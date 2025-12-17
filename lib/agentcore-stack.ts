@@ -110,6 +110,26 @@ export class AgentCoreStack extends cdk.Stack {
       exportName: `${id}-EchoToolLambdaName`,
     });
 
+    // Cognito User Pool の情報を出力
+    if (this.gateway.gateway.authorizerConfiguration) {
+      // Cognito User Pool が作成されている場合の出力
+      // Note: Gateway の内部実装により、Cognito User Pool の ARN/ID にアクセスする方法が必要
+      // 現在のAPIでは直接アクセスできないため、Gateway IDから推測または手動確認が必要
+    }
+
+    new cdk.CfnOutput(this, "GatewayMcpEndpoint", {
+      value: `https://${this.gateway.gatewayId}.gateway.bedrock-agentcore.${this.region}.amazonaws.com/mcp`,
+      description: "AgentCore Gateway MCP Endpoint",
+      exportName: `${id}-GatewayMcpEndpoint`,
+    });
+
+    new cdk.CfnOutput(this, "CognitoInstructions", {
+      value:
+        "Cognito User Pool ID と Client ID は AWS コンソールで確認してください。Gateway ID: " +
+        this.gateway.gatewayId,
+      description: "Cognito 設定確認のための指示",
+    });
+
     // タグの追加
     cdk.Tags.of(this).add("Project", "AgentCore");
     cdk.Tags.of(this).add("Component", "Gateway");

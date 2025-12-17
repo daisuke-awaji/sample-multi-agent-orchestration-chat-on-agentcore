@@ -32,50 +32,71 @@ interface ToolResponse {
 }
 
 export async function handler(
-  event: APIGatewayProxyEvent,
+  event: any,
   context: Context
 ): Promise<APIGatewayProxyResult> {
-  console.log("Received event:", JSON.stringify(event, null, 2));
+  console.log("=== AgentCore Gateway Lambda Handler Start ===");
+  console.log("Lambda Request ID:", context.awsRequestId);
+  console.log("=== DEBUG: Full Event Structure ===");
+  console.log("Event keys:", Object.keys(event));
+  console.log("Event:", JSON.stringify(event, null, 2));
+  console.log("=== DEBUG: Context Structure ===");
+  console.log("Context:", JSON.stringify(context, null, 2));
 
   try {
-    // リクエストボディをパース
-    const requestBody: ToolRequest = event.body
-      ? JSON.parse(event.body)
-      : (event as any);
+    // AgentCore Gateway経由の場合、context.client_contextが設定される
+    let toolName: string | null = null;
 
-    const { tool, input, sessionId, userId } = requestBody;
+    try {
+      if (context.clientContext && context.clientContext.Custom) {
+        // client_contextから直接ツール名を取得
+        toolName = context.clientContext.Custom[
+          "bedrockAgentCoreToolName"
+        ] as string;
+        console.log(`Original tool name from Gateway: ${toolName}`);
 
-    if (!tool) {
-      throw new Error("Tool name is required");
+        // Gateway Target プレフィックスを除去 (echo-tool___ping → ping)
+        const delimiter = "___";
+        if (toolName && toolName.includes(delimiter)) {
+          toolName = toolName.substring(
+            toolName.indexOf(delimiter) + delimiter.length
+          );
+          console.log(`Processed tool name: ${toolName}`);
+        }
+
+        console.log(
+          `Client context structure: ${JSON.stringify(context.clientContext)}`
+        );
+      } else {
+        console.log(
+          "No client_context available - direct Lambda invocation or different format"
+        );
+      }
+    } catch (error) {
+      console.error(`Error accessing client_context: ${error}`);
+      toolName = null;
     }
 
-    let result: any;
+    let toolResult: any;
 
-    // ツール実行
-    switch (tool) {
-      case "echo":
-        result = await handleEcho(input);
-        break;
-
-      case "ping":
-        result = await handlePing(input);
-        break;
-
-      default:
-        throw new Error(`Unknown tool: ${tool}`);
+    // ツール名に基づいて処理を分岐
+    if (toolName === "echo") {
+      console.log("=== Echo tool execution ===");
+      const message = event.message || "Hello from AgentCore Gateway!";
+      toolResult = await handleEcho({ message });
+    } else if (toolName === "ping") {
+      console.log("=== Ping tool execution ===");
+      toolResult = await handlePing(event);
+    } else {
+      console.log(
+        `=== Unknown or missing tool name: ${toolName} - defaulting to ping ===`
+      );
+      // ツール名が不明な場合はpingとして処理
+      toolResult = await handlePing(event);
     }
 
-    // レスポンス作成
-    const response: ToolResponse = {
-      result,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        tool,
-        sessionId,
-      },
-    };
-
-    return {
+    // AgentCore Gateway が期待する応答フォーマット
+    const response = {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
@@ -83,28 +104,48 @@ export async function handler(
         "Access-Control-Allow-Methods": "POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
-      body: JSON.stringify(response),
+      body: JSON.stringify({
+        result: toolResult,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+          toolName: toolName || "unknown",
+        },
+      }),
     };
+
+    console.log("=== Success Response ===");
+    console.log("Response:", JSON.stringify(response, null, 2));
+
+    return response;
   } catch (error) {
-    console.error("Lambda execution error:", error);
+    console.error("=== Lambda Execution Error ===");
+    console.error("Error:", error);
+    console.error(
+      "Stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
 
-    const errorResponse: ToolResponse = {
-      result: null,
-      error: error instanceof Error ? error.message : "Unknown error",
-      metadata: {
-        timestamp: new Date().toISOString(),
-        tool: "unknown",
-      },
-    };
-
-    return {
-      statusCode: 400,
+    const errorResponse = {
+      statusCode: 500,
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify(errorResponse),
+      body: JSON.stringify({
+        result: null,
+        error: error instanceof Error ? error.message : "Unknown error",
+        metadata: {
+          timestamp: new Date().toISOString(),
+          requestId: context.awsRequestId,
+        },
+      }),
     };
+
+    console.log("=== Error Response ===");
+    console.log("Error response:", JSON.stringify(errorResponse, null, 2));
+
+    return errorResponse;
   }
 }
 
