@@ -2,30 +2,21 @@
   "name": "fullstack-agentcore",
   "version": "0.1.0",
   "description": "CDK スタックによる Amazon Bedrock AgentCore デプロイメント",
-  "bin": {
-    "fullstack-agentcore": "bin/app.js"
-  },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
-    "cdk": "cdk",
-    "synth": "cdk synth",
-    "deploy": "cdk deploy",
-    "diff": "cdk diff"
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "cdk": "npm run cdk --workspace=@fullstack-agentcore/cdk",
+    "synth": "npm run synth --workspace=@fullstack-agentcore/cdk",
+    "deploy": "npm run deploy --workspace=@fullstack-agentcore/cdk",
+    "diff": "npm run diff --workspace=@fullstack-agentcore/cdk",
+    "start:agent": "npm run start --workspace=@fullstack-agentcore/agent-sample",
+    "build:lambda": "npm run build --workspace=@fullstack-agentcore/lambda-tools"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.5",
-    "@types/node": "^20.6.2",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "aws-cdk": "^2.1034.0",
     "typescript": "~5.2.2"
-  },
-  "dependencies": {
-    "aws-cdk-lib": "2.232.2",
-    "constructs": "^10.0.0",
-    "@aws-cdk/aws-bedrock-agentcore-alpha": "2.232.2-alpha.0",
-    "@aws-cdk/aws-bedrock-alpha": "2.232.2-alpha.0"
   }
 }

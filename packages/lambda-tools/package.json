@@ -1,0 +1,21 @@
+{
+  "name": "@fullstack-agentcore/lambda-tools",
+  "version": "0.1.0",
+  "description": "AgentCore Gateway Lambda Tools Collection",
+  "scripts": {
+    "build": "npm run build:echo-tool",
+    "build:echo-tool": "cd tools/echo-tool && npm run build",
+    "clean": "npm run clean:echo-tool",
+    "clean:echo-tool": "cd tools/echo-tool && npm run clean",
+    "test": "npm run test:echo-tool",
+    "test:echo-tool": "cd tools/echo-tool && npm run test"
+  },
+  "keywords": [
+    "lambda",
+    "agentcore",
+    "mcp",
+    "tools"
+  ],
+  "author": "AgentCore Gateway",
+  "license": "MIT"
+}

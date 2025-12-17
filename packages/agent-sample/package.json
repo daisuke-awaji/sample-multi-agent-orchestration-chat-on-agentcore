@@ -1,6 +1,6 @@
 {
-  "name": "agentcore-gateway-sample",
-  "version": "1.0.0",
+  "name": "@fullstack-agentcore/agent-sample",
+  "version": "0.1.0",
   "description": "Strands AI Agent sample using AgentCore Gateway MCP tools",
   "type": "module",
   "main": "dist/index.js",

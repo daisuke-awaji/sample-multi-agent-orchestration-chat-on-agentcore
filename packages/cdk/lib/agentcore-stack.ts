@@ -70,8 +70,8 @@ export class AgentCoreStack extends cdk.Stack {
     this.echoToolTarget = new AgentCoreLambdaTarget(this, "EchoToolTarget", {
       targetName: "echo-tool",
       description: "Echo/Ping ツールを提供するLambda関数",
-      lambdaCodePath: "lambda/echo-tool",
-      toolSchemaPath: "lambda/echo-tool/tool-schema.json",
+      lambdaCodePath: "packages/lambda-tools/tools/echo-tool",
+      toolSchemaPath: "packages/lambda-tools/tools/echo-tool/tool-schema.json",
       timeout: 30,
       memorySize: 256,
       environment: {
