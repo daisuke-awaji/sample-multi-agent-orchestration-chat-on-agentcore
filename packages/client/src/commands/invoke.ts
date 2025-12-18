@@ -14,7 +14,6 @@ export async function invokeCommand(
   options: {
     json?: boolean;
     noAuth?: boolean;
-    time?: boolean;
   }
 ): Promise<void> {
   const client = createClient(config);
@@ -22,17 +21,11 @@ export async function invokeCommand(
 
   if (options.json) {
     try {
-      const result = options.time
-        ? await client.timedInvoke(prompt, useAuth)
-        : { response: await client.invoke(prompt, useAuth), clientDuration: 0 };
+      const response = await client.invoke(prompt, useAuth);
 
       const output = {
         prompt,
-        response: result.response,
-        timing: {
-          clientDuration: result.clientDuration,
-          serverDuration: result.response.metadata?.duration || 0,
-        },
+        response,
         metadata: {
           endpoint: config.endpoint,
           runtime: config.isAwsRuntime
@@ -77,12 +70,7 @@ export async function invokeCommand(
   const spinner = ora("Agent が考えています...").start();
 
   try {
-    const startTime = Date.now();
-    const result = options.time
-      ? await client.timedInvoke(prompt, useAuth)
-      : { response: await client.invoke(prompt, useAuth), clientDuration: 0 };
-
-    const totalTime = Date.now() - startTime;
+    const response = await client.invoke(prompt, useAuth);
     spinner.succeed(chalk.green("Agent が応答しました"));
 
     console.log("");
@@ -91,17 +79,14 @@ export async function invokeCommand(
 
     // レスポンスの内容を表示
     if (
-      result.response.response.lastMessage?.content &&
-      result.response.response.lastMessage.content.length > 0
+      response.response.lastMessage?.content &&
+      response.response.lastMessage.content.length > 0
     ) {
-      result.response.response.lastMessage.content.forEach(
+      response.response.lastMessage.content.forEach(
         (content: any, index: number) => {
           if (content.text) {
             console.log(chalk.white(content.text));
-            if (
-              index <
-              result.response.response.lastMessage!.content.length - 1
-            ) {
+            if (index < response.response.lastMessage!.content.length - 1) {
               console.log("");
             }
           }
@@ -113,39 +98,19 @@ export async function invokeCommand(
 
     console.log(chalk.white("─".repeat(60)));
 
-    // メタデータとタイミング情報
+    // メタデータ情報
     console.log("");
     console.log(chalk.bold("📊 実行情報:"));
     console.log(
       `${chalk.blue("🆔")} リクエストID: ${chalk.gray(
-        result.response.metadata?.requestId || "N/A"
+        response.metadata?.requestId || "N/A"
       )}`
     );
     console.log(
       `${chalk.blue("🛑")} 停止理由: ${chalk.gray(
-        result.response.response.stopReason || "N/A"
+        response.response.stopReason || "N/A"
       )}`
     );
-
-    if (options.time || result.clientDuration > 0) {
-      console.log("");
-      console.log(chalk.bold("⏱️ タイミング情報:"));
-      if (result.clientDuration > 0) {
-        console.log(
-          `${chalk.yellow("📤")} クライアント処理時間: ${chalk.bold(
-            result.clientDuration
-          )}ms`
-        );
-      }
-      console.log(
-        `${chalk.yellow("🖥️")} サーバー処理時間: ${chalk.bold(
-          result.response.metadata?.duration || "N/A"
-        )}ms`
-      );
-      console.log(
-        `${chalk.yellow("🕐")} 総実行時間: ${chalk.bold(totalTime)}ms`
-      );
-    }
   } catch (error) {
     spinner.fail(chalk.red("Agent 呼び出しに失敗しました"));
 
@@ -199,11 +164,21 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
   rl.on("line", async (input) => {
     const trimmed = input.trim();
 
-    if (trimmed === "" || trimmed === "exit" || trimmed === "quit") {
+    // 空の入力は無視してプロンプトを再表示
+    if (trimmed === "") {
+      rl.prompt();
+      return;
+    }
+
+    // exit/quit で終了
+    if (trimmed === "exit" || trimmed === "quit") {
       console.log(chalk.yellow("👋 セッションを終了します"));
       rl.close();
       return;
     }
+
+    // 非同期処理中は readline を一時停止
+    rl.pause();
 
     try {
       const spinner = ora("Agent が考えています...").start();
@@ -230,9 +205,11 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
         )
       );
       console.log("");
+    } finally {
+      // 処理完了後に再開してプロンプト表示
+      rl.resume();
+      rl.prompt();
     }
-
-    rl.prompt();
   });
 
   rl.on("close", () => {

@@ -115,13 +115,9 @@ export class AgentCoreClient {
       : `${this.config.endpoint}/invocations`;
 
     try {
-      // 環境に応じて Content-Type を設定
-      const contentType = isAgentCoreRuntime
-        ? "application/json"
-        : "application/octet-stream";
-
+      // 両環境で統一: JSON 形式を使用
       const headers: Record<string, string> = {
-        "Content-Type": contentType,
+        "Content-Type": "application/json",
       };
 
       // AgentCore Runtime の場合は追加のヘッダーが必要
@@ -140,8 +136,8 @@ export class AgentCoreClient {
         headers["Authorization"] = `Bearer ${authResult.accessToken}`;
       }
 
-      // AgentCore Runtime の場合は JSON 形式、ローカルの場合は文字列
-      const body = isAgentCoreRuntime ? JSON.stringify({ prompt }) : prompt;
+      // 両環境で統一: JSON 形式を使用
+      const body = JSON.stringify({ prompt });
 
       const response = await fetch(url, {
         method: "POST",
@@ -175,26 +171,6 @@ export class AgentCoreClient {
       }
       throw new Error("不明なエラーが発生しました");
     }
-  }
-
-  /**
-   * レスポンス時間を測定して invoke を実行
-   */
-  async timedInvoke(
-    prompt: string,
-    useAuth: boolean = true
-  ): Promise<{
-    response: InvokeResponse;
-    clientDuration: number;
-  }> {
-    const startTime = Date.now();
-    const response = await this.invoke(prompt, useAuth);
-    const clientDuration = Date.now() - startTime;
-
-    return {
-      response,
-      clientDuration,
-    };
   }
 
   /**

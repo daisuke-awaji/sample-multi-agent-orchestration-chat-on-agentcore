@@ -13,7 +13,11 @@
     "synth": "npm run synth --workspace=@fullstack-agentcore/cdk",
     "deploy": "npm run deploy --workspace=@fullstack-agentcore/cdk",
     "diff": "npm run diff --workspace=@fullstack-agentcore/cdk",
-    "build:lambda": "npm run build --workspace=@fullstack-agentcore/lambda-tools"
+    "build:lambda": "npm run build --workspace=@fullstack-agentcore/lambda-tools",
+    "client:build": "npm run build --workspace=@fullstack-agentcore/client",
+    "client:start": "npm run start --workspace=@fullstack-agentcore/client",
+    "client:dev": "npm run dev --workspace=@fullstack-agentcore/client",
+    "client": "npm run client:build && npm run client:start"
   },
   "devDependencies": {
     "typescript": "~5.2.2"

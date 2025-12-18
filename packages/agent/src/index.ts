@@ -6,8 +6,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Agent } from "@strands-agents/sdk";
 import { createAgent } from "./agent.js";
-import { getContextMetadata } from "./context/request-context";
-import { requestContextMiddleware } from "./middleware/request-context";
+import { getContextMetadata } from "./context/request-context.js";
+import { requestContextMiddleware } from "./middleware/request-context.js";
 
 const PORT = process.env.PORT || 8080;
 const app = express();
@@ -46,8 +46,7 @@ async function ensureAgentInitialized(): Promise<void> {
   await initializationPromise;
 }
 
-// リクエストボディを raw データとして受け取る設定
-app.use("/invocations", express.raw({ type: "application/octet-stream" }));
+// リクエストボディを JSON として受け取る設定
 app.use(express.json());
 
 // リクエストコンテキストミドルウェアを適用（認証が必要なエンドポイント）
@@ -81,8 +80,8 @@ app.post("/invocations", async (req: Request, res: Response) => {
       });
     }
 
-    // リクエストボディからプロンプトを取得
-    const prompt = req.body?.toString("utf-8") || "";
+    // リクエストボディからプロンプトを取得（JSON 形式）
+    const prompt = req.body?.prompt || "";
 
     if (!prompt.trim()) {
       return res.status(400).json({

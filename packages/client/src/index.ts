@@ -68,7 +68,6 @@ program
   .argument("<prompt>", "送信するプロンプト")
   .option("--json", "JSON形式で出力")
   .option("--no-auth", "認証なしで実行")
-  .option("--time", "実行時間を測定")
   .action(async (prompt, options) => {
     try {
       const globalOptions = program.opts();
@@ -86,7 +85,6 @@ program
       await invokeCommand(prompt, config, {
         json: options.json || globalOptions.json,
         noAuth: !options.auth, // --no-auth なので反転
-        time: options.time,
       });
     } catch (error) {
       console.error(
