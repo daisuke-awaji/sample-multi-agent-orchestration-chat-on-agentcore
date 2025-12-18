@@ -143,8 +143,14 @@ export async function invokeCommand(
 export async function interactiveMode(config: ClientConfig): Promise<void> {
   const client = createClient(config);
 
+  // インタラクティブセッション用の固定セッションIDを生成
+  const sessionId = `interactive-session-${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2)}`;
+
   console.log(chalk.cyan("🔄 AgentCore インタラクティブモード"));
   console.log(chalk.gray(`エンドポイント: ${config.endpoint}`));
+  console.log(chalk.gray(`セッションID: ${sessionId}`));
   console.log(
     chalk.gray("終了するには 'exit' または Ctrl+C を入力してください")
   );
@@ -182,7 +188,8 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
 
     try {
       const spinner = ora("Agent が考えています...").start();
-      const result = await client.invoke(trimmed);
+      // 固定セッションIDを使用して呼び出し
+      const result = await client.invoke(trimmed, true, sessionId);
       spinner.succeed(chalk.green("応答完了"));
 
       console.log("");

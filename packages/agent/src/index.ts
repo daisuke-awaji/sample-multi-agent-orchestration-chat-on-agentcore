@@ -4,7 +4,7 @@
  */
 
 import express, { Request, Response, NextFunction } from "express";
-import { Agent } from "@strands-agents/sdk";
+import { Agent, Message } from "@strands-agents/sdk";
 import { createAgent } from "./agent.js";
 import { getContextMetadata } from "./context/request-context.js";
 import { requestContextMiddleware } from "./middleware/request-context.js";
@@ -15,6 +15,57 @@ const app = express();
 // Agent インスタンス（遅延初期化）
 let agent: Agent | null = null;
 let initializationPromise: Promise<void> | null = null;
+
+// セッション履歴管理
+interface SessionHistory {
+  sessionId: string;
+  messages: Message[];
+  lastAccessed: Date;
+}
+
+// セッション履歴を保存するMap（本来はRedisなどの永続化ストレージを使用）
+const sessionHistories = new Map<string, SessionHistory>();
+
+// セッション履歴のクリーンアップ（1時間以上アクセスされていないものを削除）
+setInterval(() => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  for (const [sessionId, history] of sessionHistories.entries()) {
+    if (history.lastAccessed < oneHourAgo) {
+      sessionHistories.delete(sessionId);
+      console.log(`🗑️ セッション履歴をクリーンアップ: ${sessionId}`);
+    }
+  }
+}, 15 * 60 * 1000); // 15分ごとにチェック
+
+/**
+ * セッション履歴を取得または作成
+ */
+function getOrCreateSessionHistory(sessionId: string): SessionHistory {
+  let history = sessionHistories.get(sessionId);
+  if (!history) {
+    history = {
+      sessionId,
+      messages: [],
+      lastAccessed: new Date(),
+    };
+    sessionHistories.set(sessionId, history);
+    console.log(`📝 新しいセッション履歴を作成: ${sessionId}`);
+  } else {
+    history.lastAccessed = new Date();
+  }
+  return history;
+}
+
+/**
+ * セッション履歴にメッセージを追加
+ */
+function addMessageToSession(sessionId: string, message: Message): void {
+  const history = getOrCreateSessionHistory(sessionId);
+  history.messages.push(message);
+  console.log(
+    `💬 メッセージを履歴に追加 (${sessionId}): ${history.messages.length}件`
+  );
+}
 
 // Agent の遅延初期化（最初のリクエスト時に実行）
 async function ensureAgentInitialized(): Promise<void> {
@@ -89,11 +140,52 @@ app.post("/invocations", async (req: Request, res: Response) => {
       });
     }
 
+    // セッションIDをヘッダーから取得
+    const sessionId = req.headers[
+      "x-amzn-bedrock-agentcore-runtime-session-id"
+    ] as string;
+
     const contextMeta = getContextMetadata();
     console.log(`📝 Received prompt (${contextMeta.requestId}): ${prompt}`);
+    console.log(`🔗 Session ID: ${sessionId}`);
 
-    // Agent でプロンプトを処理
-    const result = await agent.invoke(prompt);
+    // セッション履歴を取得
+    const sessionHistory = sessionId
+      ? getOrCreateSessionHistory(sessionId)
+      : null;
+
+    // ユーザーメッセージを作成
+    const userMessage: Message = {
+      type: "message",
+      role: "user",
+      content: [{ type: "textBlock", text: prompt }],
+    };
+
+    // セッション履歴にユーザーメッセージを追加
+    if (sessionHistory) {
+      addMessageToSession(sessionId, userMessage);
+    }
+
+    // Agent でプロンプトを処理（会話履歴を含む）
+    let result;
+    if (sessionHistory && sessionHistory.messages.length > 1) {
+      // 既存の会話履歴がある場合：全ての履歴を含めて処理
+      // 最後のユーザーメッセージ（現在のプロンプト）以外の履歴を取得
+      const conversationHistory = sessionHistory.messages.slice(0, -1);
+      console.log(conversationHistory);
+
+      // Agentに会話履歴付きで呼び出し（Strands SDKの仕様に合わせて調整が必要）
+      // 現在はプロンプトのみで呼び出し、後で会話履歴対応を実装
+      result = await agent.invoke(prompt);
+    } else {
+      // 新しいセッションまたは初回メッセージの場合
+      result = await agent.invoke(prompt);
+    }
+
+    // Assistant の応答をセッション履歴に追加
+    if (sessionHistory && result.lastMessage) {
+      addMessageToSession(sessionId, result.lastMessage);
+    }
 
     // 結果を JSON で返す
     return res.json({
@@ -101,6 +193,8 @@ app.post("/invocations", async (req: Request, res: Response) => {
       metadata: {
         requestId: contextMeta.requestId,
         duration: contextMeta.duration,
+        sessionId: sessionId || "none",
+        conversationLength: sessionHistory?.messages.length || 1,
       },
     });
   } catch (error) {

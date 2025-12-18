@@ -104,7 +104,8 @@ export class AgentCoreClient {
    */
   async invoke(
     prompt: string,
-    useAuth: boolean = true
+    useAuth: boolean = true,
+    sessionId?: string
   ): Promise<InvokeResponse> {
     // AgentCore Runtime の場合は /invocations が既に含まれているため追加しない
     const isAgentCoreRuntime =
@@ -122,12 +123,15 @@ export class AgentCoreClient {
 
       // AgentCore Runtime の場合は追加のヘッダーが必要
       if (isAgentCoreRuntime) {
-        // セッション ID を生成（33文字以上必須）
-        const sessionId = `client-session-${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(2)}`;
+        // セッション ID: 引数で渡された場合はそれを使用、なければ新規生成
+        const actualSessionId =
+          sessionId ||
+          `client-session-${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(2)}`;
         headers["X-Amzn-Trace-Id"] = `client-trace-${Date.now()}`;
-        headers["X-Amzn-Bedrock-AgentCore-Runtime-Session-Id"] = sessionId;
+        headers["X-Amzn-Bedrock-AgentCore-Runtime-Session-Id"] =
+          actualSessionId;
       }
 
       // JWT認証が必要な場合
