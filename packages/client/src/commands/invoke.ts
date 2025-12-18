@@ -21,15 +21,13 @@ export async function invokeCommand(
   config: ClientConfig,
   options: {
     json?: boolean;
-    noAuth?: boolean;
   }
 ): Promise<void> {
   const client = createClient(config);
-  const useAuth = !options.noAuth;
 
   if (options.json) {
     try {
-      const response = await client.invoke(prompt, useAuth);
+      const response = await client.invoke(prompt);
 
       const output = {
         prompt,
@@ -37,7 +35,6 @@ export async function invokeCommand(
         metadata: {
           endpoint: config.endpoint,
           runtime: config.isAwsRuntime ? 'AWS AgentCore Runtime' : 'ローカル環境',
-          useAuth,
           timestamp: new Date().toISOString(),
         },
       };
@@ -62,7 +59,6 @@ export async function invokeCommand(
   console.log(
     chalk.gray(`ランタイム: ${config.isAwsRuntime ? 'AWS AgentCore Runtime' : 'ローカル環境'}`)
   );
-  console.log(chalk.gray(`認証: ${useAuth ? '有効' : '無効'}`));
   console.log('');
 
   console.log(chalk.bold('📝 プロンプト:'));
@@ -72,7 +68,7 @@ export async function invokeCommand(
   const spinner = ora('Agent が考えています...').start();
 
   try {
-    const response = await client.invoke(prompt, useAuth);
+    const response = await client.invoke(prompt);
     spinner.succeed(chalk.green('Agent が応答しました'));
 
     console.log('');
@@ -119,11 +115,6 @@ export async function invokeCommand(
     console.log(chalk.gray('   1. プロンプトが空でないか確認してください'));
     console.log(chalk.gray('   2. サーバーが起動しているか確認してください'));
     console.log(chalk.gray('   3. ネットワーク接続を確認してください'));
-
-    if (useAuth && config.isAwsRuntime) {
-      console.log(chalk.gray('   4. Cognito認証情報を確認してください'));
-      console.log(chalk.gray('   5. --no-auth オプションで認証なしを試してください'));
-    }
 
     process.exit(1);
   }
@@ -177,7 +168,7 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
     try {
       const spinner = ora('Agent が考えています...').start();
       // 固定セッションIDを使用して呼び出し
-      const result = await client.invoke(trimmed, true, sessionId);
+      const result = await client.invoke(trimmed, sessionId);
       spinner.succeed(chalk.green('応答完了'));
 
       console.log('');

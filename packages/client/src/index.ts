@@ -71,7 +71,6 @@ program
 
       await invokeCommand(prompt, config, {
         json: options.json || globalOptions.json,
-        noAuth: !options.auth, // --no-auth なので反転
       });
     } catch (error) {
       console.error(

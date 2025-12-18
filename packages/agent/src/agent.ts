@@ -36,19 +36,49 @@ interface MCPToolDefinition {
 }
 
 /**
- * JSON Schema を Zod Schema に変換
+ * プロパティキー名をサニタイズ（Bedrock の制約に適合させる）
+ * パターン: ^[a-zA-Z0-9_.-]{1,64}$
  */
-function convertToZodSchema(jsonSchema: JSONSchema): z.ZodObject<Record<string, z.ZodTypeAny>> {
+function sanitizePropertyKey(key: string): string {
+  // 許可されていない文字をアンダースコアに置換
+  let sanitized = key.replace(/[^a-zA-Z0-9_.-]/g, '_');
+
+  // 64文字に切り詰め
+  if (sanitized.length > 64) {
+    sanitized = sanitized.substring(0, 64);
+  }
+
+  // 空文字の場合はデフォルト名
+  if (sanitized.length === 0) {
+    sanitized = '_param';
+  }
+
+  return sanitized;
+}
+
+/**
+ * JSON Schema を Zod Schema に変換し、キーマッピングも返す
+ */
+function convertToZodSchema(jsonSchema: JSONSchema): {
+  schema: z.ZodObject<Record<string, z.ZodTypeAny>>;
+  keyMapping: Record<string, string>; // sanitizedKey -> originalKey
+} {
   if (!jsonSchema || jsonSchema.type !== 'object') {
-    return z.object({});
+    return { schema: z.object({}), keyMapping: {} };
   }
 
   const properties = jsonSchema.properties || {};
   const required = jsonSchema.required || [];
   const zodFields: Record<string, z.ZodTypeAny> = {};
+  const keyMapping: Record<string, string> = {};
 
   for (const [key, prop] of Object.entries(properties)) {
     const propSchema = prop as JSONSchemaProperty;
+
+    // プロパティキー名をサニタイズ
+    const sanitizedKey = sanitizePropertyKey(key);
+    keyMapping[sanitizedKey] = key; // マッピングを記録
+
     let zodType: z.ZodTypeAny;
 
     switch (propSchema.type) {
@@ -80,10 +110,10 @@ function convertToZodSchema(jsonSchema: JSONSchema): z.ZodObject<Record<string, 
       zodType = zodType.optional();
     }
 
-    zodFields[key] = zodType;
+    zodFields[sanitizedKey] = zodType;
   }
 
-  return z.object(zodFields);
+  return { schema: z.object(zodFields), keyMapping };
 }
 
 /**
@@ -95,14 +125,23 @@ type ToolInput = Record<string, unknown>;
  * MCP ツールを Strands ツールに変換
  */
 function createStrandsToolFromMCP(mcpTool: MCPToolDefinition) {
+  const { schema, keyMapping } = convertToZodSchema(mcpTool.inputSchema);
+
   return tool({
     name: mcpTool.name,
     description: mcpTool.description || `AgentCore Gateway ツール: ${mcpTool.name}`,
-    inputSchema: convertToZodSchema(mcpTool.inputSchema),
+    inputSchema: schema,
     callback: async (input: ToolInput): Promise<string> => {
       try {
-        logger.debug(`ツール呼び出し: ${mcpTool.name}`, input);
-        const result: MCPToolResult = await mcpClient.callTool(mcpTool.name, input);
+        // サニタイズされたキーを元のキーに変換
+        const originalInput: Record<string, unknown> = {};
+        for (const [sanitizedKey, value] of Object.entries(input)) {
+          const originalKey = keyMapping[sanitizedKey] || sanitizedKey;
+          originalInput[originalKey] = value;
+        }
+
+        logger.debug(`ツール呼び出し: ${mcpTool.name}`, originalInput);
+        const result: MCPToolResult = await mcpClient.callTool(mcpTool.name, originalInput);
 
         if (result.isError) {
           logger.error(`ツール実行エラー: ${mcpTool.name}`, result);

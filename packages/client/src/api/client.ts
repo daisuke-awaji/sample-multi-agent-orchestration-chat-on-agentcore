@@ -4,6 +4,7 @@
  */
 
 import fetch from 'node-fetch';
+import { randomUUID } from 'crypto';
 import type { ClientConfig } from '../config/index.js';
 import { getCachedJwtToken } from '../auth/cognito.js';
 
@@ -102,11 +103,7 @@ export class AgentCoreClient {
   /**
    * Agent 呼び出し
    */
-  async invoke(
-    prompt: string,
-    useAuth: boolean = true,
-    sessionId?: string
-  ): Promise<InvokeResponse> {
+  async invoke(prompt: string, sessionId?: string): Promise<InvokeResponse> {
     // AgentCore Runtime の場合は /invocations が既に含まれているため追加しない
     const isAgentCoreRuntime =
       this.config.endpoint.includes('bedrock-agentcore') &&
@@ -121,18 +118,15 @@ export class AgentCoreClient {
 
       // AgentCore Runtime の場合は追加のヘッダーが必要
       if (isAgentCoreRuntime) {
-        // セッション ID: 引数で渡された場合はそれを使用、なければ新規生成
-        const actualSessionId =
-          sessionId || `client-session-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+        // セッション ID: 引数で渡された場合はそれを使用、なければ新規生成（UUID で 33 文字以上を保証）
+        const actualSessionId = sessionId || `session-${randomUUID()}`;
         headers['X-Amzn-Trace-Id'] = `client-trace-${Date.now()}`;
         headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = actualSessionId;
       }
 
-      // JWT認証が必要な場合
-      if (useAuth) {
-        const authResult = await getCachedJwtToken(this.config.cognito);
-        headers['Authorization'] = `Bearer ${authResult.accessToken}`;
-      }
+      // JWT認証（常に必要）
+      const authResult = await getCachedJwtToken(this.config.cognito);
+      headers['Authorization'] = `Bearer ${authResult.accessToken}`;
 
       // 両環境で統一: JSON 形式を使用
       const body = JSON.stringify({ prompt });

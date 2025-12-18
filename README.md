@@ -70,27 +70,19 @@ graph TB
 ```
 fullstack-agentcore/
 ├── packages/
-│   ├── cdk/                    # CDK デプロイメント
-│   │   ├── lib/constructs/
-│   │   │   ├── agentcore-runtime.ts      # Runtime 設定
-│   │   │   ├── agentcore-gateway.ts      # Gateway 設定
-│   │   │   └── cognito-auth.ts           # JWT 認証設定
-│   │   └── scripts/
-│   │       ├── test-jwt-auth.sh          # JWT認証テスト
-│   │       └── test-jwt-propagation.sh   # JWT伝播テスト
+│   ├── cdk/                    # AWS インフラストラクチャ (CDK)
+│   │   ├── lib/                # スタックと Construct 定義
+│   │   └── scripts/            # JWT 認証テストスクリプト
 │   │
-│   ├── agent/                  # Agent Runtime コード
-│   │   ├── src/
-│   │   │   ├── index.ts                  # Express サーバー
-│   │   │   ├── agent.ts                  # Strands Agent
-│   │   │   ├── context/
-│   │   │   │   └── request-context.ts    # JWT コンテキスト管理
-│   │   │   └── mcp/
-│   │   │       └── client.ts             # JWT伝播 MCP Client
-│   │   └── Dockerfile
+│   ├── agent/                  # Agent Runtime (Express + Strands)
+│   │   ├── src/                # JWT 伝播機能付き Agent 実装
+│   │   └── scripts/            # ローカル開発・テスト用スクリプト
 │   │
-│   └── lambda-tools/           # Lambda ツール
-│       └── tools/echo-tool/    # エコーツール実装
+│   ├── client/                 # CLI クライアント
+│   │   └── src/                # Cognito 認証付き API クライアント
+│   │
+│   └── lambda-tools/           # AgentCore Gateway ツール
+│       └── tools/echo-tool/    # サンプル Lambda ツール実装
 │
 ├── cdk.json                    # CDK 設定
 └── README.md                   # このファイル
