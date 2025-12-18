@@ -2,7 +2,7 @@
  * ツール共通型定義
  */
 
-import { ToolInput, ToolResult } from "../types.js";
+import { ToolInput, ToolResult } from '../types.js';
 
 /**
  * ツールハンドラー関数の型
@@ -61,7 +61,7 @@ export class ToolError extends Error {
     public readonly cause?: Error
   ) {
     super(message);
-    this.name = "ToolError";
+    this.name = 'ToolError';
   }
 }
 
@@ -75,6 +75,6 @@ export class ToolValidationError extends ToolError {
     public readonly field?: string
   ) {
     super(message, toolName);
-    this.name = "ToolValidationError";
+    this.name = 'ToolValidationError';
   }
 }

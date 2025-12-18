@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-import { z } from "zod";
+import dotenv from 'dotenv';
+import { z } from 'zod';
 
 // 環境変数を読み込み
 dotenv.config();
@@ -9,24 +9,22 @@ dotenv.config();
  */
 const envSchema = z.object({
   // AWS Configuration
-  AWS_REGION: z.string().default("us-east-1"),
+  AWS_REGION: z.string().default('us-east-1'),
   AWS_PROFILE: z.string().optional(),
 
   // AgentCore Gateway Configuration
   AGENTCORE_GATEWAY_ENDPOINT: z.string().url(),
 
   // Bedrock Configuration
-  BEDROCK_MODEL_ID: z
-    .string()
-    .default("anthropic.claude-sonnet-4-5-20250929-v1:0"),
-  BEDROCK_REGION: z.string().default("us-east-1"),
+  BEDROCK_MODEL_ID: z.string().default('anthropic.claude-sonnet-4-5-20250929-v1:0'),
+  BEDROCK_REGION: z.string().default('us-east-1'),
 
   // Debug Configuration
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   DEBUG_MCP: z
     .string()
-    .default("false")
-    .transform((val) => val === "true"),
+    .default('false')
+    .transform((val) => val === 'true'),
 });
 
 /**
@@ -42,9 +40,7 @@ function parseEnv(): Config {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.issues
-        .map((issue) => issue.path.join("."))
-        .join(", ");
+      const missingVars = error.issues.map((issue) => issue.path.join('.')).join(', ');
       throw new Error(`必要な環境変数が設定されていません: ${missingVars}`);
     }
     throw error;
@@ -61,22 +57,22 @@ export const config = parseEnv();
  */
 export const logger = {
   debug: (...args: unknown[]) => {
-    if (config.LOG_LEVEL === "debug") {
-      console.log("[DEBUG]", new Date().toISOString(), ...args);
+    if (config.LOG_LEVEL === 'debug') {
+      console.log('[DEBUG]', new Date().toISOString(), ...args);
     }
   },
   info: (...args: unknown[]) => {
-    if (["debug", "info"].includes(config.LOG_LEVEL)) {
-      console.log("[INFO]", new Date().toISOString(), ...args);
+    if (['debug', 'info'].includes(config.LOG_LEVEL)) {
+      console.log('[INFO]', new Date().toISOString(), ...args);
     }
   },
   warn: (...args: unknown[]) => {
-    if (["debug", "info", "warn"].includes(config.LOG_LEVEL)) {
-      console.warn("[WARN]", new Date().toISOString(), ...args);
+    if (['debug', 'info', 'warn'].includes(config.LOG_LEVEL)) {
+      console.warn('[WARN]', new Date().toISOString(), ...args);
     }
   },
   error: (...args: unknown[]) => {
-    console.error("[ERROR]", new Date().toISOString(), ...args);
+    console.error('[ERROR]', new Date().toISOString(), ...args);
   },
 };
 
@@ -84,8 +80,8 @@ export const logger = {
  * 設定値を検証・表示
  */
 export function validateConfig(): void {
-  logger.info("設定値検証開始");
+  logger.info('設定値検証開始');
 
-  logger.debug("設定値:", config);
-  logger.info("設定値検証完了");
+  logger.debug('設定値:', config);
+  logger.info('設定値検証完了');
 }

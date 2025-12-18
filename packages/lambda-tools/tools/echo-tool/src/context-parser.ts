@@ -2,21 +2,18 @@
  * AgentCore Gateway Context解析ユーティリティ
  */
 
-import { Context } from "aws-lambda";
-import { logger } from "./logger.js";
+import { Context } from 'aws-lambda';
+import { logger } from './logger.js';
 
 /**
- * AgentCore Gateway のクライアントコンテキスト型定義
+ * Lambda ClientContext の型定義
  */
-interface AgentCoreClientContext {
+interface LambdaClientContext {
   custom?: {
-    bedrockAgentCoreTargetId?: string;
-    bedrockAgentCoreGatewayId?: string;
-    bedrockAgentCoreMessageVersion?: string;
-    bedrockAgentCoreMcpMessageId?: string;
-    bedrockAgentCoreAwsRequestId?: string;
     bedrockAgentCoreToolName?: string;
+    [key: string]: unknown;
   };
+  [key: string]: unknown;
 }
 
 /**
@@ -29,19 +26,19 @@ export function extractToolName(context: Context): string | null {
   try {
     // clientContextの存在確認
     if (!context.clientContext) {
-      logger.info("CONTEXT", {
-        status: "no_client_context",
-        invocationType: "direct_or_unknown",
+      logger.info('CONTEXT', {
+        status: 'no_client_context',
+        invocationType: 'direct_or_unknown',
       });
       return null;
     }
 
     // customフィールドの存在確認（実際のAWS環境では小文字）
-    const customContext = (context.clientContext as any).custom;
+    const customContext = (context.clientContext as unknown as LambdaClientContext).custom;
 
     if (!customContext) {
-      logger.info("CONTEXT", {
-        status: "no_custom_context",
+      logger.info('CONTEXT', {
+        status: 'no_custom_context',
         clientContext: context.clientContext,
       });
       return null;
@@ -51,8 +48,8 @@ export function extractToolName(context: Context): string | null {
     const originalToolName = customContext.bedrockAgentCoreToolName as string;
 
     if (!originalToolName) {
-      logger.info("CONTEXT", {
-        status: "no_tool_name",
+      logger.info('CONTEXT', {
+        status: 'no_tool_name',
         customKeys: Object.keys(customContext),
       });
       return null;
@@ -61,7 +58,7 @@ export function extractToolName(context: Context): string | null {
     // Gateway Target プレフィックスを除去 (echo-tool___ping → ping)
     const processedToolName = extractActualToolName(originalToolName);
 
-    logger.info("CONTEXT", {
+    logger.info('CONTEXT', {
       originalTool: originalToolName,
       processedTool: processedToolName,
       clientContext: context.clientContext,
@@ -69,11 +66,9 @@ export function extractToolName(context: Context): string | null {
 
     return processedToolName;
   } catch (error) {
-    logger.warn("CONTEXT_ERROR", {
+    logger.warn('CONTEXT_ERROR', {
       error,
-      contextKeys: context.clientContext
-        ? Object.keys(context.clientContext)
-        : [],
+      contextKeys: context.clientContext ? Object.keys(context.clientContext) : [],
     });
     return null;
   }
@@ -86,7 +81,7 @@ export function extractToolName(context: Context): string | null {
  * @returns 実際のツール名（例: "echo"）
  */
 export function extractActualToolName(toolName: string): string {
-  const delimiter = "___";
+  const delimiter = '___';
 
   if (toolName && toolName.includes(delimiter)) {
     return toolName.substring(toolName.indexOf(delimiter) + delimiter.length);
@@ -108,8 +103,6 @@ export function getContextSummary(context: Context) {
     memoryLimit: context.memoryLimitInMB,
     remainingTime: context.getRemainingTimeInMillis(),
     hasClientContext: !!context.clientContext,
-    clientContextKeys: context.clientContext
-      ? Object.keys(context.clientContext)
-      : [],
+    clientContextKeys: context.clientContext ? Object.keys(context.clientContext) : [],
   };
 }

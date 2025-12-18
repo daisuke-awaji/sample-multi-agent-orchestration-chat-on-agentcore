@@ -4,17 +4,17 @@
  * 利用可能なツールを管理し、ツール名による検索機能を提供
  */
 
-import { Tool, ToolHandler } from "./types.js";
-import { echoTool } from "./echo.js";
-import { pingTool } from "./ping.js";
-import { logger } from "../logger.js";
+import { Tool, ToolHandler } from './types.js';
+import { echoTool } from './echo.js';
+import { pingTool } from './ping.js';
+import { logger } from '../logger.js';
 
 /**
  * 利用可能なツールのレジストリ
  */
 export const toolRegistry = new Map<string, Tool>([
-  ["echo", echoTool],
-  ["ping", pingTool],
+  ['echo', echoTool],
+  ['ping', pingTool],
 ]);
 
 /**
@@ -30,10 +30,10 @@ export const defaultTool = pingTool;
  */
 export function getToolHandler(toolName: string | null): ToolHandler {
   if (!toolName) {
-    logger.info("TOOL_REGISTRY", {
-      action: "get_default_tool",
+    logger.info('TOOL_REGISTRY', {
+      action: 'get_default_tool',
       defaultTool: defaultTool.name,
-      reason: "no_tool_name_provided",
+      reason: 'no_tool_name_provided',
     });
     return defaultTool.handler;
   }
@@ -41,8 +41,8 @@ export function getToolHandler(toolName: string | null): ToolHandler {
   const tool = toolRegistry.get(toolName);
 
   if (!tool) {
-    logger.warn("TOOL_REGISTRY", {
-      action: "tool_not_found",
+    logger.warn('TOOL_REGISTRY', {
+      action: 'tool_not_found',
       requestedTool: toolName,
       availableTools: Array.from(toolRegistry.keys()),
       fallbackTool: defaultTool.name,
@@ -50,8 +50,8 @@ export function getToolHandler(toolName: string | null): ToolHandler {
     return defaultTool.handler;
   }
 
-  logger.info("TOOL_REGISTRY", {
-    action: "tool_found",
+  logger.info('TOOL_REGISTRY', {
+    action: 'tool_found',
     toolName: tool.name,
     toolVersion: tool.version,
   });
@@ -110,8 +110,8 @@ export function registerTool(tool: Tool): void {
 
   toolRegistry.set(tool.name, tool);
 
-  logger.info("TOOL_REGISTRY", {
-    action: "tool_registered",
+  logger.info('TOOL_REGISTRY', {
+    action: 'tool_registered',
     toolName: tool.name,
     toolVersion: tool.version,
     totalTools: toolRegistry.size,
@@ -125,12 +125,11 @@ export function registerTool(tool: Tool): void {
  * @returns 削除された場合 true、存在しなかった場合 false
  */
 export function unregisterTool(toolName: string): boolean {
-  const existed = toolRegistry.has(toolName);
   const deleted = toolRegistry.delete(toolName);
 
   if (deleted) {
-    logger.info("TOOL_REGISTRY", {
-      action: "tool_unregistered",
+    logger.info('TOOL_REGISTRY', {
+      action: 'tool_unregistered',
       toolName,
       totalTools: toolRegistry.size,
     });
@@ -163,25 +162,23 @@ export function getRegistryStats() {
  * @returns 該当するツールの配列
  */
 export function getToolsByTag(tag: string): Tool[] {
-  return Array.from(toolRegistry.values()).filter(
-    (tool) => tool.tags && tool.tags.includes(tag)
-  );
+  return Array.from(toolRegistry.values()).filter((tool) => tool.tags && tool.tags.includes(tag));
 }
 
 /**
  * レジストリの初期化とバリデーション
  */
 function initializeRegistry(): void {
-  logger.info("TOOL_REGISTRY", {
-    action: "registry_initialized",
+  logger.info('TOOL_REGISTRY', {
+    action: 'registry_initialized',
     ...getRegistryStats(),
   });
 
   // 各ツールの基本検証
   for (const [name, tool] of toolRegistry) {
     if (tool.name !== name) {
-      logger.warn("TOOL_REGISTRY", {
-        action: "name_mismatch",
+      logger.warn('TOOL_REGISTRY', {
+        action: 'name_mismatch',
         registryKey: name,
         toolName: tool.name,
       });

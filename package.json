@@ -17,9 +17,20 @@
     "client:build": "npm run build --workspace=@fullstack-agentcore/client",
     "client:start": "npm run start --workspace=@fullstack-agentcore/client",
     "client:dev": "npm run dev --workspace=@fullstack-agentcore/client",
-    "client": "npm run client:build && npm run client:start"
+    "client": "npm run client:build && npm run client:start",
+    "lint": "eslint 'packages/**/src/**/*.ts'",
+    "lint:fix": "eslint 'packages/**/src/**/*.ts' --fix",
+    "format": "prettier --write 'packages/**/src/**/*.ts'",
+    "format:check": "prettier --check 'packages/**/src/**/*.ts'"
   },
   "devDependencies": {
-    "typescript": "~5.2.2"
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "typescript": "~5.2.2",
+    "typescript-eslint": "^8.50.0"
   }
 }

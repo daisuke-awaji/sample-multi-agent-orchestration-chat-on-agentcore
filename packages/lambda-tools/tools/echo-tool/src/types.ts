@@ -7,14 +7,14 @@
  */
 export interface ToolInput {
   message?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
  * ツール実行結果の基本型
  */
 export interface ToolResult {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

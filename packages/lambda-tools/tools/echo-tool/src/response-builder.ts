@@ -2,17 +2,17 @@
  * AgentCore Gateway レスポンス生成ユーティリティ
  */
 
-import { APIGatewayProxyResult } from "aws-lambda";
-import { ToolResult, AgentCoreResponse } from "./types.js";
+import { APIGatewayProxyResult } from 'aws-lambda';
+import { ToolResult, AgentCoreResponse } from './types.js';
 
 /**
  * 共通のCORSヘッダー
  */
 const CORS_HEADERS = {
-  "Content-Type": "application/json",
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 /**
@@ -35,7 +35,7 @@ export function createSuccessResponse(
     metadata: {
       timestamp,
       requestId,
-      toolName: toolName || "unknown",
+      toolName: toolName || 'unknown',
     },
   };
 
@@ -61,7 +61,7 @@ export function createErrorResponse(
   requestId: string,
   timestamp: string
 ): APIGatewayProxyResult {
-  const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
   const responseBody: AgentCoreResponse = {
     result: null,
@@ -69,7 +69,7 @@ export function createErrorResponse(
     metadata: {
       timestamp,
       requestId,
-      toolName: toolName || "unknown",
+      toolName: toolName || 'unknown',
     },
   };
 
@@ -89,7 +89,7 @@ export function createOptionsResponse(): APIGatewayProxyResult {
   return {
     statusCode: 200,
     headers: CORS_HEADERS,
-    body: "",
+    body: '',
   };
 }
 
@@ -110,10 +110,7 @@ export function calculateResponseSize(response: APIGatewayProxyResult): number {
  * @param toolResult ツールの実行結果
  * @returns ログ用メタデータ
  */
-export function extractResponseMetadata(
-  response: APIGatewayProxyResult,
-  toolResult?: ToolResult
-) {
+export function extractResponseMetadata(response: APIGatewayProxyResult, toolResult?: ToolResult) {
   return {
     statusCode: response.statusCode,
     responseSize: response.body.length,

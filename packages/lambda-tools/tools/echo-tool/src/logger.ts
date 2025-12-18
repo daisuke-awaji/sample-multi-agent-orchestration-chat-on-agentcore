@@ -6,14 +6,14 @@
  */
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
+type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 class Logger {
   private reqId?: string;
-  private logLevel: LogLevel = "INFO";
+  private logLevel: LogLevel = 'INFO';
 
   /**
    * リクエストIDを設定（全ログに自動付与される）
@@ -54,14 +54,14 @@ class Logger {
     const logMessage = `[${tag}] ${JSON.stringify(processedData)}`;
 
     switch (level) {
-      case "ERROR":
+      case 'ERROR':
         console.error(logMessage);
         break;
-      case "WARN":
+      case 'WARN':
         console.warn(logMessage);
         break;
-      case "DEBUG":
-      case "INFO":
+      case 'DEBUG':
+      case 'INFO':
       default:
         console.log(logMessage);
         break;
@@ -71,7 +71,7 @@ class Logger {
   /**
    * エラーオブジェクトをログ出力可能な形式に変換
    */
-  private processErrorObjects(obj: any): any {
+  private processErrorObjects(obj: unknown): unknown {
     if (obj instanceof Error) {
       return {
         message: obj.message,
@@ -84,8 +84,8 @@ class Logger {
       return obj.map((item) => this.processErrorObjects(item));
     }
 
-    if (typeof obj === "object" && obj !== null) {
-      const processed: any = {};
+    if (typeof obj === 'object' && obj !== null) {
+      const processed: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         processed[key] = this.processErrorObjects(value);
       }
@@ -99,28 +99,28 @@ class Logger {
    * DEBUGレベルログ
    */
   debug(tag: string, data: LogContext = {}): void {
-    this.log("DEBUG", tag, data);
+    this.log('DEBUG', tag, data);
   }
 
   /**
    * INFOレベルログ
    */
   info(tag: string, data: LogContext = {}): void {
-    this.log("INFO", tag, data);
+    this.log('INFO', tag, data);
   }
 
   /**
    * WARNレベルログ
    */
   warn(tag: string, data: LogContext = {}): void {
-    this.log("WARN", tag, data);
+    this.log('WARN', tag, data);
   }
 
   /**
    * ERRORレベルログ
    */
   error(tag: string, data: LogContext = {}): void {
-    this.log("ERROR", tag, data);
+    this.log('ERROR', tag, data);
   }
 
   /**
@@ -172,6 +172,6 @@ export const logger = new Logger();
 
 // 環境変数でログレベル設定
 const envLogLevel = process.env.LOG_LEVEL?.toUpperCase() as LogLevel;
-if (envLogLevel && ["DEBUG", "INFO", "WARN", "ERROR"].includes(envLogLevel)) {
+if (envLogLevel && ['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(envLogLevel)) {
   logger.setLogLevel(envLogLevel);
 }

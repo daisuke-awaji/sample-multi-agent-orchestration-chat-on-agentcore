@@ -7,14 +7,27 @@ import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   AuthFlowType,
-} from "@aws-sdk/client-cognito-identity-provider";
-import type { CognitoConfig } from "../config/index.js";
+} from '@aws-sdk/client-cognito-identity-provider';
+import type { CognitoConfig } from '../config/index.js';
 
 export interface AuthResult {
   accessToken: string;
   idToken?: string;
   refreshToken?: string;
   expiresIn: number;
+}
+
+/**
+ * JWT トークンのペイロード型
+ */
+export interface TokenPayload {
+  sub: string;
+  username?: string;
+  'cognito:username'?: string;
+  exp: string;
+  iat: string;
+  iss: string;
+  aud: string;
 }
 
 /**
@@ -38,7 +51,7 @@ export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
     const response = await client.send(command);
 
     if (!response.AuthenticationResult?.AccessToken) {
-      throw new Error("JWT トークンの取得に失敗しました");
+      throw new Error('JWT トークンの取得に失敗しました');
     }
 
     return {
@@ -51,7 +64,7 @@ export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
     if (error instanceof Error) {
       throw new Error(`Cognito 認証エラー: ${error.message}`);
     }
-    throw new Error("不明な認証エラーが発生しました");
+    throw new Error('不明な認証エラーが発生しました');
   }
 }
 
@@ -60,9 +73,7 @@ export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
  */
 export function isTokenExpired(token: string): boolean {
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split(".")[1], "base64").toString()
-    );
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     const exp = payload.exp;
     const now = Math.floor(Date.now() / 1000);
     return exp < now;
@@ -74,14 +85,12 @@ export function isTokenExpired(token: string): boolean {
 /**
  * JWT トークンの情報を取得
  */
-export function getTokenInfo(token: string): Record<string, any> | null {
+export function getTokenInfo(token: string): TokenPayload | null {
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split(".")[1], "base64").toString()
-    );
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
     return {
       sub: payload.sub,
-      username: payload.username || payload["cognito:username"],
+      username: payload.username || payload['cognito:username'],
       exp: new Date(payload.exp * 1000).toISOString(),
       iat: new Date(payload.iat * 1000).toISOString(),
       iss: payload.iss,
@@ -96,8 +105,7 @@ export function getTokenInfo(token: string): Record<string, any> | null {
  * トークンキャッシュ管理
  */
 class TokenCache {
-  private cache: Map<string, { token: AuthResult; timestamp: number }> =
-    new Map();
+  private cache: Map<string, { token: AuthResult; timestamp: number }> = new Map();
 
   set(key: string, token: AuthResult): void {
     this.cache.set(key, {
@@ -132,9 +140,7 @@ export const tokenCache = new TokenCache();
 /**
  * キャッシュ付きトークン取得
  */
-export async function getCachedJwtToken(
-  config: CognitoConfig
-): Promise<AuthResult> {
+export async function getCachedJwtToken(config: CognitoConfig): Promise<AuthResult> {
   const cacheKey = `${config.userPoolId}:${config.username}`;
 
   // キャッシュから取得を試行

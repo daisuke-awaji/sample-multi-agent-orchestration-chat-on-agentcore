@@ -4,9 +4,9 @@
  * 入力されたメッセージをそのまま返すツール
  */
 
-import { ToolInput, ToolResult } from "../types.js";
-import { Tool, ToolValidationError } from "./types.js";
-import { logger } from "../logger.js";
+import { ToolInput, ToolResult } from '../types.js';
+import { Tool, ToolValidationError } from './types.js';
+import { logger } from '../logger.js';
 
 /**
  * Echoツールの入力型
@@ -36,11 +36,7 @@ async function handleEcho(input: ToolInput): Promise<EchoResult> {
 
   // 入力検証
   if (!echoInput.message) {
-    throw new ToolValidationError(
-      "Echo tool requires a 'message' parameter",
-      "echo",
-      "message"
-    );
+    throw new ToolValidationError("Echo tool requires a 'message' parameter", 'echo', 'message');
   }
 
   const message = echoInput.message;
@@ -49,7 +45,7 @@ async function handleEcho(input: ToolInput): Promise<EchoResult> {
   const messageAnalysis = analyzeMessage(message);
 
   // ログ出力
-  logger.debug("ECHO_RESULT", {
+  logger.debug('ECHO_RESULT', {
     messageLength: message.length,
     ...messageAnalysis,
   });
@@ -84,42 +80,14 @@ function analyzeMessage(message: string) {
 }
 
 /**
- * メッセージの検証
- *
- * @param message 検証対象のメッセージ
- * @throws ToolValidationError 検証エラー
- */
-function validateMessage(message: string): void {
-  if (typeof message !== "string") {
-    throw new ToolValidationError(
-      "Message must be a string",
-      "echo",
-      "message"
-    );
-  }
-
-  if (message.length === 0) {
-    throw new ToolValidationError("Message cannot be empty", "echo", "message");
-  }
-
-  if (message.length > 10000) {
-    throw new ToolValidationError(
-      "Message is too long (maximum 10,000 characters)",
-      "echo",
-      "message"
-    );
-  }
-}
-
-/**
  * Echoツールの定義
  */
 export const echoTool: Tool = {
-  name: "echo",
+  name: 'echo',
   handler: handleEcho,
-  description: "Echo back the input message with additional transformations",
-  version: "1.0.0",
-  tags: ["utility", "text-processing"],
+  description: 'Echo back the input message with additional transformations',
+  version: '1.0.0',
+  tags: ['utility', 'text-processing'],
 };
 
 export default echoTool;

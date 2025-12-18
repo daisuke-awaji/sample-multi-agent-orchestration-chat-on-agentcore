@@ -1,18 +1,14 @@
-import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Context,
-} from "aws-lambda";
-import { logger } from "./logger.js";
-import { extractToolName, getContextSummary } from "./context-parser.js";
-import { getToolHandler } from "./tools/index.js";
+import { APIGatewayProxyResult, Context } from 'aws-lambda';
+import { logger } from './logger.js';
+import { extractToolName, getContextSummary } from './context-parser.js';
+import { getToolHandler } from './tools/index.js';
 import {
   createSuccessResponse,
   createErrorResponse,
   createOptionsResponse,
   extractResponseMetadata,
-} from "./response-builder.js";
-import { ToolInput } from "./types.js";
+} from './response-builder.js';
+import { ToolInput } from './types.js';
 
 /**
  * AgentCore Gateway Echo/Ping Tool Lambda Handler
@@ -21,10 +17,7 @@ import { ToolInput } from "./types.js";
  * 登録されたツールを実行します。
  */
 
-export async function handler(
-  event: any,
-  context: Context
-): Promise<APIGatewayProxyResult> {
+export async function handler(event: ToolInput, context: Context): Promise<APIGatewayProxyResult> {
   const reqId = context.awsRequestId;
   const timestamp = new Date().toISOString();
 
@@ -33,7 +26,7 @@ export async function handler(
 
   // 開始ログ: リクエスト情報を記録
   const contextSummary = getContextSummary(context);
-  logger.info("START", {
+  logger.info('START', {
     timestamp,
     eventKeys: Object.keys(event),
     eventSize: JSON.stringify(event).length,
@@ -48,8 +41,8 @@ export async function handler(
     const toolHandler = getToolHandler(toolName);
 
     // ツール実行ログ
-    logger.info("TOOL_EXEC", {
-      tool: toolName || "ping",
+    logger.info('TOOL_EXEC', {
+      tool: toolName || 'ping',
       inputKeys: Object.keys(event),
       inputSize: JSON.stringify(event).length,
     });
@@ -59,17 +52,12 @@ export async function handler(
     const toolResult = await toolHandler(toolInput);
 
     // 成功レスポンスを生成
-    const response = createSuccessResponse(
-      toolResult,
-      toolName,
-      reqId,
-      timestamp
-    );
+    const response = createSuccessResponse(toolResult, toolName, reqId, timestamp);
 
     // 成功ログ
     const responseMetadata = extractResponseMetadata(response, toolResult);
-    logger.info("SUCCESS", {
-      tool: toolName || "ping",
+    logger.info('SUCCESS', {
+      tool: toolName || 'ping',
       executionTime: context.getRemainingTimeInMillis(),
       ...responseMetadata,
     });
@@ -77,19 +65,14 @@ export async function handler(
     return response;
   } catch (error) {
     // エラーログ
-    logger.error("ERROR", {
+    logger.error('ERROR', {
       error,
-      tool: extractToolName(context) || "unknown",
+      tool: extractToolName(context) || 'unknown',
       remainingTime: context.getRemainingTimeInMillis(),
     });
 
     // エラーレスポンスを生成
-    return createErrorResponse(
-      error,
-      extractToolName(context),
-      reqId,
-      timestamp
-    );
+    return createErrorResponse(error, extractToolName(context), reqId, timestamp);
   }
 }
 

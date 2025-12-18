@@ -3,8 +3,8 @@
  * リクエストスコープでのコンテキスト管理
  */
 
-import { AsyncLocalStorage } from "async_hooks";
-import { randomUUID } from "crypto";
+import { AsyncLocalStorage } from 'async_hooks';
+import { randomUUID } from 'crypto';
 
 /**
  * リクエストコンテキストの型定義
@@ -58,9 +58,7 @@ export function getCurrentAuthHeader(): string | undefined {
 /**
  * 新しいリクエストコンテキストを作成
  */
-export function createRequestContext(
-  authorizationHeader?: string
-): RequestContext {
+export function createRequestContext(authorizationHeader?: string): RequestContext {
   return {
     authorizationHeader,
     requestId: randomUUID(),
@@ -71,10 +69,7 @@ export function createRequestContext(
 /**
  * リクエストコンテキストでコールバック関数を実行
  */
-export function runWithContext<T>(
-  context: RequestContext,
-  callback: () => T
-): T {
+export function runWithContext<T>(context: RequestContext, callback: () => T): T {
   return requestContextStorage.run(context, callback);
 }
 
@@ -85,7 +80,7 @@ export function getContextMetadata(): ContextMetadata {
   const context = getCurrentContext();
   if (!context) {
     return {
-      requestId: "unknown",
+      requestId: 'unknown',
       hasAuth: false,
       duration: 0,
     };
