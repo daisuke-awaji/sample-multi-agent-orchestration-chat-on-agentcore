@@ -13,7 +13,6 @@
     "synth": "npm run synth --workspace=@fullstack-agentcore/cdk",
     "deploy": "npm run deploy --workspace=@fullstack-agentcore/cdk",
     "diff": "npm run diff --workspace=@fullstack-agentcore/cdk",
-    "start:agent": "npm run start --workspace=@fullstack-agentcore/agent-sample",
     "build:lambda": "npm run build --workspace=@fullstack-agentcore/lambda-tools"
   },
   "devDependencies": {

@@ -18,7 +18,7 @@ const envSchema = z.object({
   // Bedrock Configuration
   BEDROCK_MODEL_ID: z
     .string()
-    .default("anthropic.claude-3-5-sonnet-20241022-v2:0"),
+    .default("anthropic.claude-sonnet-4-5-20250929-v1:0"),
   BEDROCK_REGION: z.string().default("us-east-1"),
 
   // Debug Configuration

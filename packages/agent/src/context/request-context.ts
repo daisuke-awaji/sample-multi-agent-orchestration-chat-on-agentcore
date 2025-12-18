@@ -21,6 +21,20 @@ export interface RequestContext {
 }
 
 /**
+ * コンテキストメタデータの型定義
+ */
+export interface ContextMetadata {
+  /** リクエスト固有ID */
+  requestId: string;
+  /** ユーザーID（存在する場合） */
+  userId?: string;
+  /** 認証ヘッダーの有無 */
+  hasAuth: boolean;
+  /** リクエスト処理時間（ミリ秒） */
+  duration: number;
+}
+
+/**
  * AsyncLocalStorage を使用したリクエストコンテキスト管理
  * Express リクエストスコープで認証情報を伝播
  */
@@ -67,10 +81,14 @@ export function runWithContext<T>(
 /**
  * リクエストコンテキストログ用のメタデータを取得
  */
-export function getContextMetadata(): Record<string, unknown> {
+export function getContextMetadata(): ContextMetadata {
   const context = getCurrentContext();
   if (!context) {
-    return {};
+    return {
+      requestId: "unknown",
+      hasAuth: false,
+      duration: 0,
+    };
   }
 
   return {

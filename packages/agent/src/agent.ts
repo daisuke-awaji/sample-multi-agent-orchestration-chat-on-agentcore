@@ -5,9 +5,9 @@
 
 import { Agent, BedrockModel, tool } from "@strands-agents/sdk";
 import { z } from "zod";
-import { config, logger } from "./config/index.js";
-import { mcpClient, MCPToolResult } from "./mcp/client.js";
-import { weatherTool } from "./tools/weather.js";
+import { config, logger } from "./config";
+import { mcpClient, MCPToolResult } from "./mcp/client";
+import { weatherTool } from "./tools/weather";
 
 /**
  * MCP ツール定義の型

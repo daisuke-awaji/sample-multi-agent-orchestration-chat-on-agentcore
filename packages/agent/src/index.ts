@@ -6,11 +6,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import { Agent } from "@strands-agents/sdk";
 import { createAgent } from "./agent.js";
-import {
-  createRequestContext,
-  runWithContext,
-  getContextMetadata,
-} from "./context/request-context.js";
+import { getContextMetadata } from "./context/request-context";
+import { requestContextMiddleware } from "./middleware/request-context";
 
 const PORT = process.env.PORT || 8080;
 const app = express();
@@ -53,6 +50,9 @@ async function ensureAgentInitialized(): Promise<void> {
 app.use("/invocations", express.raw({ type: "application/octet-stream" }));
 app.use(express.json());
 
+// リクエストコンテキストミドルウェアを適用（認証が必要なエンドポイント）
+app.use("/invocations", requestContextMiddleware);
+
 /**
  * ヘルスチェックエンドポイント
  * AgentCore Runtime が正常に動作していることを確認するためのエンドポイント
@@ -69,83 +69,55 @@ app.get("/ping", (req: Request, res: Response) => {
  * ユーザーからのクエリを受け取り、Agent に処理させて結果を返す
  */
 app.post("/invocations", async (req: Request, res: Response) => {
-  // リクエストコンテキストを作成（Authorizationヘッダーを抽出）
-  const authHeader = req.headers.authorization;
-  const requestContext = createRequestContext(authHeader);
+  try {
+    // リクエストコンテキスト内でAgentを初期化（JWTが利用可能）
+    await ensureAgentInitialized();
 
-  // デバッグ：すべてのヘッダーをログ出力
-  console.log(`📝 All request headers:`, {
-    headers: Object.keys(req.headers),
-    authorization: req.headers.authorization ? "PRESENT" : "MISSING",
-    "x-amzn-bedrock-agentcore-runtime-custom-authorization": req.headers[
-      "x-amzn-bedrock-agentcore-runtime-custom-authorization"
-    ]
-      ? "PRESENT"
-      : "MISSING",
-  });
-
-  console.log(`📝 Request context created:`, {
-    requestId: requestContext.requestId,
-    hasAuth: !!authHeader,
-    authType: authHeader?.split(" ")[0] || "None",
-  });
-
-  // リクエストコンテキストでAgent処理を実行
-  return runWithContext(requestContext, async () => {
-    try {
-      // リクエストコンテキスト内でAgentを初期化（JWTが利用可能）
-      await ensureAgentInitialized();
-
-      // Agent が初期化されているかチェック（念のため）
-      if (!agent) {
-        return res.status(503).json({
-          error: "Service Unavailable",
-          message: "Agent initialization failed",
-        });
-      }
-
-      // リクエストボディからプロンプトを取得
-      const prompt = req.body?.toString("utf-8") || "";
-
-      if (!prompt.trim()) {
-        return res.status(400).json({
-          error: "Empty prompt provided",
-        });
-      }
-
-      const contextMeta = getContextMetadata();
-      console.log(`📝 Received prompt (${contextMeta.requestId}): ${prompt}`);
-
-      // Agent でプロンプトを処理
-      const result = await agent.invoke(prompt);
-
-      console.log(
-        `✅ Agent response completed (${contextMeta.requestId}). Stop reason: ${result.stopReason}`
-      );
-
-      // 結果を JSON で返す
-      return res.json({
-        response: result,
-        metadata: {
-          requestId: contextMeta.requestId,
-          duration: contextMeta.duration,
-        },
-      });
-    } catch (error) {
-      const contextMeta = getContextMetadata();
-      console.error(
-        `❌ Error processing request (${contextMeta.requestId}):`,
-        error
-      );
-
-      // エラーレスポンスを返す
-      return res.status(500).json({
-        error: "Internal server error",
-        message: error instanceof Error ? error.message : "Unknown error",
-        requestId: contextMeta.requestId,
+    // Agent が初期化されているかチェック（念のため）
+    if (!agent) {
+      return res.status(503).json({
+        error: "Service Unavailable",
+        message: "Agent initialization failed",
       });
     }
-  });
+
+    // リクエストボディからプロンプトを取得
+    const prompt = req.body?.toString("utf-8") || "";
+
+    if (!prompt.trim()) {
+      return res.status(400).json({
+        error: "Empty prompt provided",
+      });
+    }
+
+    const contextMeta = getContextMetadata();
+    console.log(`📝 Received prompt (${contextMeta.requestId}): ${prompt}`);
+
+    // Agent でプロンプトを処理
+    const result = await agent.invoke(prompt);
+
+    // 結果を JSON で返す
+    return res.json({
+      response: result,
+      metadata: {
+        requestId: contextMeta.requestId,
+        duration: contextMeta.duration,
+      },
+    });
+  } catch (error) {
+    const contextMeta = getContextMetadata();
+    console.error(
+      `❌ Error processing request (${contextMeta.requestId}):`,
+      error
+    );
+
+    // エラーレスポンスを返す
+    return res.status(500).json({
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "Unknown error",
+      requestId: contextMeta.requestId,
+    });
+  }
 });
 
 /**
