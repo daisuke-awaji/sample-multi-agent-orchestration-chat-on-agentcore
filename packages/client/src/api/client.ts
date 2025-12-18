@@ -129,7 +129,7 @@ export class AgentCoreClient {
       }
 
       // JWT認証が必要な場合
-      if (useAuth && this.config.isAwsRuntime) {
+      if (useAuth) {
         const authResult = await getCachedJwtToken(this.config.cognito);
         headers['Authorization'] = `Bearer ${authResult.accessToken}`;
       }
