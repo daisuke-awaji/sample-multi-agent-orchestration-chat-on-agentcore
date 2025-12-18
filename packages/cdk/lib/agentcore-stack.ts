@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { AgentCoreGateway } from "./constructs/agentcore-gateway";
 import { AgentCoreLambdaTarget } from "./constructs/agentcore-lambda-target";
+import { AgentCoreRuntime } from "./constructs/agentcore-runtime";
 
 export interface AgentCoreStackProps extends cdk.StackProps {
   /**
@@ -46,6 +47,11 @@ export class AgentCoreStack extends cdk.Stack {
    * 作成された Echo Tool Lambda Target
    */
   public readonly echoToolTarget: AgentCoreLambdaTarget;
+
+  /**
+   * 作成された AgentCore Runtime
+   */
+  public readonly agentRuntime: AgentCoreRuntime;
 
   constructor(scope: Construct, id: string, props?: AgentCoreStackProps) {
     super(scope, id, props);
@@ -128,6 +134,25 @@ export class AgentCoreStack extends cdk.Stack {
         "Cognito User Pool ID と Client ID は AWS コンソールで確認してください。Gateway ID: " +
         this.gateway.gatewayId,
       description: "Cognito 設定確認のための指示",
+    });
+
+    // AgentCore Runtime の作成
+    this.agentRuntime = new AgentCoreRuntime(this, "AgentCoreRuntime", {
+      runtimeName: "StrandsAgentsTS",
+      description: "TypeScript版Strands Agent Runtime",
+      region: this.region,
+    });
+
+    new cdk.CfnOutput(this, "AgentRuntimeArn", {
+      value: this.agentRuntime.runtimeArn,
+      description: "AgentCore Runtime ARN",
+      exportName: `${id}-AgentRuntimeArn`,
+    });
+
+    new cdk.CfnOutput(this, "AgentRuntimeId", {
+      value: this.agentRuntime.runtimeId,
+      description: "AgentCore Runtime ID",
+      exportName: `${id}-AgentRuntimeId`,
     });
 
     // タグの追加

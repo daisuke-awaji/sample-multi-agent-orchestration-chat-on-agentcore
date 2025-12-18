@@ -78,3 +78,7 @@ build/
 # Temporary files
 tmp/
 temp/
+
+# Local authentication files
+.env.local
+*.local.sh
