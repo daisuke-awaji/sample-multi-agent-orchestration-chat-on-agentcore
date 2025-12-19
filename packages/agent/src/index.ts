@@ -354,7 +354,7 @@ app.post('/invocations', async (req: Request, res: Response) => {
         metadata: {
           requestId: contextMeta.requestId,
           duration: contextMeta.duration,
-          sessionId: sessionId || 'none',
+          sessionId: sessionId,
           conversationLength: sessionHistory?.messages.length || 1,
         },
       };

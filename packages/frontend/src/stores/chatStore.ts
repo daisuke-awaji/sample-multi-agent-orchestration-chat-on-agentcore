@@ -48,7 +48,13 @@ export const useChatStore = create<ChatStore>()(
       },
 
       sendPrompt: async (prompt: string) => {
-        const { addMessage, updateMessage, sessionId } = get();
+        let { addMessage, updateMessage, sessionId } = get();
+
+        // セッションIDがない場合は生成
+        if (!sessionId) {
+          sessionId = nanoid(33); // 33文字以上で生成
+          set({ sessionId });
+        }
 
         try {
           set({ isLoading: true, error: null });

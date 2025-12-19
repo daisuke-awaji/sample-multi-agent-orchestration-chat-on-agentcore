@@ -28,7 +28,7 @@ interface StreamingCallbacks {
  */
 export const streamAgentResponse = async (
   prompt: string,
-  sessionId: string | null,
+  sessionId: string,
   callbacks: StreamingCallbacks
 ): Promise<void> => {
   const { user } = useAuthStore.getState();
@@ -54,10 +54,8 @@ export const streamAgentResponse = async (
     Authorization: `Bearer ${user.accessToken}`,
   };
 
-  // セッションIDがあれば追加
-  if (sessionId) {
-    headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = sessionId;
-  }
+  // セッションIDを常に付与
+  headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = sessionId;
 
   const body = JSON.stringify({ prompt });
 

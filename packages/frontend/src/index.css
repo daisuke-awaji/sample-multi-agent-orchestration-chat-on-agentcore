@@ -22,7 +22,7 @@
   }
 
   .message-user {
-    @apply bg-gray-100 text-gray-900 ml-auto;
+    @apply bg-gray-100 text-gray-900;
   }
 
   .message-assistant {
