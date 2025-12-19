@@ -8,8 +8,8 @@ import type {
 import { useAuthStore } from '../stores/authStore';
 
 // Agent API エンドポイント（環境変数から取得）
-// ローカル開発時: '' (空文字) → Vite proxy経由で localhost:8080 へ
-// 本番環境: AgentCore Runtime エンドポイント
+// ローカル開発時: http://localhost:8080/invocations → Vite proxy経由
+// 本番環境: AgentCore Runtime エンドポイント（/invocations 含む）
 const AGENT_ENDPOINT = import.meta.env.VITE_AGENT_ENDPOINT || '';
 
 /**
@@ -37,7 +37,17 @@ export const streamAgentResponse = async (
     throw new Error('認証が必要です');
   }
 
-  const url = `${AGENT_ENDPOINT}/invocations`;
+  // ARN部分をURLエンコードする（AgentCore Runtimeの場合）
+  let url = AGENT_ENDPOINT;
+  if (AGENT_ENDPOINT.includes('bedrock-agentcore') && AGENT_ENDPOINT.includes('/runtimes/arn:')) {
+    // ARN部分を抽出してエンコード
+    url = AGENT_ENDPOINT.replace(
+      /\/runtimes\/(arn:[^/]+\/[^/]+)\//,
+      (_match: string, arn: string) => {
+        return `/runtimes/${encodeURIComponent(arn)}/`;
+      }
+    );
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -195,7 +205,20 @@ export const getAgentConfig = () => ({
  */
 export const testAgentConnection = async (): Promise<boolean> => {
   try {
-    const response = await fetch(`${AGENT_ENDPOINT}/ping`, {
+    // ARN部分をURLエンコード処理してからbaseEndpointを構築
+    let baseEndpoint = AGENT_ENDPOINT.replace('/invocations', '').replace('?qualifier=DEFAULT', '');
+
+    if (baseEndpoint.includes('bedrock-agentcore') && baseEndpoint.includes('/runtimes/arn:')) {
+      // ARN部分をエンコード
+      baseEndpoint = baseEndpoint.replace(
+        /\/runtimes\/(arn:[^/]+\/[^/]+)\//,
+        (_match: string, arn: string) => {
+          return `/runtimes/${encodeURIComponent(arn)}/`;
+        }
+      );
+    }
+
+    const response = await fetch(`${baseEndpoint}/ping`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
