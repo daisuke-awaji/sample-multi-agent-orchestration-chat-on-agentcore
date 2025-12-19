@@ -1,0 +1,47 @@
+{
+  "name": "@fullstack-agentcore/backend",
+  "version": "0.1.0",
+  "description": "Backend API server with JWT authentication for AgentCore",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "clean": "rimraf dist",
+    "docker:build": "docker build -t agentcore-backend .",
+    "docker:run": "docker run -p 3000:3000 agentcore-backend",
+    "docker:dev": "docker-compose up --build",
+    "docker:dev:detach": "docker-compose up -d --build",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:test": "docker-compose exec agentcore-backend curl http://localhost:3000/ping"
+  },
+  "keywords": [
+    "agentcore",
+    "backend",
+    "api",
+    "jwt",
+    "express"
+  ],
+  "author": "AgentCore Backend API",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "jose": "^5.2.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.10.0",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
