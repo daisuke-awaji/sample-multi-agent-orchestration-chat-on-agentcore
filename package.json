@@ -21,10 +21,15 @@
     "lint": "eslint 'packages/**/src/**/*.ts'",
     "lint:fix": "eslint 'packages/**/src/**/*.ts' --fix",
     "format": "prettier --write 'packages/**/src/**/*.ts'",
-    "format:check": "prettier --check 'packages/**/src/**/*.ts'"
+    "format:check": "prettier --check 'packages/**/src/**/*.ts'",
+    "docs:lint": "redocly lint openapi.yaml",
+    "docs:preview": "redocly preview-docs openapi.yaml",
+    "docs:build": "redocly build-docs openapi.yaml -o api.html",
+    "docs:serve": "redocly preview-docs openapi.yaml --port=8081"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@redocly/cli": "^1.34.6",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",

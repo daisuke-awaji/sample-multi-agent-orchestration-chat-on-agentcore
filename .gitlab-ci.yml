@@ -1,0 +1,25 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: node:18
+  script:
+    - npm install -g redoc-cli
+    - redoc build openapi.yaml --output public/index.html
+  artifacts:
+    paths:
+      - public/
+  only:
+    - main
+
+pages:
+  stage: deploy
+  script:
+    - echo "Deploying to GitLab Pages"
+  artifacts:
+    paths:
+      - public/
+  only:
+    - main

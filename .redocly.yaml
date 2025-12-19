@@ -1,0 +1,31 @@
+extends:
+  - recommended
+
+apis:
+  main:
+    root: docs/openapi.yaml
+
+rules:
+  # 日本語説明を許可
+  no-invalid-media-type: off
+  # 長い説明文を許可
+  no-unused-components: warn
+  # ストリーミング用のカスタムフォーマット許可
+  valid-type-for-format: off
+  # 例の値をより柔軟に
+  example-value-matches-type: warn
+  # localhost サーバーを許可
+  no-server-example.com: off
+  # 4xxレスポンス必須を無効化（ヘルスチェックなど）
+  operation-4xx-response: warn
+
+# Redoc テーマ設定
+theme:
+  colors:
+    primary:
+      main: '#1976d2'
+    secondary:
+      main: '#424242'
+  typography:
+    fontSize: '16px'
+    fontFamily: 'Roboto, sans-serif'

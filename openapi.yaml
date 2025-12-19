@@ -1,0 +1,574 @@
+openapi: 3.0.3
+info:
+  title: AgentCore Runtime Streaming API
+  version: 0.1.0
+  description: |
+    Strands Agents SDK を使用した AI Agent ストリーミング API。
+
+    ## 概要
+    このAPIは、AIエージェントとリアルタイムでやり取りできるストリーミングインターフェースを提供します。
+    HTTP POST リクエストでプロンプトを送信すると、NDJSON（Newline Delimited JSON）形式でストリーミングレスポンスを受信できます。
+
+    ## ストリーミングプロトコル
+    - **プロトコル**: HTTP POST + NDJSON ストリーミング
+    - **Content-Type**: `text/plain; charset=utf-8`
+    - **レスポンス形式**: 改行区切りのJSONオブジェクト
+    - **リアルタイム性**: テキスト生成とツール実行をリアルタイム表示
+
+    ## 認証
+    JWT Bearer Token による認証が必要です。
+    `Authorization: Bearer <JWT-TOKEN>` ヘッダーを設定してください。
+
+    ## セッション管理
+    オプションで `X-Amzn-Bedrock-AgentCore-Runtime-Session-Id` ヘッダーを使用して、
+    会話履歴を管理できます。
+
+  contact:
+    name: AgentCore Runtime
+    url: https://github.com/your-org/fullstack-agentcore
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: ローカル開発環境
+  - url: https://{gateway-id}.bedrock-agentcore.{region}.amazonaws.com
+    description: AWS AgentCore Runtime (本番環境)
+    variables:
+      gateway-id:
+        description: AgentCore Gateway ID
+        default: default-gateway-abc123
+      region:
+        description: AWS リージョン
+        enum:
+          - us-east-1
+          - us-west-2
+          - ap-northeast-1
+        default: us-east-1
+
+paths:
+  /:
+    get:
+      summary: サービス情報取得
+      description: AgentCore Runtime サービスの基本情報を取得
+      operationId: getServiceInfo
+      responses:
+        '200':
+          description: サービス情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+              example:
+                service: 'AgentCore Runtime Agent'
+                version: '0.1.0'
+                endpoints:
+                  health: 'GET /ping'
+                  invoke: 'POST /invocations'
+                status: 'running'
+        '404':
+          description: エンドポイントが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              example:
+                error: 'Not Found'
+                message: 'Endpoint GET /unknown not found'
+                availableEndpoints: ['GET /', 'GET /ping', 'POST /invocations']
+
+  /ping:
+    get:
+      summary: ヘルスチェック
+      description: サービスの稼働状態を確認
+      operationId: healthCheck
+      responses:
+        '200':
+          description: ヘルスチェック成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: 'Healthy'
+                time_of_last_update: 1703836800
+        '404':
+          description: エンドポイントが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              example:
+                error: 'Not Found'
+                message: 'Endpoint GET /unknown not found'
+                availableEndpoints: ['GET /', 'GET /ping', 'POST /invocations']
+
+  /invocations:
+    post:
+      summary: AI Agent 呼び出し（ストリーミング）
+      description: |
+        AI Agent にプロンプトを送信し、リアルタイムストリーミングレスポンスを受信します。
+
+        ## ストリーミングフロー
+        1. HTTP POST でプロンプトを送信
+        2. サーバーからNDJSON形式のストリーミングレスポンスを受信
+        3. 各行が個別のJSONイベントオブジェクト
+        4. リアルタイムでテキスト生成とツール実行状況を取得
+
+        ## イベントタイプ
+        - `modelContentBlockDeltaEvent`: テキスト生成（リアルタイム）
+        - `modelContentBlockStartEvent`: ツール使用開始
+        - `beforeToolsEvent` / `afterToolsEvent`: ツール実行状況
+        - `serverCompletionEvent`: 処理完了
+        - `serverErrorEvent`: エラー発生
+
+        ## 使用例
+        ```bash
+        curl -X POST http://localhost:8080/invocations \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer <JWT-TOKEN>" \
+          -d '{"prompt": "東京の天気を教えてください"}' \
+          --no-buffer
+        ```
+
+        ## レスポンス例
+        ```
+        {"type":"beforeInvocationEvent"}
+        {"type":"modelContentBlockDeltaEvent","delta":{"type":"textDelta","text":"こんにちは"}}
+        {"type":"modelContentBlockDeltaEvent","delta":{"type":"textDelta","text":"！"}}
+        {"type":"serverCompletionEvent","metadata":{"requestId":"req-123","duration":1500}}
+        ```
+
+      operationId: invokeAgent
+      parameters:
+        - name: X-Amzn-Bedrock-AgentCore-Runtime-Session-Id
+          in: header
+          description: |
+            セッションID（オプション）。
+            指定すると会話履歴が保持され、コンテキストを継続できます。
+          required: false
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9-_]{1,200}$'
+            example: session-abc123-xyz789
+      requestBody:
+        required: true
+        description: AI Agent への呼び出しリクエスト
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeRequest'
+            examples:
+              weather_query:
+                summary: 天気取得リクエスト
+                value:
+                  prompt: '東京の天気を教えてください'
+              office365_query:
+                summary: Microsoft 365 操作リクエスト
+                value:
+                  prompt: 'OneDrive にあるファイル一覧を取得してください'
+              general_question:
+                summary: 一般的な質問
+                value:
+                  prompt: 'Pythonでリストの重複を除去する方法を教えてください'
+
+      responses:
+        '200':
+          description: |
+            ストリーミングレスポンス成功
+
+            **重要**: このレスポンスはNDJSON形式のストリーミングです。
+            各行が個別のJSONイベントオブジェクトとして送信されます。
+
+            **ストリーミング処理方法**:
+            1. レスポンスボディを行単位で読み取り
+            2. 各行をJSONとしてパース
+            3. `type` プロパティでイベント種別を判定
+            4. イベントに応じた処理を実行
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: 'text/plain; charset=utf-8'
+            Cache-Control:
+              schema:
+                type: string
+                example: 'no-cache'
+            Connection:
+              schema:
+                type: string
+                example: 'keep-alive'
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: |
+                  NDJSON ストリーミングレスポンス
+
+                  各行は以下のいずれかのイベントタイプです:
+                  - modelContentBlockDeltaEvent (テキスト生成)
+                  - modelContentBlockStartEvent (ツール使用開始)
+                  - modelContentBlockStopEvent (コンテンツブロック終了)
+                  - beforeInvocationEvent (Agent開始)
+                  - afterInvocationEvent (Agent終了)
+                  - beforeToolsEvent (ツール実行前)
+                  - afterToolsEvent (ツール実行後)
+                  - serverCompletionEvent (処理完了)
+                  - serverErrorEvent (エラー)
+                format: ndjson
+              examples:
+                streaming_response:
+                  summary: ストリーミングレスポンス例
+                  value: |
+                    {"type":"beforeInvocationEvent"}
+                    {"type":"modelContentBlockDeltaEvent","delta":{"type":"textDelta","text":"東京の天気は"}}
+                    {"type":"modelContentBlockStartEvent","start":{"type":"toolUseStart","name":"weather_get_forecast","toolUseId":"tool-123"}}
+                    {"type":"beforeToolsEvent"}
+                    {"type":"afterToolsEvent"}
+                    {"type":"modelContentBlockDeltaEvent","delta":{"type":"textDelta","text":"晴れです。"}}
+                    {"type":"afterInvocationEvent"}
+                    {"type":"serverCompletionEvent","metadata":{"requestId":"req-abc123","duration":1500,"sessionId":"session-xyz","conversationLength":2}}
+
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_prompt:
+                  summary: 空のプロンプト
+                  value:
+                    error: 'Empty prompt provided'
+
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  summary: 認証失敗
+                  value:
+                    error: 'Unauthorized'
+                    message: 'Invalid or missing JWT token'
+
+        '500':
+          description: |
+            サーバーエラー
+
+            **注意**: リクエスト処理中のエラーには `requestId` が含まれますが、
+            グローバルエラーハンドラーによるエラーには `requestId` は含まれません。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error_with_request_id:
+                  summary: リクエスト処理中のエラー
+                  value:
+                    error: 'Internal server error'
+                    message: 'Agent initialization failed'
+                    requestId: 'req-abc123'
+                global_server_error:
+                  summary: グローバルエラーハンドラー
+                  value:
+                    error: 'Internal Server Error'
+                    message: 'Unhandled exception occurred'
+
+        '503':
+          description: サービス利用不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                service_unavailable:
+                  summary: サービス利用不可
+                  value:
+                    error: 'Service Unavailable'
+                    message: 'Agent initialization failed'
+
+        '404':
+          description: エンドポイントが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              example:
+                error: 'Not Found'
+                message: 'Endpoint POST /unknown not found'
+                availableEndpoints: ['GET /', 'GET /ping', 'POST /invocations']
+
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer Token による認証。
+        Authorization ヘッダーに `Bearer <token>` を設定してください。
+
+  schemas:
+    # === リクエスト ===
+    InvokeRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: AI Agent に送信するプロンプト
+          minLength: 1
+          maxLength: 10000
+          example: '東京の天気を教えてください'
+
+    # === レスポンス ===
+    ServiceInfo:
+      type: object
+      properties:
+        service:
+          type: string
+          description: サービス名
+          example: 'AgentCore Runtime Agent'
+        version:
+          type: string
+          description: バージョン
+          example: '0.1.0'
+        endpoints:
+          type: object
+          description: 利用可能なエンドポイント
+          properties:
+            health:
+              type: string
+              example: 'GET /ping'
+            invoke:
+              type: string
+              example: 'POST /invocations'
+        status:
+          type: string
+          description: サービス状態
+          example: 'running'
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          description: サービス状態
+          enum: [Healthy, Unhealthy]
+          example: 'Healthy'
+        time_of_last_update:
+          type: integer
+          description: 最終更新時刻（UNIX タイムスタンプ）
+          example: 1703836800
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: エラータイプ
+          example: 'Bad Request'
+        message:
+          type: string
+          description: エラーメッセージ（オプション）
+          example: 'Empty prompt provided'
+        requestId:
+          type: string
+          description: リクエストID（オプション）
+          format: uuid
+          example: 'req-abc123'
+
+    NotFoundResponse:
+      type: object
+      required:
+        - error
+        - message
+        - availableEndpoints
+      properties:
+        error:
+          type: string
+          description: エラータイプ
+          enum: ['Not Found']
+          example: 'Not Found'
+        message:
+          type: string
+          description: 未見つかりエンドポイントの詳細メッセージ
+          pattern: '^Endpoint [A-Z]+ .+ not found$'
+          example: 'Endpoint GET /unknown not found'
+        availableEndpoints:
+          type: array
+          description: 利用可能なエンドポイント一覧
+          items:
+            type: string
+            pattern: '^[A-Z]+ /.*$'
+          minItems: 3
+          maxItems: 3
+          example: ['GET /', 'GET /ping', 'POST /invocations']
+
+    # === ストリーミングイベント（参考用スキーマ） ===
+    StreamEvent:
+      type: object
+      description: |
+        ストリーミングイベントの基本構造
+        **注意**: 実際のレスポンスはNDJSON形式で送信されます
+      discriminator:
+        propertyName: type
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: イベントタイプ
+          enum:
+            - modelContentBlockDeltaEvent
+            - modelContentBlockStartEvent
+            - modelContentBlockStopEvent
+            - modelMessageStartEvent
+            - modelMessageStopEvent
+            - messageAddedEvent
+            - modelMetadataEvent
+            - agentResult
+            - textBlock
+            - modelStreamEventHook
+            - beforeInvocationEvent
+            - afterInvocationEvent
+            - beforeModelCallEvent
+            - afterModelCallEvent
+            - beforeToolsEvent
+            - afterToolsEvent
+            - serverCompletionEvent
+            - serverErrorEvent
+
+    TextDeltaEvent:
+      allOf:
+        - $ref: '#/components/schemas/StreamEvent'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [modelContentBlockDeltaEvent]
+            delta:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum: [textDelta]
+                text:
+                  type: string
+                  description: 生成されたテキスト断片
+                  example: 'こんにちは'
+
+    ToolUseStartEvent:
+      allOf:
+        - $ref: '#/components/schemas/StreamEvent'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [modelContentBlockStartEvent]
+            start:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [toolUseStart]
+                name:
+                  type: string
+                  description: ツール名
+                  example: 'weather_get_forecast'
+                toolUseId:
+                  type: string
+                  description: ツール使用ID
+                  example: 'tool-abc123'
+
+    ServerCompletionEvent:
+      allOf:
+        - $ref: '#/components/schemas/StreamEvent'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [serverCompletionEvent]
+            metadata:
+              type: object
+              required:
+                - requestId
+                - sessionId
+              properties:
+                requestId:
+                  type: string
+                  description: リクエストID
+                  format: uuid
+                  example: 'req-abc123'
+                duration:
+                  type: number
+                  description: 処理時間（ミリ秒）
+                  minimum: 0
+                  example: 1500
+                sessionId:
+                  type: string
+                  description: |
+                    セッションID。
+                    ヘッダーで指定されていない場合は `'none'` が設定されます。
+                  example: 'session-xyz789'
+                  default: 'none'
+                conversationLength:
+                  type: integer
+                  description: 会話のメッセージ数
+                  minimum: 1
+                  example: 2
+
+    ServerErrorEvent:
+      allOf:
+        - $ref: '#/components/schemas/StreamEvent'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [serverErrorEvent]
+            error:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: エラーメッセージ
+                  example: 'Agent ストリーミングエラー: Connection timeout'
+                requestId:
+                  type: string
+                  description: リクエストID
+                  format: uuid
+                  example: 'req-abc123'
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: ヘルスチェック関連
+  - name: Agent
+    description: AI Agent 呼び出し
+  - name: Service
+    description: サービス情報
+
+# OpenAPI拡張情報
+x-readme:
+  explorer-enabled: true
+  proxy-enabled: true
+
+x-logo:
+  url: 'https://example.com/logo.png'
+  altText: 'AgentCore Runtime API'
