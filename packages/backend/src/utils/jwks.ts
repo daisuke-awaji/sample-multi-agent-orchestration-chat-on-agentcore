@@ -72,15 +72,22 @@ export async function verifyJWT(token: string): Promise<JWTVerificationResult> {
     const JWKS = getJWKS();
 
     // JWT を検証
-    const verifyOptions: any = {
-      issuer: config.jwt.issuer,
-      audience: config.jwt.audience,
+    const verifyOptions: {
+      issuer?: string;
+      audience?: string;
+      algorithms: string[];
+    } = {
       algorithms: ['RS256'],
     };
 
-    // audienceが未設定の場合は検証をスキップ
-    if (!verifyOptions.audience) {
-      delete verifyOptions.audience;
+    // issuerが設定されている場合のみ追加
+    if (config.jwt.issuer) {
+      verifyOptions.issuer = config.jwt.issuer;
+    }
+
+    // audienceが設定されている場合のみ追加
+    if (config.jwt.audience) {
+      verifyOptions.audience = config.jwt.audience;
     }
 
     const { payload }: JWTVerifyResult = await jwtVerify(token, JWKS, verifyOptions);

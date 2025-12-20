@@ -48,7 +48,8 @@ export const useChatStore = create<ChatStore>()(
       },
 
       sendPrompt: async (prompt: string) => {
-        let { addMessage, updateMessage, sessionId } = get();
+        const { addMessage, updateMessage } = get();
+        let { sessionId } = get();
 
         // セッションIDがない場合は生成
         if (!sessionId) {
