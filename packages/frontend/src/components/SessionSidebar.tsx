@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Donut, SquarePen, Search, PanelRight } from 'lucide-react';
+import { Donut, SquarePen, Search, PanelRight, Wrench } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useSessionStore } from '../stores/sessionStore';
 import { useUIStore } from '../stores/uiStore';
@@ -109,6 +109,12 @@ export function SessionSidebar() {
     // TODO: 検索機能の実装
   };
 
+  // ツール検索
+  const handleToolsSearch = () => {
+    console.log('🔧 ツール検索ページへナビゲート');
+    navigate('/tools');
+  };
+
   // サイドバー折りたたみ
   const handleToggleSidebar = () => {
     toggleSidebar();
@@ -173,6 +179,17 @@ export function SessionSidebar() {
           >
             <Search className="w-5 h-5 flex-shrink-0" />
             {isSidebarOpen && <span className="text-sm">チャットを検索</span>}
+          </button>
+
+          <button
+            onClick={handleToolsSearch}
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 ${
+              isSidebarOpen ? 'w-full text-left' : 'w-auto'
+            }`}
+            title={!isSidebarOpen ? 'ツールを検索' : undefined}
+          >
+            <Wrench className="w-5 h-5 flex-shrink-0" />
+            {isSidebarOpen && <span className="text-sm">ツールを検索</span>}
           </button>
         </div>
       </div>

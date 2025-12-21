@@ -32,6 +32,9 @@ const envSchema = z.object({
   // AgentCore Memory 設定
   AGENTCORE_MEMORY_ID: z.string().optional(),
   AWS_REGION: z.string().default('us-east-1'),
+
+  // AgentCore Gateway 設定
+  AGENTCORE_GATEWAY_ENDPOINT: z.string().url().optional(),
 });
 
 /**
@@ -88,6 +91,11 @@ export const config = {
   agentcore: {
     memoryId: env.AGENTCORE_MEMORY_ID,
     region: env.AWS_REGION,
+  },
+
+  // AgentCore Gateway 設定
+  gateway: {
+    endpoint: env.AGENTCORE_GATEWAY_ENDPOINT,
   },
 } as const;
 

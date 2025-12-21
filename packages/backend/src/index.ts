@@ -8,6 +8,7 @@ import cors from 'cors';
 import { config } from './config/index.js';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from './middleware/auth.js';
 import sessionsRouter from './routes/sessions.js';
+import toolsRouter from './routes/tools.js';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use(express.json());
 
 // API ルート設定
 app.use('/sessions', sessionsRouter);
+app.use('/tools', toolsRouter);
 
 /**
  * ヘルスチェックエンドポイント（認証不要）

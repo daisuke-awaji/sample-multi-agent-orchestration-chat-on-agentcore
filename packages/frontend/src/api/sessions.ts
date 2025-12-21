@@ -65,16 +65,16 @@ function getBackendBaseUrl(): string {
  * @returns Authorization ヘッダー
  */
 function createAuthHeaders(user: User): Record<string, string> {
-  // ID トークンを使用（JWT 認証）
-  const idToken = user.idToken || user.accessToken;
+  // Access Token を使用（一貫性のため）
+  const accessToken = user.accessToken || user.idToken;
 
-  if (!idToken) {
+  if (!accessToken) {
     throw new Error('認証トークンが見つかりません');
   }
 
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${idToken}`,
+    Authorization: `Bearer ${accessToken}`,
   };
 }
 
