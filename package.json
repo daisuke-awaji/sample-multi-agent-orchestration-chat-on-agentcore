@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces --if-present",
+    "test:integration": "npm run test:integration --workspace=@fullstack-agentcore/backend",
     "cdk": "npm run cdk --workspace=@fullstack-agentcore/cdk",
     "synth": "npm run synth --workspace=@fullstack-agentcore/cdk",
     "deploy": "npm run deploy --workspace=@fullstack-agentcore/cdk",

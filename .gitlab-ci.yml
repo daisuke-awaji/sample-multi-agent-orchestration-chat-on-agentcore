@@ -3,7 +3,7 @@
 
 stages:
   - lint
-  # - test
+  - test
   - build
   - deploy
 
@@ -53,24 +53,24 @@ lint:openapi:
 # TEST STAGE
 # ========================================
 
-# test:
-#   <<: *node_template
-#   stage: test
-#   script:
-#     - npm run test
-#   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
-#   artifacts:
-#     when: always
-#     reports:
-#       coverage_report:
-#         coverage_format: cobertura
-#         path: coverage/cobertura-coverage.xml
-#     paths:
-#       - coverage/
-#     expire_in: 1 week
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+test:
+  <<: *node_template
+  stage: test
+  script:
+    - npm run test
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 # ========================================
 # BUILD STAGE

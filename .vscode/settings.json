@@ -1,0 +1,28 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.associations": {
+    "*.mjs": "javascript"
+  },
+
+  // === ESLint拡張機能の推奨設定 ===
+
+  // ESLint Flat Config を明示的に有効化
+  "eslint.useFlatConfig": true,
+
+  // 検証対象ファイルタイプを明示
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+  // ESLint の作業ディレクトリをワークスペースルートに設定
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+
+  // 問題パネルでの表示を有効化
+  "eslint.problems.shortenToSingleLine": true
+
+  // デバッグが必要な場合は以下のコメントアウトを外してください
+  // "eslint.debug": true,
+  // "eslint.trace.server": "messages"
+}

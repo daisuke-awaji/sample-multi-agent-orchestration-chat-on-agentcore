@@ -53,7 +53,7 @@ coverage/
 .aws/
 
 # IDE
-.vscode/
+# .vscode/
 .idea/
 *.swp
 *.swo
