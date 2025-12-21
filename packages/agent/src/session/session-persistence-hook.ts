@@ -4,8 +4,8 @@
  */
 
 import { HookProvider, HookRegistry, AfterInvocationEvent } from '@strands-agents/sdk';
-import { SessionConfig, SessionStorage } from './types';
-import { logger } from '../config/index';
+import { SessionConfig, SessionStorage } from './types.js';
+import { logger } from '../config/index.js';
 
 /**
  * Agent のライフサイクルイベントに応答してセッション履歴を永続化するフック

@@ -6,8 +6,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Message } from '@strands-agents/sdk';
-import { SessionConfig, SessionStorage } from './types';
-import { logger } from '../config/index';
+import { SessionConfig, SessionStorage } from './types.js';
+import { logger } from '../config/index.js';
 
 /**
  * ローカルファイルシステムでセッション履歴を管理するクラス

@@ -5,11 +5,11 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import { createAgent } from './agent';
-import { getContextMetadata } from './context/request-context';
-import { requestContextMiddleware } from './middleware/request-context';
-import { createSessionStorage, SessionPersistenceHook } from './session/index';
-import type { SessionConfig } from './session/types';
+import { createAgent } from './agent.js';
+import { getContextMetadata } from './context/request-context.js';
+import { requestContextMiddleware } from './middleware/request-context.js';
+import { createSessionStorage, SessionPersistenceHook } from './session/index.js';
+import type { SessionConfig } from './session/types.js';
 
 /**
  * Strands Agents ストリーミングイベントを安全にシリアライズ

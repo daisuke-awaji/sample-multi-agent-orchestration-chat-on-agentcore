@@ -3,7 +3,6 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { Construct } from 'constructs';
@@ -245,11 +244,11 @@ export class BackendApi extends Construct {
     });
 
     // CloudWatch Alarms（オプション）
-    const errorRate = this.lambdaFunction.metricErrors({
+    this.lambdaFunction.metricErrors({
       period: cdk.Duration.minutes(5),
     });
 
-    const durationAlarm = this.lambdaFunction.metricDuration({
+    this.lambdaFunction.metricDuration({
       period: cdk.Duration.minutes(5),
     });
 

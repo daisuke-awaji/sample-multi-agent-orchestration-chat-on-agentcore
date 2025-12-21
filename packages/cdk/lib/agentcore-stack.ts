@@ -141,10 +141,7 @@ export class AgentCoreStack extends cdk.Stack {
     });
 
     // Gateway に Lambda Target を追加
-    const echoTarget = this.echoToolTarget.addToGateway(
-      this.gateway.gateway,
-      'EchoToolGatewayTarget'
-    );
+    this.echoToolTarget.addToGateway(this.gateway.gateway, 'EchoToolGatewayTarget');
 
     // CloudFormation出力
     new cdk.CfnOutput(this, 'GatewayArn', {
@@ -331,19 +328,5 @@ export class AgentCoreStack extends cdk.Stack {
     cdk.Tags.of(this).add('Component', 'Gateway');
     cdk.Tags.of(this).add('Memory', 'Enabled');
     cdk.Tags.of(this).add('BackendApi', 'Enabled');
-  }
-
-  /**
-   * 簡単なLambda関数をGatewayTargetとして追加するヘルパーメソッド
-   */
-  public addSimpleLambdaTarget(targetName: string, code: string): void {
-    // 注意: 実際の実装では適切なLambda関数を作成する必要があります
-    // ここではプレースホルダーとして記述
-    // const lambdaFunction = new lambda.Function(this, `${targetName}Lambda`, {
-    //   runtime: lambda.Runtime.NODEJS_20_X,
-    //   handler: 'index.handler',
-    //   code: lambda.Code.fromInline(code),
-    // });
-    // this.gateway.addLambdaTarget(targetName, lambdaFunction);
   }
 }

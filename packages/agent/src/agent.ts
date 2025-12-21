@@ -5,9 +5,9 @@
 
 import { Agent, BedrockModel, tool, Message } from '@strands-agents/sdk';
 import { z } from 'zod';
-import { config, logger } from './config/index';
-import { mcpClient, MCPToolResult } from './mcp/client';
-import { weatherTool } from './tools/weather';
+import { config, logger } from './config/index.js';
+import { mcpClient, MCPToolResult } from './mcp/client.js';
+import { weatherTool } from './tools/weather.js';
 
 /**
  * JSON Schema プロパティの型定義

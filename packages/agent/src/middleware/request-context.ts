@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { createRequestContext, runWithContext } from '../context/request-context';
+import { createRequestContext, runWithContext } from '../context/request-context.js';
 
 /**
  * JWT から userId を抽出する（簡易実装）
