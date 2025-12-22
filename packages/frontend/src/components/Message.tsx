@@ -91,7 +91,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
               </div>
             ) : (
               <div className="text-gray-500 italic">
-                {message.isStreaming ? 'メッセージを生成中...' : 'メッセージがありません'}
+                {message.isStreaming ? 'Thinking...' : 'メッセージがありません'}
               </div>
             )}
           </div>

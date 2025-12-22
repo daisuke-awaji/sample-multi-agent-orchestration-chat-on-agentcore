@@ -3,7 +3,7 @@
  * Backend のツール API を呼び出すためのクライアント
  */
 
-import type { User } from '../types/index';
+import { getValidAccessToken } from '../lib/cognito';
 
 /**
  * MCP ツールの型定義
@@ -58,16 +58,15 @@ function getBackendBaseUrl(): string {
 }
 
 /**
- * 認証ヘッダーを作成
- * @param user ユーザー情報
+ * 認証ヘッダーを作成（自動トークンリフレッシュ対応）
  * @returns Authorization ヘッダー
  */
-function createAuthHeaders(user: User): Record<string, string> {
-  // Access Token を使用（Gateway API アクセス用）
-  const accessToken = user.accessToken || user.idToken;
+async function createAuthHeaders(): Promise<Record<string, string>> {
+  // getValidAccessToken() は必要に応じて自動でトークンをリフレッシュ
+  const accessToken = await getValidAccessToken();
 
   if (!accessToken) {
-    throw new Error('認証トークンが見つかりません');
+    throw new Error('認証トークンの取得に失敗しました。再ログインが必要です。');
   }
 
   return {
@@ -78,20 +77,16 @@ function createAuthHeaders(user: User): Record<string, string> {
 
 /**
  * ツール一覧を取得（ページネーション対応）
- * @param user Cognito ユーザー情報
  * @param cursor ページネーション用のカーソル（オプショナル）
  * @returns ツール一覧とnextCursor
  */
-export async function fetchTools(
-  user: User,
-  cursor?: string
-): Promise<{
+export async function fetchTools(cursor?: string): Promise<{
   tools: MCPTool[];
   nextCursor?: string;
 }> {
   try {
     const baseUrl = getBackendBaseUrl();
-    const headers = createAuthHeaders(user);
+    const headers = await createAuthHeaders();
 
     // cursorパラメータがある場合はクエリに追加
     const url = cursor
@@ -132,18 +127,17 @@ export async function fetchTools(
 
 /**
  * ツールを検索
- * @param user Cognito ユーザー情報
  * @param query 検索クエリ
  * @returns 検索結果のツール一覧
  */
-export async function searchTools(user: User, query: string): Promise<MCPTool[]> {
+export async function searchTools(query: string): Promise<MCPTool[]> {
   if (!query || query.trim().length === 0) {
     throw new Error('検索クエリが必要です');
   }
 
   try {
     const baseUrl = getBackendBaseUrl();
-    const headers = createAuthHeaders(user);
+    const headers = await createAuthHeaders();
 
     console.log(`🔍 ツール検索開始: "${query}"`);
 
@@ -176,13 +170,12 @@ export async function searchTools(user: User, query: string): Promise<MCPTool[]>
 
 /**
  * Gateway 接続状態を確認
- * @param user Cognito ユーザー情報
  * @returns 接続状態情報
  */
-export async function checkGatewayHealth(user: User): Promise<HealthResponse> {
+export async function checkGatewayHealth(): Promise<HealthResponse> {
   try {
     const baseUrl = getBackendBaseUrl();
-    const headers = createAuthHeaders(user);
+    const headers = await createAuthHeaders();
 
     console.log('💓 Gateway 接続確認開始...');
 

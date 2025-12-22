@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Check, X, AlertCircle } from 'lucide-react';
-import { useAuthStore } from '../stores/authStore';
 import { fetchTools, type MCPTool } from '../api/tools';
 import { LoadingIndicator } from './ui/LoadingIndicator';
 
@@ -15,7 +14,6 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
   onSelectionChange,
   disabled = false,
 }) => {
-  const { user } = useAuthStore();
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [filteredTools, setFilteredTools] = useState<MCPTool[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,13 +23,11 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
   // ツール一覧を取得
   useEffect(() => {
     const loadTools = async () => {
-      if (!user) return;
-
       setLoading(true);
       setError(null);
 
       try {
-        const result = await fetchTools(user);
+        const result = await fetchTools();
         setTools(result.tools);
         setFilteredTools(result.tools);
       } catch (err) {
@@ -43,7 +39,7 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
     };
 
     loadTools();
-  }, [user]);
+  }, []);
 
   // 検索フィルタリング
   useEffect(() => {

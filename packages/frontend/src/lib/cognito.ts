@@ -159,6 +159,71 @@ export const refreshTokens = async (): Promise<User | null> => {
 };
 
 /**
+ * 有効なアクセストークンを取得する（必要に応じて自動リフレッシュ）
+ * getSession() は期限切れトークンを自動的にリフレッシュしてくれる
+ */
+export const getValidAccessToken = async (): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const cognitoUser = userPool.getCurrentUser();
+
+    if (!cognitoUser) {
+      console.warn('🔒 認証されたユーザーが見つかりません');
+      resolve(null);
+      return;
+    }
+
+    // getSession() は内部で期限切れチェック & 自動リフレッシュを行う
+    cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+      if (err) {
+        console.warn('🔒 セッション取得エラー:', err.message);
+        resolve(null);
+        return;
+      }
+
+      if (!session || !session.isValid()) {
+        console.warn('🔒 無効なセッション');
+        resolve(null);
+        return;
+      }
+
+      const accessToken = session.getAccessToken().getJwtToken();
+      console.log('✅ 有効なアクセストークンを取得');
+      resolve(accessToken);
+    });
+  });
+};
+
+/**
+ * 有効なユーザー情報を取得する（必要に応じて自動リフレッシュ）
+ */
+export const getValidUser = async (): Promise<User | null> => {
+  return new Promise((resolve) => {
+    const cognitoUser = userPool.getCurrentUser();
+
+    if (!cognitoUser) {
+      resolve(null);
+      return;
+    }
+
+    cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+      if (err || !session || !session.isValid()) {
+        resolve(null);
+        return;
+      }
+
+      const user: User = {
+        username: cognitoUser.getUsername(),
+        accessToken: session.getAccessToken().getJwtToken(),
+        refreshToken: session.getRefreshToken().getToken(),
+        idToken: session.getIdToken().getJwtToken(),
+      };
+
+      resolve(user);
+    });
+  });
+};
+
+/**
  * Cognito設定を取得する
  */
 export const getCognitoConfig = () => ({

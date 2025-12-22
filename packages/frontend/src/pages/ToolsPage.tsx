@@ -148,7 +148,7 @@ export function ToolsPage() {
   // 初回ロード
   useEffect(() => {
     if (user) {
-      loadTools(user);
+      loadTools();
     }
   }, [user, loadTools]);
 
@@ -159,7 +159,7 @@ export function ToolsPage() {
       clearSearch();
       return;
     }
-    await searchToolsWithQuery(user, localSearchQuery.trim());
+    await searchToolsWithQuery(localSearchQuery.trim());
   };
 
   // Enterキーでの検索
@@ -180,14 +180,14 @@ export function ToolsPage() {
   const handleRefresh = () => {
     if (user) {
       clearError();
-      loadTools(user);
+      loadTools();
     }
   };
 
   // 次のページを読み込み
   const handleLoadMore = async () => {
     if (user) {
-      await loadMoreTools(user);
+      await loadMoreTools();
     }
   };
 

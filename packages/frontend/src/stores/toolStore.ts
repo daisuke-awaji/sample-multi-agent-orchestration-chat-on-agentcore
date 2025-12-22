@@ -5,7 +5,6 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { User } from '../types/index';
 import type { MCPTool } from '../api/tools';
 import { fetchTools, searchTools, checkGatewayHealth } from '../api/tools';
 
@@ -31,12 +30,12 @@ export interface ToolStoreState {
   gatewayStatus: 'unknown' | 'healthy' | 'unhealthy';
 
   // アクション
-  loadTools: (user: User) => Promise<void>;
-  loadMoreTools: (user: User) => Promise<void>; // 追加ページ読み込み
-  searchToolsWithQuery: (user: User, query: string) => Promise<void>;
+  loadTools: () => Promise<void>;
+  loadMoreTools: () => Promise<void>; // 追加ページ読み込み
+  searchToolsWithQuery: (query: string) => Promise<void>;
   clearSearch: () => void;
   setSearchQuery: (query: string) => void;
-  checkGateway: (user: User) => Promise<void>;
+  checkGateway: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -64,7 +63,7 @@ export const useToolStore = create<ToolStoreState>()(
       /**
        * ツール一覧を読み込み（最初のページ）
        */
-      loadTools: async (user: User) => {
+      loadTools: async () => {
         const currentState = get();
 
         // 既に読み込み中の場合は重複実行を避ける
@@ -83,7 +82,7 @@ export const useToolStore = create<ToolStoreState>()(
         try {
           console.log('🔧 ツール一覧読み込み開始');
 
-          const result = await fetchTools(user);
+          const result = await fetchTools();
 
           set({
             tools: result.tools,
@@ -120,7 +119,7 @@ export const useToolStore = create<ToolStoreState>()(
       /**
        * 追加ページを読み込み
        */
-      loadMoreTools: async (user: User) => {
+      loadMoreTools: async () => {
         const currentState = get();
 
         if (currentState.isLoading || !currentState.nextCursor) {
@@ -136,7 +135,7 @@ export const useToolStore = create<ToolStoreState>()(
         try {
           console.log('🔧 追加ツール読み込み開始', { cursor: currentState.nextCursor });
 
-          const result = await fetchTools(user, currentState.nextCursor);
+          const result = await fetchTools(currentState.nextCursor);
 
           set({
             tools: [...currentState.tools, ...result.tools], // 既存のツールに追加
@@ -170,7 +169,7 @@ export const useToolStore = create<ToolStoreState>()(
       /**
        * ツール検索を実行
        */
-      searchToolsWithQuery: async (user: User, query: string) => {
+      searchToolsWithQuery: async (query: string) => {
         if (!query || query.trim().length === 0) {
           set({
             searchQuery: '',
@@ -192,7 +191,7 @@ export const useToolStore = create<ToolStoreState>()(
         try {
           console.log(`🔍 ツール検索実行: "${trimmedQuery}"`);
 
-          const searchResults = await searchTools(user, trimmedQuery);
+          const searchResults = await searchTools(trimmedQuery);
 
           set({
             searchResults,
@@ -243,11 +242,11 @@ export const useToolStore = create<ToolStoreState>()(
       /**
        * Gateway の接続状態を確認
        */
-      checkGateway: async (user: User) => {
+      checkGateway: async () => {
         try {
           console.log('💓 Gateway 接続状態確認開始');
 
-          const healthResponse = await checkGatewayHealth(user);
+          const healthResponse = await checkGatewayHealth();
 
           set({
             gatewayHealthy: healthResponse.gateway.connected,
