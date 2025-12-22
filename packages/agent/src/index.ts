@@ -198,15 +198,25 @@ app.get('/ping', (req: Request, res: Response) => {
 });
 
 /**
+ * Agent 呼び出しリクエストの型定義
+ */
+interface InvocationRequest {
+  prompt: string; // 必須: ユーザーの入力
+  modelId?: string; // 任意: 使用するモデルID（デフォルト: 環境変数）
+  enabledTools?: string[]; // 任意: 有効化するツール名の配列（undefined=全て、[]=なし）
+  systemPrompt?: string; // 任意: カスタムシステムプロンプト
+}
+
+/**
  * Agent 呼び出しエンドポイント（ストリーミング対応）
  * セッションごとに Agent を作成し、履歴の永続化を行う
  */
 app.post('/invocations', async (req: Request, res: Response) => {
   try {
-    // リクエストボディからプロンプトを取得
-    const prompt = req.body?.prompt || '';
+    // リクエストボディから各パラメータを取得
+    const { prompt, modelId, enabledTools, systemPrompt } = req.body as InvocationRequest;
 
-    if (!prompt.trim()) {
+    if (!prompt?.trim()) {
       return res.status(400).json({
         error: 'Empty prompt provided',
       });
@@ -240,8 +250,20 @@ app.post('/invocations', async (req: Request, res: Response) => {
     // セッション永続化フックを作成
     const sessionHook = new SessionPersistenceHook(sessionStorage, sessionConfig);
 
+    // Agent作成オプション
+    const agentOptions = {
+      modelId,
+      enabledTools,
+      systemPrompt,
+    };
+
+    // ログ出力（デバッグ用）
+    if (modelId) console.log(`🤖 カスタムモデル: ${modelId}`);
+    if (enabledTools) console.log(`🔧 指定ツール: ${enabledTools.join(', ')}`);
+    if (systemPrompt) console.log(`📝 カスタムシステムプロンプト使用`);
+
     // セッション用の Agent を作成
-    const agent = await createAgent(savedMessages, [sessionHook]);
+    const agent = await createAgent(savedMessages, [sessionHook], agentOptions);
 
     // ストリーミングレスポンス用のヘッダー設定
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');

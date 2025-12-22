@@ -168,13 +168,24 @@ function createStrandsToolFromMCP(mcpTool: MCPToolDefinition) {
 }
 
 /**
+ * AgentCore Runtime 用の Strands Agent 作成オプション
+ */
+interface CreateAgentOptions {
+  modelId?: string; // 使用するモデルID（未指定時は環境変数）
+  enabledTools?: string[]; // 有効化するツール名配列（undefined=全て、[]=なし）
+  systemPrompt?: string; // カスタムシステムプロンプト（未指定時は自動生成）
+}
+
+/**
  * AgentCore Runtime 用の Strands Agent を作成
  * @param initialMessages 初期会話履歴（セッション復元用）
  * @param hooks HookProvider の配列（セッション永続化など）
+ * @param options Agent作成オプション（モデルID、ツール、システムプロンプト）
  */
 export async function createAgent(
   initialMessages?: Message[],
-  hooks?: import('@strands-agents/sdk').HookProvider[]
+  hooks?: import('@strands-agents/sdk').HookProvider[],
+  options?: CreateAgentOptions
 ): Promise<Agent> {
   logger.info('Strands Agent を初期化中...');
 
@@ -191,28 +202,59 @@ export async function createAgent(
     });
 
     // 4. ローカルツールとMCPツールを結合
-    const allTools = [weatherTool, ...strandsToolsFromMCP];
+    let allTools = [weatherTool, ...strandsToolsFromMCP];
+
+    // 4.1. ツールのフィルタリング（options.enabledTools が指定されている場合）
+    if (options?.enabledTools !== undefined) {
+      if (options.enabledTools.length === 0) {
+        // 空配列の場合はツールなし
+        allTools = [];
+        logger.info('🔧 ツールを無効化: 空配列が指定されました');
+      } else {
+        // 指定されたツールのみ有効化
+        allTools = allTools.filter((tool) => options.enabledTools!.includes(tool.name));
+        logger.info(`🔧 ツールをフィルタリング: ${options.enabledTools.join(', ')}`);
+      }
+    }
     logger.info(`✅ 合計${allTools.length}個のツールを準備しました`);
 
     // 5. Amazon Bedrock モデルの設定
+    const modelId = options?.modelId || config.BEDROCK_MODEL_ID;
     const model = new BedrockModel({
       region: config.BEDROCK_REGION,
-      modelId: config.BEDROCK_MODEL_ID,
+      modelId,
     });
+    logger.info(`🤖 使用モデル: ${modelId}`);
 
-    // 6. システムプロンプトの生成
-    const localTools = ['get_weather: 指定された都市の天気情報を取得'];
-    const gatewayTools = mcpTools.map(
-      (tool) => `- ${tool.name}: ${tool.description || '説明なし'}`
-    );
+    // 6. システムプロンプトの設定
+    let systemPrompt: string;
 
-    const systemPrompt = `あなたは AgentCore Runtime で動作する AI アシスタントです。
+    if (options?.systemPrompt) {
+      // カスタムシステムプロンプトが指定されている場合
+      systemPrompt = options.systemPrompt;
+      logger.info('📝 カスタムシステムプロンプトを使用');
+    } else {
+      // デフォルトのシステムプロンプトを生成
+      const enabledLocalTools = allTools.filter((tool) => tool.name === 'get_weather');
+      const enabledMcpTools = allTools.filter((tool) => tool.name !== 'get_weather');
 
-利用可能なツール:
-${localTools.concat(gatewayTools).join('\n')}
+      const localToolDescriptions = enabledLocalTools.map(
+        (tool) => `- ${tool.name}: 指定された都市の天気情報を取得`
+      );
+      const gatewayToolDescriptions = enabledMcpTools.map((tool) => {
+        const mcpTool = mcpTools.find((mcp) => mcp.name === tool.name);
+        return `- ${tool.name}: ${mcpTool?.description || '説明なし'}`;
+      });
 
-ユーザーからの質問に日本語で丁寧に応答し、必要に応じて適切なツールを呼び出してください。
+      const allToolDescriptions = [...localToolDescriptions, ...gatewayToolDescriptions];
+
+      systemPrompt = `あなたは AgentCore Runtime で動作する AI アシスタントです。
+
+${allToolDescriptions.length > 0 ? `利用可能なツール:\n${allToolDescriptions.join('\n')}\n\n` : ''}ユーザーからの質問に日本語で丁寧に応答し、必要に応じて適切なツールを呼び出してください。
 技術的な内容についても分かりやすく説明してください。`;
+
+      logger.info('📝 デフォルトシステムプロンプトを生成');
+    }
 
     // 7. Agent の作成
     const agent = new Agent({

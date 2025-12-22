@@ -119,6 +119,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
           <div className="flex items-center space-x-3">
             <Modal.Icon icon={Bot} />
             <Modal.Title>{getModalTitle()}</Modal.Title>
+            <span>エージェントのカスタマイズ機能は現在実装中です...</span>
           </div>
           <Modal.CloseButton />
         </Modal.Header>
@@ -153,7 +154,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
               <div className="mb-8">
                 <button
                   onClick={() => setMode('create')}
-                  className="inline-flex items-center space-x-3 px-6 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg"
+                  className="inline-flex items-center space-x-3 px-6 py-3 text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
                 >
                   <Plus className="w-5 h-5" />
                   <span className="font-medium">新規エージェント作成</span>

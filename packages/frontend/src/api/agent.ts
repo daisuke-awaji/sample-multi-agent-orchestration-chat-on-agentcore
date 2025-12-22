@@ -29,12 +29,22 @@ interface StreamingCallbacks {
 }
 
 /**
+ * Agent 設定オプション
+ */
+interface AgentConfig {
+  modelId?: string; // 使用するモデルID
+  enabledTools?: string[]; // 有効化するツール名の配列
+  systemPrompt?: string; // カスタムシステムプロンプト
+}
+
+/**
  * Agent にストリーミングでプロンプトを送信する
  */
 export const streamAgentResponse = async (
   prompt: string,
   sessionId: string,
-  callbacks: StreamingCallbacks
+  callbacks: StreamingCallbacks,
+  agentConfig?: AgentConfig
 ): Promise<void> => {
   const { user } = useAuthStore.getState();
 
@@ -62,7 +72,22 @@ export const streamAgentResponse = async (
   // セッションIDを常に付与
   headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = sessionId;
 
-  const body = JSON.stringify({ prompt });
+  // リクエストボディを構築（agentConfigが指定されている場合は含める）
+  const requestBody: Record<string, unknown> = { prompt };
+
+  if (agentConfig?.modelId) {
+    requestBody.modelId = agentConfig.modelId;
+  }
+
+  if (agentConfig?.enabledTools) {
+    requestBody.enabledTools = agentConfig.enabledTools;
+  }
+
+  if (agentConfig?.systemPrompt) {
+    requestBody.systemPrompt = agentConfig.systemPrompt;
+  }
+
+  const body = JSON.stringify(requestBody);
 
   try {
     const response = await fetch(url, {
