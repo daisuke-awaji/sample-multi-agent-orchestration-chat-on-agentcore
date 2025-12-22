@@ -206,11 +206,6 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2">
                                   <h3 className="font-medium text-gray-900">{agent.name}</h3>
-                                  {isSelected && (
-                                    <span className="inline-block px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
-                                      アクティブ
-                                    </span>
-                                  )}
                                 </div>
                                 <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                                   {agent.description}

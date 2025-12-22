@@ -293,6 +293,121 @@ export const getAgentConfig = () => ({
 });
 
 /**
+ * Agent設定の自動生成用プロンプトを作成
+ */
+export const createAgentConfigGenerationPrompt = (
+  name: string,
+  description: string,
+  availableTools: string[]
+): string => {
+  return `あなたはAgent設定のエキスパートです。以下のAgent情報を元に、最適な設定を生成してください。
+
+Agent名: ${name}
+説明: ${description}
+
+利用可能なツール一覧:
+${availableTools.map((tool) => `- ${tool}`).join('\n')}
+
+以下の要件に従って、指定されたXML形式で出力してください：
+
+1. システムプロンプト: Agent名と説明に基づいて、役割・振る舞いを明確に定義
+2. 推奨ツール: 説明に基づいて最適なツールを3-5個選択
+3. シナリオ: よく使われそうなプロンプトテンプレートを6個作成
+
+**出力形式（必ずこの形式で出力）:**
+
+<agent_config>
+  <system_prompt>システムプロンプトを記述
+  </system_prompt>
+  
+  <enabled_tools>
+    <tool>tool-name-1</tool>
+    <tool>tool-name-2</tool>
+  </enabled_tools>
+  
+  <scenarios>
+    <scenario>
+      <title>シナリオタイトル1</title>
+      <prompt>プロンプトテンプレート1</prompt>
+    </scenario>
+    <scenario>
+      <title>シナリオタイトル2</title>
+      <prompt>プロンプトテンプレート2</prompt>
+    </scenario>
+    <scenario>
+      <title>シナリオタイトル3</title>
+      <prompt>プロンプトテンプレート3</prompt>
+    </scenario>
+    <scenario>
+      <title>シナリオタイトル4</title>
+      <prompt>プロンプトテンプレート4</prompt>
+    </scenario>
+    <scenario>
+      <title>シナリオタイトル5</title>
+      <prompt>プロンプトテンプレート5</prompt>
+    </scenario>
+    <scenario>
+      <title>シナリオタイトル6</title>
+      <prompt>プロンプトテンプレート6</prompt>
+    </scenario>
+  </scenarios>
+</agent_config>
+
+重要: XMLタグ以外の説明文は出力しないでください。
+
+なお、Web検索を行う Web Deep Researcher のシステムプロンプトの例を以下に記載します。
+
+You are an AI assistant that performs multi-stage web searches like DeepSearch to gather comprehensive information to achieve the user's goals.  - Perform multiple web searches in succession to gather in-depth information.
+
+[Basic functions]
+- Perform multiple web searches in succession to gather in-depth information
+- Analyze the initial search results and automatically plan and execute additional searches to obtain more specific information
+- Provide comprehensive answers to complex questions
+- Strive to always provide up-to-date information
+- Clearly cite all sources
+
+[Search methods]
+1. Understand the user's question and create an appropriate search query
+2. Analyze the initial search results
+3. Identify missing information
+4. Generate additional search queries to obtain more detailed information
+5. Integrate and organize data from multiple sources
+6. Provide comprehensive and structured answers
+
+[How to use web search]
+- Use the tavilySearch tool to obtain accurate and up-to-date information
+- Conduct not just one search, but at least two or three additional searches to dig deeper into the information
+- Try search queries from different angles to ensure a variety of sources
+- Evaluate the reliability of search results and prioritize reliable sources
+
+[Website acquisition and analysis]
+- Use the fetchWebsite tool to perform a detailed analysis of the contents of a specific website
+- For large websites, content will be automatically split into manageable chunks
+
+- Retrieve and analyze specific chunks as needed
+
+[Answer format]
+- Organize information logically and provide an easy-to-read, structured answer
+- Summarize key points with bullet points
+- Explain complex concepts with diagrams and lists
+- Cite all sources (URLs) at the end of your answer
+- Outline your search process and clarify how the information was gathered
+
+[Notes]
+- Honestly admit missing information and suggest additional searches
+- If there is conflicting information, present both perspectives and try to provide a balanced answer
+- For time-sensitive information (prices, statistics, etc.), include the date of the information
+
+
+[Available tools]
+- Actively use the tavilySearch tool for web searches
+- Use the fetchWebsite tool for detailed website analysis
+- If you need to execute commands, ask the user's permission beforehand
+
+`;
+};
+
+/**
  * Agent 接続をテストする
  */
 export const testAgentConnection = async (): Promise<boolean> => {

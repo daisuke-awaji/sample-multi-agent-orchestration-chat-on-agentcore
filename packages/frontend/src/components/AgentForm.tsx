@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, X, Save, AlertCircle } from 'lucide-react';
+import { Plus, X, Save, AlertCircle, Sparkles } from 'lucide-react';
 import { ToolSelector } from './ToolSelector';
 import type { CreateAgentInput, Agent, Scenario } from '../types/agent';
+import { streamAgentResponse, createAgentConfigGenerationPrompt } from '../api/agent';
+import { useToolStore } from '../stores/toolStore';
+import { parseStreamingXml, createInitialXmlState, type XmlParseState } from '../utils/xmlParser';
 
 interface AgentFormProps {
   agent?: Agent;
@@ -39,6 +42,15 @@ export const AgentForm: React.FC<AgentFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // AI生成関連の状態
+  const [isGenerating, setIsGenerating] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_xmlBuffer, setXmlBuffer] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_xmlParseState, setXmlParseState] = useState<XmlParseState | null>(null);
+
+  const { tools } = useToolStore();
 
   // バリデーション
   const validateForm = (): boolean => {
@@ -136,6 +148,96 @@ export const AgentForm: React.FC<AgentFormProps> = ({
     }
   };
 
+  // AI生成機能
+  const handleAIGeneration = async () => {
+    if (!formData.name.trim() || !formData.description.trim()) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setXmlBuffer('');
+
+    // XMLパース状態を初期化
+    const initialParseState = createInitialXmlState();
+    setXmlParseState(initialParseState);
+
+    // 利用可能なツール名を取得
+    const availableTools = tools.map((tool) => tool.name);
+
+    // 生成プロンプトを作成
+    const generationPrompt = createAgentConfigGenerationPrompt(
+      formData.name,
+      formData.description,
+      availableTools
+    );
+
+    // 一意のセッションID生成
+    const sessionId = `ai-generation-${Date.now()}`;
+
+    try {
+      let currentParseState = initialParseState;
+      let accumulatedXml = '';
+
+      await streamAgentResponse(generationPrompt, sessionId, {
+        onTextDelta: (text: string) => {
+          accumulatedXml += text;
+          setXmlBuffer(accumulatedXml);
+
+          // XMLを逐次解析してフォームに反映
+          const { state: newParseState, updates } = parseStreamingXml(
+            accumulatedXml,
+            currentParseState
+          );
+          currentParseState = newParseState;
+          setXmlParseState(newParseState);
+
+          // システムプロンプトの更新
+          if (updates.systemPrompt !== undefined) {
+            setFormData((prev) => ({
+              ...prev,
+              systemPrompt: updates.systemPrompt || '',
+            }));
+          }
+
+          // ツール選択の更新
+          if (updates.newTool) {
+            setFormData((prev) => ({
+              ...prev,
+              enabledTools: [...new Set([...prev.enabledTools, updates.newTool!])],
+            }));
+          }
+
+          // シナリオの追加
+          if (updates.newScenario) {
+            setFormData((prev) => ({
+              ...prev,
+              scenarios: [...prev.scenarios, updates.newScenario!],
+            }));
+          }
+        },
+        onComplete: () => {
+          console.log('AI生成完了');
+          setIsGenerating(false);
+        },
+        onError: (error: Error) => {
+          console.error('AI生成エラー:', error);
+          setErrors((prev) => ({
+            ...prev,
+            generation: `生成に失敗しました: ${error.message}`,
+          }));
+          setIsGenerating(false);
+        },
+      });
+    } catch (error) {
+      console.error('AI生成エラー:', error);
+      setErrors((prev) => ({
+        ...prev,
+        generation: `生成に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+      }));
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div>
       <form id="agent-form" onSubmit={handleSubmit} className="space-y-6">
@@ -154,7 +256,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({
                 setErrors((prev) => ({ ...prev, name: '' }));
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isGenerating}
             placeholder="例: コードレビューAgent"
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
               errors.name ? 'border-red-500' : 'border-gray-300'
@@ -182,7 +284,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({
                 setErrors((prev) => ({ ...prev, description: '' }));
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isGenerating}
             placeholder="このAgentの用途や特徴を説明してください"
             rows={1}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none ${
@@ -199,9 +301,23 @@ export const AgentForm: React.FC<AgentFormProps> = ({
 
         {/* システムプロンプト */}
         <div>
-          <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-700 mb-2">
-            システムプロンプト <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="systemPrompt" className="text-sm font-medium text-gray-700">
+              システムプロンプト <span className="text-red-500">*</span>
+            </label>
+            {/* AI自動生成ボタン */}
+            <button
+              type="button"
+              onClick={handleAIGeneration}
+              disabled={
+                isLoading || isGenerating || !formData.name.trim() || !formData.description.trim()
+              }
+              className="inline-flex items-center space-x-1 px-2 py-1 text-xs text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>{isGenerating ? '生成中...' : 'AIで自動生成'}</span>
+            </button>
+          </div>
           <textarea
             id="systemPrompt"
             value={formData.systemPrompt}
@@ -211,7 +327,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({
                 setErrors((prev) => ({ ...prev, systemPrompt: '' }));
               }
             }}
-            disabled={isLoading}
+            disabled={isLoading || isGenerating}
             placeholder="このAgentの役割や振る舞いを定義してください"
             rows={6}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none ${
@@ -224,6 +340,14 @@ export const AgentForm: React.FC<AgentFormProps> = ({
               <span className="text-sm text-red-600">{errors.systemPrompt}</span>
             </div>
           )}
+
+          {/* 生成エラー表示 */}
+          {errors.generation && (
+            <div className="flex items-center space-x-1 mt-1">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              <span className="text-sm text-red-600">{errors.generation}</span>
+            </div>
+          )}
         </div>
 
         {/* ツール選択 */}
@@ -231,18 +355,18 @@ export const AgentForm: React.FC<AgentFormProps> = ({
           <ToolSelector
             selectedTools={formData.enabledTools}
             onSelectionChange={(tools) => setFormData((prev) => ({ ...prev, enabledTools: tools }))}
-            disabled={isLoading}
+            disabled={isLoading || isGenerating}
           />
         </div>
 
         {/* シナリオ管理 */}
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <label className="block text-sm font-medium text-gray-700">よく使うシナリオ</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-gray-700">Scenarios（オプション）</label>
             <button
               type="button"
               onClick={addScenario}
-              disabled={isLoading}
+              disabled={isLoading || isGenerating}
               className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
@@ -250,69 +374,74 @@ export const AgentForm: React.FC<AgentFormProps> = ({
             </button>
           </div>
 
-          {formData.scenarios.length === 0 ? (
-            <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-              シナリオがありません。「シナリオ追加」ボタンから追加してください。
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {formData.scenarios.map((scenario, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">シナリオ {index + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeScenario(index)}
-                      disabled={isLoading}
-                      className="text-red-500 hover:text-red-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+          <p className="text-sm text-gray-600 mb-4">
+            よく使用するやり取りのパターンをシナリオとして登録できます。シナリオのタイトルと具体的な内容を入力してください。
+          </p>
 
-                  <div>
-                    <input
-                      type="text"
-                      value={scenario.title}
-                      onChange={(e) => updateScenario(index, 'title', e.target.value)}
-                      disabled={isLoading}
-                      placeholder="シナリオタイトル（例: コードレビュー依頼）"
-                      className={`w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                        errors[`scenario_title_${index}`] ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors[`scenario_title_${index}`] && (
-                      <div className="flex items-center space-x-1 mt-1">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-600">
-                          {errors[`scenario_title_${index}`]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <textarea
-                      value={scenario.prompt}
-                      onChange={(e) => updateScenario(index, 'prompt', e.target.value)}
-                      disabled={isLoading}
-                      placeholder="プロンプトテンプレート"
-                      rows={3}
-                      className={`w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none ${
-                        errors[`scenario_prompt_${index}`] ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors[`scenario_prompt_${index}`] && (
-                      <div className="flex items-center space-x-1 mt-1">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-red-600">
-                          {errors[`scenario_prompt_${index}`]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+          <div className="space-y-3">
+            {formData.scenarios.map((scenario, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                {/* タイトル（左側・小さめ） */}
+                <div className="flex-shrink-0 w-48">
+                  <input
+                    type="text"
+                    value={scenario.title}
+                    onChange={(e) => updateScenario(index, 'title', e.target.value)}
+                    disabled={isLoading || isGenerating}
+                    placeholder="例: Python基礎レッスン"
+                    className={`w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                      errors[`scenario_title_${index}`] ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors[`scenario_title_${index}`] && (
+                    <div className="flex items-center space-x-1 mt-1">
+                      <AlertCircle className="w-3 h-3 text-red-500" />
+                      <span className="text-xs text-red-600">
+                        {errors[`scenario_title_${index}`]}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ))}
+
+                {/* プロンプト（右側・大きめ） */}
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={scenario.prompt}
+                    onChange={(e) => updateScenario(index, 'prompt', e.target.value)}
+                    disabled={isLoading || isGenerating}
+                    placeholder="例: Pythonの基本文法について説明してください"
+                    className={`w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                      errors[`scenario_prompt_${index}`] ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors[`scenario_prompt_${index}`] && (
+                    <div className="flex items-center space-x-1 mt-1">
+                      <AlertCircle className="w-3 h-3 text-red-500" />
+                      <span className="text-xs text-red-600">
+                        {errors[`scenario_prompt_${index}`]}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 削除ボタン（最右端） */}
+                <button
+                  type="button"
+                  onClick={() => removeScenario(index)}
+                  disabled={isLoading || isGenerating}
+                  className="flex-shrink-0 text-gray-400 hover:text-red-500 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* 空の状態 */}
+          {formData.scenarios.length === 0 && (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              シナリオを追加するには「シナリオ追加」ボタンをクリックしてください
             </div>
           )}
         </div>
