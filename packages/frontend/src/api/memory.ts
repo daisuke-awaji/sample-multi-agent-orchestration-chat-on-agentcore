@@ -6,11 +6,6 @@
 import { getValidAccessToken } from '../lib/cognito';
 
 /**
- * メモリタイプの型定義
- */
-export type MemoryType = 'preferences' | 'facts';
-
-/**
  * メモリレコードの型定義
  */
 export interface MemoryRecord {
@@ -33,7 +28,6 @@ export interface MemoryRecordList {
  * セマンティック検索のリクエスト型定義
  */
 export interface SearchMemoryRequest {
-  type: MemoryType;
   query: string;
   topK?: number;
   relevanceScore?: number;
@@ -70,17 +64,16 @@ async function createAuthHeaders(): Promise<Record<string, string>> {
 
 /**
  * メモリレコード一覧を取得
- * @param type メモリタイプ (preferences または facts)
  * @returns メモリレコード一覧
  */
-export async function fetchMemoryRecords(type: MemoryType): Promise<MemoryRecordList> {
+export async function fetchMemoryRecords(): Promise<MemoryRecordList> {
   try {
     const baseUrl = getBackendBaseUrl();
     const headers = await createAuthHeaders();
 
-    console.log(`📋 メモリレコード取得開始: ${type}`);
+    console.log(`📋 メモリレコード取得開始`);
 
-    const response = await fetch(`${baseUrl}/memory/records?type=${encodeURIComponent(type)}`, {
+    const response = await fetch(`${baseUrl}/memory/records`, {
       method: 'GET',
       headers,
     });
@@ -107,9 +100,8 @@ export async function fetchMemoryRecords(type: MemoryType): Promise<MemoryRecord
 /**
  * メモリレコードを削除
  * @param recordId レコードID
- * @param type メモリタイプ (preferences または facts)
  */
-export async function deleteMemoryRecord(recordId: string, type: MemoryType): Promise<void> {
+export async function deleteMemoryRecord(recordId: string): Promise<void> {
   try {
     const baseUrl = getBackendBaseUrl();
     const headers = await createAuthHeaders();
@@ -119,7 +111,6 @@ export async function deleteMemoryRecord(recordId: string, type: MemoryType): Pr
     const response = await fetch(`${baseUrl}/memory/records/${recordId}`, {
       method: 'DELETE',
       headers,
-      body: JSON.stringify({ type }),
     });
 
     if (!response.ok) {
@@ -150,7 +141,7 @@ export async function searchMemoryRecords(
     const baseUrl = getBackendBaseUrl();
     const headers = await createAuthHeaders();
 
-    console.log(`🔍 メモリ検索開始: "${searchRequest.query}" in ${searchRequest.type}`);
+    console.log(`🔍 メモリ検索開始: "${searchRequest.query}"`);
 
     const response = await fetch(`${baseUrl}/memory/search`, {
       method: 'POST',

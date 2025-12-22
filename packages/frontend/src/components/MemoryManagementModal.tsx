@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Trash2, Brain, AlertCircle, Loader2 } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
-import { type MemoryRecord, type MemoryType } from '../api/memory';
+import { type MemoryRecord } from '../api/memory';
 import { Modal } from './ui/Modal/Modal';
 
 interface MemoryManagementModalProps {
@@ -19,15 +19,14 @@ interface MemoryManagementModalProps {
  */
 interface MemoryRecordItemProps {
   record: MemoryRecord;
-  recordType: MemoryType;
-  onDelete: (recordId: string, type: MemoryType) => void;
+  onDelete: (recordId: string) => void;
   isDeleting: boolean;
 }
 
-function MemoryRecordItem({ record, recordType, onDelete, isDeleting }: MemoryRecordItemProps) {
+function MemoryRecordItem({ record, onDelete, isDeleting }: MemoryRecordItemProps) {
   const handleDelete = () => {
     if (window.confirm('このメモリを削除しますか？')) {
-      onDelete(record.recordId, recordType);
+      onDelete(record.recordId);
     }
   };
 
@@ -71,8 +70,7 @@ function MemoryRecordItem({ record, recordType, onDelete, isDeleting }: MemoryRe
  */
 export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModalProps) {
   const {
-    preferenceRecords,
-    factRecords,
+    records,
     isLoading,
     isDeleting,
     error,
@@ -85,13 +83,13 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MemoryRecord[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [activeTab, setActiveTab] = useState<'preferences' | 'facts'>('preferences');
 
   // モーダル表示時にデータを読み込み
   useEffect(() => {
-    loadMemoryRecords('preferences');
-    loadMemoryRecords('facts');
-  }, [loadMemoryRecords]);
+    if (isOpen) {
+      loadMemoryRecords();
+    }
+  }, [isOpen, loadMemoryRecords]);
 
   // 検索実行
   const handleSearch = async () => {
@@ -102,9 +100,8 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
 
     setIsSearching(true);
     try {
-      const preferencesResults = await searchMemoryRecords(searchQuery, 'preferences');
-      const factsResults = await searchMemoryRecords(searchQuery, 'facts');
-      setSearchResults([...preferencesResults, ...factsResults]);
+      const results = await searchMemoryRecords(searchQuery);
+      setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -126,18 +123,12 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
   };
 
   // 削除処理
-  const handleDelete = (recordId: string, type: MemoryType) => {
-    deleteMemoryRecord(recordId, type);
+  const handleDelete = (recordId: string) => {
+    deleteMemoryRecord(recordId);
   };
 
-  // 表示するレコード（検索中は検索結果、通常時は選択されたタブのレコード）
-  const displayRecords = searchQuery
-    ? searchResults
-    : activeTab === 'preferences'
-      ? preferenceRecords
-      : factRecords;
-
-  const totalRecords = preferenceRecords.length + factRecords.length;
+  // 表示するレコード（検索中は検索結果、通常時は全レコード）
+  const displayRecords = searchQuery ? searchResults : records;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" className="max-w-4xl">
@@ -195,36 +186,8 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
         </div>
       </div>
 
-      {/* タブ切り替え（検索時は非表示） */}
-      {!searchQuery && (
-        <div className="border-b border-gray-200">
-          <nav className="flex">
-            <button
-              onClick={() => setActiveTab('preferences')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'preferences'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              嗜好 ({preferenceRecords.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('facts')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'facts'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              事実 ({factRecords.length})
-            </button>
-          </nav>
-        </div>
-      )}
-
       {/* コンテンツエリア */}
-      <div className="px-6 py-4 max-h-96 overflow-y-auto">
+      <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0">
         {/* エラー表示 */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
@@ -266,11 +229,11 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
                 <p className="text-sm text-gray-600 mb-2">
                   {searchQuery
                     ? '検索結果が見つかりませんでした'
-                    : totalRecords === 0
+                    : records.length === 0
                       ? 'まだメモリが保存されていません'
-                      : `${activeTab === 'preferences' ? '嗜好' : '事実'}のメモリがありません`}
+                      : 'メモリがありません'}
                 </p>
-                {!searchQuery && totalRecords === 0 && (
+                {!searchQuery && records.length === 0 && (
                   <p className="text-xs text-gray-500">
                     エージェントとの会話を続けると、自動的にメモリが蓄積されます
                   </p>
@@ -278,29 +241,14 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
               </div>
             ) : (
               <div className="space-y-3">
-                {displayRecords.map((record, index) => {
-                  // レコードの所属するタイプを判定
-                  let recordType: MemoryType;
-                  if (searchQuery) {
-                    // 検索結果の場合、どちらの配列に含まれているかで判定
-                    recordType = preferenceRecords.some((r) => r.recordId === record.recordId)
-                      ? 'preferences'
-                      : 'facts';
-                  } else {
-                    // タブ表示の場合、現在のタブを使用
-                    recordType = activeTab;
-                  }
-
-                  return (
-                    <MemoryRecordItem
-                      key={record.recordId || `memory-${index}`}
-                      record={record}
-                      recordType={recordType}
-                      onDelete={handleDelete}
-                      isDeleting={isDeleting === record.recordId}
-                    />
-                  );
-                })}
+                {displayRecords.map((record, index) => (
+                  <MemoryRecordItem
+                    key={record.recordId || `memory-${index}`}
+                    record={record}
+                    onDelete={handleDelete}
+                    isDeleting={isDeleting === record.recordId}
+                  />
+                ))}
               </div>
             )}
           </>
@@ -310,7 +258,9 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
       {/* フッター */}
       <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
         <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-500">合計 {totalRecords} 件のメモリが保存されています</p>
+          <p className="text-xs text-gray-500">
+            合計 {records.length} 件のメモリが保存されています
+          </p>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"

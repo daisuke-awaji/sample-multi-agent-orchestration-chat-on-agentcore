@@ -7,6 +7,12 @@ import {
 } from 'amazon-cognito-identity-js';
 import type { User } from '../types/index';
 
+// Cognito エラー型定義
+interface CognitoError extends Error {
+  code?: string;
+  name: string;
+}
+
 // Cognito設定（環境変数から取得）
 const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID || '';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '';
@@ -240,15 +246,16 @@ export const signUpUser = async (
       }),
     ];
 
-    userPool.signUp(username, password, attributeList, [], (err, _result) => {
+    userPool.signUp(username, password, attributeList, [], (err) => {
       if (err) {
         let errorMessage = 'サインアップに失敗しました';
 
-        if ((err as any).code === 'UsernameExistsException') {
+        const cognitoError = err as CognitoError;
+        if (cognitoError.code === 'UsernameExistsException') {
           errorMessage = 'このユーザー名は既に使用されています';
-        } else if ((err as any).code === 'InvalidPasswordException') {
+        } else if (cognitoError.code === 'InvalidPasswordException') {
           errorMessage = 'パスワードが要件を満たしていません';
-        } else if ((err as any).code === 'InvalidParameterException') {
+        } else if (cognitoError.code === 'InvalidParameterException') {
           errorMessage = '入力値が正しくありません';
         } else if (err.message) {
           errorMessage = err.message;
@@ -273,15 +280,16 @@ export const confirmSignUp = async (username: string, code: string): Promise<voi
       Pool: userPool,
     });
 
-    cognitoUser.confirmRegistration(code, true, (err, _result) => {
+    cognitoUser.confirmRegistration(code, true, (err) => {
       if (err) {
         let errorMessage = '確認に失敗しました';
 
-        if ((err as any).code === 'CodeMismatchException') {
+        const cognitoError = err as CognitoError;
+        if (cognitoError.code === 'CodeMismatchException') {
           errorMessage = '確認コードが正しくありません';
-        } else if ((err as any).code === 'ExpiredCodeException') {
+        } else if (cognitoError.code === 'ExpiredCodeException') {
           errorMessage = '確認コードの有効期限が切れています';
-        } else if ((err as any).code === 'UserNotFoundException') {
+        } else if (cognitoError.code === 'UserNotFoundException') {
           errorMessage = 'ユーザーが見つかりません';
         } else if (err.message) {
           errorMessage = err.message;
@@ -306,13 +314,14 @@ export const resendConfirmationCode = async (username: string): Promise<void> =>
       Pool: userPool,
     });
 
-    cognitoUser.resendConfirmationCode((err, _result) => {
+    cognitoUser.resendConfirmationCode((err) => {
       if (err) {
         let errorMessage = '確認コードの再送に失敗しました';
 
-        if ((err as any).code === 'UserNotFoundException') {
+        const cognitoError = err as CognitoError;
+        if (cognitoError.code === 'UserNotFoundException') {
           errorMessage = 'ユーザーが見つかりません';
-        } else if ((err as any).code === 'InvalidParameterException') {
+        } else if (cognitoError.code === 'InvalidParameterException') {
           errorMessage = 'ユーザーは既に確認済みです';
         } else if (err.message) {
           errorMessage = err.message;

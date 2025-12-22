@@ -10,7 +10,6 @@ import {
   deleteMemoryRecord as apiDeleteMemoryRecord,
   searchMemoryRecords as apiSearchMemoryRecords,
   type MemoryRecord,
-  type MemoryType,
 } from '../api/memory';
 
 /**
@@ -20,9 +19,8 @@ interface MemoryState {
   // メモリ参照のON/OFF設定
   isMemoryEnabled: boolean;
 
-  // メモリレコード（preferences と facts）
-  preferenceRecords: MemoryRecord[];
-  factRecords: MemoryRecord[];
+  // メモリレコード（統一）
+  records: MemoryRecord[];
 
   // ローディング状態
   isLoading: boolean;
@@ -32,14 +30,13 @@ interface MemoryState {
   error: string | null;
 
   // ページネーション
-  preferenceNextToken?: string;
-  factNextToken?: string;
+  nextToken?: string;
 
   // アクション
   setMemoryEnabled: (enabled: boolean) => void;
-  loadMemoryRecords: (type: MemoryType) => Promise<void>;
-  deleteMemoryRecord: (recordId: string, type: MemoryType) => Promise<void>;
-  searchMemoryRecords: (query: string, type: MemoryType) => Promise<MemoryRecord[]>;
+  loadMemoryRecords: () => Promise<void>;
+  deleteMemoryRecord: (recordId: string) => Promise<void>;
+  searchMemoryRecords: (query: string) => Promise<MemoryRecord[]>;
   clearError: () => void;
 }
 
@@ -51,8 +48,7 @@ export const useMemoryStore = create<MemoryState>()(
     (set, get) => ({
       // 初期状態
       isMemoryEnabled: true, // デフォルトはON
-      preferenceRecords: [],
-      factRecords: [],
+      records: [],
       isLoading: false,
       isDeleting: null,
       error: null,
@@ -68,31 +64,24 @@ export const useMemoryStore = create<MemoryState>()(
       /**
        * メモリレコード一覧を取得
        */
-      loadMemoryRecords: async (type: MemoryType) => {
+      loadMemoryRecords: async () => {
         try {
           set({ isLoading: true, error: null });
 
-          const data = await fetchMemoryRecords(type);
+          const data = await fetchMemoryRecords();
 
           // 状態を更新
-          if (type === 'preferences') {
-            set({
-              preferenceRecords: data.records,
-              preferenceNextToken: data.nextToken,
-            });
-          } else {
-            set({
-              factRecords: data.records,
-              factNextToken: data.nextToken,
-            });
-          }
+          set({
+            records: data.records,
+            nextToken: data.nextToken,
+          });
 
-          console.log(`[MemoryStore] Loaded ${data.records.length} ${type} records`);
+          console.log(`[MemoryStore] Loaded ${data.records.length} records`);
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : '不明なエラーが発生しました';
           set({ error: errorMessage });
-          console.error(`[MemoryStore] Error loading ${type} records:`, error);
+          console.error(`[MemoryStore] Error loading records:`, error);
         } finally {
           set({ isLoading: false });
         }
@@ -101,25 +90,17 @@ export const useMemoryStore = create<MemoryState>()(
       /**
        * メモリレコードを削除
        */
-      deleteMemoryRecord: async (recordId: string, type: MemoryType) => {
+      deleteMemoryRecord: async (recordId: string) => {
         try {
           set({ isDeleting: recordId, error: null });
 
-          await apiDeleteMemoryRecord(recordId, type);
+          await apiDeleteMemoryRecord(recordId);
 
           // ローカル状態からレコードを削除
           const currentState = get();
-          if (type === 'preferences') {
-            set({
-              preferenceRecords: currentState.preferenceRecords.filter(
-                (r) => r.recordId !== recordId
-              ),
-            });
-          } else if (type === 'facts') {
-            set({
-              factRecords: currentState.factRecords.filter((r) => r.recordId !== recordId),
-            });
-          }
+          set({
+            records: currentState.records.filter((r) => r.recordId !== recordId),
+          });
 
           console.log(`[MemoryStore] Deleted memory record: ${recordId}`);
         } catch (error) {
@@ -134,10 +115,9 @@ export const useMemoryStore = create<MemoryState>()(
       /**
        * メモリレコードをセマンティック検索
        */
-      searchMemoryRecords: async (query: string, type: MemoryType): Promise<MemoryRecord[]> => {
+      searchMemoryRecords: async (query: string): Promise<MemoryRecord[]> => {
         try {
           const records = await apiSearchMemoryRecords({
-            type,
             query,
             topK: 20,
             relevanceScore: 0.2,

@@ -11,6 +11,10 @@ import {
   DeleteMemoryRecordCommand,
   RetrieveMemoryRecordsCommand,
 } from '@aws-sdk/client-bedrock-agentcore';
+import {
+  BedrockAgentCoreControlClient,
+  GetMemoryCommand,
+} from '@aws-sdk/client-bedrock-agentcore-control';
 import { config } from '../config/index.js';
 
 /**
@@ -278,7 +282,10 @@ export interface MemoryRecordList {
  */
 export class AgentCoreMemoryService {
   private client: BedrockAgentCoreClient;
+  private controlClient: BedrockAgentCoreControlClient;
   private memoryId: string;
+  private region: string;
+  private cachedStrategyId: string | null = null;
 
   constructor(memoryId?: string, region: string = 'us-east-1') {
     if (!memoryId) {
@@ -286,7 +293,64 @@ export class AgentCoreMemoryService {
     }
 
     this.client = new BedrockAgentCoreClient({ region });
+    this.controlClient = new BedrockAgentCoreControlClient({ region });
     this.memoryId = memoryId;
+    this.region = region;
+  }
+
+  /**
+   * セマンティックメモリ戦略IDを取得（キャッシュ付き）
+   * @returns セマンティックメモリ戦略ID
+   */
+  async getSemanticMemoryStrategyId(): Promise<string> {
+    if (this.cachedStrategyId) {
+      console.log(
+        `[AgentCoreMemoryService] キャッシュされた strategyId を使用: ${this.cachedStrategyId}`
+      );
+      return this.cachedStrategyId;
+    }
+
+    try {
+      console.log(
+        `[AgentCoreMemoryService] GetMemory API で strategyId を取得中: memoryId=${this.memoryId}`
+      );
+
+      const command = new GetMemoryCommand({
+        memoryId: this.memoryId,
+      });
+
+      const response = await this.controlClient.send(command);
+
+      if (!response.memory?.strategies || response.memory.strategies.length === 0) {
+        console.warn('[AgentCoreMemoryService] Memory に strategies が見つかりません');
+        this.cachedStrategyId = 'semantic_memory_strategy'; // フォールバック
+        return this.cachedStrategyId;
+      }
+
+      // name が 'semantic_memory_strategy' で始まる strategy を検索
+      const semanticStrategy = response.memory.strategies.find((strategy) =>
+        strategy.name?.startsWith('semantic_memory_strategy')
+      );
+
+      if (semanticStrategy?.strategyId) {
+        this.cachedStrategyId = semanticStrategy.strategyId;
+        console.log(
+          `[AgentCoreMemoryService] セマンティック戦略ID を取得: ${this.cachedStrategyId}`
+        );
+      } else {
+        console.warn(
+          '[AgentCoreMemoryService] セマンティック戦略が見つかりません、フォールバックを使用'
+        );
+        this.cachedStrategyId = 'semantic_memory_strategy'; // フォールバック
+      }
+
+      return this.cachedStrategyId;
+    } catch (error) {
+      console.error('[AgentCoreMemoryService] GetMemory API エラー:', error);
+      // エラー時はフォールバック値を使用
+      this.cachedStrategyId = 'semantic_memory_strategy';
+      return this.cachedStrategyId;
+    }
   }
 
   /**

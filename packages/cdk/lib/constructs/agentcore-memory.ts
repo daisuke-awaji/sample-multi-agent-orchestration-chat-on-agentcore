@@ -48,7 +48,8 @@ export interface AgentCoreMemoryProps {
 
   /**
    * Memory作成時に組み込み戦略を使用するかどうか
-   * true の場合、Summarization、Semantic、UserPreference 戦略を自動で追加
+   * true の場合、Semantic 戦略（セマンティック記憶戦略）を自動で追加
+   * 会話から一般的な事実、概念、意味を抽出してベクター埋め込みで類似度検索を行う
    * デフォルト: false
    */
   readonly useBuiltInStrategies?: boolean;
@@ -100,9 +101,11 @@ export class AgentCoreMemory extends Construct {
     // 組み込み戦略を使用する場合
     if (props.useBuiltInStrategies && !memoryStrategies) {
       memoryStrategies = [
-        agentcore.MemoryStrategy.usingBuiltInSummarization(),
-        agentcore.MemoryStrategy.usingBuiltInSemantic(),
-        agentcore.MemoryStrategy.usingBuiltInUserPreference(),
+        agentcore.MemoryStrategy.usingSemantic({
+          name: 'semantic_memory_strategy',
+          namespaces: ['/strategies/{memoryStrategyId}/actors/{actorId}'],
+          description: 'セマンティック記憶戦略 - 会話から一般的な事実、概念、意味を抽出',
+        }),
       ];
     }
 

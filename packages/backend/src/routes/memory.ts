@@ -10,31 +10,10 @@ import type { AuthenticatedRequest } from '../middleware/auth.js';
 const router = Router();
 
 /**
- * メモリタイプと記憶戦略IDのマッピング
- */
-const MEMORY_STRATEGY_MAP = {
-  preferences: 'preference_builtin_cdkGen0001-L84bdDEgeO',
-  facts: 'semantic_builtin_cdkGen0001-i5KqT8FRLs',
-} as const;
-
-/**
- * メモリタイプの型定義
- */
-type MemoryType = keyof typeof MEMORY_STRATEGY_MAP;
-
-/**
- * メモリタイプの検証
- */
-function isValidMemoryType(type: string): type is MemoryType {
-  return type in MEMORY_STRATEGY_MAP;
-}
-
-/**
  * 長期記憶レコード一覧を取得
  * GET /api/memory/records
  *
  * Query Parameters:
- * - type: メモリタイプ (preferences または facts)
  * - nextToken: ページネーション用トークン (オプション)
  */
 router.get('/records', async (req: AuthenticatedRequest, res: Response) => {
@@ -44,34 +23,18 @@ router.get('/records', async (req: AuthenticatedRequest, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { type, nextToken } = req.query;
-
-    // type の検証
-    if (!type || typeof type !== 'string') {
-      return res.status(400).json({
-        error: 'type query parameter is required (preferences or facts)',
-      });
-    }
-
-    // 許可されたtypeのみ受け付ける
-    if (!isValidMemoryType(type)) {
-      return res.status(400).json({
-        error: `Invalid type. Allowed types: ${Object.keys(MEMORY_STRATEGY_MAP).join(', ')}`,
-      });
-    }
-
-    // typeを memoryStrategyId に変換
-    const memoryStrategyId = MEMORY_STRATEGY_MAP[type];
+    const { nextToken } = req.query;
 
     const memoryService = createAgentCoreMemoryService();
+    const strategyId = await memoryService.getSemanticMemoryStrategyId();
     const result = await memoryService.listMemoryRecords(
       userId,
-      memoryStrategyId,
+      strategyId,
       typeof nextToken === 'string' ? nextToken : undefined
     );
 
     console.log(
-      `[Memory API] Retrieved ${result.records.length} memory records for user: ${userId}, type: ${type}`
+      `[Memory API] Retrieved ${result.records.length} memory records for user: ${userId}`
     );
 
     res.json({
@@ -93,9 +56,6 @@ router.get('/records', async (req: AuthenticatedRequest, res: Response) => {
  *
  * Parameters:
  * - recordId: 削除するレコードID
- *
- * Body:
- * - type: メモリタイプ (preferences または facts)
  */
 router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -105,35 +65,17 @@ router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Respo
     }
 
     const { recordId } = req.params;
-    const { type } = req.body;
 
     // パラメータの検証
     if (!recordId) {
       return res.status(400).json({ error: 'recordId parameter is required' });
     }
 
-    if (!type || typeof type !== 'string') {
-      return res
-        .status(400)
-        .json({ error: 'type is required in request body (preferences or facts)' });
-    }
-
-    // 許可されたtypeのみ受け付ける
-    if (!isValidMemoryType(type)) {
-      return res.status(400).json({
-        error: `Invalid type. Allowed types: ${Object.keys(MEMORY_STRATEGY_MAP).join(', ')}`,
-      });
-    }
-
-    // typeを memoryStrategyId に変換
-    const memoryStrategyId = MEMORY_STRATEGY_MAP[type];
-
     const memoryService = createAgentCoreMemoryService();
-    await memoryService.deleteMemoryRecord(userId, memoryStrategyId, recordId);
+    const strategyId = await memoryService.getSemanticMemoryStrategyId();
+    await memoryService.deleteMemoryRecord(userId, strategyId, recordId);
 
-    console.log(
-      `[Memory API] Deleted memory record: ${recordId} for user: ${userId}, type: ${type}`
-    );
+    console.log(`[Memory API] Deleted memory record: ${recordId} for user: ${userId}`);
 
     res.json({
       success: true,
@@ -154,7 +96,6 @@ router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Respo
  * POST /api/memory/search
  *
  * Body:
- * - type: メモリタイプ (preferences または facts)
  * - query: 検索クエリ
  * - topK: 取得件数 (オプション、デフォルト: 10)
  * - relevanceScore: 関連度スコアの閾値 (オプション、デフォルト: 0.2)
@@ -166,22 +107,11 @@ router.post('/search', async (req: AuthenticatedRequest, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { type, query, topK = 10, relevanceScore = 0.2 } = req.body;
+    const { query, topK = 10, relevanceScore = 0.2 } = req.body;
 
     // パラメータの検証
-    if (!type || typeof type !== 'string') {
-      return res.status(400).json({ error: 'type is required (preferences or facts)' });
-    }
-
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'query is required' });
-    }
-
-    // 許可されたtypeのみ受け付ける
-    if (!isValidMemoryType(type)) {
-      return res.status(400).json({
-        error: `Invalid type. Allowed types: ${Object.keys(MEMORY_STRATEGY_MAP).join(', ')}`,
-      });
     }
 
     // 数値パラメータの検証
@@ -197,20 +127,18 @@ router.post('/search', async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ error: 'relevanceScore must be a number between 0 and 1' });
     }
 
-    // typeを memoryStrategyId に変換
-    const memoryStrategyId = MEMORY_STRATEGY_MAP[type];
-
     const memoryService = createAgentCoreMemoryService();
+    const strategyId = await memoryService.getSemanticMemoryStrategyId();
     const records = await memoryService.retrieveMemoryRecords(
       userId,
-      memoryStrategyId,
+      strategyId,
       query,
       topKNum,
       relevanceScoreNum
     );
 
     console.log(
-      `[Memory API] Retrieved ${records.length} search results for query: "${query}" for user: ${userId}, type: ${type}`
+      `[Memory API] Retrieved ${records.length} search results for query: "${query}" for user: ${userId}`
     );
 
     res.json({ records });
