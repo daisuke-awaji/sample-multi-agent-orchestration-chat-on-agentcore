@@ -59,6 +59,13 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // テストファイル専用設定: no-explicit-any を無効化
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
   {
     ignores: ['**/dist/**', '**/node_modules/**', 'cdk.out/**'],
   }
