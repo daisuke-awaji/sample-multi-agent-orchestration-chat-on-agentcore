@@ -36,6 +36,53 @@ interface MCPToolDefinition {
 }
 
 /**
+ * デフォルトコンテキストを生成
+ * @param tools 有効なツール一覧
+ * @param mcpTools MCP ツール定義一覧
+ */
+function generateDefaultContext(
+  tools: Array<{ name: string; description?: string }>,
+  mcpTools: MCPToolDefinition[]
+): string {
+  // 現在時刻をISO 8601形式（UTC）で取得
+  const now = new Date();
+  const currentTime = now.toISOString();
+
+  // ツール一覧をフォーマット（英語）
+  const toolDescriptions: string[] = [];
+
+  tools.forEach((tool) => {
+    if (tool.name === 'get_weather') {
+      // ローカルツール
+      toolDescriptions.push(`    - ${tool.name}: Get weather information for a specified city`);
+    } else {
+      // MCP ツール
+      const mcpTool = mcpTools.find((mcp) => mcp.name === tool.name);
+      const description = mcpTool?.description || 'No description available';
+      toolDescriptions.push(`    - ${tool.name}: ${description}`);
+    }
+  });
+
+  const availableTools = toolDescriptions.length > 0 ? toolDescriptions.join('\n') : '    - None';
+
+  // Markdown 描画ルールを英語で定義
+  const markdownRules = `    This system supports the following Markdown formats:
+    - Mermaid diagram notation (\`\`\`mermaid ... \`\`\`)
+    - LaTeX math notation (inline: $...$, block: $$...$$)`;
+
+  return `
+<context>
+  <current_time>${currentTime}</current_time>
+  <available_tools>
+${availableTools}
+  </available_tools>
+  <markdown_rules>
+${markdownRules}
+  </markdown_rules>
+</context>`;
+}
+
+/**
  * プロパティキー名をサニタイズ（Bedrock の制約に適合させる）
  * パターン: ^[a-zA-Z0-9_.-]{1,64}$
  */
@@ -227,11 +274,11 @@ export async function createAgent(
     logger.info(`🤖 使用モデル: ${modelId}`);
 
     // 6. システムプロンプトの設定
-    let systemPrompt: string;
+    let baseSystemPrompt: string;
 
     if (options?.systemPrompt) {
       // カスタムシステムプロンプトが指定されている場合
-      systemPrompt = options.systemPrompt;
+      baseSystemPrompt = options.systemPrompt;
       logger.info('📝 カスタムシステムプロンプトを使用');
     } else {
       // デフォルトのシステムプロンプトを生成
@@ -248,13 +295,19 @@ export async function createAgent(
 
       const allToolDescriptions = [...localToolDescriptions, ...gatewayToolDescriptions];
 
-      systemPrompt = `あなたは AgentCore Runtime で動作する AI アシスタントです。
+      baseSystemPrompt = `あなたは AgentCore Runtime で動作する AI アシスタントです。
 
 ${allToolDescriptions.length > 0 ? `利用可能なツール:\n${allToolDescriptions.join('\n')}\n\n` : ''}ユーザーからの質問に日本語で丁寧に応答し、必要に応じて適切なツールを呼び出してください。
 技術的な内容についても分かりやすく説明してください。`;
 
       logger.info('📝 デフォルトシステムプロンプトを生成');
     }
+
+    // 7. デフォルトコンテキストを付与してシステムプロンプトを完成
+    const defaultContext = generateDefaultContext(allTools, mcpTools as MCPToolDefinition[]);
+    const systemPrompt = baseSystemPrompt + defaultContext;
+
+    logger.info('📝 デフォルトコンテキストを付与したシステムプロンプトを生成');
 
     // 7. Agent の作成
     const agent = new Agent({

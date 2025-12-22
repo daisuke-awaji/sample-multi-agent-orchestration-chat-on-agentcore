@@ -1,12 +1,15 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Message as MessageType } from '../types/index';
 import { TypingIndicator } from './TypingIndicator';
 import { ToolUseBlock } from './ToolUseBlock';
 import { ToolResultBlock } from './ToolResultBlock';
+import { MermaidDiagram } from './MermaidDiagram';
 
 interface MessageProps {
   message: MessageType;
@@ -26,17 +29,30 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     code: ({ inline, className, children, ...props }: any) => {
       const match = /language-(\w+)/.exec(className || '');
-      return !inline && match ? (
-        <SyntaxHighlighter
-          style={oneLight}
-          language={match[1]}
-          PreTag="div"
-          className="rounded-lg"
-          {...props}
-        >
-          {String(children).replace(/\n$/, '')}
-        </SyntaxHighlighter>
-      ) : (
+      const language = match ? match[1] : '';
+
+      if (!inline && match) {
+        // Mermaid図の場合
+        if (language === 'mermaid') {
+          return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
+        }
+
+        // その他のコードブロック
+        return (
+          <SyntaxHighlighter
+            style={oneLight}
+            language={language}
+            PreTag="div"
+            className="rounded-lg"
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        );
+      }
+
+      // インラインコード
+      return (
         <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
           {children}
         </code>
@@ -107,7 +123,8 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                       return (
                         <div key={`text-${index}`} className="markdown-content">
                           <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
+                            remarkPlugins={[remarkGfm, remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
                             components={markdownComponents}
                           >
                             {content.text || ''}

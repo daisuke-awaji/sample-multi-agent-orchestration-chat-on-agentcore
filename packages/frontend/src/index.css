@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* KaTeX CSS for math rendering */
+@import url('katex/dist/katex.min.css');
+
 @layer base {
   body {
     @apply bg-white text-gray-900 font-sans antialiased;
