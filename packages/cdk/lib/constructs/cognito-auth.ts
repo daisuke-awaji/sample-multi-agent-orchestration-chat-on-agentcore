@@ -119,7 +119,7 @@ export class CognitoAuth extends Construct {
       customAttributes: {},
 
       // アカウント復旧
-      accountRecovery: cognito.AccountRecovery.NONE,
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
     });
 
     // App Client 作成
@@ -172,23 +172,6 @@ export class CognitoAuth extends Construct {
       value: this.discoveryUrl,
       description: 'OIDC Discovery URL for JWT authentication',
       exportName: `${cdk.Stack.of(this).stackName}-DiscoveryUrl`,
-    });
-  }
-
-  /**
-   * 管理者によるユーザー作成のヘルパーメソッド
-   */
-  public addUser(id: string, username: string, password: string): cognito.CfnUserPoolUser {
-    return new cognito.CfnUserPoolUser(this, id, {
-      userPoolId: this.userPoolId,
-      username: username,
-      messageAction: 'SUPPRESS', // ウェルカムメール無効
-      userAttributes: [
-        {
-          name: 'email_verified',
-          value: 'true',
-        },
-      ],
     });
   }
 

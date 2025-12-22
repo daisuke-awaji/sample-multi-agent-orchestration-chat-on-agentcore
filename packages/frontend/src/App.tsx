@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
-import { LoginForm } from './features/auth/LoginForm';
+import { AuthContainer } from './features/auth/AuthContainer';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { ChatPage } from './pages/ChatPage';
@@ -55,7 +55,7 @@ function App() {
     );
   }
 
-  return <LoginForm />;
+  return <AuthContainer />;
 }
 
 export default App;

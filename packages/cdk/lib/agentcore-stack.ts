@@ -112,6 +112,12 @@ export class AgentCoreStack extends cdk.Stack {
       userPoolName: `${gatewayName}-user-pool`,
       appClientName: `${gatewayName}-client`,
       deletionProtection: false, // 開発環境用
+      userPoolConfig: {
+        selfSignUpEnabled: true, // セルフサインアップを有効化
+        autoVerify: {
+          email: true, // メール自動検証を有効化
+        },
+      },
     });
 
     // 2. AgentCore Gateway の作成
