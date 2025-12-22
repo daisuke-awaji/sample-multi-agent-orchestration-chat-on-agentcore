@@ -35,7 +35,7 @@ async function handleEcho(input: ToolInput): Promise<EchoResult> {
   const echoInput = input as EchoInput;
 
   // 入力検証
-  if (!echoInput.message) {
+  if (echoInput.message === undefined || echoInput.message === null) {
     throw new ToolValidationError("Echo tool requires a 'message' parameter", 'echo', 'message');
   }
 
