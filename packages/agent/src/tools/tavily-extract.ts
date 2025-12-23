@@ -54,6 +54,7 @@ function truncateContent(content: string, maxLength: number = 3000): string {
 /**
  * Tavily Extract API を呼び出す
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function callTavilyExtractAPI(params: Record<string, any>): Promise<TavilyExtractResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
 
@@ -181,6 +182,7 @@ export const tavilyExtractTool = tool({
 
     try {
       // API パラメータの構築
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiParams: Record<string, any> = {
         urls: urlArray,
         extract_depth: extractDepth,

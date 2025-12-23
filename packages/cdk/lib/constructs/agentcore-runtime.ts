@@ -263,7 +263,10 @@ export class AgentCoreRuntime extends Construct {
           'bedrock-agentcore:GetCodeInterpreterSession',
           'bedrock-agentcore:ListCodeInterpreterSessions',
         ],
-        resources: [`arn:aws:bedrock-agentcore:${region}:${account}:code-interpreter/*`],
+        resources: [
+          `arn:aws:bedrock-agentcore:${region}:${account}:code-interpreter/*`,
+          `arn:aws:bedrock-agentcore:${region}:aws:code-interpreter/*`, // AWSマネージドCode Interpreter
+        ],
       })
     );
 

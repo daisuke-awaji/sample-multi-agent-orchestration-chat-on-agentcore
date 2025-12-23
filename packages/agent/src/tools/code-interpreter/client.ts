@@ -569,6 +569,7 @@ print("__DOWNLOAD_RESULTS_END__")
         };
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let fileResults: Record<string, any>;
       try {
         fileResults = JSON.parse(resultsJson);
@@ -668,11 +669,13 @@ print("__DOWNLOAD_RESULTS_END__")
   /**
    * ストリーミングレスポンスからツール結果を作成
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async createToolResult(response: any): Promise<ToolResult> {
     logger.debug(`Processing response: ${JSON.stringify(response, null, 2)}`);
 
     if (response.stream) {
       // ストリーミングレスポンスを処理
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const results: any[] = [];
 
       try {

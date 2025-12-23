@@ -51,6 +51,7 @@ function truncateContent(content: string, maxLength: number = 2500): string {
 /**
  * Tavily Crawl API を呼び出す
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function callTavilyCrawlAPI(params: Record<string, any>): Promise<TavilyCrawlResponse> {
   const apiKey = process.env.TAVILY_API_KEY;
 
@@ -206,6 +207,7 @@ export const tavilyCrawlTool = tool({
 
     try {
       // API パラメータの構築
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiParams: Record<string, any> = {
         url,
         max_depth: maxDepth,

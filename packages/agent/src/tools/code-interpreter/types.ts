@@ -9,7 +9,7 @@ export type LanguageType = 'python' | 'javascript' | 'typescript';
  */
 export interface ToolResult {
   status: 'success' | 'error';
-  content: Array<{ text?: string; json?: any }>;
+  content: Array<{ text?: string; json?: unknown }>;
 }
 
 /**
