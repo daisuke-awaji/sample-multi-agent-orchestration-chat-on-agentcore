@@ -50,6 +50,50 @@ export class Frontend extends Construct {
       autoDeleteObjects: true, // For demo purposes
     });
 
+    // Response Headers Policy for optimized caching and security
+    const responseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(
+      this,
+      'FrontendResponseHeadersPolicy',
+      {
+        // Security headers
+        securityHeadersBehavior: {
+          contentTypeOptions: { override: true },
+          frameOptions: {
+            frameOption: cloudfront.HeadersFrameOption.DENY,
+            override: true,
+          },
+          referrerPolicy: {
+            referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+            override: true,
+          },
+          strictTransportSecurity: {
+            accessControlMaxAge: cdk.Duration.days(365),
+            includeSubdomains: true,
+            override: true,
+          },
+          xssProtection: {
+            protection: true,
+            modeBlock: true,
+            override: true,
+          },
+        },
+      }
+    );
+
+    // Cache Policy for static assets (JS, CSS, fonts, images)
+    const staticAssetsCachePolicy = new cloudfront.CachePolicy(this, 'StaticAssetsCachePolicy', {
+      cachePolicyName: `agentcore-static-assets-${cdk.Aws.REGION}`,
+      comment: 'Cache policy for static assets with long TTL',
+      defaultTtl: cdk.Duration.days(365),
+      maxTtl: cdk.Duration.days(365),
+      minTtl: cdk.Duration.days(365),
+      enableAcceptEncodingBrotli: true,
+      enableAcceptEncodingGzip: true,
+      headerBehavior: cloudfront.CacheHeaderBehavior.none(),
+      queryStringBehavior: cloudfront.CacheQueryStringBehavior.none(),
+      cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+    });
+
     // CloudFront Distribution
     this.cloudFrontDistribution = new cloudfront.Distribution(
       this,
@@ -59,6 +103,18 @@ export class Frontend extends Construct {
           origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          responseHeadersPolicy: responseHeadersPolicy,
+          compress: true,
+        },
+        // Static assets behavior (JS, CSS, fonts, images) with aggressive caching
+        additionalBehaviors: {
+          '/assets/*': {
+            origin: origins.S3BucketOrigin.withOriginAccessControl(this.s3Bucket),
+            viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            cachePolicy: staticAssetsCachePolicy,
+            responseHeadersPolicy: responseHeadersPolicy,
+            compress: true,
+          },
         },
         defaultRootObject: 'index.html',
         errorResponses: [
