@@ -217,6 +217,35 @@ export const useChatStore = create<ChatStore>()(
                   });
                 }
               },
+              onToolInputUpdate: (toolUseId: string, input: Record<string, unknown>) => {
+                // ツール入力パラメータを更新
+                const { messages } = get();
+                const currentMessage = messages.find((msg) => msg.id === assistantMessageId);
+                if (currentMessage) {
+                  const updatedContents = currentMessage.contents.map((content) => {
+                    if (content.type === 'toolUse' && content.toolUse) {
+                      // originalToolUseIdまたはローカルIDで一致確認
+                      if (
+                        content.toolUse.originalToolUseId === toolUseId ||
+                        content.toolUse.id === toolUseId
+                      ) {
+                        return {
+                          ...content,
+                          toolUse: {
+                            ...content.toolUse,
+                            input,
+                          },
+                        };
+                      }
+                    }
+                    return content;
+                  });
+
+                  updateMessage(assistantMessageId, {
+                    contents: updatedContents,
+                  });
+                }
+              },
               onToolResult: (toolResult: ToolResult) => {
                 // ツール結果を追加
                 const { messages } = get();

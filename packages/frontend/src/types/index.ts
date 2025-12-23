@@ -105,6 +105,21 @@ export interface MessageAddedEvent extends AgentStreamEvent {
   };
 }
 
+export interface BeforeToolsEvent extends AgentStreamEvent {
+  type: 'beforeToolsEvent';
+  message?: {
+    role: string;
+    content: Array<{
+      type: string;
+      name?: string;
+      input?: Record<string, unknown>;
+      toolUseId?: string;
+      text?: string; // textBlock用
+      [key: string]: unknown;
+    }>;
+  };
+}
+
 export interface AfterToolsEvent extends AgentStreamEvent {
   type: 'afterToolsEvent';
   [key: string]: unknown;

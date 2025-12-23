@@ -103,10 +103,20 @@ function serializeStreamEvent(event: unknown): object {
     // 既存のライフサイクルイベント
     case 'beforeInvocationEvent':
     case 'afterInvocationEvent':
-    case 'beforeToolsEvent':
     case 'afterToolsEvent':
     case 'beforeModelCallEvent':
       return baseEvent;
+
+    case 'beforeToolsEvent':
+      return {
+        ...baseEvent,
+        message: eventObj.message
+          ? {
+              role: (eventObj.message as { role: unknown }).role,
+              content: (eventObj.message as { content: unknown }).content,
+            }
+          : undefined,
+      };
 
     case 'afterModelCallEvent':
       return {

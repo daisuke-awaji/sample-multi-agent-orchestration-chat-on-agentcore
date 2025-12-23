@@ -5,6 +5,7 @@ import type {
   ServerCompletionEvent,
   ServerErrorEvent,
   MessageAddedEvent,
+  BeforeToolsEvent,
   ToolUse,
   ToolResult,
 } from '../types/index';
@@ -23,6 +24,7 @@ interface StreamingCallbacks {
   onToolStart?: (toolName: string) => void;
   onToolEnd?: (toolName: string) => void;
   onToolUse?: (toolUse: ToolUse) => void;
+  onToolInputUpdate?: (toolUseId: string, input: Record<string, unknown>) => void;
   onToolResult?: (toolResult: ToolResult) => void;
   onComplete?: (metadata: Record<string, unknown>) => void;
   onError?: (error: Error) => void;
@@ -202,6 +204,31 @@ const handleStreamEvent = (event: AgentStreamEvent, callbacks: StreamingCallback
           };
           callbacks.onToolUse(toolUse);
         }
+      }
+      break;
+    }
+
+    case 'beforeToolsEvent': {
+      // ツール実行前イベント（完全なツール入力情報を含む）
+      const beforeToolsEvent = event as BeforeToolsEvent;
+      console.debug('🔧 beforeToolsEvent received:', beforeToolsEvent);
+
+      if (beforeToolsEvent.message?.content && Array.isArray(beforeToolsEvent.message.content)) {
+        beforeToolsEvent.message.content.forEach((block, index) => {
+          console.debug(`🔧 BeforeTools content block ${index}:`, block);
+
+          // ツール使用ブロックの場合、入力パラメータを更新
+          if (
+            block.type === 'toolUseBlock' &&
+            block.name &&
+            block.input &&
+            callbacks.onToolInputUpdate
+          ) {
+            const toolUseId = block.toolUseId || 'unknown';
+            console.debug(`🔧 Updating tool input for ${block.name} (${toolUseId}):`, block.input);
+            callbacks.onToolInputUpdate(toolUseId, block.input);
+          }
+        });
       }
       break;
     }
