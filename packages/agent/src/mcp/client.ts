@@ -3,6 +3,7 @@
 // import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { config, logger } from '../config/index.js';
 import { getCurrentAuthHeader } from '../context/request-context.js';
+import { MCPToolDefinition } from '../schemas/types.js';
 
 /**
  * JSONRPC レスポンスの基本型
@@ -22,11 +23,7 @@ interface JSONRPCResponse<T = unknown> {
  * ツール一覧のレスポンス型
  */
 interface ListToolsResult {
-  tools: Array<{
-    name: string;
-    description?: string;
-    inputSchema: unknown;
-  }>;
+  tools: Array<MCPToolDefinition>;
   nextCursor?: string;
 }
 
@@ -258,13 +255,7 @@ export class AgentCoreMCPClient {
   /**
    * 利用可能なツール一覧を取得（ページネーション対応）
    */
-  async listTools(): Promise<
-    Array<{
-      name: string;
-      description?: string;
-      inputSchema: unknown;
-    }>
-  > {
+  async listTools(): Promise<Array<MCPToolDefinition>> {
     try {
       logger.debug('ツール一覧を取得中...');
 
@@ -278,11 +269,7 @@ export class AgentCoreMCPClient {
         headers.Authorization = authHeader;
       }
 
-      const allTools: Array<{
-        name: string;
-        description?: string;
-        inputSchema: unknown;
-      }> = [];
+      const allTools = [];
       let cursor: string | undefined = undefined;
       let pageCount = 0;
 

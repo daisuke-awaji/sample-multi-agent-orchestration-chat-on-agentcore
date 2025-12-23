@@ -51,7 +51,7 @@ export async function createAgent(
   try {
     // 1. MCP ツールを取得・変換
     const mcpTools = await mcpClient.listTools();
-    const mcpStrandsTools = await convertMCPToolsToStrands();
+    const mcpStrandsTools = convertMCPToolsToStrands(mcpTools as MCPToolDefinition[]);
 
     // 2. ローカルツールとMCPツールを結合
     let allTools = [executeCommandTool, ...mcpStrandsTools];

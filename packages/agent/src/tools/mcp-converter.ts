@@ -52,14 +52,15 @@ export function createStrandsToolFromMCP(mcpTool: MCPToolDefinition) {
 
 /**
  * MCP ツール一覧を Strands ツールに一括変換
+ * @param mcpTools 既に取得済みのMCPツール一覧
  */
-export async function convertMCPToolsToStrands(): Promise<Array<ReturnType<typeof tool>>> {
-  logger.debug('AgentCore Gateway からツール一覧を取得中...');
-  const mcpTools = await mcpClient.listTools();
-  logger.info(`✅ ${mcpTools.length}個のMCPツールを取得しました`);
+export function convertMCPToolsToStrands(
+  mcpTools: MCPToolDefinition[]
+): Array<ReturnType<typeof tool>> {
+  logger.info(`✅ ${mcpTools.length}個のMCPツールを変換しています`);
 
   return mcpTools.map((mcpTool) => {
     logger.debug(`ツール変換中: ${mcpTool.name}`);
-    return createStrandsToolFromMCP(mcpTool as MCPToolDefinition);
+    return createStrandsToolFromMCP(mcpTool);
   });
 }
