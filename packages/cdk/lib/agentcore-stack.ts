@@ -175,6 +175,22 @@ export class AgentCoreStack extends cdk.Stack {
       exportName: `${id}-GatewayId`,
     });
 
+    new cdk.CfnOutput(this, 'Region', {
+      value: this.region,
+      description: 'AWS Region',
+      exportName: `${id}-Region`,
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolId', {
+      value: this.cognitoAuth.userPoolId,
+      description: 'Cognito User Pool ID',
+    });
+
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
+      value: this.cognitoAuth.clientId,
+      description: 'Cognito User Pool Client ID',
+    });
+
     new cdk.CfnOutput(this, 'UtilityToolsLambdaArn', {
       value: this.echoToolTarget.lambdaFunction.functionArn,
       description: 'Utility Tools Lambda Function ARN',

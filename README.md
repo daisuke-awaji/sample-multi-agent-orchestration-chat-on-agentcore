@@ -107,6 +107,7 @@ fullstack-agentcore/
 - **Node.js 18+**
 - **Docker** (推奨)
 - **AWS CLI** 設定済み (Bedrock API 利用のため)
+- **デプロイ済みの CDK スタック** (環境変数自動セットアップを使用する場合)
 
 ### Step 1: 依存関係のインストール
 
@@ -115,7 +116,99 @@ fullstack-agentcore/
 npm install
 ```
 
-### Step 2: Agent の環境設定・起動
+### Step 2: 環境変数の自動セットアップ (推奨)
+
+デプロイ済みの CloudFormation スタックから環境変数を自動取得し、`.env` ファイルを生成します。
+
+```bash
+# CloudFormation スタック出力から環境変数を自動生成
+npm run setup-env
+
+# スタック名をカスタマイズする場合
+STACK_NAME=YourCustomStackName npm run setup-env
+```
+
+このコマンドで以下のファイルが自動生成されます：
+- `packages/frontend/.env` - Frontend 用環境変数
+- `packages/backend/.env` - Backend 用環境変数
+- `packages/agent/.env` - Agent 用環境変数
+
+**生成される環境変数:**
+- Cognito 認証情報 (User Pool ID, Client ID)
+- AWS リージョン
+- AgentCore Memory ID
+- AgentCore Gateway エンドポイント
+- User Storage バケット名
+
+#### 手動セットアップ（オプション）
+
+自動セットアップを使用しない場合は、以下のように手動で設定できます：
+
+```bash
+cp packages/agent/.env.example packages/agent/.env
+cp packages/backend/.env.example packages/backend/.env
+cp packages/frontend/.env.example packages/frontend/.env
+```
+
+各 `.env` ファイルを編集して、必要な値を設定してください。
+
+### Step 3: 開発サーバーの起動
+
+#### 方法A: 全サービスを一度に起動 (推奨)
+
+```bash
+# Frontend, Backend, Agent を同時に起動
+npm run dev
+```
+
+このコマンドは以下を実行します：
+1. 環境変数の自動セットアップ (`npm run setup-env`)
+2. Frontend (localhost:5173)、Backend (localhost:3000)、Agent (localhost:8080) の同時起動
+
+#### 方法B: 個別に起動
+
+```bash
+# Frontend のみ起動
+npm run dev:frontend
+
+# Backend のみ起動
+npm run dev:backend
+
+# Agent のみ起動
+npm run dev:agent
+```
+
+各コマンドは起動前に自動的に `setup-env` を実行します。
+
+#### 方法C: Docker で起動
+
+```bash
+# Agent を Docker で起動
+npm run agent:docker
+
+# Backend を Docker で起動
+npm run backend:docker
+```
+
+### Step 4: 動作確認
+
+#### Frontend から確認
+
+ブラウザで http://localhost:5173 にアクセスして、Web UI から Agent と対話できます。
+
+#### CLI から確認
+
+```bash
+# CLI 環境設定
+cp packages/client/.env.example packages/client/.env
+
+# CLI で Agent に質問
+npm run client:dev -- invoke "今日の天気を教えて"
+```
+
+### ~~Step 2: Agent の環境設定・起動~~
+
+**注: この手順は `npm run setup-env` により自動化されました。手動設定が必要な場合のみ以下を参照してください。**
 
 #### 環境変数の設定
 
@@ -219,6 +312,22 @@ VITE_AGENT_ENDPOINT=https://your-gateway-id.bedrock-agentcore.us-east-1.amazonaw
 
 ## 🛠️ 開発コマンド
 
+### 環境セットアップ
+
+```bash
+npm run setup-env              # CloudFormation から環境変数を自動取得
+STACK_NAME=CustomStack npm run setup-env  # カスタムスタック名を指定
+```
+
+### 統合開発コマンド
+
+```bash
+npm run dev                    # 全サービス起動 (Frontend + Backend + Agent)
+npm run dev:frontend           # Frontend のみ起動 (setup-env 含む)
+npm run dev:backend            # Backend のみ起動 (setup-env 含む)
+npm run dev:agent              # Agent のみ起動 (setup-env 含む)
+```
+
 ### Agent 関連
 
 ```bash
@@ -226,6 +335,17 @@ npm run agent:dev              # Agent 開発サーバー起動
 npm run agent:docker           # Docker で起動
 npm run agent:docker:detach    # Docker バックグラウンド起動
 npm run agent:docker:stop      # Docker 停止
+```
+
+### Backend 関連
+
+```bash
+npm run backend:dev            # Backend 開発サーバー起動
+npm run backend:build          # ビルド
+npm run backend:start          # ビルド後に起動
+npm run backend:docker         # Docker で起動
+npm run backend:docker:detach  # Docker バックグラウンド起動
+npm run backend:docker:stop    # Docker 停止
 ```
 
 ### Frontend 関連
