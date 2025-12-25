@@ -10,6 +10,7 @@ import { buildSystemPrompt } from './prompts/index.js';
 import { createBedrockModel } from './models/index.js';
 import { MCPToolDefinition } from './schemas/types.js';
 import { mcpClient } from './mcp/client.js';
+import { loadMCPConfig, getEnabledMCPServers, createMCPClients } from './mcp/index.js';
 import { getCurrentStoragePath } from './context/request-context.js';
 import type { SessionStorage, SessionConfig } from './session/types.js';
 import { retrieveLongTermMemory } from './session/memory-retriever.js';
@@ -142,8 +143,13 @@ export async function createAgent(
   logger.info('Strands Agent を初期化中...');
 
   try {
-    // 1. セッション履歴復元、MCPツール取得、長期記憶取得を並列実行
-    const [savedMessages, mcpTools, longTermMemoriesResult] = await Promise.all([
+    // 1. ローカル MCP 設定を読み込み
+    const localMCPConfig = loadMCPConfig();
+    const localMCPClients =
+      localMCPConfig !== null ? createMCPClients(getEnabledMCPServers(localMCPConfig)) : [];
+
+    // 2. セッション履歴復元、Gateway MCPツール取得、長期記憶取得を並列実行
+    const [savedMessages, gatewayMCPTools, longTermMemoriesResult] = await Promise.all([
       loadSessionHistory(options?.sessionStorage, options?.sessionConfig),
       mcpClient.listTools(),
       fetchLongTermMemories(options),
@@ -157,24 +163,31 @@ export async function createAgent(
       logger.info(`🧠 長期記憶を取得: ${longTermMemories.length}件`);
     }
 
-    // 2. MCP ツールを変換
-    const mcpStrandsTools = convertMCPToolsToStrands(mcpTools as MCPToolDefinition[]);
+    // 3. Gateway MCP ツールを Strands 形式に変換
+    const gatewayStrandsTools = convertMCPToolsToStrands(gatewayMCPTools as MCPToolDefinition[]);
 
-    // 2. ローカルツールとMCPツールを結合
-    let allTools = [...localTools, ...mcpStrandsTools];
+    // 4. すべてのツールを統合
+    // - ローカル Python ツール等
+    // - AgentCore Gateway 経由のツール
+    // - ローカル MCP サーバー (stdio/http/sse)
+    let allTools: any[] = [...localTools, ...gatewayStrandsTools, ...localMCPClients];
     allTools = filterTools(allTools, options?.enabledTools);
-    logger.info(`✅ 合計${allTools.length}個のツールを準備しました`);
+    allTools = [...allTools, localMCPClients];
+
+    logger.info(
+      `✅ 合計${allTools.length}個のツールを準備 (ローカル: ${localTools.length}, Gateway: ${gatewayStrandsTools.length}, MCP: ${localMCPClients.length})`
+    );
 
     // 3. Bedrock モデルを作成
     const model = createBedrockModel({ modelId: options?.modelId });
     logger.info(`🤖 使用モデル: ${options?.modelId || 'デフォルト'}`);
 
-    // 4. システムプロンプトを生成（ストレージパス情報と長期記憶を含む）
+    // 5. システムプロンプトを生成（ストレージパス情報と長期記憶を含む）
     const storagePath = getCurrentStoragePath();
     const systemPrompt = buildSystemPrompt({
       customPrompt: options?.systemPrompt,
       tools: allTools,
-      mcpTools: mcpTools as MCPToolDefinition[],
+      mcpTools: gatewayMCPTools as MCPToolDefinition[],
       storagePath,
       longTermMemories,
     });
@@ -188,7 +201,7 @@ export async function createAgent(
 
     logger.info({ systemPrompt });
 
-    // 5. Agent を作成
+    // 6. Agent を作成
     const agent = new Agent({
       model,
       systemPrompt,
@@ -197,7 +210,7 @@ export async function createAgent(
       hooks,
     });
 
-    // 6. ログ出力
+    // 7. ログ出力
     if (hooks && hooks.length > 0) {
       logger.info(`✅ ${hooks.length}個のフックを登録`);
     }
