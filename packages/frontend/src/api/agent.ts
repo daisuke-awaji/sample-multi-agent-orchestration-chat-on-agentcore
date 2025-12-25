@@ -40,6 +40,7 @@ interface AgentConfig {
   storagePath?: string; // ユーザーが選択しているS3ディレクトリパス
   memoryEnabled?: boolean; // 長期記憶を有効化するか
   memoryTopK?: number; // 取得する長期記憶の件数
+  mcpConfig?: Record<string, unknown>; // MCP サーバー設定
 }
 
 /**
@@ -105,6 +106,10 @@ export const streamAgentResponse = async (
 
   if (agentConfig?.memoryTopK !== undefined) {
     requestBody.memoryTopK = agentConfig.memoryTopK;
+  }
+
+  if (agentConfig?.mcpConfig) {
+    requestBody.mcpConfig = agentConfig.mcpConfig;
   }
 
   const body = JSON.stringify(requestBody);

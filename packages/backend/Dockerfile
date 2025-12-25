@@ -1,8 +1,19 @@
 # AgentCore Backend API Dockerfile
 FROM node:20-slim
 
-# curl をインストール（ヘルスチェック用）
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# 必要なツールをインストール（ヘルスチェック、Python、MCP サーバー実行用）
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv をインストール（Python MCP サーバー用）
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# uv の PATH とディレクトリ設定（Lambda /tmp 制約対応）
+ENV PATH="/root/.local/bin:$PATH"
+ENV UV_TOOL_DIR="/tmp/uv_tools"
+ENV UV_TOOL_BIN_DIR="/tmp/uv_bin"
 
 # 作業ディレクトリを設定
 WORKDIR /app

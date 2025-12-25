@@ -179,6 +179,7 @@ export const useChatStore = create<ChatStore>()(
                 enabledTools: selectedAgent.enabledTools,
                 storagePath: currentPath,
                 memoryEnabled: isMemoryEnabled,
+                mcpConfig: selectedAgent.mcpConfig as Record<string, unknown> | undefined,
               }
             : {
                 storagePath: currentPath,

@@ -4,6 +4,18 @@
 # ビルドステージ
 FROM public.ecr.aws/docker/library/node:20-slim AS builder
 
+# 必要なツールをインストール（Python、MCP サーバー実行用）
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv をグローバルにインストール（全ユーザーアクセス可能）
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
+    mv /root/.local/bin/uvx /usr/local/bin/uvx && \
+    chmod +x /usr/local/bin/uv /usr/local/bin/uvx
+
 WORKDIR /app
 
 # パッケージファイルをコピー
@@ -24,6 +36,22 @@ RUN npm install --only=production && npm cache clean --force
 
 # ランタイムステージ
 FROM public.ecr.aws/docker/library/node:20-slim
+
+# 必要なツールをインストール（Python、MCP サーバー実行用）
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv をグローバルにインストール（全ユーザーアクセス可能）
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv /root/.local/bin/uv /usr/local/bin/uv && \
+    mv /root/.local/bin/uvx /usr/local/bin/uvx && \
+    chmod +x /usr/local/bin/uv /usr/local/bin/uvx
+
+# uv ディレクトリ設定（Lambda /tmp 制約対応）
+ENV UV_TOOL_DIR="/tmp/uv_tools"
+ENV UV_TOOL_BIN_DIR="/tmp/uv_bin"
 
 # Lambda Web Adapter をインストール
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter

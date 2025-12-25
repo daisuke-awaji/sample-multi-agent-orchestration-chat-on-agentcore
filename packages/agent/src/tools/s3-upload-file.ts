@@ -8,6 +8,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';
 import { logger } from '../config/index.js';
+import { readFile, stat } from 'fs/promises';
+import { fileURLToPath } from 'url';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
@@ -110,26 +112,54 @@ function guessContentType(filename: string): string {
 }
 
 /**
+ * Parse file path from file:// protocol or regular path
+ */
+function parseFilePath(filePathOrUrl: string): string {
+  if (filePathOrUrl.startsWith('file://')) {
+    return fileURLToPath(filePathOrUrl);
+  }
+  return filePathOrUrl;
+}
+
+/**
  * S3 Upload File Tool
  */
 export const s3UploadFileTool = tool({
   name: 's3_upload_file',
   description:
-    'Upload text content as a file to user S3 storage. Can save code, documents, configuration files, etc. Note: When uploading files with Japanese or non-ASCII characters, specify contentType with charset (e.g., "text/plain; charset=utf-8") to ensure proper encoding.',
-  inputSchema: z.object({
-    path: z
-      .string()
-      .describe('Destination file path (required). Example: "/notes/memo.txt", "/code/sample.py"'),
-    content: z.string().describe('File content (required). Text-based content'),
-    contentType: z
-      .string()
-      .optional()
-      .describe(
-        'MIME type (optional). Auto-detected from filename if not specified. Example: "text/plain", "application/json"'
-      ),
-  }),
+    'Upload text content or local files to user S3 storage. Supports two upload methods: 1) Direct text content upload for code, documents, etc. 2) Local file upload (including binary files like images, PDFs) by specifying sourceFile path. Note: When uploading files with Japanese or non-ASCII characters, specify contentType with charset (e.g., "text/plain; charset=utf-8") to ensure proper encoding.',
+  inputSchema: z
+    .object({
+      path: z
+        .string()
+        .describe(
+          'Destination file path (required). Example: "/notes/memo.txt", "/images/photo.jpg"'
+        ),
+      content: z
+        .string()
+        .optional()
+        .describe('File content (optional). Text-based content for direct upload'),
+      sourceFile: z
+        .string()
+        .optional()
+        .describe(
+          'Local file path to upload (optional). Supports file:// protocol or absolute path. Example: "file:///tmp/image.png" or "/tmp/image.png"'
+        ),
+      contentType: z
+        .string()
+        .optional()
+        .describe(
+          'MIME type (optional). Auto-detected from filename if not specified. Example: "text/plain", "application/json", "image/jpeg"'
+        ),
+    })
+    .refine((data) => data.content !== undefined || data.sourceFile !== undefined, {
+      message: 'Either content or sourceFile must be provided',
+    })
+    .refine((data) => !(data.content !== undefined && data.sourceFile !== undefined), {
+      message: 'Cannot specify both content and sourceFile',
+    }),
   callback: async (input) => {
-    const { path, content, contentType } = input;
+    const { path, content, sourceFile, contentType } = input;
 
     // Get user ID and storage path from request context
     const context = getCurrentContext();
@@ -157,40 +187,98 @@ export const s3UploadFileTool = tool({
       return `Access denied: The specified path "${path}" is outside the permitted directory ("${allowedStoragePath}").`;
     }
 
-    // Check file size
-    const contentSize = Buffer.byteLength(content, 'utf-8');
-    if (contentSize > MAX_UPLOAD_SIZE) {
-      logger.warn(
-        `[S3_UPLOAD] File size too large: ${formatFileSize(contentSize)} > ${formatFileSize(MAX_UPLOAD_SIZE)}`
-      );
-      return `File size too large
+    const key = `${getUserStoragePrefix(userId)}/${normalizedPath}`;
+    const filename = normalizedPath.split('/').pop() || 'unknown';
+
+    let uploadBody: Buffer | string;
+    let contentSize: number;
+    let uploadSource: string;
+
+    try {
+      // Handle sourceFile upload (binary or text files)
+      if (sourceFile) {
+        const localPath = parseFilePath(sourceFile);
+
+        logger.info(`[S3_UPLOAD] Reading local file: ${localPath}`);
+
+        try {
+          // Check file exists and get size
+          const fileStats = await stat(localPath);
+          contentSize = fileStats.size;
+
+          // Check file size before reading
+          if (contentSize > MAX_UPLOAD_SIZE) {
+            logger.warn(
+              `[S3_UPLOAD] File size too large: ${formatFileSize(contentSize)} > ${formatFileSize(MAX_UPLOAD_SIZE)}`
+            );
+            return `File size too large
+File: ${localPath}
+Size: ${formatFileSize(contentSize)}
+Maximum allowed size: ${formatFileSize(MAX_UPLOAD_SIZE)}
+
+Please use a smaller file.`;
+          }
+
+          // Read file as binary buffer
+          uploadBody = await readFile(localPath);
+          uploadSource = `local file: ${localPath}`;
+
+          logger.info(`[S3_UPLOAD] File read successfully: ${formatFileSize(contentSize)}`);
+        } catch (fileError: unknown) {
+          const errorMessage = fileError instanceof Error ? fileError.message : 'Unknown error';
+          logger.error(`[S3_UPLOAD] Failed to read local file: ${errorMessage}`);
+
+          return `Failed to read local file
+File: ${localPath}
+Error: ${errorMessage}
+
+Possible causes:
+1. File does not exist
+2. No read permission
+3. Invalid file path
+4. File is locked by another process`;
+        }
+      }
+      // Handle text content upload
+      else if (content !== undefined) {
+        uploadBody = content;
+        contentSize = Buffer.byteLength(content, 'utf-8');
+        uploadSource = 'text content';
+
+        // Check size for text content
+        if (contentSize > MAX_UPLOAD_SIZE) {
+          logger.warn(
+            `[S3_UPLOAD] Content size too large: ${formatFileSize(contentSize)} > ${formatFileSize(MAX_UPLOAD_SIZE)}`
+          );
+          return `Content size too large
 Attempted upload size: ${formatFileSize(contentSize)}
 Maximum allowed size: ${formatFileSize(MAX_UPLOAD_SIZE)}
 
 Please split into smaller files or reduce content.`;
-    }
+        }
+      } else {
+        // This should not happen due to schema validation
+        return 'Error: Either content or sourceFile must be provided';
+      }
 
-    const key = `${getUserStoragePrefix(userId)}/${normalizedPath}`;
-    const filename = normalizedPath.split('/').pop() || 'unknown';
+      // Determine Content-Type
+      const finalContentType = contentType || guessContentType(filename);
 
-    // Determine Content-Type
-    const finalContentType = contentType || guessContentType(filename);
+      logger.info(
+        `[S3_UPLOAD] File upload: user=${userId}, path=${path}, source=${uploadSource}, allowedPath=${allowedStoragePath}, size=${formatFileSize(contentSize)}, type=${finalContentType}`
+      );
 
-    logger.info(
-      `[S3_UPLOAD] File upload: user=${userId}, path=${path}, allowedPath=${allowedStoragePath}, size=${formatFileSize(contentSize)}, type=${finalContentType}`
-    );
-
-    try {
       // Upload file to S3
       const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
-        Body: content,
+        Body: uploadBody,
         ContentType: finalContentType,
         // Metadata
         Metadata: {
           'uploaded-by': 'ai-agent',
           'upload-timestamp': new Date().toISOString(),
+          'upload-source': sourceFile ? 'local-file' : 'text-content',
         },
       });
 
@@ -213,6 +301,7 @@ Please split into smaller files or reduce content.`;
       return `File uploaded to S3 successfully
 
 File: ${path}
+Source: ${uploadSource}
 Size: ${formatFileSize(contentSize)}
 Type: ${finalContentType}
 Upload Time: ${new Date().toISOString()}
@@ -226,11 +315,11 @@ File has been saved successfully.
 You can download the file using the above URL.`;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error(`[S3_UPLOAD] Upload error: ${errorMessage}`);
+      logger.error(`[S3_UPLOAD] S3 upload error: ${errorMessage}`);
 
-      return `Error occurred during file upload
-Path: ${path}
-Size: ${formatFileSize(contentSize)}
+      return `Error occurred during S3 upload
+Destination: ${path}
+Source: ${sourceFile || 'text content'}
 Error: ${errorMessage}
 
 Possible causes:

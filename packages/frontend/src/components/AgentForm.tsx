@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, X, AlertCircle, Sparkles, Settings, Wrench } from 'lucide-react';
+import { Plus, X, AlertCircle, Sparkles, Settings, Wrench, Server } from 'lucide-react';
 import { ToolSelector } from './ToolSelector';
+import { MCPConfigEditor } from './MCPConfigEditor';
 import { IconPicker } from './ui/IconPicker';
 import { SidebarTabsLayout, type TabItem } from './ui/SidebarTabs';
 import type { CreateAgentInput, Agent, Scenario } from '../types/agent';
@@ -14,7 +15,7 @@ interface AgentFormProps {
   isLoading?: boolean;
 }
 
-type TabType = 'basic' | 'tools';
+type TabType = 'basic' | 'tools' | 'mcp';
 
 export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading = false }) => {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -30,6 +31,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           title: s.title,
           prompt: s.prompt,
         })),
+        mcpConfig: agent.mcpConfig,
       };
     }
     return {
@@ -39,6 +41,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
       systemPrompt: '',
       enabledTools: [],
       scenarios: [],
+      mcpConfig: undefined,
     };
   });
 
@@ -232,6 +235,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
   const tabs: TabItem<TabType>[] = [
     { id: 'basic', label: '基本設定', icon: Settings },
     { id: 'tools', label: 'ツール', icon: Wrench },
+    { id: 'mcp', label: 'MCP', icon: Server },
   ];
 
   return (
@@ -475,6 +479,18 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                 onSelectionChange={(tools) =>
                   setFormData((prev) => ({ ...prev, enabledTools: tools }))
                 }
+                disabled={isLoading || isGenerating}
+              />
+            </div>
+          )}
+
+          {/* MCP パネル */}
+          {activeTab === 'mcp' && (
+            <div className="space-y-6 max-w-5xl mx-auto">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">MCP サーバー設定</h2>
+              <MCPConfigEditor
+                config={formData.mcpConfig}
+                onChange={(config) => setFormData((prev) => ({ ...prev, mcpConfig: config }))}
                 disabled={isLoading || isGenerating}
               />
             </div>

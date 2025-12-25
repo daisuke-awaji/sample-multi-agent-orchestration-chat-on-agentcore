@@ -6,6 +6,7 @@
 import express, { Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
 import { gatewayService } from '../services/agentcore-gateway.js';
+import { fetchToolsFromMCPConfig, MCPConfig } from '../mcp/index.js';
 
 const router = express.Router();
 
@@ -210,6 +211,54 @@ router.get('/health', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
     res.status(500).json({
       error: 'Health Check Error',
       message: error instanceof Error ? error.message : 'Gateway 接続確認に失敗しました',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * ローカル MCP ツール取得エンドポイント
+ * POST /tools/local
+ * ユーザー定義の MCP サーバー設定からツール一覧を取得
+ */
+router.post('/local', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const auth = getCurrentAuth(req);
+    const { mcpConfig } = req.body as { mcpConfig: MCPConfig };
+
+    if (!mcpConfig || !mcpConfig.mcpServers) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'mcpConfig が必要です',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`🔧 ローカル MCP ツール取得開始 (${auth.requestId}):`, {
+      userId: auth.userId,
+      serverCount: Object.keys(mcpConfig.mcpServers).length,
+    });
+
+    // MCP サーバーからツール一覧を取得
+    const tools = await fetchToolsFromMCPConfig(mcpConfig, console);
+
+    const response = {
+      tools,
+      metadata: {
+        requestId: auth.requestId,
+        timestamp: new Date().toISOString(),
+        actorId: auth.userId,
+        count: tools.length,
+      },
+    };
+
+    console.log(`✅ ローカル MCP ツール取得完了 (${auth.requestId}): ${tools.length}件`);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(`💥 ローカル MCP ツール取得エラー:`, error);
+    res.status(500).json({
+      error: 'MCP Tools Error',
+      message: error instanceof Error ? error.message : 'ツール取得に失敗しました',
       timestamp: new Date().toISOString(),
     });
   }

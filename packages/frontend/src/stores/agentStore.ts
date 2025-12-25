@@ -130,6 +130,7 @@ const createAgentFromInput = (input: CreateAgentInput): Agent => {
       ...scenario,
       id: uuidv4(),
     })),
+    mcpConfig: input.mcpConfig,
     createdAt: now,
     updatedAt: now,
   };
@@ -186,6 +187,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
               id: uuidv4(),
             }))
           : currentAgent.scenarios,
+        mcpConfig: input.mcpConfig ?? currentAgent.mcpConfig,
         updatedAt: new Date(),
       };
 

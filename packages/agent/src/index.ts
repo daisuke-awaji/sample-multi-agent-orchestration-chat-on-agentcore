@@ -219,6 +219,7 @@ interface InvocationRequest {
   storagePath?: string; // 任意: ユーザーが選択しているS3ディレクトリパス
   memoryEnabled?: boolean; // 任意: 長期記憶を有効化するか（デフォルト: false）
   memoryTopK?: number; // 任意: 取得する長期記憶の件数（デフォルト: 10）
+  mcpConfig?: Record<string, unknown>; // 任意: ユーザー定義の MCP サーバー設定
 }
 
 /**
@@ -228,8 +229,16 @@ interface InvocationRequest {
 app.post('/invocations', async (req: Request, res: Response) => {
   try {
     // リクエストボディから各パラメータを取得
-    const { prompt, modelId, enabledTools, systemPrompt, storagePath, memoryEnabled, memoryTopK } =
-      req.body as InvocationRequest;
+    const {
+      prompt,
+      modelId,
+      enabledTools,
+      systemPrompt,
+      storagePath,
+      memoryEnabled,
+      memoryTopK,
+      mcpConfig,
+    } = req.body as InvocationRequest;
 
     if (!prompt?.trim()) {
       return res.status(400).json({
@@ -279,6 +288,8 @@ app.post('/invocations', async (req: Request, res: Response) => {
       memoryContext: memoryEnabled ? prompt : undefined,
       actorId: memoryEnabled ? actorId : undefined,
       memoryTopK,
+      // ユーザー定義 MCP サーバー設定
+      mcpConfig,
     };
 
     // Agent を作成（セッションフックは条件付き）

@@ -4,7 +4,7 @@ TypeScript 版 Strands Agent を Amazon Bedrock AgentCore Runtime で動作さ�
 
 ## 特徴
 
-- 🤖 **Strands AI Agent**: 天気情報取得ツール付きの AI エージェント
+- 🤖 **Strands AI Agent**: AI エージェント
 - 🚀 **AgentCore Runtime 対応**: `/ping` と `/invocations` エンドポイント実装
 - 🐳 **Docker 対応**: コンテナ化された実行環境
 - 🔐 **AWS 認証**: ローカル開発時の認証情報マウント対応
@@ -97,22 +97,122 @@ echo -n "東京の天気を教えて" | curl -X POST http://localhost:8080/invoc
 
 ## 利用可能なツール
 
-### 天気情報取得ツール (`get_weather`)
+### ローカルツール
 
-指定された都市の天気情報を取得します。
+`./src/tools` 配下のツールが利用できます。
 
-**対応都市:**
+### MCP サーバー統合
 
-- 東京
-- 大阪
-- ニューヨーク
-- その他（デフォルト値で応答）
+このエージェントは **Model Context Protocol (MCP)** をサポートしており、以下の3つの方法でツールを拡張できます：
 
-**使用例:**
+1. **AgentCore Gateway 経由** - リモート MCP サーバー（自動）
+2. **ローカル stdio MCP サーバー** - コマンドラインツール
+3. **リモート HTTP/SSE MCP サーバー** - Web API
 
-- "東京の天気を教えて"
-- "大阪の気温は？"
-- "ニューヨークの天候を知りたい"
+#### mcp.json 設定ファイル
+
+ローカル MCP サーバーを使用するには、プロジェクトルートに `mcp.json` ファイルを作成します：
+
+```bash
+# サンプルファイルをコピー
+cp mcp.json.example mcp.json
+
+# 必要に応じて編集
+vi mcp.json
+```
+
+#### 設定例
+
+```json
+{
+  "mcpServers": {
+    "aws-docs": {
+      "transport": "stdio",
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "enabled": true
+    },
+    "github": {
+      "transport": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", 
+               "ghcr.io/github/github-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "enabled": false
+    },
+    "github-copilot": {
+      "transport": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PAT}"
+      },
+      "enabled": false
+    }
+  }
+}
+```
+
+#### トランスポート種別
+
+| トランスポート | 説明 | 用途 |
+|--------------|------|------|
+| `stdio` | ローカルプロセスとの通信 | CLI ツール、Docker コンテナ |
+| `http` | Streamable HTTP 経由 | リモート Web API |
+| `sse` | Server-Sent Events 経由 | リアルタイム通信 |
+
+#### 環境変数の展開
+
+`${VAR_NAME}` 形式で環境変数を参照できます：
+
+```json
+{
+  "env": {
+    "API_KEY": "${MY_API_KEY}",
+    "REGION": "${AWS_REGION}"
+  }
+}
+```
+
+#### MCP サーバーの有効化/無効化
+
+各サーバーは `enabled` フィールドで制御できます（デフォルト: `true`）：
+
+```json
+{
+  "aws-docs": {
+    "transport": "stdio",
+    "command": "uvx",
+    "args": ["awslabs.aws-documentation-mcp-server@latest"],
+    "enabled": true  // このサーバーを有効化
+  },
+  "filesystem": {
+    "transport": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+    "enabled": false  // このサーバーを無効化
+  }
+}
+```
+
+#### 設定ファイルのパス指定
+
+デフォルトでは `./mcp.json` を読み込みますが、環境変数で変更可能です：
+
+```bash
+export MCP_CONFIG_PATH=/path/to/custom-mcp.json
+npm run dev
+```
+
+#### 人気のある MCP サーバー
+
+- **AWS Documentation**: `awslabs.aws-documentation-mcp-server@latest`
+- **GitHub**: `ghcr.io/github/github-mcp-server`
+- **Filesystem**: `@modelcontextprotocol/server-filesystem`
+- **Tavily Search**: `tavily-mcp@0.1.2`
+
+詳細は [MCP サーバーリスト](https://github.com/modelcontextprotocol/servers) を参照してください。
 
 ## AWS 認証設定
 

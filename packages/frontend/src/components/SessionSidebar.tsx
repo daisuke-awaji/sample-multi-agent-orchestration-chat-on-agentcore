@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   Donut,
   SquarePen,
@@ -16,6 +16,7 @@ import {
   LogOut,
   X,
   Settings,
+  CalendarRange,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useSessionStore } from '../stores/sessionStore';
@@ -35,10 +36,11 @@ interface SessionItemProps {
 
 function SessionItem({ session, isActive, onSelect, isNew = false }: SessionItemProps) {
   return (
-    <button
+    <Link
+      to={`/chat/${session.sessionId}`}
       onClick={onSelect}
       className={`
-        w-full text-left p-2 rounded-lg transition-all duration-200 group
+        block w-full text-left p-2 rounded-lg transition-all duration-200 group no-underline
         ${isActive ? 'bg-gray-100' : 'hover:bg-gray-100'}
         ${isNew ? 'animate-subtle-fade-in' : ''}
       `}
@@ -61,7 +63,7 @@ function SessionItem({ session, isActive, onSelect, isNew = false }: SessionItem
           {session.sessionId}
         </span>
       </div>
-    </button>
+    </Link>
   );
 }
 
@@ -168,40 +170,9 @@ export function SessionSidebar() {
     navigate(`/chat/${session.sessionId}`);
   };
 
-  // 検索ボタン
-  const handleSearch = () => {
-    console.log('🔍 チャット検索ページへナビゲート');
-    navigate('/search');
-  };
-
-  // ツール検索
-  const handleToolsSearch = () => {
-    console.log('🔧 ツール検索ページへナビゲート');
-    navigate('/tools');
-  };
-
-  // エージェント検索
-  const handleAgentsSearch = () => {
-    console.log('🤖 エージェント検索ページへナビゲート');
-    navigate('/agents');
-  };
-
-  // ホームページ遷移
-  const handleHomeNavigate = () => {
-    console.log('🏠 ホームページへナビゲート');
-    navigate('/');
-  };
-
   // サイドバー折りたたみ
   const handleToggleSidebar = () => {
     toggleSidebar();
-  };
-
-  // 設定画面遷移
-  const handleSettings = () => {
-    console.log('⚙️ 設定画面へナビゲート');
-    navigate('/settings');
-    setIsUserDropdownOpen(false); // ドロップダウンを閉じる
   };
 
   // ログアウト処理
@@ -250,16 +221,16 @@ export function SessionSidebar() {
         >
           {shouldShowExpanded ? (
             <>
-              <button
-                onClick={handleHomeNavigate}
-                className="flex items-center gap-2  rounded-lg p-2 pb-1 pt-1 transition-colors group"
+              <Link
+                to="/"
+                className="flex items-center gap-2 rounded-lg p-2 pb-1 pt-1 transition-colors group no-underline"
                 title="ホームページに戻る"
               >
                 <Donut className="w-5 h-5 text-gray-700 group-hover:text-amber-600 transition-colors" />
                 <span className="text-lg font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">
                   Donuts
                 </span>
-              </button>
+              </Link>
 
               {/* モバイル時は×ボタン、デスクトップ時はPanelRightボタン */}
               <button
@@ -282,49 +253,61 @@ export function SessionSidebar() {
         </div>
 
         <div className={`space-y-2 ${!shouldShowExpanded ? 'flex flex-col items-center' : ''}`}>
-          <button
+          <Link
+            to="/chat"
             onClick={handleNewChat}
-            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
             title={!shouldShowExpanded ? '新しいチャット' : undefined}
           >
             <SquarePen className="w-5 h-5 flex-shrink-0" />
             {shouldShowExpanded && <span className="text-sm">新しいチャット</span>}
-          </button>
+          </Link>
 
-          <button
-            onClick={handleSearch}
-            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 ${
+          <Link
+            to="/search"
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
             title={!shouldShowExpanded ? 'チャットを検索' : undefined}
           >
             <Search className="w-5 h-5 flex-shrink-0" />
             {shouldShowExpanded && <span className="text-sm">チャットを検索</span>}
-          </button>
+          </Link>
 
-          <button
-            onClick={handleToolsSearch}
-            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 ${
+          <Link
+            to="/tools"
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
             title={!shouldShowExpanded ? 'ツールを検索' : undefined}
           >
             <Wrench className="w-5 h-5 flex-shrink-0" />
             {shouldShowExpanded && <span className="text-sm">ツールを検索</span>}
-          </button>
+          </Link>
 
-          <button
-            onClick={handleAgentsSearch}
-            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 ${
+          <Link
+            to="/agents"
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
             title={!shouldShowExpanded ? 'エージェントを検索' : undefined}
           >
             <Bot className="w-5 h-5 flex-shrink-0" />
             {shouldShowExpanded && <span className="text-sm">エージェントを検索</span>}
-          </button>
+          </Link>
+
+          <Link
+            to="/events"
+            className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
+              shouldShowExpanded ? 'w-full text-left' : 'w-auto'
+            }`}
+            title={!shouldShowExpanded ? 'イベント連携' : undefined}
+          >
+            <CalendarRange className="w-5 h-5 flex-shrink-0" />
+            {shouldShowExpanded && <span className="text-sm">イベント連携</span>}
+          </Link>
         </div>
       </div>
 
@@ -436,13 +419,14 @@ export function SessionSidebar() {
               )}
 
               {/* 設定 */}
-              <button
-                onClick={handleSettings}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              <Link
+                to="/settings"
+                onClick={() => setIsUserDropdownOpen(false)}
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 no-underline"
               >
                 <Settings className="w-4 h-4" />
                 設定
-              </button>
+              </Link>
 
               {/* ログアウト */}
               <button

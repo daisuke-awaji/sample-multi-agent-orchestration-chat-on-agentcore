@@ -625,6 +625,46 @@ export async function fetchTools(cursor?: string): Promise<{
 }
 
 /**
+ * ローカル MCP ツール取得
+ * ユーザー定義の MCP サーバー設定からツール一覧を取得
+ * @param mcpConfig mcp.json 形式の MCP サーバー設定
+ * @returns ツール一覧（サーバー名付き）
+ */
+export async function fetchLocalMCPTools(
+  mcpConfig: Record<string, unknown>
+): Promise<(MCPTool & { serverName: string })[]> {
+  try {
+    const baseUrl = getBackendBaseUrl();
+    const headers = await createAuthHeaders();
+
+    console.log('🔧 ローカル MCP ツール取得開始...');
+
+    const response = await fetch(`${baseUrl}/tools/local`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ mcpConfig }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `ローカル MCP ツール取得失敗: ${response.status} ${response.statusText} - ${
+          errorData.message || 'Unknown error'
+        }`
+      );
+    }
+
+    const data = await response.json();
+    console.log(`✅ ローカル MCP ツール取得完了: ${data.tools.length}件`);
+
+    return data.tools;
+  } catch (error) {
+    console.error('💥 ローカル MCP ツール取得エラー:', error);
+    throw error;
+  }
+}
+
+/**
  * ツールを検索
  * @param query 検索クエリ
  * @returns 検索結果のツール一覧
