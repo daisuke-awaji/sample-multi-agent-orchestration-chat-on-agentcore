@@ -7,6 +7,10 @@ description: Testing guidelines and best practices for Fullstack AgentCore
 
 This document outlines testing practices, conventions, and guidelines for the Fullstack AgentCore project.
 
+## Local development
+
+!IMPORTANT RULE: You **SHOULD NOT RUN** the command **npm run dev** unless your user specifically tells you to, which is usually because they are running npm run dev and have hot-reload enabled.
+
 ## Test Structure
 
 ### Unit Tests

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, CheckCircle, Loader2, ChevronDown } from 'lucide-react';
 import type { MCPConfig } from '../types/agent';
 import { fetchLocalMCPTools } from '../api/tools';
@@ -15,9 +16,9 @@ interface MCPToolPreview {
   description?: string;
 }
 
-const SAMPLE_CONFIGS = {
+const SAMPLE_CONFIGS = (t: (key: string) => string) => ({
   filesystem: {
-    label: 'Filesystem Server',
+    label: t('tool.mcp.samples.filesystem'),
     config: {
       mcpServers: {
         filesystem: {
@@ -28,7 +29,7 @@ const SAMPLE_CONFIGS = {
     },
   },
   github: {
-    label: 'GitHub Server',
+    label: t('tool.mcp.samples.github'),
     config: {
       mcpServers: {
         github: {
@@ -42,7 +43,7 @@ const SAMPLE_CONFIGS = {
     },
   },
   'aws-docs': {
-    label: 'AWS Documentation Server',
+    label: t('tool.mcp.samples.awsDocs'),
     config: {
       mcpServers: {
         'aws-docs': {
@@ -53,7 +54,7 @@ const SAMPLE_CONFIGS = {
     },
   },
   multiple: {
-    label: 'Multiple Servers',
+    label: t('tool.mcp.samples.multiple'),
     config: {
       mcpServers: {
         filesystem: {
@@ -67,13 +68,14 @@ const SAMPLE_CONFIGS = {
       },
     },
   },
-};
+});
 
 export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   config,
   onChange,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const [jsonText, setJsonText] = useState<string>(() => {
     if (config) {
       return JSON.stringify(config, null, 2);
@@ -111,7 +113,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   const handleFetchTools = async () => {
     try {
       if (!jsonText.trim()) {
-        setValidationError('設定が空です');
+        setValidationError(t('tool.mcp.emptyConfig'));
         return;
       }
 
@@ -123,7 +125,9 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
       setToolsPreview(tools);
     } catch (error) {
       setValidationError(
-        error instanceof Error ? `ツール取得エラー: ${error.message}` : 'ツール取得に失敗しました'
+        error instanceof Error
+          ? `${t('tool.mcp.fetchError')}: ${error.message}`
+          : t('tool.mcp.fetchFailed')
       );
       setToolsPreview([]);
     } finally {
@@ -132,8 +136,9 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   };
 
   // サンプルを挿入
-  const handleInsertSample = (sampleKey: keyof typeof SAMPLE_CONFIGS) => {
-    const sample = SAMPLE_CONFIGS[sampleKey];
+  const handleInsertSample = (sampleKey: keyof ReturnType<typeof SAMPLE_CONFIGS>) => {
+    const samples = SAMPLE_CONFIGS(t);
+    const sample = samples[sampleKey];
     const sampleText = JSON.stringify(sample.config, null, 2);
     setJsonText(sampleText);
     onChange(sample.config);
@@ -158,15 +163,14 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     <div className="space-y-4">
       {/* 説明 */}
       <div className="text-sm text-gray-600">
-        <p>
-          このエージェントで使用する MCP サーバーを設定します。設定した MCP
-          サーバーのツールが自動的に利用可能になります。
-        </p>
+        <p>{t('tool.mcp.description')}</p>
       </div>
 
       {/* JSON エディター */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">MCP 設定 (JSON 形式)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('tool.mcp.configLabel')}
+        </label>
         <textarea
           value={jsonText}
           onChange={(e) => handleTextChange(e.target.value)}
@@ -187,7 +191,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
             disabled={disabled}
             className="inline-flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            <span>サンプルを挿入</span>
+            <span>{t('tool.mcp.insertSample')}</span>
             <ChevronDown className="w-4 h-4" />
           </button>
 
@@ -195,11 +199,13 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSampleDropdown(false)} />
               <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
-                {Object.entries(SAMPLE_CONFIGS).map(([key, sample]) => (
+                {Object.entries(SAMPLE_CONFIGS(t)).map(([key, sample]) => (
                   <button
                     key={key}
                     type="button"
-                    onClick={() => handleInsertSample(key as keyof typeof SAMPLE_CONFIGS)}
+                    onClick={() =>
+                      handleInsertSample(key as keyof ReturnType<typeof SAMPLE_CONFIGS>)
+                    }
                     className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     {sample.label}
@@ -219,10 +225,10 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
           {isFetchingTools ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>取得中...</span>
+              <span>{t('tool.mcp.fetching')}</span>
             </>
           ) : (
-            <span>ツールをプレビュー</span>
+            <span>{t('tool.mcp.previewTools')}</span>
           )}
         </button>
       </div>
@@ -240,12 +246,12 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
       {/* ツールプレビュー */}
       {toolsPreview.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-700">利用可能なツール</h3>
+          <h3 className="text-sm font-medium text-gray-700">{t('tool.mcp.availableToolsTitle')}</h3>
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
             {Object.entries(groupedTools).map(([serverName, tools]) => (
               <div key={serverName}>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">
-                  {serverName} ({tools.length} ツール)
+                  {serverName} ({t('tool.mcp.toolCount', { count: tools.length })})
                 </h4>
                 <div className="space-y-2">
                   {tools.map((tool) => (

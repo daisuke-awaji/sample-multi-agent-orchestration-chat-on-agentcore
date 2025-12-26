@@ -1,0 +1,325 @@
+# 日本語翻訳ファイル
+
+# 共通
+common:
+  loading: 読み込み中...
+  error: エラーが発生しました
+  save: 保存
+  cancel: キャンセル
+  delete: 削除
+  close: 閉じる
+  confirm: 確認
+  edit: 編集
+  create: 作成
+  update: 更新
+  search: 検索
+  filter: フィルター
+  clear: クリア
+  yes: はい
+  no: いいえ
+  back: 戻る
+  next: 次へ
+
+# 認証
+auth:
+  signIn: サインイン
+  signInAction: サインイン中...
+  signUp: 新規登録
+  signUpAction: 登録中...
+  confirmSignUp: アカウント確認
+  confirmAction: 確認中...
+  signOut: ログアウト
+  username: ユーザー名
+  password: パスワード
+  confirmPassword: パスワード（確認）
+  email: メールアドレス
+  verificationCode: 確認コード
+  authenticated: 認証済み
+  noAccount: アカウントをお持ちでない方は
+  hasAccount: アカウントをお持ちの方は
+  checkEmail: メールアドレスをご確認ください
+  enterVerificationCode: 確認コードを入力してアカウントを有効化してください
+  resendCode: コードを再送信
+  welcomeTitle: Donuts
+  welcomeDescription: これは Amazon Bedrock AgentCore を使った
+  welcomeDescriptionLine2: あなただけのAIエージェントのデモアプリです
+  placeholderUsername: ユーザー名を入力
+  placeholderPassword: パスワードを入力
+  placeholderConfirmPassword: パスワードを再入力
+  placeholderEmail: メールアドレスを入力
+  placeholderCode: 確認コードを入力
+  createAccount: アカウント作成
+  createAccountDescription: アカウントを新しく作る
+  passwordRequirements: 8文字以上で、大文字・小文字・数字をそれぞれ1文字以上含める必要があります
+  emailVerification: メール認証
+  enterCodeSentTo: に送信された確認コードを入力してください
+  verificationCodeLabel: 確認コード（6桁）
+  verificationCodeDescription: メールに記載されている6桁の数字を入力してください
+  confirmAccount: アカウントを確認
+  resendCodeSuccess: 確認コードを再送信しました
+  backToSignUp: サインアップに戻る
+
+# ナビゲーション
+navigation:
+  home: ホーム
+  newChat: 新しいチャット
+  searchChat: チャットを検索
+  searchTools: ツールを検索
+  searchAgents: エージェントを検索
+  events: イベント連携
+  settings: 設定
+  userMenu: ユーザーメニュー
+  toggleSidebar: サイドバーを切り替え
+  openSidebar: サイドバーを開く
+  closeSidebar: サイドバーを閉じる
+
+# チャット
+chat:
+  sessionName: セッション名
+  sessionNameLabel: セッション名
+  noConversations: まだ会話がありません
+  startNewChat: 新しいチャットを開始しましょう
+  loadingSessions: セッション一覧を読み込み中...
+  sendMessage: メッセージを送信
+  typingMessage: メッセージを入力...
+  thinking: 考え中...
+  stopGenerating: 生成を停止
+  selectAgent: エージェントを選択
+  changeAgent: エージェントを変更
+  messageInputPlaceholder: メッセージを入力してください...
+  attachFile: ファイルを添付
+  submit: 送信
+  inputHelp: Shift + Enter で改行、Enter で送信
+  searchChatsDescription: チャット検索機能は今後開発する予定です。
+  searchChatsFeature: 過去の会話履歴をキーワードで検索できるようになります。
+
+# エージェント
+agent:
+  selectAgent: エージェントを選択
+  createAgent: エージェントを作成
+  editAgent: エージェントを編集
+  deleteAgent: エージェントを削除
+  agentName: エージェント名
+  description: 説明
+  systemPrompt: システムプロンプト
+  model: モデル
+  temperature: Temperature
+  maxTokens: 最大トークン数
+  tools: ツール
+  selectTools: ツールを選択
+  noAgents: エージェントがありません
+  createFirstAgent: 最初のエージェントを作成しましょう
+  agentNamePlaceholder: エージェント名を入力
+  descriptionPlaceholder: エージェントの説明を入力
+  systemPromptPlaceholder: システムプロンプトを入力
+  comingSoon: Coming Soon
+  searchAgentsDescription: エージェント検索機能は今後開発する予定です。
+  searchAgentsFeature: 組織内で作成したエージェントを共有・検索できるようになります。
+  backToChat: チャットに戻る
+  basicSettings: 基本設定
+  toolsSettings: ツール
+  mcpSettings: MCP
+  nameAndIcon: Name & Icon
+  nameDescription: エージェントの表示名とアイコンを設定してください。アイコンをクリックして変更できます。
+  namePlaceholder: 例 - プログラミングメンター
+  descriptionLabel: Description
+  descriptionDescription: このエージェントの役割や特徴を簡潔に説明してください。
+  descriptionPlaceholder2: 例 - プログラミングの基礎から応用まで教えるAIメンター
+  systemPromptLabel: システムプロンプト
+  systemPromptRequired: 'システムプロンプト *'
+  systemPromptDescription: エージェントの振る舞いを定義するシステムプロンプトを入力してください。どのような役割を果たし、どのように応答すべきかを詳細に記述します。作業するプロジェクトのディレクトリパスを明確に指示することを推奨します。
+  systemPromptPlaceholder2: '例 - あなたは親切で知識豊富なAIアシスタントです。'
+  aiGenerate: AIで自動生成
+  aiGenerating: 生成中...
+  scenarios: Scenarios（オプション）
+  scenariosDescription: よく使用するやり取りのパターンをシナリオとして登録できます。シナリオのタイトルと具体的な内容を入力してください。
+  addScenario: シナリオ追加
+  scenarioTitlePlaceholder: 例 - Python基礎レッスン
+  scenarioPromptPlaceholder: 例 - Pythonの基本文法について説明してください
+  emptyScenarios: シナリオを追加するには「シナリオ追加」ボタンをクリックしてください
+  toolSelection: ツール選択
+  mcpServerSettings: MCP サーバー設定
+  validationNameRequired: Agent名は必須です
+  validationNameTooLong: Agent名は50文字以下で入力してください
+  validationDescriptionRequired: 説明は必須です
+  validationDescriptionTooLong: 説明は200文字以下で入力してください
+  validationSystemPromptRequired: システムプロンプトは必須です
+  validationSystemPromptTooShort: システムプロンプトは10文字以上で入力してください
+  validationScenarioTitleRequired: シナリオタイトルは必須です
+  validationScenarioPromptRequired: シナリオプロンプトは必須です
+  validationGenerationFailed: 生成に失敗しました
+
+# ツール
+tool:
+  availableTools: 利用可能なツール
+  selectedTools: 選択されたツール
+  noTools: ツールがありません
+  searchTools: ツールを検索...
+  toolName: ツール名
+  toolDescription: 説明
+  selectAll: すべて選択
+  deselectAll: 選択を解除
+  parameters: パラメータ
+  required: required
+  showDetails: 詳細を表示
+  hideDetails: 詳細を閉じる
+  searchPlaceholder: 自然言語でツールを検索... (例 テキストをエコーする)
+  searching: ツールを検索しています...
+  loadingTools: ツール一覧を読み込んでいます...
+  searchResults: 検索結果
+  noSearchResults: 検索結果が見つかりません
+  tryDifferentKeyword: 別のキーワードで検索してみてください
+  noToolsFound: ツールが見つかりません
+  noToolsRegistered: Gateway に登録されているツールがありません
+  toolsPageDescription: AgentCore Gateway から提供されるツール一覧です。各ツールは自然言語での検索や、パラメータの詳細確認が可能です。
+  loadMore: 次のページを読み込む
+  displayedCount: 件表示
+  hasMore: 続きあり
+  allLoaded: 全件表示完了
+  searchingFor: 検索中
+  refresh: 再読み込み
+  closeError: エラーを閉じる
+
+  # ToolSelector
+  selector:
+    availableTools: 利用可能なツール
+    selectedCount: '{{selected}} / {{total}} 選択中'
+    searchPlaceholder: ツールを検索...
+    selectAllVisible: 表示中をすべて選択
+    deselectAllVisible: 表示中をすべて解除
+    noSearchResults: 検索結果が見つかりません
+    noTools: ツールがありません
+    selectedToolsTitle: 選択済みツール
+
+  # MCP Config Editor
+  mcp:
+    description: このエージェントで使用する MCP サーバーを設定します。設定した MCP サーバーのツールが自動的に利用可能になります。
+    configLabel: MCP 設定 (JSON 形式)
+    insertSample: サンプルを挿入
+    previewTools: ツールをプレビュー
+    fetching: 取得中...
+    emptyConfig: 設定が空です
+    fetchError: ツール取得エラー
+    fetchFailed: ツール取得に失敗しました
+    availableToolsTitle: 利用可能なツール
+    toolCount: '{{count}} ツール'
+    samples:
+      filesystem: Filesystem Server
+      github: GitHub Server
+      awsDocs: AWS Documentation Server
+      multiple: Multiple Servers
+
+# ストレージ
+storage:
+  title: ストレージ管理
+  currentPath: 現在のパス
+  uploadFile: ファイルをアップロード
+  uploadFolder: フォルダをアップロード
+  download: ダウンロード
+  createFolder: フォルダを作成
+  rename: 名前を変更
+  move: 移動
+  size: サイズ
+  lastModified: 最終更新日時
+  type: 種類
+  folder: フォルダ
+  file: ファイル
+  uploading: アップロード中...
+  uploadSuccess: アップロード完了
+  uploadError: アップロードエラー
+  deleteConfirm: 本当に削除しますか？
+
+# メモリ
+memory:
+  title: メモリ（長期記憶）
+  longTermMemory: 保存されたメモリを参照する
+  longTermMemoryDescription: エージェントが回答するときにメモリを保存して使用できるようにします。
+  searchMemory: メモリを検索...
+  noMemories: メモリがありません
+  addMemory: メモリを追加
+  deleteMemory: メモリを削除
+  memoryContent: 内容
+  createdAt: 作成日時
+  savedMemories: 保存されたメモリ
+  description: エージェントは最近のチャットを記憶しようとしますが、時間の経過と共に忘れることもあります。保存されたメモリは決して忘れられることはありません。
+  searchPlaceholder: メモリを検索
+  searchButton: 検索
+  searchResults: 検索結果
+  noSearchResults: 検索結果が見つかりませんでした
+  noMemoriesYet: まだメモリが保存されていません
+  autoAccumulate: エージェントとの会話を続けると、自動的にメモリが蓄積されます
+  totalCount: '合計 {{count}} 件のメモリが保存されています'
+  created: 作成
+  updated: 更新
+  cannotDelete: 削除不可（IDが無効）
+  cannotDeleteTooltip: 削除不可（レコードIDが無効）
+  deleteConfirm: このメモリを削除しますか？
+  searching: 検索中
+
+# 設定
+settings:
+  title: 設定
+  language: 言語
+  theme: テーマ
+  notifications: 通知
+  privacy: プライバシー
+  about: このアプリについて
+  version: バージョン
+  logout: ログアウト
+  languageJa: 日本語
+  languageEn: English
+  themeLight: ライト
+  themeDark: ダーク
+  themeAuto: 自動
+
+# エラー
+error:
+  generic: エラーが発生しました
+  network: ネットワークエラー
+  notFound: 見つかりませんでした
+  unauthorized: 認証が必要です
+  forbidden: アクセスが拒否されました
+  serverError: サーバーエラー
+  tryAgain: もう一度お試しください
+  contactSupport: サポートにお問い合わせください
+
+# ページタイトル
+page:
+  home: ホーム
+  chat: チャット
+  search: 検索
+  tools: ツール
+  agents: エージェント
+  events: イベント
+  settings: 設定
+
+# イベント
+events:
+  title: イベント連携
+  comingSoon: Coming Soon
+  eventsDescription: イベント連携機能は今後開発する予定です。
+  eventsFeature: 外部カレンダーやイベント管理ツールと連携できるようになります。
+
+# ホームページ
+home:
+  title: あなただけの AI エージェント
+  description: 質問、相談、アイデアの整理まで。
+  descriptionLine2: 甘いドーナツのように、いつでもあなたの傍にいます。
+  getStarted: 今すぐ始める
+  footer: © 2025 Donuts AI Assistant. Made with ❤️ and a lot of coffee.
+
+# モーダル
+modal:
+  confirmTitle: 確認
+  confirmMessage: この操作を実行してもよろしいですか？
+  deleteTitle: 削除の確認
+  deleteMessage: この項目を削除してもよろしいですか？この操作は取り消せません。
+
+# バリデーション
+validation:
+  required: この項目は必須です
+  minLength: '{{min}}文字以上で入力してください'
+  maxLength: '{{max}}文字以内で入力してください'
+  email: 有効なメールアドレスを入力してください
+  passwordMismatch: パスワードが一致しません
+  invalidFormat: 入力形式が正しくありません

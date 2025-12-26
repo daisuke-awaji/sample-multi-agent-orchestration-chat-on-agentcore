@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface LoadingIndicatorProps {
   /** ローディングメッセージ */
@@ -19,12 +20,14 @@ export interface LoadingIndicatorProps {
 }
 
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
-  message = '読み込み中...',
+  message,
   size = 'md',
   center = true,
   spacing = 'md',
   textColor = 'text-gray-500',
 }) => {
+  const { t } = useTranslation();
+  const displayMessage = message ?? t('common.loading');
   // スピナーサイズの定義
   const spinnerSizeClasses = {
     sm: 'w-3 h-3',
@@ -50,7 +53,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         <div
           className={`${spinnerSizeClasses[size]} border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin`}
         />
-        {message}
+        {displayMessage}
       </div>
     </div>
   );

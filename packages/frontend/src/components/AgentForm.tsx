@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, X, AlertCircle, Sparkles, Settings, Wrench, Server } from 'lucide-react';
 import { ToolSelector } from './ToolSelector';
 import { MCPConfigEditor } from './MCPConfigEditor';
@@ -18,6 +19,7 @@ interface AgentFormProps {
 type TabType = 'basic' | 'tools' | 'mcp';
 
 export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading = false }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const [formData, setFormData] = useState<CreateAgentInput>(() => {
     if (agent) {
@@ -57,30 +59,30 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Agent名は必須です';
+      newErrors.name = t('agent.validationNameRequired');
     } else if (formData.name.length > 50) {
-      newErrors.name = 'Agent名は50文字以下で入力してください';
+      newErrors.name = t('agent.validationNameTooLong');
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = '説明は必須です';
+      newErrors.description = t('agent.validationDescriptionRequired');
     } else if (formData.description.length > 200) {
-      newErrors.description = '説明は200文字以下で入力してください';
+      newErrors.description = t('agent.validationDescriptionTooLong');
     }
 
     if (!formData.systemPrompt.trim()) {
-      newErrors.systemPrompt = 'システムプロンプトは必須です';
+      newErrors.systemPrompt = t('agent.validationSystemPromptRequired');
     } else if (formData.systemPrompt.length < 10) {
-      newErrors.systemPrompt = 'システムプロンプトは10文字以上で入力してください';
+      newErrors.systemPrompt = t('agent.validationSystemPromptTooShort');
     }
 
     // シナリオのバリデーション
     formData.scenarios.forEach((scenario, index) => {
       if (!scenario.title.trim()) {
-        newErrors[`scenario_title_${index}`] = 'シナリオタイトルは必須です';
+        newErrors[`scenario_title_${index}`] = t('agent.validationScenarioTitleRequired');
       }
       if (!scenario.prompt.trim()) {
-        newErrors[`scenario_prompt_${index}`] = 'シナリオプロンプトは必須です';
+        newErrors[`scenario_prompt_${index}`] = t('agent.validationScenarioPromptRequired');
       }
     });
 
@@ -216,7 +218,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           console.error('AI生成エラー:', error);
           setErrors((prev) => ({
             ...prev,
-            generation: `生成に失敗しました: ${error.message}`,
+            generation: `${t('agent.validationGenerationFailed')}: ${error.message}`,
           }));
           setIsGenerating(false);
         },
@@ -225,7 +227,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
       console.error('AI生成エラー:', error);
       setErrors((prev) => ({
         ...prev,
-        generation: `生成に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`,
+        generation: `${t('agent.validationGenerationFailed')}: ${error instanceof Error ? error.message : '不明なエラー'}`,
       }));
       setIsGenerating(false);
     }
@@ -233,9 +235,9 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
 
   // タブ設定
   const tabs: TabItem<TabType>[] = [
-    { id: 'basic', label: '基本設定', icon: Settings },
-    { id: 'tools', label: 'ツール', icon: Wrench },
-    { id: 'mcp', label: 'MCP', icon: Server },
+    { id: 'basic', label: t('agent.basicSettings'), icon: Settings },
+    { id: 'tools', label: t('agent.toolsSettings'), icon: Wrench },
+    { id: 'mcp', label: t('agent.mcpSettings'), icon: Server },
   ];
 
   return (
@@ -246,16 +248,16 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* 基本設定パネル */}
           {activeTab === 'basic' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">基本設定</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                {t('agent.basicSettings')}
+              </h2>
 
               {/* Agent名 */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name & Icon
+                  {t('agent.nameAndIcon')}
                 </label>
-                <p className="text-sm text-gray-500 mb-3">
-                  エージェントの表示名とアイコンを設定してください。アイコンをクリックして変更できます。
-                </p>
+                <p className="text-sm text-gray-500 mb-3">{t('agent.nameDescription')}</p>
                 <div className="flex items-center space-x-3">
                   <IconPicker
                     value={formData.icon}
@@ -273,7 +275,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                       }
                     }}
                     disabled={isLoading || isGenerating}
-                    placeholder="例: プログラミングメンター"
+                    placeholder={t('agent.namePlaceholder')}
                     className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
                       errors.name ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -293,11 +295,9 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Description
+                  {t('agent.descriptionLabel')}
                 </label>
-                <p className="text-sm text-gray-500 mb-3">
-                  このエージェントの役割や特徴を簡潔に説明してください。
-                </p>
+                <p className="text-sm text-gray-500 mb-3">{t('agent.descriptionDescription')}</p>
                 <textarea
                   id="description"
                   value={formData.description}
@@ -308,7 +308,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                     }
                   }}
                   disabled={isLoading || isGenerating}
-                  placeholder="例: プログラミングの基礎から応用まで教えるAIメンター"
+                  placeholder={t('agent.descriptionPlaceholder2')}
                   rows={2}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
@@ -326,7 +326,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label htmlFor="systemPrompt" className="text-sm font-medium text-gray-700">
-                    システムプロンプト <span className="text-red-500">*</span>
+                    {t('agent.systemPromptRequired')}
                   </label>
                   {/* AI自動生成ボタン */}
                   <button
@@ -341,12 +341,10 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                     className="inline-flex items-center space-x-1 px-3 py-1.5 text-xs text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isGenerating ? '生成中...' : 'AIで自動生成'}</span>
+                    <span>{isGenerating ? t('agent.aiGenerating') : t('agent.aiGenerate')}</span>
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">
-                  エージェントの振る舞いを定義するシステムプロンプトを入力してください。どのような役割を果たし、どのように応答すべきかを詳細に記述します。作業するプロジェクトのディレクトリパスを明確に指示することを推奨します。
-                </p>
+                <p className="text-sm text-gray-500 mb-3">{t('agent.systemPromptDescription')}</p>
                 <textarea
                   id="systemPrompt"
                   value={formData.systemPrompt}
@@ -357,7 +355,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                     }
                   }}
                   disabled={isLoading || isGenerating}
-                  placeholder="例: あなたは親切で知識豊富なAIアシスタントです。以下の方針でユーザーをサポートします：&#10;- 明確で理解しやすい説明を提供する&#10;- 必要に応じて具体例を示す&#10;- 不明な点は確認してから回答する"
+                  placeholder={t('agent.systemPromptPlaceholder2')}
                   rows={12}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none font-mono text-sm ${
                     errors.systemPrompt ? 'border-red-500' : 'border-gray-300'
@@ -381,7 +379,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-700">
-                    Scenarios（オプション）
+                    {t('agent.scenarios')}
                   </label>
                   <button
                     type="button"
@@ -390,13 +388,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                     className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>シナリオ追加</span>
+                    <span>{t('agent.addScenario')}</span>
                   </button>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-4">
-                  よく使用するやり取りのパターンをシナリオとして登録できます。シナリオのタイトルと具体的な内容を入力してください。
-                </p>
+                <p className="text-sm text-gray-500 mb-4">{t('agent.scenariosDescription')}</p>
 
                 <div className="space-y-3">
                   {formData.scenarios.map((scenario, index) => (
@@ -407,7 +403,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                           value={scenario.title}
                           onChange={(e) => updateScenario(index, 'title', e.target.value)}
                           disabled={isLoading || isGenerating}
-                          placeholder="例: Python基礎レッスン"
+                          placeholder={t('agent.scenarioTitlePlaceholder')}
                           rows={2}
                           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-y ${
                             errors[`scenario_title_${index}`] ? 'border-red-500' : 'border-gray-300'
@@ -429,7 +425,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                           value={scenario.prompt}
                           onChange={(e) => updateScenario(index, 'prompt', e.target.value)}
                           disabled={isLoading || isGenerating}
-                          placeholder="例: Pythonの基本文法について説明してください"
+                          placeholder={t('agent.scenarioPromptPlaceholder')}
                           rows={2}
                           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-y ${
                             errors[`scenario_prompt_${index}`]
@@ -463,7 +459,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                 {/* 空の状態 */}
                 {formData.scenarios.length === 0 && (
                   <div className="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-lg border border-gray-200 border-dashed">
-                    シナリオを追加するには「シナリオ追加」ボタンをクリックしてください
+                    {t('agent.emptyScenarios')}
                   </div>
                 )}
               </div>
@@ -473,7 +469,9 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* ツールパネル */}
           {activeTab === 'tools' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">ツール選択</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                {t('agent.toolSelection')}
+              </h2>
               <ToolSelector
                 selectedTools={formData.enabledTools}
                 onSelectionChange={(tools) =>
@@ -487,7 +485,9 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* MCP パネル */}
           {activeTab === 'mcp' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">MCP サーバー設定</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                {t('agent.mcpServerSettings')}
+              </h2>
               <MCPConfigEditor
                 config={formData.mcpConfig}
                 onChange={(config) => setFormData((prev) => ({ ...prev, mcpConfig: config }))}

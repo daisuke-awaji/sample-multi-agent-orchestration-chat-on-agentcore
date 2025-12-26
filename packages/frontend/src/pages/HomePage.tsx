@@ -4,9 +4,11 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Donut, MessageCircle } from 'lucide-react';
 
 export function HomePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -21,14 +23,14 @@ export function HomePage() {
 
           {/* タイトルと説明 */}
           <div className="space-y-4">
-            <h1 className="text-6xl font-extrabold text-amber-900 tracking-tight">Donuts</h1>
-            <p className="text-xl text-amber-700 font-medium leading-relaxed">
-              あなただけの AI エージェント
-            </p>
+            <h1 className="text-6xl font-extrabold text-amber-900 tracking-tight">
+              {t('auth.welcomeTitle')}
+            </h1>
+            <p className="text-xl text-amber-700 font-medium leading-relaxed">{t('home.title')}</p>
             <p className="text-md text-amber-600 leading-relaxed max-w-lg mx-auto">
-              質問、相談、アイデアの整理まで。
+              {t('home.description')}
               <br />
-              甘いドーナツのように、いつでもあなたの傍にいます。
+              {t('home.descriptionLine2')}
             </p>
           </div>
 
@@ -39,7 +41,7 @@ export function HomePage() {
               className="group px-12 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full text-lg font-semibold transition-all duration-300 shadow-md"
             >
               <span className="flex items-center gap-2">
-                今すぐ始める
+                {t('home.getStarted')}
                 <MessageCircle className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
@@ -49,9 +51,7 @@ export function HomePage() {
 
       {/* フッター */}
       <footer className="p-6 text-center">
-        <p className="text-sm text-gray-500">
-          © 2025 Donuts AI Assistant. Made with ❤️ and a lot of coffee.
-        </p>
+        <p className="text-sm text-gray-500">{t('home.footer')}</p>
       </footer>
     </>
   );

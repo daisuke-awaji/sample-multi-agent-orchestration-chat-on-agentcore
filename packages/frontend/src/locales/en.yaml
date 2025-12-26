@@ -1,0 +1,325 @@
+# English Translation File
+
+# Common
+common:
+  loading: Loading...
+  error: An error occurred
+  save: Save
+  cancel: Cancel
+  delete: Delete
+  close: Close
+  confirm: Confirm
+  edit: Edit
+  create: Create
+  update: Update
+  search: Search
+  filter: Filter
+  clear: Clear
+  yes: Yes
+  no: No
+  back: Back
+  next: Next
+
+# Authentication
+auth:
+  signIn: Sign In
+  signInAction: Signing in...
+  signUp: Sign Up
+  signUpAction: Signing up...
+  confirmSignUp: Confirm Account
+  confirmAction: Confirming...
+  signOut: Sign Out
+  username: Username
+  password: Password
+  confirmPassword: Confirm Password
+  email: Email Address
+  verificationCode: Verification Code
+  authenticated: Authenticated
+  noAccount: Don't have an account?
+  hasAccount: Already have an account?
+  checkEmail: Please check your email
+  enterVerificationCode: Enter the verification code to activate your account
+  resendCode: Resend Code
+  welcomeTitle: Donuts
+  welcomeDescription: This is a demo application of your own
+  welcomeDescriptionLine2: AI Agent powered by Amazon Bedrock AgentCore
+  placeholderUsername: Enter username
+  placeholderPassword: Enter password
+  placeholderConfirmPassword: Re-enter password
+  placeholderEmail: Enter email address
+  placeholderCode: Enter verification code
+  createAccount: Create Account
+  createAccountDescription: Create a new account
+  passwordRequirements: Must be at least 8 characters with uppercase, lowercase, and numbers
+  emailVerification: Email Verification
+  enterCodeSentTo: 'Please enter the verification code sent to '
+  verificationCodeLabel: Verification Code (6 digits)
+  verificationCodeDescription: Enter the 6-digit number from your email
+  confirmAccount: Confirm Account
+  resendCodeSuccess: Verification code has been resent
+  backToSignUp: Back to Sign Up
+
+# Navigation
+navigation:
+  home: Home
+  newChat: New Chat
+  searchChat: Search Chats
+  searchTools: Search Tools
+  searchAgents: Search Agents
+  events: Event Integration
+  settings: Settings
+  userMenu: User Menu
+  toggleSidebar: Toggle Sidebar
+  openSidebar: Open Sidebar
+  closeSidebar: Close Sidebar
+
+# Chat
+chat:
+  sessionName: Session Name
+  sessionNameLabel: Session
+  noConversations: No conversations yet
+  startNewChat: Start a new chat
+  loadingSessions: Loading sessions...
+  sendMessage: Send Message
+  typingMessage: Type a message...
+  thinking: Thinking...
+  stopGenerating: Stop Generating
+  selectAgent: Select Agent
+  changeAgent: Change Agent
+  messageInputPlaceholder: Type your message...
+  attachFile: Attach File
+  submit: Submit
+  inputHelp: Shift + Enter for new line, Enter to send
+  searchChatsDescription: Chat search functionality is under development.
+  searchChatsFeature: You will be able to search past conversation history by keywords.
+
+# Agent
+agent:
+  selectAgent: Select Agent
+  createAgent: Create Agent
+  editAgent: Edit Agent
+  deleteAgent: Delete Agent
+  agentName: Agent Name
+  description: Description
+  systemPrompt: System Prompt
+  model: Model
+  temperature: Temperature
+  maxTokens: Max Tokens
+  tools: Tools
+  selectTools: Select Tools
+  noAgents: No agents available
+  createFirstAgent: Create your first agent
+  agentNamePlaceholder: Enter agent name
+  descriptionPlaceholder: Enter agent description
+  systemPromptPlaceholder: Enter system prompt
+  comingSoon: Coming Soon
+  searchAgentsDescription: Agent search functionality is under development.
+  searchAgentsFeature: You will be able to share and search agents created within your organization.
+  backToChat: Back to Chat
+  basicSettings: Basic Settings
+  toolsSettings: Tools
+  mcpSettings: MCP
+  nameAndIcon: Name & Icon
+  nameDescription: Set the display name and icon for your agent. Click the icon to change it.
+  namePlaceholder: 'e.g. - Programming Mentor'
+  descriptionLabel: Description
+  descriptionDescription: Briefly describe the role and characteristics of this agent.
+  descriptionPlaceholder2: 'e.g. - An AI mentor teaching programming from basics to advanced'
+  systemPromptLabel: System Prompt
+  systemPromptRequired: 'System Prompt *'
+  systemPromptDescription: Enter the system prompt that defines the agent's behavior. Describe in detail what role it should play and how it should respond. It is recommended to clearly specify the project directory path.
+  systemPromptPlaceholder2: 'e.g. - You are a helpful and knowledgeable AI assistant.'
+  aiGenerate: Auto-generate with AI
+  aiGenerating: Generating...
+  scenarios: Scenarios (Optional)
+  scenariosDescription: Register commonly used interaction patterns as scenarios. Enter the scenario title and specific content.
+  addScenario: Add Scenario
+  scenarioTitlePlaceholder: 'e.g. - Python Basics Lesson'
+  scenarioPromptPlaceholder: 'e.g. - Please explain Python basic syntax'
+  emptyScenarios: Click "Add Scenario" button to add scenarios
+  toolSelection: Tool Selection
+  mcpServerSettings: MCP Server Settings
+  validationNameRequired: Agent name is required
+  validationNameTooLong: Agent name must be 50 characters or less
+  validationDescriptionRequired: Description is required
+  validationDescriptionTooLong: Description must be 200 characters or less
+  validationSystemPromptRequired: System prompt is required
+  validationSystemPromptTooShort: System prompt must be at least 10 characters
+  validationScenarioTitleRequired: Scenario title is required
+  validationScenarioPromptRequired: Scenario prompt is required
+  validationGenerationFailed: Generation failed
+
+# Tools
+tool:
+  availableTools: Available Tools
+  selectedTools: Selected Tools
+  noTools: No tools available
+  searchTools: Search tools...
+  toolName: Tool Name
+  toolDescription: Description
+  selectAll: Select All
+  deselectAll: Deselect All
+  parameters: Parameters
+  required: required
+  showDetails: Show Details
+  hideDetails: Hide Details
+  searchPlaceholder: Search tools in natural language... (e.g. 'echo text')
+  searching: Searching tools...
+  loadingTools: Loading tools...
+  searchResults: Search Results
+  noSearchResults: No search results found
+  tryDifferentKeyword: Try searching with different keywords
+  noToolsFound: No tools found
+  noToolsRegistered: No tools registered in Gateway
+  toolsPageDescription: List of tools provided by AgentCore Gateway. Each tool can be searched using natural language and parameters can be examined.
+  loadMore: Load More
+  displayedCount: items displayed
+  hasMore: more available
+  allLoaded: all loaded
+  searchingFor: Searching
+  refresh: Refresh
+  closeError: Close Error
+
+  # ToolSelector
+  selector:
+    availableTools: Available Tools
+    selectedCount: '{{selected}} / {{total}} selected'
+    searchPlaceholder: Search tools...
+    selectAllVisible: Select all visible
+    deselectAllVisible: Deselect all visible
+    noSearchResults: No search results found
+    noTools: No tools available
+    selectedToolsTitle: 'Selected Tools:'
+
+  # MCP Config Editor
+  mcp:
+    description: Configure MCP servers to be used by this agent. Tools from configured MCP servers will be automatically available.
+    configLabel: MCP Configuration (JSON format)
+    insertSample: Insert Sample
+    previewTools: Preview Tools
+    fetching: Fetching...
+    emptyConfig: Configuration is empty
+    fetchError: Tool fetch error
+    fetchFailed: Failed to fetch tools
+    availableToolsTitle: Available Tools
+    toolCount: '{{count}} tools'
+    samples:
+      filesystem: Filesystem Server
+      github: GitHub Server
+      awsDocs: AWS Documentation Server
+      multiple: Multiple Servers
+
+# Storage
+storage:
+  title: Storage Management
+  currentPath: Current Path
+  uploadFile: Upload File
+  uploadFolder: Upload Folder
+  download: Download
+  createFolder: Create Folder
+  rename: Rename
+  move: Move
+  size: Size
+  lastModified: Last Modified
+  type: Type
+  folder: Folder
+  file: File
+  uploading: Uploading...
+  uploadSuccess: Upload Successful
+  uploadError: Upload Error
+  deleteConfirm: Are you sure you want to delete?
+
+# Memory
+memory:
+  title: Memory Management
+  longTermMemory: Long-term Memory
+  longTermMemoryDescription: Allows agents to save and use memory when answering.
+  searchMemory: Search memory...
+  noMemories: No memories available
+  addMemory: Add Memory
+  deleteMemory: Delete Memory
+  memoryContent: Content
+  createdAt: Created At
+  savedMemories: Saved Memories
+  description: The agent tries to remember recent chats, but may forget over time. Saved memories will never be forgotten.
+  searchPlaceholder: Search memory
+  searchButton: Search
+  searchResults: Search Results
+  noSearchResults: No search results found
+  noMemoriesYet: No memories saved yet
+  autoAccumulate: Memories will accumulate automatically as you continue conversing with the agent
+  totalCount: 'Total {{count}} memories saved'
+  created: Created
+  updated: Updated
+  cannotDelete: Cannot delete (Invalid ID)
+  cannotDeleteTooltip: Cannot delete (Invalid record ID)
+  deleteConfirm: Are you sure you want to delete this memory?
+  searching: Searching
+
+# Settings
+settings:
+  title: Settings
+  language: Language
+  theme: Theme
+  notifications: Notifications
+  privacy: Privacy
+  about: About
+  version: Version
+  logout: Logout
+  languageJa: 日本語
+  languageEn: English
+  themeLight: Light
+  themeDark: Dark
+  themeAuto: Auto
+
+# Error
+error:
+  generic: An error occurred
+  network: Network error
+  notFound: Not found
+  unauthorized: Authentication required
+  forbidden: Access denied
+  serverError: Server error
+  tryAgain: Please try again
+  contactSupport: Contact support
+
+# Page Titles
+page:
+  home: Home
+  chat: Chat
+  search: Search
+  tools: Tools
+  agents: Agents
+  events: Events
+  settings: Settings
+
+# Events
+events:
+  title: Event Integration
+  comingSoon: Coming Soon
+  eventsDescription: Event integration functionality is under development.
+  eventsFeature: You will be able to integrate with external calendars and event management tools.
+
+# Home Page
+home:
+  title: Your Personal AI Agent
+  description: From questions to consultations and idea organization.
+  descriptionLine2: Like a sweet donut, always by your side.
+  getStarted: Get Started
+  footer: © 2025 Donuts AI Assistant. Made with ❤️ and a lot of coffee.
+
+# Modal
+modal:
+  confirmTitle: Confirm
+  confirmMessage: Are you sure you want to proceed?
+  deleteTitle: Confirm Deletion
+  deleteMessage: Are you sure you want to delete this item? This action cannot be undone.
+
+# Validation
+validation:
+  required: This field is required
+  minLength: 'Please enter at least {{min}} characters'
+  maxLength: 'Please enter no more than {{max}} characters'
+  email: Please enter a valid email address
+  passwordMismatch: Passwords do not match
+  invalidFormat: Invalid format

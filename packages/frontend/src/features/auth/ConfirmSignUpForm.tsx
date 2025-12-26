@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
@@ -15,6 +16,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
   onSwitchToLogin,
   onBack,
 }) => {
+  const { t } = useTranslation();
   const { confirmSignUp, resendCode, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState<ConfirmSignUpFormData>({
     username,
@@ -127,9 +129,11 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-amber-900 mb-2">Donuts - メール認証</h2>
+          <h2 className="text-3xl font-bold text-amber-900 mb-2">
+            {t('auth.welcomeTitle')} - {t('auth.emailVerification')}
+          </h2>
           <p className="text-gray-600">
-            <strong>{username}</strong> に送信された確認コードを入力してください
+            <strong>{username}</strong> {t('auth.enterCodeSentTo')}
           </p>
         </div>
 
@@ -137,7 +141,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
           <div className="space-y-4">
             <div>
               <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
-                確認コード（6桁） <span className="text-red-500">*</span>
+                {t('auth.verificationCodeLabel')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="code"
@@ -157,9 +161,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
               {validationErrors.code && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.code}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                メールに記載されている6桁の数字を入力してください
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{t('auth.verificationCodeDescription')}</p>
             </div>
           </div>
 
@@ -195,7 +197,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-green-800">確認コードを再送信しました</p>
+                  <p className="text-sm text-green-800">{t('auth.resendCodeSuccess')}</p>
                 </div>
               </div>
             </div>
@@ -228,10 +230,10 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
                       d="m12 2v4m0 12v4m10-10h-4m-12 0H2m15.364-7.364-2.829 2.829m-9.899 9.899-2.829 2.829m12.728 0-2.829-2.829M4.929 4.929l-2.829 2.829"
                     ></path>
                   </svg>
-                  確認中...
+                  {t('auth.confirmAction')}
                 </>
               ) : (
-                'アカウントを確認'
+                t('auth.confirmAccount')
               )}
             </button>
 
@@ -241,7 +243,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
               disabled={isLoading}
               className="w-full px-4 py-2 border border-gray-300 rounded-2xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              確認コードを再送信
+              {t('auth.resendCode')}
             </button>
           </div>
         </form>
@@ -252,16 +254,16 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
             onClick={onBack}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
-            ← サインアップに戻る
+            ← {t('auth.backToSignUp')}
           </button>
           <p className="text-sm text-gray-600">
-            既にアカウントをお持ちですか？{' '}
+            {t('auth.hasAccount')}{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
               className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
             >
-              ログイン
+              {t('auth.signIn')}
             </button>
           </p>
         </div>

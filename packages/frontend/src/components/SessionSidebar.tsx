@@ -5,6 +5,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Donut,
   SquarePen,
@@ -35,6 +36,8 @@ interface SessionItemProps {
 }
 
 function SessionItem({ session, isActive, onSelect, isNew = false }: SessionItemProps) {
+  const { t } = useTranslation();
+
   return (
     <Link
       to={`/chat/${session.sessionId}`}
@@ -52,7 +55,7 @@ function SessionItem({ session, isActive, onSelect, isNew = false }: SessionItem
           ${isActive ? 'text-gray-900' : 'text-gray-900 group-hover:text-gray-700'}
         `}
         >
-          セッション名
+          {t('chat.sessionNameLabel')}
         </span>
         <span
           className={`
@@ -71,6 +74,7 @@ function SessionItem({ session, isActive, onSelect, isNew = false }: SessionItem
  * セッションサイドバーコンポーネント
  */
 export function SessionSidebar() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { user, logout } = useAuthStore();
@@ -230,10 +234,10 @@ export function SessionSidebar() {
             className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? '新しいチャット' : undefined}
+            title={!shouldShowExpanded ? t('navigation.newChat') : undefined}
           >
             <SquarePen className="w-5 h-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm">新しいチャット</span>}
+            {shouldShowExpanded && <span className="text-sm">{t('navigation.newChat')}</span>}
           </Link>
 
           <Link
@@ -241,10 +245,10 @@ export function SessionSidebar() {
             className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? 'チャットを検索' : undefined}
+            title={!shouldShowExpanded ? t('navigation.searchChat') : undefined}
           >
             <Search className="w-5 h-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm">チャットを検索</span>}
+            {shouldShowExpanded && <span className="text-sm">{t('navigation.searchChat')}</span>}
           </Link>
 
           <Link
@@ -252,10 +256,10 @@ export function SessionSidebar() {
             className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? 'ツールを検索' : undefined}
+            title={!shouldShowExpanded ? t('navigation.searchTools') : undefined}
           >
             <Wrench className="w-5 h-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm">ツールを検索</span>}
+            {shouldShowExpanded && <span className="text-sm">{t('navigation.searchTools')}</span>}
           </Link>
 
           <Link
@@ -263,10 +267,10 @@ export function SessionSidebar() {
             className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? 'エージェントを検索' : undefined}
+            title={!shouldShowExpanded ? t('navigation.searchAgents') : undefined}
           >
             <Bot className="w-5 h-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm">エージェントを検索</span>}
+            {shouldShowExpanded && <span className="text-sm">{t('navigation.searchAgents')}</span>}
           </Link>
 
           <Link
@@ -274,10 +278,10 @@ export function SessionSidebar() {
             className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? 'イベント連携' : undefined}
+            title={!shouldShowExpanded ? t('navigation.events') : undefined}
           >
             <CalendarRange className="w-5 h-5 flex-shrink-0" />
-            {shouldShowExpanded && <span className="text-sm">イベント連携</span>}
+            {shouldShowExpanded && <span className="text-sm">{t('navigation.events')}</span>}
           </Link>
         </div>
       </div>
@@ -304,7 +308,7 @@ export function SessionSidebar() {
 
           {isLoadingSessions && sessions.length === 0 && (
             <div className="p-4">
-              <LoadingIndicator message="セッション一覧を読み込み中..." spacing="none" />
+              <LoadingIndicator message={t('chat.loadingSessions')} spacing="none" />
             </div>
           )}
 
@@ -323,8 +327,8 @@ export function SessionSidebar() {
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              <p className="text-sm">まだ会話がありません</p>
-              <p className="text-xs text-gray-400 mt-1">新しいチャットを開始しましょう</p>
+              <p className="text-sm">{t('chat.noConversations')}</p>
+              <p className="text-xs text-gray-400 mt-1">{t('chat.startNewChat')}</p>
             </div>
           )}
 
@@ -354,7 +358,7 @@ export function SessionSidebar() {
             className={`flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors ${
               shouldShowExpanded ? 'w-full text-left' : 'w-auto'
             }`}
-            title={!shouldShowExpanded ? 'ユーザーメニュー' : undefined}
+            title={!shouldShowExpanded ? t('navigation.userMenu') : undefined}
           >
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-gray-600" />
@@ -377,7 +381,7 @@ export function SessionSidebar() {
               {shouldShowExpanded && (
                 <div className="px-4 py-2 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                  <p className="text-xs text-gray-500">認証済み</p>
+                  <p className="text-xs text-gray-500">{t('auth.authenticated')}</p>
                 </div>
               )}
 
@@ -385,7 +389,7 @@ export function SessionSidebar() {
               {!shouldShowExpanded && (
                 <div className="px-4 py-2 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                  <p className="text-xs text-gray-500">認証済み</p>
+                  <p className="text-xs text-gray-500">{t('auth.authenticated')}</p>
                 </div>
               )}
 
@@ -396,7 +400,7 @@ export function SessionSidebar() {
                 className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 no-underline"
               >
                 <Settings className="w-4 h-4" />
-                設定
+                {t('navigation.settings')}
               </Link>
 
               {/* ログアウト */}
@@ -405,7 +409,7 @@ export function SessionSidebar() {
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
-                ログアウト
+                {t('auth.signOut')}
               </button>
             </div>
           )}

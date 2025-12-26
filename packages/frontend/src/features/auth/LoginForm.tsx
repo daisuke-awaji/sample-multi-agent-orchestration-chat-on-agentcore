@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,6 +10,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
+  const { t } = useTranslation();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState<LoginFormData>({
     username: '',
@@ -77,16 +79,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
             <div className="absolute inset-0 bg-amber-200 rounded-full blur-2xl opacity-30 scale-125"></div>
             <Donut className="w-16 h-16 text-amber-600 mx-auto" />
           </div>
-          <h2 className="text-3xl font-bold text-amber-900 mb-2">Donuts</h2>
-          <p className="text-gray-600 text-sm">これは Amazon Bedrock AgentCore を使った</p>
-          <p className="text-gray-600 text-sm">あなただけのAIエージェントのデモアプリです</p>
+          <h2 className="text-3xl font-bold text-amber-900 mb-2">{t('auth.welcomeTitle')}</h2>
+          <p className="text-gray-600 text-sm">{t('auth.welcomeDescription')}</p>
+          <p className="text-gray-600 text-sm">{t('auth.welcomeDescriptionLine2')}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                ユーザー名
+                {t('auth.username')}
               </label>
               <input
                 id="username"
@@ -99,7 +101,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
                 className={`input-field ${
                   validationErrors.username ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="ユーザー名を入力"
+                placeholder={t('auth.placeholderUsername')}
               />
               {validationErrors.username && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.username}</p>
@@ -108,7 +110,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                パスワード
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -121,7 +123,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
                 className={`input-field ${
                   validationErrors.password ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="パスワードを入力"
+                placeholder={t('auth.placeholderPassword')}
               />
               {validationErrors.password && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.password}</p>
@@ -174,27 +176,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
                     d="m12 2v4m0 12v4m10-10h-4m-12 0H2m15.364-7.364-2.829 2.829m-9.899 9.899-2.829 2.829m12.728 0-2.829-2.829M4.929 4.929l-2.829 2.829"
                   ></path>
                 </svg>
-                サインイン中...
+                {t('auth.signInAction')}
               </>
             ) : (
-              'サインイン'
+              t('auth.signIn')
             )}
           </button>
         </form>
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            アカウントをお持ちでない方は{' '}
-            {onSwitchToSignUp ? (
+            {t('auth.noAccount')}{' '}
+            {onSwitchToSignUp && (
               <button
                 type="button"
                 onClick={onSwitchToSignUp}
                 className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
               >
-                新規登録
+                {t('auth.signUp')}
               </button>
-            ) : (
-              'Cognito User Pool による認証'
             )}
           </p>
         </div>

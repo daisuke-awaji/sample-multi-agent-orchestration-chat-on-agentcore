@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Send, Loader2 } from 'lucide-react';
 import { useChatStore } from '../stores/chatStore';
 import { StoragePathDisplay } from './StoragePathDisplay';
@@ -15,6 +16,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onCreateSession,
   getScenarioPrompt,
 }) => {
+  const { t } = useTranslation();
   const { sendPrompt, isLoading } = useChatStore();
   const [input, setInput] = useState('');
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
@@ -118,7 +120,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             value={input}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="メッセージを入力してください..."
+            placeholder={t('chat.messageInputPlaceholder')}
             className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-2xl focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-transparent resize-none min-h-[52px] max-h-[200px] bg-white"
             rows={1}
             style={{ height: 'auto' }}
@@ -143,7 +145,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
 
         {/* ヘルプテキスト */}
-        <p className="mt-2 text-xs text-gray-500">Shift + Enter で改行、Enter で送信</p>
+        <p className="mt-2 text-xs text-gray-500">{t('chat.inputHelp')}</p>
       </form>
 
       {/* ストレージ管理モーダル */}

@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Settings, Brain, HelpCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Settings, Brain, HelpCircle, Languages, ChevronDown, Check } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { MemoryManagementModal } from '../components/MemoryManagementModal';
 
@@ -8,8 +9,39 @@ import { MemoryManagementModal } from '../components/MemoryManagementModal';
  * 各種設定を管理するページ（今後設定項目を追加予定）
  */
 export function SettingsPage() {
+  const { t, i18n } = useTranslation();
   const { isMemoryEnabled, setMemoryEnabled } = useMemoryStore();
   const [showMemoryModal, setShowMemoryModal] = useState(false);
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 言語選択オプション
+  const languageOptions = [
+    { value: 'ja', label: t('settings.languageJa') },
+    { value: 'en', label: t('settings.languageEn') },
+  ];
+
+  const handleLanguageChange = (lang: string) => {
+    i18n.changeLanguage(lang);
+    setIsLanguageDropdownOpen(false);
+  };
+
+  // ドロップダウン外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsLanguageDropdownOpen(false);
+      }
+    };
+
+    if (isLanguageDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isLanguageDropdownOpen]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -17,34 +49,82 @@ export function SettingsPage() {
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex items-center gap-3">
           <Settings className="w-6 h-6 text-gray-700" />
-          <h1 className="text-xl font-semibold text-gray-900">設定</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{t('settings.title')}</h1>
         </div>
       </header>
 
       {/* メインコンテンツ */}
       <main className="flex-1 overflow-y-auto p-6">
+        {/* 言語設定セクション */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Languages className="w-5 h-5 text-gray-700" />
+            <h2 className="text-lg font-semibold text-gray-900">{t('settings.language')}</h2>
+          </div>
+
+          {/* カスタムドロップダウン */}
+          <div ref={dropdownRef} className="relative w-full">
+            {/* トリガーボタン */}
+            <button
+              onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium cursor-pointer hover:border-gray-400 transition-colors flex items-center justify-between"
+            >
+              <span>{languageOptions.find((opt) => opt.value === i18n.language)?.label}</span>
+              <ChevronDown
+                className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                  isLanguageDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* ドロップダウンメニュー */}
+            {isLanguageDropdownOpen && (
+              <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-subtle-fade-in">
+                {languageOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleLanguageChange(option.value)}
+                    className={`
+                      w-full px-4 py-3 text-left flex items-center justify-between
+                      transition-colors duration-150
+                      ${
+                        i18n.language === option.value
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-900 hover:bg-gray-50'
+                      }
+                    `}
+                  >
+                    <span>{option.label}</span>
+                    {i18n.language === option.value && <Check className="w-5 h-5 text-blue-600" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* メモリ管理セクション */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-gray-700" />
-              <h2 className="text-lg font-semibold text-gray-900">メモリ</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('memory.title')}</h2>
               <HelpCircle className="w-4 h-4 text-gray-400" />
             </div>
             <button
               onClick={() => setShowMemoryModal(true)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              管理する
+              {t('common.edit')}
             </button>
           </div>
 
           <div className="flex items-center justify-between py-4">
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-gray-900 mb-1">保存されたメモリを参照する</h3>
-              <p className="text-sm text-gray-600">
-                エージェントが回答するときにメモリを保存して使用できるようにします。
-              </p>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
+                {t('memory.longTermMemory')}
+              </h3>
+              <p className="text-sm text-gray-600">{t('memory.longTermMemoryDescription')}</p>
             </div>
             <div className="ml-4">
               {/* カスタムトグルスイッチ */}
@@ -68,29 +148,6 @@ export function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* 他の設定項目（準備中） */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-4">今後追加予定の設定項目:</h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0"></div>
-              テーマ設定（ダークモード/ライトモード）
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0"></div>
-              デフォルトのLLMモデル選択
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0"></div>
-              通知設定
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0"></div>
-              アカウント設定
-            </li>
-          </ul>
         </div>
 
         {/* メモリ管理モーダル */}

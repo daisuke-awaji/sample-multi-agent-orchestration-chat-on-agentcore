@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,6 +10,7 @@ interface SignUpFormProps {
 }
 
 export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
+  const { t } = useTranslation();
   const { signUp, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState<SignUpFormData>({
     username: '',
@@ -88,15 +90,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
             <div className="absolute inset-0 bg-amber-200 rounded-full blur-2xl opacity-30 scale-125"></div>
             <Donut className="w-16 h-16 text-amber-600 mx-auto" />
           </div>
-          <h2 className="text-3xl font-bold text-amber-900 mb-2">Donuts</h2>
-          <p className="text-gray-600">アカウントを新しく作る</p>
+          <h2 className="text-3xl font-bold text-amber-900 mb-2">{t('auth.welcomeTitle')}</h2>
+          <p className="text-gray-600">{t('auth.createAccountDescription')}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                ユーザー名 <span className="text-red-500">*</span>
+                {t('auth.username')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="username"
@@ -109,7 +111,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                 className={`input-field ${
                   validationErrors.username ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="ユーザー名を入力"
+                placeholder={t('auth.placeholderUsername')}
               />
               {validationErrors.username && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.username}</p>
@@ -118,7 +120,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                メールアドレス <span className="text-red-500">*</span>
+                {t('auth.email')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
@@ -131,7 +133,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                 className={`input-field ${
                   validationErrors.email ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="メールアドレスを入力"
+                placeholder={t('auth.placeholderEmail')}
               />
               {validationErrors.email && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.email}</p>
@@ -140,7 +142,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                パスワード <span className="text-red-500">*</span>
+                {t('auth.password')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
@@ -153,14 +155,12 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                 className={`input-field ${
                   validationErrors.password ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="パスワードを入力"
+                placeholder={t('auth.placeholderPassword')}
               />
               {validationErrors.password && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.password}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                8文字以上で、大文字・小文字・数字をそれぞれ1文字以上含める必要があります
-              </p>
+              <p className="mt-1 text-xs text-gray-500">{t('auth.passwordRequirements')}</p>
             </div>
 
             <div>
@@ -168,7 +168,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                パスワード（確認） <span className="text-red-500">*</span>
+                {t('auth.confirmPassword')} <span className="text-red-500">*</span>
               </label>
               <input
                 id="confirmPassword"
@@ -181,7 +181,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                 className={`input-field ${
                   validationErrors.confirmPassword ? 'border-red-300 focus:ring-red-300' : ''
                 }`}
-                placeholder="パスワードを再入力"
+                placeholder={t('auth.placeholderConfirmPassword')}
               />
               {validationErrors.confirmPassword && (
                 <p className="mt-2 text-sm text-red-600">{validationErrors.confirmPassword}</p>
@@ -234,23 +234,23 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
                     d="m12 2v4m0 12v4m10-10h-4m-12 0H2m15.364-7.364-2.829 2.829m-9.899 9.899-2.829 2.829m12.728 0-2.829-2.829M4.929 4.929l-2.829 2.829"
                   ></path>
                 </svg>
-                登録中...
+                {t('auth.signUpAction')}
               </>
             ) : (
-              'アカウント作成'
+              t('auth.createAccount')
             )}
           </button>
         </form>
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            既にアカウントをお持ちですか？{' '}
+            {t('auth.hasAccount')}{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
               className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
             >
-              ログイン
+              {t('auth.signIn')}
             </button>
           </p>
         </div>

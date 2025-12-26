@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, X, AlertCircle } from 'lucide-react';
 import { useToolStore } from '../stores/toolStore';
 import { LoadingIndicator } from './ui/LoadingIndicator';
@@ -15,6 +16,7 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
   onSelectionChange,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const { tools, isLoading, error, loadAllTools } = useToolStore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -79,9 +81,12 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
     <div className="space-y-4">
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-900">利用可能なツール</h3>
+        <h3 className="text-sm font-medium text-gray-900">{t('tool.selector.availableTools')}</h3>
         <span className="text-xs text-gray-500">
-          {selectedTools.length} / {tools.length} 選択中
+          {t('tool.selector.selectedCount', {
+            selected: selectedTools.length,
+            total: tools.length,
+          })}
         </span>
       </div>
 
@@ -90,7 +95,7 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input
           type="text"
-          placeholder="ツールを検索..."
+          placeholder={t('tool.selector.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           disabled={disabled || isLoading}
@@ -113,12 +118,14 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
           disabled={disabled || isLoading}
           className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
         >
-          {allFilteredSelected ? '表示中をすべて解除' : '表示中をすべて選択'}
+          {allFilteredSelected
+            ? t('tool.selector.deselectAllVisible')
+            : t('tool.selector.selectAllVisible')}
         </button>
       )}
 
       {/* ローディング状態 */}
-      {isLoading && <LoadingIndicator message="ツール一覧を読み込み中..." spacing="lg" />}
+      {isLoading && <LoadingIndicator message={t('tool.loadingTools')} spacing="lg" />}
 
       {/* エラー状態 */}
       {error && (
@@ -133,7 +140,7 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
         <div className="space-y-2 max-h-[30vh] overflow-y-auto border border-gray-200 rounded-lg">
           {filteredTools.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              {searchQuery ? '検索結果が見つかりません' : 'ツールがありません'}
+              {searchQuery ? t('tool.selector.noSearchResults') : t('tool.selector.noTools')}
             </div>
           ) : (
             filteredTools.map((tool) => {
@@ -174,7 +181,9 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
       {/* 選択済みツールの概要 */}
       {selectedTools.length > 0 && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">選択済みツール:</h4>
+          <h4 className="text-sm font-medium text-blue-900 mb-2">
+            {t('tool.selector.selectedToolsTitle')}
+          </h4>
           <div className="flex flex-wrap gap-1">
             {selectedTools.map((toolName) => (
               <span

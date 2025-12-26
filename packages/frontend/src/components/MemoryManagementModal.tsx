@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Search, Trash2, Brain, AlertCircle, Loader2 } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { type MemoryRecord } from '../api/memory';
@@ -24,8 +25,10 @@ interface MemoryRecordItemProps {
 }
 
 function MemoryRecordItem({ record, onDelete, isDeleting }: MemoryRecordItemProps) {
+  const { t } = useTranslation();
+
   const handleDelete = () => {
-    if (window.confirm('このメモリを削除しますか？')) {
+    if (window.confirm(t('memory.deleteConfirm'))) {
       onDelete(record.recordId);
     }
   };
@@ -43,16 +46,20 @@ function MemoryRecordItem({ record, onDelete, isDeleting }: MemoryRecordItemProp
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-900 leading-relaxed mb-2">{truncatedContent}</p>
           <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span>作成: {new Date(record.createdAt).toLocaleDateString('ja-JP')}</span>
-            <span>更新: {new Date(record.updatedAt).toLocaleDateString('ja-JP')}</span>
-            {!canDelete && <span className="text-red-500">削除不可（IDが無効）</span>}
+            <span>
+              {t('memory.created')}: {new Date(record.createdAt).toLocaleDateString()}
+            </span>
+            <span>
+              {t('memory.updated')}: {new Date(record.updatedAt).toLocaleDateString()}
+            </span>
+            {!canDelete && <span className="text-red-500">{t('memory.cannotDelete')}</span>}
           </div>
         </div>
         <button
           onClick={handleDelete}
           disabled={isDeleting || !canDelete}
           className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title={canDelete ? '削除' : '削除不可（レコードIDが無効）'}
+          title={canDelete ? t('common.delete') : t('memory.cannotDeleteTooltip')}
         >
           {isDeleting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -69,6 +76,7 @@ function MemoryRecordItem({ record, onDelete, isDeleting }: MemoryRecordItemProp
  * メモリ管理モーダル
  */
 export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModalProps) {
+  const { t } = useTranslation();
   const {
     records,
     isLoading,
@@ -137,7 +145,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-gray-700" />
-            <h2 className="text-lg font-semibold text-gray-900">保存されたメモリ</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('memory.savedMemories')}</h2>
           </div>
           <button
             onClick={onClose}
@@ -146,10 +154,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-gray-600 mt-2">
-          エージェントは最近のチャットを記憶しようとしますが、時間の経過と共に忘れることもあります。
-          保存されたメモリは決して忘れられることはありません。
-        </p>
+        <p className="text-sm text-gray-600 mt-2">{t('memory.description')}</p>
       </div>
 
       {/* 検索セクション */}
@@ -164,7 +169,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="メモリを検索"
+              placeholder={t('memory.searchPlaceholder')}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
             {searchQuery && (
@@ -181,7 +186,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
             disabled={isSearching || !searchQuery.trim()}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : '検索'}
+            {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : t('memory.searchButton')}
           </button>
         </div>
       </div>
@@ -198,7 +203,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
                 onClick={clearError}
                 className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
               >
-                閉じる
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -208,7 +213,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
         {isLoading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-sm text-gray-600">読み込み中...</span>
+            <span className="ml-2 text-sm text-gray-600">{t('common.loading')}</span>
           </div>
         )}
 
@@ -218,7 +223,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
             {searchQuery && (
               <div className="mb-4">
                 <p className="text-sm text-gray-600">
-                  検索結果: "{searchQuery}" ({searchResults.length}件)
+                  {t('memory.searchResults')}: "{searchQuery}" ({searchResults.length}件)
                 </p>
               </div>
             )}
@@ -228,15 +233,13 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
                 <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-sm text-gray-600 mb-2">
                   {searchQuery
-                    ? '検索結果が見つかりませんでした'
+                    ? t('memory.noSearchResults')
                     : records.length === 0
-                      ? 'まだメモリが保存されていません'
-                      : 'メモリがありません'}
+                      ? t('memory.noMemoriesYet')
+                      : t('memory.noMemories')}
                 </p>
                 {!searchQuery && records.length === 0 && (
-                  <p className="text-xs text-gray-500">
-                    エージェントとの会話を続けると、自動的にメモリが蓄積されます
-                  </p>
+                  <p className="text-xs text-gray-500">{t('memory.autoAccumulate')}</p>
                 )}
               </div>
             ) : (
@@ -259,13 +262,13 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
       <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
         <div className="flex justify-between items-center">
           <p className="text-xs text-gray-500">
-            合計 {records.length} 件のメモリが保存されています
+            {t('memory.totalCount', { count: records.length })}
           </p>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
-            閉じる
+            {t('common.close')}
           </button>
         </div>
       </div>
