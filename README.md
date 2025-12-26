@@ -1,305 +1,103 @@
 # Fullstack AgentCore
 
-Amazon Bedrock AgentCore を使用したフルスタック AI エージェントシステム。
+A full-stack AI agent system built with Amazon Bedrock AgentCore, providing a production-ready platform for deploying generative AI applications.
 
-## 🏗️ アーキテクチャ概要
+<div align="center">
+  <img src="./docs/fullstack-agentcore-architecture.drawio.png" alt="Architecture Diagram" width="80%">
+</div>
 
-### システム構成
+## 🏗️ Architecture
 
-![./docs/fullstack-agentcore-architecture.drawio.png](./docs/fullstack-agentcore-architecture.drawio.png)
+This project provides a complete stack for deploying AI agents powered by Amazon Bedrock:
 
-| コンポーネント | 技術スタック | ポート | 役割 | 対応AWSサービス |
-|---------------|-------------|--------|------|----------------|
-| **Frontend** | React + Vite + Tailwind CSS | 5173 | Web UI、ユーザーインターフェース | CloudFront, S3 |
-| **Backend** | Express + JWT + AWS SDK | 3000 | API サーバー、認証管理 | Lambda, API Gateway |
-| **Agent** | Express + Strands Agents SDK | 8080 | AI Agent ランタイム | AgentCore Runtime, AgentCore Memory, Amazon Bedrock |
-| **CLI** | Commander.js ベースのクライアント | - | コマンドライン操作 | Cognito (JWT認証) |
-| **CDK** | AWS CDK + TypeScript | - | インフラストラクチャ管理 | CloudFormation |
-| **Lambda Tools** | AWS Lambda + MCP | - | AgentCore Gateway ツール | Lambda, Bedrock Knowledge Base |
+| Component | Technology Stack | Port | Role | AWS Services |
+|-----------|-----------------|------|------|--------------|
+| **Frontend** | React + Vite + Tailwind CSS | 5173 | Web UI | CloudFront, S3 |
+| **Backend** | Express + JWT + AWS SDK | 3000 | API Server, Authentication | Lambda, API Gateway |
+| **Agent** | Express + Strands Agents SDK | 8080 | AI Agent Runtime | AgentCore Runtime, AgentCore Memory, Amazon Bedrock |
+| **CLI** | Commander.js | - | Command-line Interface | Cognito (JWT Auth) |
+| **CDK** | AWS CDK + TypeScript | - | Infrastructure as Code | CloudFormation |
+| **Lambda Tools** | AWS Lambda + MCP | - | AgentCore Gateway Tools | Lambda, Bedrock Knowledge Base |
 
-### ローカル開発構成
+## ✨ Key Features
 
-```mermaid
-flowchart TB
-    subgraph Local["ローカル環境"]
-        CLI[CLI Client<br/>localhost:コマンド]
-        Frontend[Frontend<br/>localhost:5173]
-        Backend[Backend API<br/>localhost:3000]
-        Agent[Agent<br/>localhost:8080]
-    end
+- **Production-Ready**: Well-architected full-stack implementation with security best practices
+- **Amazon Bedrock Integration**: Seamless integration with Claude models and other foundation models
+- **Memory & Context**: Built-in session management with AgentCore Memory
+- **File Operations**: S3-based storage for user files and agent data
+- **Authentication**: Cognito-based JWT authentication system
+- **Extensible**: MCP (Model Context Protocol) support for custom tools
+- **Development-Friendly**: Hot reload, Docker support, and comprehensive development tools
 
-    subgraph AWS["☁️ AWS"]
-        Bedrock[Bedrock API<br/>Claude 4.5 Sonnet]
-        Cognito[Cognito<br/>User Pool]
-    end
+## 🚀 Deployment
 
-    CLI --> Agent
-    Frontend --> Backend
-    Frontend --> Agent
-    Backend --> Cognito
-    Agent --> Bedrock
+<details>
+<summary><strong>Prerequisites</strong></summary>
 
-    style Local fill:#e3f2fd
-    style AWS fill:#f3e5f5
-```
+- **Node.js 22.12.0+** (Version management with [n](https://github.com/tj/n), see `.node-version`)
+- **AWS CLI** configured with appropriate credentials
+- **Amazon Bedrock Model Access**: Enable required models in your AWS account
+  - Text generation models (e.g., Claude Sonnet)
+  - Image generation models (if using image features)
+  - Video generation models (if using video features)
+  - Check [`/packages/cdk/cdk.json`](/packages/cdk/cdk.json) for model IDs and regions
 
+</details>
 
-## 📁 プロジェクト構造
+### Deploy to AWS
 
-```
-fullstack-agentcore/
-├── packages/
-│   ├── agent/                  # Agent Runtime (Express + Strands)
-│   │   ├── src/                # Agent 実装
-│   │   ├── scripts/            # 開発スクリプト
-│   │   ├── sessions/           # セッション管理
-│   │   ├── docs/               # Agent ドキュメント
-│   │   ├── docker-compose.yml  # Docker 設定
-│   │   ├── Dockerfile          # Docker イメージ
-│   │   └── .env.example        # 環境変数テンプレート
-│   │
-│   ├── backend/                # Backend API (Express + JWT)
-│   │   ├── src/                # API 実装
-│   │   ├── Dockerfile          # Docker イメージ
-│   │   └── docker-compose.yml  # Docker 設定
-│   │
-│   ├── frontend/               # React Frontend (Vite)
-│   │   ├── src/                # Frontend コード
-│   │   ├── public/             # 静的ファイル
-│   │   └── .env.example        # 環境変数テンプレート
-│   │
-│   ├── client/                 # CLI クライアント
-│   │   ├── src/                # CLI 実装
-│   │   └── .env.example        # 環境変数テンプレート
-│   │
-│   ├── cdk/                    # AWS インフラストラクチャ (CDK)
-│   │   ├── lib/                # スタックと Construct 定義
-│   │   └── bin/                # CDK アプリケーション
-│   │
-│   └── lambda-tools/           # AgentCore Gateway ツール
-│       └── utility-tools/      # Lambda ユーティリティツール
-│
-├── docs/                       # プロジェクトドキュメント
-│   ├── README.md               # ドキュメント一覧
-│   ├── aws-architecture.md     # AWS アーキテクチャ
-│   └── jwt-authentication.md   # JWT 認証システム
-│
-├── .husky/                     # Git hooks
-│   └── pre-commit              # コミット前チェック
-│
-├── cdk.out/                    # CDK 出力ファイル
-├── node_modules/               # 依存関係
-│
-├── package.json                # Workspace 設定
-├── tsconfig.base.json          # TypeScript 基本設定
-├── eslint.config.mjs           # ESLint 設定
-├── .prettierrc                 # Prettier 設定
-├── .gitlab-ci.yml              # CI/CD パイプライン
-├── openapi.yaml                # API ドキュメント
-├── cdk.json                    # CDK 設定
-└── README.md                   # このファイル
-```
-
-## 🚀 Getting Started (ローカル開発)
-
-### 前提条件
-
-- **Node.js 22.12.0+** ([n](https://github.com/tj/n) でバージョン管理、`.node-version` ファイル参照)
-- **Docker** (推奨)
-- **AWS CLI** 設定済み (Bedrock API 利用のため)
-- **デプロイ済みの CDK スタック** (環境変数自動セットアップを使用する場合)
-
-### Step 1: 依存関係のインストール
+#### 1. **Install dependencies**
 
 ```bash
-# ルートディレクトリで実行
-npm install
+npm ci
 ```
 
-### Step 2: 環境変数の自動セットアップ (推奨)
-
-デプロイ済みの CloudFormation スタックから環境変数を自動取得し、`.env` ファイルを生成します。
-
+#### 2. **Bootstrap CDK (first time only)**
 ```bash
-# CloudFormation スタック出力から環境変数を自動生成
-npm run setup-env
-
-# スタック名をカスタマイズする場合
-STACK_NAME=YourCustomStackName npm run setup-env
+npx -w packages/cdk cdk bootstrap
 ```
 
-このコマンドで以下のファイルが自動生成されます：
-- `packages/frontend/.env` - Frontend 用環境変数
-- `packages/backend/.env` - Backend 用環境変数
-- `packages/agent/.env` - Agent 用環境変数
-
-**生成される環境変数:**
-- Cognito 認証情報 (User Pool ID, Client ID)
-- AWS リージョン
-- AgentCore Memory ID
-- AgentCore Gateway エンドポイント
-- User Storage バケット名
-
-#### 手動セットアップ（オプション）
-
-自動セットアップを使用しない場合は、以下のように手動で設定できます：
+#### 3. **Deploy the stack**
 
 ```bash
-cp packages/agent/.env.example packages/agent/.env
-cp packages/backend/.env.example packages/backend/.env
-cp packages/frontend/.env.example packages/frontend/.env
-```
-
-各 `.env` ファイルを編集して、必要な値を設定してください。
-
-### Step 3: 開発サーバーの起動
-
-#### 方法A: 全サービスを一度に起動 (推奨)
-
-```bash
-# Frontend, Backend, Agent を同時に起動
-npm run dev
-```
-
-このコマンドは以下を実行します：
-1. 環境変数の自動セットアップ (`npm run setup-env`)
-2. Frontend (localhost:5173)、Backend (localhost:3000)、Agent (localhost:8080) の同時起動
-
-#### 方法B: 個別に起動
-
-```bash
-# Frontend のみ起動
-npm run dev:frontend
-
-# Backend のみ起動
-npm run dev:backend
-
-# Agent のみ起動
-npm run dev:agent
-```
-
-各コマンドは起動前に自動的に `setup-env` を実行します。
-
-#### 方法C: Docker で起動
-
-```bash
-# Agent を Docker で起動
-npm run agent:docker
-
-# Backend を Docker で起動
-npm run backend:docker
-```
-
-### Step 4: 動作確認
-
-#### Frontend から確認
-
-ブラウザで http://localhost:5173 にアクセスして、Web UI から Agent と対話できます。
-
-#### CLI から確認
-
-```bash
-# CLI 環境設定
-cp packages/client/.env.example packages/client/.env
-
-# CLI で Agent に質問
-npm run client:dev -- invoke "今日の天気を教えて"
-```
-
-### ~~Step 2: Agent の環境設定・起動~~
-
-**注: この手順は `npm run setup-env` により自動化されました。手動設定が必要な場合のみ以下を参照してください。**
-
-#### 環境変数の設定
-
-```bash
-# Agent 環境変数設定
-cp packages/agent/.env.example packages/agent/.env
-```
-
-`packages/agent/.env` を編集：
-
-```bash
-# AWS 認証情報
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-AWS_REGION=us-west-2
-
-# Bedrock 設定
-BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-4-5-20250929-v1:0
-BEDROCK_REGION=us-west-2
-
-# 開発設定
-LOG_LEVEL=info
-DEBUG_MCP=false
-```
-
-#### Agent の起動（2つの方法）
-
-**方法A: Docker で起動 (推奨)**
-
-```bash
-npm run agent:docker
-```
-
-**方法B: 直接起動**
-
-```bash
-npm run agent:dev
-```
-
-### Step 3: 動作確認
-
-#### 方法A: CLI で確認
-
-```bash
-# CLI 環境設定
-cp packages/client/.env.example packages/client/.env
-
-# CLI で Agent に質問
-npm run client:dev -- invoke "今日の天気を教えて"
-```
-
-#### 方法B: Frontend で確認
-
-```bash
-# Frontend 環境設定
-cp packages/frontend/.env.example packages/frontend/.env
-```
-
-`packages/frontend/.env` を編集：
-
-```bash
-# Agent API 設定
-VITE_AGENT_ENDPOINT=http://localhost:8080/invocations
-
-# Cognito 設定（必要に応じて）
-VITE_COGNITO_USER_POOL_ID=us-east-1_xxxxxxxxx
-VITE_COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx
-VITE_AWS_REGION=us-east-1
-```
-
-Frontend 起動：
-
-```bash
-npm run frontend:dev
-```
-
-ブラウザで http://localhost:5173 にアクセス
-
-## ☁️ AWS デプロイ
-
-### CDK デプロイ
-
-```bash
-# デフォルトリージョンにデプロイ（AWS CLI の設定に依存）
+# Deploy to default region (based on AWS CLI configuration)
 npm run deploy
 
-# 東京リージョン (ap-northeast-1) にデプロイ
+# Deploy to Tokyo region (ap-northeast-1)
 npm run deploy:tokyo
 
-# 任意のリージョンにデプロイ
+# Deploy to a specific region
 AWS_REGION=eu-west-1 AWS_DEFAULT_REGION=eu-west-1 CDK_DEFAULT_REGION=eu-west-1 npm run deploy
 ```
+After deployment, the CloudFormation stack outputs will include the Frontend URL. Open the URL in your browser to start using the application
 
-**注意**: リージョンを指定する場合、`AWS_REGION`、`AWS_DEFAULT_REGION`、`CDK_DEFAULT_REGION` の3つの環境変数を設定する必要があります。
+
+## 📖 Documentation
+
+- [🔧 Local Development Guide](docs/DEVELOPMENT.md) - For developers
+- [💻 Local Development Setup](docs/local-development-setup.md) - Environment setup automation
+- [🔐 JWT Authentication System](docs/jwt-authentication.md) - Authentication details
+- [📊 Architecture Diagram](docs/fullstack-agentcore-architecture.drawio.png)
+
+## 🛠️ Development
+
+For local development, see the [Development Guide](docs/DEVELOPMENT.md) which covers:
+- Project structure and organization
+- Running services locally with hot reload
+- Docker-based development
+- npm scripts reference
+- Testing and debugging
+
+## 📝 License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 🔗 Related Resources
+
+- [Amazon Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
+- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+- [Strands Agents SDK](https://github.com/awslabs/multi-agent-orchestrator)
