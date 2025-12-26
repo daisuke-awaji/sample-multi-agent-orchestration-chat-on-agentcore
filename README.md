@@ -1,7 +1,5 @@
 # Fullstack AgentCore
 
-[![CI](https://github.com/USERNAME/fullstack-agentcore/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/fullstack-agentcore/actions/workflows/ci.yml)
-
 A full-stack AI agent system built with Amazon Bedrock AgentCore, providing a production-ready platform for deploying generative AI applications.
 
 <div align="center">
@@ -73,42 +71,6 @@ AWS_REGION=eu-west-1 AWS_DEFAULT_REGION=eu-west-1 CDK_DEFAULT_REGION=eu-west-1 n
 ```
 After deployment, the CloudFormation stack outputs will include the Frontend URL. Open the URL in your browser to start using the application
 
-
-## 🔄 Continuous Integration
-
-This project uses GitHub Actions for CI/CD. The following workflows are configured:
-
-### Workflows
-
-- **CI** (`.github/workflows/ci.yml`): Runs on every push and PR
-  - ESLint code quality checks
-  - Prettier formatting checks
-  - OpenAPI specification validation
-  - Unit tests with coverage reports
-  - TypeScript type checking
-  - Package builds
-
-- **Security** (`.github/workflows/security.yml`): Runs on push, PR, and weekly schedule
-  - npm audit for vulnerability scanning
-  - Dependency review for PRs
-
-- **Deploy Documentation** (`.github/workflows/deploy-docs.yml`): Deploys OpenAPI docs to GitHub Pages
-  - Automatically deploys on push to main
-  - Manual deployment option available
-
-### Setup Instructions
-
-1. **Enable GitHub Pages** (for documentation deployment):
-   - Go to repository Settings → Pages
-   - Source: GitHub Actions
-
-2. **Update CI badges**: Replace `USERNAME` in README.md with your GitHub username/organization
-
-3. **Configure secrets** (if needed for deployment):
-   - Go to repository Settings → Secrets and variables → Actions
-   - Add any required secrets for AWS deployment
-
-All checks must pass before merging PRs to the main branch.
 
 ## 📖 Documentation
 
