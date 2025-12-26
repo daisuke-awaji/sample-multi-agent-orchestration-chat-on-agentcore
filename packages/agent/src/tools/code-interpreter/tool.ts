@@ -203,19 +203,64 @@ OPERATION TYPES:
 
 FILE SYSTEM STRUCTURE:
 
-• Default Working Directory: /tmp/ws/
-  - All file operations should use this directory
-  - Directory must be created before use: mkdir -p /tmp/ws
-  - This directory is isolated within the sandbox session
+⚠️ CRITICAL: Two Separate File Systems
+
+CodeInterpreter uses TWO DIFFERENT file systems that DO NOT share files:
+
+1. CODE EXECUTION FILE SYSTEM (executeCode/executeCommand):
+   • Working Directory: /opt/amazon/genesis1p-tools/var
+   • Files created by Python/JavaScript code live here
+   • Files created by shell commands live here
+   • These files CANNOT be accessed by readFiles
+   
+   Access methods:
+   ✓ executeCode: Print file contents
+   ✓ executeCommand: cat filename
+   ✓ downloadFiles: Download to local filesystem
+
+2. MCP RESOURCE FILE SYSTEM (writeFiles/readFiles/listFiles):
+   • Virtual file system with URI format: file:///filename
+   • ONLY files created by writeFiles can be read by readFiles
+   • Files from executeCode are NOT visible here
+   
+   Access methods:
+   ✓ writeFiles: Create files
+   ✓ readFiles: Read files (ONLY those created by writeFiles)
+   ✓ listFiles: Browse files (ONLY shows writeFiles-created files)
+   ✓ removeFiles: Delete files
 
 • File Path Examples:
-  ✓ GOOD: "/tmp/ws/output.png"
-  ✓ GOOD: "/tmp/ws/data/results.csv"
-  ✗ BAD: "output.png" (may fail without explicit directory creation)
-  ✗ BAD: "./output.png" (relative paths can be unreliable)
+  For executeCode/executeCommand:
+    ✓ GOOD: "sales_data.csv" (relative to /opt/amazon/genesis1p-tools/var)
+    ✓ GOOD: "/opt/amazon/genesis1p-tools/var/output.png"
+  
+  For writeFiles/readFiles:
+    ✓ GOOD: "report.txt" (creates file:///report.txt)
+    ✓ GOOD: "data/results.csv" (creates file:///data/results.csv)
 
-• Important: Always create /tmp/ws/ directory first in new sessions:
-  executeCommand: "mkdir -p /tmp/ws"
+⚠️ Common Mistake:
+{
+  "action": "executeCode",
+  "code": "import pandas as pd\ndf.to_csv('data.csv')"
+}
+// Then trying to read it:
+{
+  "action": "readFiles",
+  "paths": ["data.csv"]  // ❌ FAILS: File not found!
+}
+
+✓ Correct approach - Use downloadFiles:
+{
+  "action": "downloadFiles",
+  "sourcePaths": ["data.csv"],
+  "destinationDir": "/tmp/downloads"
+}
+
+✓ Or read directly in executeCode:
+{
+  "action": "executeCode",
+  "code": "with open('data.csv', 'r') as f:\n    print(f.read())"
+}
 
 SESSION MANAGEMENT - DETAILED BEHAVIOR:
 
