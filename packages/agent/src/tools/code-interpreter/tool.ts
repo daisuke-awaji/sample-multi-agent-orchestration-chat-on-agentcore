@@ -50,9 +50,8 @@ const codeInterpreterSchema = z.object({
   // 共通パラメータ
   sessionName: z
     .string()
-    .optional()
     .describe(
-      'Session name for persistent code execution environment. Auto-generated if omitted. Not used for listLocalSessions action.'
+      'Session name for the code execution environment. REQUIRED for all operations except listLocalSessions. Use initSession first to create a session, then specify that session name for subsequent operations to maintain context and file persistence.'
     ),
 
   // initSession 専用
@@ -127,7 +126,7 @@ const codeInterpreterSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Absolute local filesystem path for downloads (REQUIRED for downloadFiles action). Must be an absolute path like /tmp/downloads or /Users/username/downloads.'
+      'Absolute local filesystem path for downloads (REQUIRED for downloadFiles action). Use /tmp/ws or subdirectories like /tmp/ws/downloads for automatic S3 synchronization. Files downloaded to other paths (e.g., /tmp/downloads, /Users/xxx) will NOT be synced to S3 storage.'
     ),
 });
 

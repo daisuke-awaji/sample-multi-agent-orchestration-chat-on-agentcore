@@ -92,6 +92,89 @@ You can still use S3 tools for specific operations:
     }
   }
 
+  // CodeInterpreter ツールの利用可否をチェック
+  const hasCodeInterpreter = options.tools.some((tool) => tool.name === 'code_interpreter');
+
+  if (hasCodeInterpreter) {
+    basePrompt += `
+
+## Code Interpreter Usage Guidelines
+
+When using the code_interpreter tool, follow these critical guidelines for reliable execution:
+
+### Session Management (CRITICAL)
+1. **Always create a session first** using \`initSession\` action with a descriptive sessionName
+2. **Reuse the same sessionName** for all related operations in a workflow
+3. **sessionName is REQUIRED** for all actions except \`listLocalSessions\`
+4. Use descriptive session names that reflect the purpose (e.g., "data-analysis-sales-2024", "image-processing-batch1")
+
+### Recommended Workflow Pattern
+\`\`\`
+Step 1: Create session with descriptive name
+{
+  "action": "initSession",
+  "sessionName": "data-analysis-20240101",
+  "description": "Customer sales data analysis"
+}
+
+Step 2: Prepare data or install packages
+{
+  "action": "executeCommand",
+  "sessionName": "data-analysis-20240101",
+  "command": "pip install scikit-learn"
+}
+
+Step 3: Execute code
+{
+  "action": "executeCode",
+  "sessionName": "data-analysis-20240101",
+  "language": "python",
+  "code": "import pandas as pd\\ndf = pd.read_csv('data.csv')\\nprint(df.describe())"
+}
+
+Step 4: Download results if needed
+{
+  "action": "downloadFiles",
+  "sessionName": "data-analysis-20240101",
+  "sourcePaths": ["results.png"],
+  "destinationDir": "/tmp/analysis-results"
+}
+\`\`\`
+
+### Critical Context Preservation Notes
+- **Variables may not persist** between multiple \`executeCode\` calls even within the same session
+- **Combine related operations** in a single \`executeCode\` block for reliable results
+- **Alternative**: Save intermediate results to files between calls
+
+### File System Understanding
+- **executeCode/executeCommand** create files in: /opt/amazon/genesis1p-tools/var
+- **writeFiles** creates files in a separate MCP resource file system
+- These two file systems **DO NOT share files**
+- To access files created by executeCode, use \`downloadFiles\` or print content directly in code
+
+### S3 Synchronization (IMPORTANT)
+When using \`downloadFiles\`:
+- **Download to /tmp/ws or subdirectories** (e.g., /tmp/ws/downloads) for automatic S3 sync
+- Files are automatically uploaded to S3 after tool execution via Workspace Sync Hook
+- **Avoid other paths** like /tmp/downloads or /Users/xxx - these will NOT sync to S3
+- Example: \`destinationDir: "/tmp/ws/analysis-results"\` ✓ Syncs to S3
+- Example: \`destinationDir: "/tmp/downloads"\` ✗ Does NOT sync to S3
+
+### Package Installation
+Common packages that need installation:
+- seaborn, scikit-learn, tensorflow, pytorch, plotly
+- Install via: \`executeCommand\` with "pip install package-name"
+- Use matplotlib.pyplot for visualizations (pre-installed)
+
+### Best Practices
+1. Always specify sessionName for consistent context
+2. Combine related code in single executeCode blocks
+3. Use descriptive session names for tracking
+4. Install required packages before executing code
+5. Check tool description for detailed file system behavior
+`;
+  }
+
   // デフォルトコンテキストを付与
   return basePrompt + generateDefaultContext(options.tools, options.mcpTools);
 }

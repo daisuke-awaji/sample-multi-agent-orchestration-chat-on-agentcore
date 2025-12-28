@@ -26,7 +26,7 @@ export interface InitSessionAction {
  */
 export interface ExecuteCodeAction {
   action: 'executeCode';
-  sessionName?: string;
+  sessionName: string;
   language: LanguageType;
   code: string;
   clearContext?: boolean;
@@ -37,7 +37,7 @@ export interface ExecuteCodeAction {
  */
 export interface ExecuteCommandAction {
   action: 'executeCommand';
-  sessionName?: string;
+  sessionName: string;
   command: string;
 }
 
@@ -46,7 +46,7 @@ export interface ExecuteCommandAction {
  */
 export interface ReadFilesAction {
   action: 'readFiles';
-  sessionName?: string;
+  sessionName: string;
   paths: string[];
 }
 
@@ -55,7 +55,7 @@ export interface ReadFilesAction {
  */
 export interface ListFilesAction {
   action: 'listFiles';
-  sessionName?: string;
+  sessionName: string;
   path: string;
 }
 
@@ -64,7 +64,7 @@ export interface ListFilesAction {
  */
 export interface RemoveFilesAction {
   action: 'removeFiles';
-  sessionName?: string;
+  sessionName: string;
   paths: string[];
 }
 
@@ -81,7 +81,7 @@ export interface FileContent {
  */
 export interface WriteFilesAction {
   action: 'writeFiles';
-  sessionName?: string;
+  sessionName: string;
   content: FileContent[];
 }
 
@@ -90,7 +90,7 @@ export interface WriteFilesAction {
  */
 export interface DownloadFilesAction {
   action: 'downloadFiles';
-  sessionName?: string;
+  sessionName: string;
   sourcePaths: string[];
   destinationDir: string;
 }
