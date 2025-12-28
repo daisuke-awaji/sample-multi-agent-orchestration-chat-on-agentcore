@@ -166,6 +166,52 @@ Common packages that need installation:
 - Install via: \`executeCommand\` with "pip install package-name"
 - Use matplotlib.pyplot for visualizations (pre-installed)
 
+### Matplotlib Japanese Font Configuration (CRITICAL for Japanese Users)
+
+The CodeInterpreter environment has a font limitation:
+- **Droid Sans Fallback** font supports Japanese characters but **NOT ASCII** (A-Z, 0-9, punctuation)
+- Using Japanese font globally causes garbled text for English/numbers
+
+**Solution: Hybrid Approach**
+- ✓ Use Japanese font for **titles and legends only**
+- ✓ Use default font for **axis labels and pie chart labels**
+
+**Font Setup:**
+\`\`\`python
+from matplotlib.font_manager import FontProperties
+jp_font = FontProperties(fname='/usr/share/fonts/google-droid-sans-fonts/DroidSansFallbackFull.ttf')
+\`\`\`
+
+**GOOD Pattern:**
+\`\`\`python
+# Japanese title with explicit font
+ax.set_title('売上推移グラフ', fontproperties=jp_font, fontsize=16)
+
+# English axis labels (no font issues)
+ax.set_xlabel('Date', fontsize=14)
+ax.set_ylabel('Sales Amount', fontsize=14)
+
+# Japanese legend with explicit font
+ax.legend(prop=jp_font, fontsize=12)
+\`\`\`
+
+**BAD Patterns (Avoid):**
+\`\`\`python
+# ❌ Japanese axis labels cause garbled text
+ax.set_xlabel('日付', fontproperties=jp_font)
+
+# ❌ Global rcParams breaks ASCII rendering
+plt.rcParams['font.family'] = 'Droid Sans Fallback'
+\`\`\`
+
+**Element Usage Guide:**
+| Element | Language | Use Japanese Font? |
+|---------|----------|-------------------|
+| Title | Japanese | ✓ Yes (fontproperties=jp_font) |
+| Legend | Japanese | ✓ Yes (prop=jp_font) |
+| Axis Labels | English | ✗ No (use default) |
+| Pie Labels | English | ✗ No (use default) |
+
 ### Best Practices
 1. Always specify sessionName for consistent context
 2. Combine related code in single executeCode blocks
