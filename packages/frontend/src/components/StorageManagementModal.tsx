@@ -149,15 +149,13 @@ function StorageItemComponent({
 
         {/* アクション */}
         <div className="flex items-center gap-2">
-          {item.type === 'file' && (
-            <button
-              onClick={handleDownloadClick}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title={t('storage.download')}
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={handleDownloadClick}
+            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            title={item.type === 'directory' ? t('storage.downloadFolder') : t('storage.download')}
+          >
+            <Download className="w-4 h-4" />
+          </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
@@ -498,12 +496,18 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
 
   // ダウンロード
   const handleDownload = async (item: StorageItem) => {
-    try {
-      const downloadUrl = await generateDownloadUrl(item.path);
-      // 新しいタブでダウンロードURLを開く
-      window.open(downloadUrl, '_blank');
-    } catch (error) {
-      console.error('Download error:', error);
+    if (item.type === 'directory') {
+      // フォルダの場合はZIPダウンロード
+      await handleFolderDownload(item.path, item.name);
+    } else {
+      // ファイルの場合は署名付きURLでダウンロード
+      try {
+        const downloadUrl = await generateDownloadUrl(item.path);
+        // 新しいタブでダウンロードURLを開く
+        window.open(downloadUrl, '_blank');
+      } catch (error) {
+        console.error('Download error:', error);
+      }
     }
   };
 

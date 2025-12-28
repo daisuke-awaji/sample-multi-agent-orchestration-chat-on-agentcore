@@ -233,7 +233,10 @@ export async function deleteDirectory(
   }
 
   const normalizedPath = normalizePath(directoryPath);
-  const prefix = `${getUserStoragePrefix(userId)}/${normalizedPath}/`;
+  // ルートフォルダの場合も正しくプレフィックスを構築
+  const prefix = normalizedPath
+    ? `${getUserStoragePrefix(userId)}/${normalizedPath}/`
+    : `${getUserStoragePrefix(userId)}/`;
 
   console.log(`🗑️  Deleting directory: ${prefix} (force: ${force})`);
 
