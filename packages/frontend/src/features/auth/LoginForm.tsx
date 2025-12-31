@@ -7,9 +7,13 @@ import { loginSchema, type LoginFormData } from '../../schemas/auth';
 
 interface LoginFormProps {
   onSwitchToSignUp?: () => void;
+  onSwitchToForgotPassword?: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({
+  onSwitchToSignUp,
+  onSwitchToForgotPassword,
+}) => {
   const { t } = useTranslation();
   const { login, isLoading, error, clearError } = useAuthStore();
   const [formData, setFormData] = useState<LoginFormData>({
@@ -184,7 +188,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
           </button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <p className="text-sm text-gray-600">
             {t('auth.noAccount')}{' '}
             {onSwitchToSignUp && (
@@ -197,6 +201,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignUp }) => {
               </button>
             )}
           </p>
+          {onSwitchToForgotPassword && (
+            <p className="text-sm">
+              <button
+                type="button"
+                onClick={onSwitchToForgotPassword}
+                className="text-gray-600 hover:text-indigo-600 transition-colors"
+              >
+                パスワードを忘れた方はこちら
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

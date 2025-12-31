@@ -23,7 +23,7 @@ interface StackOutputs {
   AgentsTableName?: string;
 }
 
-const STACK_NAME = process.env.STACK_NAME || 'AgentCoreStack';
+const STACK_NAME = process.env.STACK_NAME || 'AgentCoreApp';
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 async function getStackOutputs(): Promise<StackOutputs> {

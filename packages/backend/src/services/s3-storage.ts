@@ -44,10 +44,35 @@ function getUserStoragePrefix(userId: string): string {
 }
 
 /**
- * パスを正規化（先頭・末尾のスラッシュを削除）
+ * パスを正規化（先頭・末尾のスラッシュを削除、ローカルワークスペースパスを除去、二重エンコード対策）
+ * 生成AIが出力するテキストはエンコードされている場合もあれば、そうでない場合もあるため二重エンコード対策を含めておく
  */
 function normalizePath(path: string): string {
-  return path.replace(/^\/+|\/+$/g, '');
+  let normalized = path;
+
+  // 1. 二重エンコード対策（最大2回までデコード）
+  for (let i = 0; i < 2; i++) {
+    try {
+      const decoded = decodeURIComponent(normalized);
+      if (decoded === normalized) {
+        // これ以上デコードできない
+        break;
+      }
+      normalized = decoded;
+    } catch {
+      // デコードに失敗した場合は現在の値を使用
+      break;
+    }
+  }
+
+  // 2. 先頭・末尾のスラッシュを削除
+  normalized = normalized.replace(/^\/+|\/+$/g, '');
+
+  // 3. ローカルワークスペースパスのプレフィックスを除去（ハルシネーション対策）
+  // /tmp/ws/, tmp/ws/, /tmp/, tmp/ などを除去
+  normalized = normalized.replace(/^(?:tmp\/ws|tmp)\//, '');
+
+  return normalized;
 }
 
 /**

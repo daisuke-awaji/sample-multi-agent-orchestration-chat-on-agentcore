@@ -670,13 +670,20 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" className="md:max-w-6xl md:h-[85vh] max-w-full h-screen">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
+      className="md:max-w-6xl md:h-[85vh] max-w-full h-screen"
+    >
       {/* ヘッダー */}
       <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Folder className="w-5 h-5 text-amber-500" />
-            <h2 className="text-base md:text-lg font-semibold text-gray-900">{t('storage.fileStorage')}</h2>
+            <h2 className="text-base md:text-lg font-semibold text-gray-900">
+              {t('storage.fileStorage')}
+            </h2>
             <Tooltip
               content={<div className="text-xs leading-relaxed">{t('storage.description')}</div>}
               position="bottom"

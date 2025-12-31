@@ -379,6 +379,80 @@ export const resendConfirmationCode = async (username: string): Promise<void> =>
 };
 
 /**
+ * パスワードリセットを開始する（確認コードを送信）
+ */
+export const forgotPassword = async (username: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = new CognitoUser({
+      Username: username,
+      Pool: userPool,
+    });
+
+    cognitoUser.forgotPassword({
+      onSuccess: () => {
+        resolve();
+      },
+      onFailure: (err) => {
+        let errorMessage = 'パスワードリセットの開始に失敗しました';
+
+        const cognitoError = err as CognitoError;
+        if (cognitoError.code === 'UserNotFoundException') {
+          errorMessage = 'ユーザーが見つかりません';
+        } else if (cognitoError.code === 'InvalidParameterException') {
+          errorMessage = '入力値が正しくありません';
+        } else if (cognitoError.code === 'LimitExceededException') {
+          errorMessage = '試行回数が上限に達しました。しばらく待ってから再度お試しください';
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
+        reject(new Error(errorMessage));
+      },
+    });
+  });
+};
+
+/**
+ * パスワードリセットを確定する（確認コードと新しいパスワードで確認）
+ */
+export const confirmResetPassword = async (
+  username: string,
+  verificationCode: string,
+  newPassword: string
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = new CognitoUser({
+      Username: username,
+      Pool: userPool,
+    });
+
+    cognitoUser.confirmPassword(verificationCode, newPassword, {
+      onSuccess: () => {
+        resolve();
+      },
+      onFailure: (err) => {
+        let errorMessage = 'パスワードのリセットに失敗しました';
+
+        const cognitoError = err as CognitoError;
+        if (cognitoError.code === 'CodeMismatchException') {
+          errorMessage = '確認コードが正しくありません';
+        } else if (cognitoError.code === 'ExpiredCodeException') {
+          errorMessage = '確認コードの有効期限が切れています';
+        } else if (cognitoError.code === 'InvalidPasswordException') {
+          errorMessage = 'パスワードが要件を満たしていません';
+        } else if (cognitoError.code === 'UserNotFoundException') {
+          errorMessage = 'ユーザーが見つかりません';
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
+        reject(new Error(errorMessage));
+      },
+    });
+  });
+};
+
+/**
  * Cognito設定を取得する
  */
 export const getCognitoConfig = () => ({

@@ -24,36 +24,42 @@ const CONCURRENT_UPLOAD_LIMIT = 10;
 
 /**
  * ファイル拡張子からContent-Typeを推測
+ * テキストファイルには charset=utf-8 を付与
  */
 function guessContentType(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase();
-  const contentTypeMap: Record<string, string> = {
+
+  // テキスト系ファイル（charset=utf-8付き）
+  const textContentTypeMap: Record<string, string> = {
     // Text files
-    txt: 'text/plain',
-    md: 'text/markdown',
-    csv: 'text/csv',
-    html: 'text/html',
-    css: 'text/css',
-    xml: 'application/xml',
+    txt: 'text/plain; charset=utf-8',
+    md: 'text/markdown; charset=utf-8',
+    csv: 'text/csv; charset=utf-8',
+    html: 'text/html; charset=utf-8',
+    css: 'text/css; charset=utf-8',
+    xml: 'application/xml; charset=utf-8',
 
     // Programming languages
-    js: 'application/javascript',
-    ts: 'application/typescript',
-    json: 'application/json',
-    py: 'text/x-python',
-    java: 'text/x-java',
-    cpp: 'text/x-c++src',
-    c: 'text/x-c',
-    go: 'text/x-go',
-    rs: 'text/x-rust',
+    js: 'application/javascript; charset=utf-8',
+    ts: 'application/typescript; charset=utf-8',
+    json: 'application/json; charset=utf-8',
+    py: 'text/x-python; charset=utf-8',
+    java: 'text/x-java; charset=utf-8',
+    cpp: 'text/x-c++src; charset=utf-8',
+    c: 'text/x-c; charset=utf-8',
+    go: 'text/x-go; charset=utf-8',
+    rs: 'text/x-rust; charset=utf-8',
 
     // Configuration files
-    yaml: 'application/x-yaml',
-    yml: 'application/x-yaml',
-    toml: 'application/toml',
-    ini: 'text/plain',
-    conf: 'text/plain',
+    yaml: 'application/x-yaml; charset=utf-8',
+    yml: 'application/x-yaml; charset=utf-8',
+    toml: 'application/toml; charset=utf-8',
+    ini: 'text/plain; charset=utf-8',
+    conf: 'text/plain; charset=utf-8',
+  };
 
+  // バイナリ系ファイル（charset不要）
+  const binaryContentTypeMap: Record<string, string> = {
     // Documents
     pdf: 'application/pdf',
     doc: 'application/msword',
@@ -69,13 +75,21 @@ function guessContentType(filename: string): string {
     svg: 'image/svg+xml',
     webp: 'image/webp',
 
-    // Others
+    // Archives
     zip: 'application/zip',
     tar: 'application/x-tar',
     gz: 'application/gzip',
   };
 
-  return ext && contentTypeMap[ext] ? contentTypeMap[ext] : 'application/octet-stream';
+  if (ext && textContentTypeMap[ext]) {
+    return textContentTypeMap[ext];
+  }
+
+  if (ext && binaryContentTypeMap[ext]) {
+    return binaryContentTypeMap[ext];
+  }
+
+  return 'application/octet-stream';
 }
 
 /**

@@ -21,14 +21,27 @@ export const S3FileLink: React.FC<S3FileLinkProps> = ({ path, children }) => {
     setIsLoading(true);
     setError(null);
 
+    // Open window immediately (within user action context) to avoid popup blockers
+    const newWindow = window.open('', '_blank');
+
     try {
       const downloadUrl = await generateDownloadUrl(path);
 
-      // Open in new tab or trigger download
-      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+      if (newWindow) {
+        // Navigate the already-opened window to the download URL
+        newWindow.location.href = downloadUrl;
+      } else {
+        // Fallback: If popup was blocked, try direct navigation
+        window.location.href = downloadUrl;
+      }
     } catch (err) {
       console.error('Failed to generate download URL:', err);
       setError(err instanceof Error ? err.message : 'Failed to download file');
+
+      // Close the empty window on error
+      if (newWindow) {
+        newWindow.close();
+      }
     } finally {
       setIsLoading(false);
     }

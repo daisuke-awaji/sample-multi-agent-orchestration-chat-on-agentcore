@@ -178,7 +178,7 @@ exports.handler = async (event) => {
       // サインイン設定
       signInAliases: {
         username: true,
-        email: false,
+        email: true,
         phone: false,
       },
 

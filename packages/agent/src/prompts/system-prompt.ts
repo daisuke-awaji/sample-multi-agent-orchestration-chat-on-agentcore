@@ -70,8 +70,13 @@ When referencing files in the user's S3 storage in your responses, ALWAYS use re
 **IMPORTANT**:
 - ❌ DO NOT generate presigned URLs or full S3 URLs like "https://bucket.s3.amazonaws.com/..."
 - ❌ DO NOT use fake or placeholder URLs
-- ✅ ALWAYS use relative paths starting with "/" (e.g., "/plots/chart.png")
+- ❌ DO NOT include workspace paths like "/tmp/ws/" or "/tmp/" in file references
+- ✅ ALWAYS use relative paths starting with "/" (e.g., "/plots/chart.png", "/sample_sales.csv")
 - ✅ The frontend will automatically generate secure download URLs when needed
+
+**Path Examples**:
+- ✅ Correct: \`[Data](/sample_sales.csv)\` or \`![Chart](/plots/chart.png)\`
+- ❌ Wrong: \`[Data](/tmp/ws/sample_sales.csv)\` or \`[Data](/tmp/sample_sales.csv)\`
 
 **Examples**:
 - Images: \`![Chart](/reports/chart.png)\`
