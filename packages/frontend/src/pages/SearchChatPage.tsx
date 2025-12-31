@@ -1,6 +1,6 @@
 /**
  * チャット検索ページ
- * 今後実装予定のプレースホルダー
+ * 過去の会話履歴を検索する機能（開発予定）
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { Search, Construction } from 'lucide-react';
 /**
  * チャット検索ページメインコンポーネント
  */
-export function SearchPage() {
+export function SearchChatPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 

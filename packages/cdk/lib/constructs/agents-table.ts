@@ -58,6 +58,20 @@ export class AgentsTable extends Construct {
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     });
 
+    // Add GSI for querying shared agents
+    this.table.addGlobalSecondaryIndex({
+      indexName: 'isShared-createdAt-index',
+      partitionKey: {
+        name: 'isShared',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'createdAt',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     this.tableName = this.table.tableName;
     this.tableArn = this.table.tableArn;
 

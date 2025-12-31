@@ -1,5 +1,6 @@
 // User types
 export interface User {
+  userId: string; // Cognito sub (UUID)
   username: string;
   email?: string;
   accessToken: string;

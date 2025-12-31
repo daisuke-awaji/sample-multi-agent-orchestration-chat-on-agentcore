@@ -12,6 +12,8 @@ import { config } from '../config/index.js';
 export interface CognitoJWTPayload extends JWTPayload {
   /** Cognito Username */
   'cognito:username'?: string;
+  /** Username (Access Token) */
+  username?: string;
   /** Email */
   email?: string;
   /** Token Use (access or id) */

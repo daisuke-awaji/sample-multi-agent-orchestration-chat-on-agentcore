@@ -71,6 +71,7 @@ navigation:
   searchChat: Search Chats
   searchTools: Search Tools
   searchAgents: Search Agents
+  manageAgents: Manage Agents
   events: Event Integration
   settings: Settings
   userMenu: User Menu
@@ -157,6 +158,22 @@ agent:
   validationScenarioTitleRequired: Scenario title is required
   validationScenarioPromptRequired: Scenario prompt is required
   validationGenerationFailed: Generation failed
+  share: Share
+  unshare: Unshare
+  shareSuccess: Agent shared successfully
+  unshareSuccess: Agent unshared successfully
+  shareError: Failed to change sharing status
+
+# Agent Directory
+agentDirectory:
+  loading: Loading agents...
+  description: Browse agents created by your organization and add them to your collection
+  searchTitle: Search Agents
+  searchPlaceholder: Search agents...
+  noAgentsFound: No agents found
+  noAgentsDescription: Try changing your search criteria and try again
+  noAgentsEmpty: No agents available
+  createdBy: Created by
 
 # Tools
 tool:

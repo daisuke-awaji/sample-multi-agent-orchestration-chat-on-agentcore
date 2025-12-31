@@ -84,6 +84,7 @@ navigation:
   searchChat: チャットを検索
   searchTools: ツールを検索
   searchAgents: エージェントを検索
+  manageAgents: エージェント管理
   events: イベント連携
   settings: 設定
   userMenu: ユーザーメニュー
@@ -174,6 +175,22 @@ agent:
   validationScenarioTitleRequired: シナリオタイトルは必須です
   validationScenarioPromptRequired: シナリオプロンプトは必須です
   validationGenerationFailed: 生成に失敗しました
+  share: 共有する
+  unshare: 共有を解除
+  shareSuccess: エージェントを共有しました
+  unshareSuccess: エージェントの共有を解除しました
+  shareError: 共有状態の変更に失敗しました
+
+# Agent Directory
+agentDirectory:
+  loading: エージェントを読み込み中...
+  description: 組織によって作成されたエージェントを閲覧し、コレクションに追加できます
+  searchTitle: エージェントを検索
+  searchPlaceholder: エージェントを検索...
+  noAgentsFound: エージェントが見つかりませんでした
+  noAgentsDescription: 検索条件を変更してもう一度お試しください
+  noAgentsEmpty: エージェントがありません
+  createdBy: 作成者
 
 # ツール
 tool:

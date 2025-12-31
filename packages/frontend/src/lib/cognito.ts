@@ -45,7 +45,17 @@ export const authenticateUser = async (username: string, password: string): Prom
         const refreshToken = session.getRefreshToken().getToken();
         const idToken = session.getIdToken().getJwtToken();
 
+        // idToken から userId (sub) を取得
+        let userId = '';
+        try {
+          const idTokenPayload = JSON.parse(atob(idToken.split('.')[1]));
+          userId = idTokenPayload.sub || '';
+        } catch (error) {
+          console.error('Failed to parse idToken:', error);
+        }
+
         const user: User = {
+          userId,
           username,
           accessToken,
           refreshToken,
@@ -110,7 +120,17 @@ export const getCurrentUserSession = async (): Promise<User | null> => {
       const refreshToken = session.getRefreshToken().getToken();
       const idToken = session.getIdToken().getJwtToken();
 
+      // idToken から userId (sub) を取得
+      let userId = '';
+      try {
+        const idTokenPayload = JSON.parse(atob(idToken.split('.')[1]));
+        userId = idTokenPayload.sub || '';
+      } catch (error) {
+        console.error('Failed to parse idToken:', error);
+      }
+
       const user: User = {
+        userId,
         username: cognitoUser.getUsername(),
         accessToken,
         refreshToken,
@@ -152,7 +172,17 @@ export const refreshTokens = async (): Promise<User | null> => {
         const newRefreshToken = newSession.getRefreshToken().getToken();
         const idToken = newSession.getIdToken().getJwtToken();
 
+        // idToken から userId (sub) を取得
+        let userId = '';
+        try {
+          const idTokenPayload = JSON.parse(atob(idToken.split('.')[1]));
+          userId = idTokenPayload.sub || '';
+        } catch (error) {
+          console.error('Failed to parse idToken:', error);
+        }
+
         const user: User = {
+          userId,
           username: cognitoUser.getUsername(),
           accessToken,
           refreshToken: newRefreshToken,
@@ -218,11 +248,23 @@ export const getValidUser = async (): Promise<User | null> => {
         return;
       }
 
+      const idToken = session.getIdToken().getJwtToken();
+
+      // idToken から userId (sub) を取得
+      let userId = '';
+      try {
+        const idTokenPayload = JSON.parse(atob(idToken.split('.')[1]));
+        userId = idTokenPayload.sub || '';
+      } catch (error) {
+        console.error('Failed to parse idToken:', error);
+      }
+
       const user: User = {
+        userId,
         username: cognitoUser.getUsername(),
         accessToken: session.getAccessToken().getJwtToken(),
         refreshToken: session.getRefreshToken().getToken(),
-        idToken: session.getIdToken().getJwtToken(),
+        idToken,
       };
 
       resolve(user);

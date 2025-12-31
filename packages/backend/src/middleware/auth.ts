@@ -135,7 +135,7 @@ export function jwtAuthMiddleware(
 
         console.log(`✅ JWT認証成功 (${requestId}):`, {
           userId: req.userId,
-          username: result.payload?.['cognito:username'],
+          username: result.payload?.['cognito:username'] || result.payload?.username,
           tokenUse: result.payload?.token_use,
         });
 
@@ -209,13 +209,26 @@ export function optionalJwtAuthMiddleware(
 }
 
 /**
+ * 認証情報の型定義
+ */
+export interface AuthInfo {
+  authenticated: boolean;
+  userId?: string;
+  username?: string;
+  email?: string;
+  groups: string[];
+  tokenUse?: 'access' | 'id';
+  requestId?: string;
+}
+
+/**
  * 現在の認証情報を取得するヘルパー関数
  */
-export function getCurrentAuth(req: AuthenticatedRequest) {
+export function getCurrentAuth(req: AuthenticatedRequest): AuthInfo {
   return {
     authenticated: !!req.jwt,
     userId: req.userId,
-    username: req.jwt?.['cognito:username'],
+    username: req.jwt?.['cognito:username'] || req.jwt?.username,
     email: req.jwt?.email,
     groups: req.jwt?.['cognito:groups'] || [],
     tokenUse: req.jwt?.token_use,

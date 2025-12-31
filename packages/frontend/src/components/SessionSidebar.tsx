@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Donut,
   SquarePen,
-  Search,
   PanelRight,
   Wrench,
   Bot,
@@ -18,6 +17,7 @@ import {
   X,
   Settings,
   CalendarRange,
+  Search,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useSessionStore } from '../stores/sessionStore';
@@ -242,13 +242,31 @@ export function SessionSidebar() {
             disabled={shouldShowExpanded}
           >
             <Link
-              to="/search"
+              to="/search-chat"
               className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
                 shouldShowExpanded ? 'w-full text-left' : 'w-auto'
               }`}
             >
               <Search className="w-5 h-5 flex-shrink-0" />
               {shouldShowExpanded && <span className="text-sm">{t('navigation.searchChat')}</span>}
+            </Link>
+          </Tooltip>
+
+          <Tooltip
+            content={t('navigation.searchAgents')}
+            position="right"
+            disabled={shouldShowExpanded}
+          >
+            <Link
+              to="/search"
+              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
+                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
+              }`}
+            >
+              <Bot className="w-5 h-5 flex-shrink-0" />
+              {shouldShowExpanded && (
+                <span className="text-sm">{t('navigation.searchAgents')}</span>
+              )}
             </Link>
           </Tooltip>
 
@@ -265,24 +283,6 @@ export function SessionSidebar() {
             >
               <Wrench className="w-5 h-5 flex-shrink-0" />
               {shouldShowExpanded && <span className="text-sm">{t('navigation.searchTools')}</span>}
-            </Link>
-          </Tooltip>
-
-          <Tooltip
-            content={t('navigation.searchAgents')}
-            position="right"
-            disabled={shouldShowExpanded}
-          >
-            <Link
-              to="/agents"
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <Bot className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && (
-                <span className="text-sm">{t('navigation.searchAgents')}</span>
-              )}
             </Link>
           </Tooltip>
 

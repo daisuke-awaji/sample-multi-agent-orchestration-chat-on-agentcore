@@ -285,3 +285,162 @@ export async function initializeDefaultAgents(): Promise<Agent[]> {
     throw error;
   }
 }
+
+/**
+ * Toggle agent share status
+ */
+export async function toggleShareAgent(agentId: string): Promise<Agent> {
+  try {
+    const baseUrl = getBackendBaseUrl();
+    const headers = await createAuthHeaders();
+
+    console.log(`🔄 Agent共有状態トグル開始: ${agentId}`);
+
+    const response = await fetch(`${baseUrl}/agents/${agentId}/share`, {
+      method: 'PUT',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Agent共有状態の変更に失敗しました: ${response.status} ${response.statusText} - ${
+          errorData.message || 'Unknown error'
+        }`
+      );
+    }
+
+    const data: AgentResponse = await response.json();
+    console.log(`✅ Agent共有状態トグル完了: isShared=${data.agent.isShared}`);
+
+    return {
+      ...data.agent,
+      createdAt: new Date(data.agent.createdAt),
+      updatedAt: new Date(data.agent.updatedAt),
+    };
+  } catch (error) {
+    console.error('💥 Agent共有状態トグルエラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * List shared agents
+ */
+export async function listSharedAgents(searchQuery?: string, limit?: number): Promise<Agent[]> {
+  try {
+    const baseUrl = getBackendBaseUrl();
+    const headers = await createAuthHeaders();
+
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('q', searchQuery);
+    if (limit) params.append('limit', limit.toString());
+
+    const queryString = params.toString();
+    const url = `${baseUrl}/agents/shared-agents/list${queryString ? `?${queryString}` : ''}`;
+
+    console.log('📋 共有Agent一覧取得開始...', { searchQuery, limit });
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `共有Agent一覧の取得に失敗しました: ${response.status} ${response.statusText} - ${
+          errorData.message || 'Unknown error'
+        }`
+      );
+    }
+
+    const data: AgentsListResponse = await response.json();
+    console.log(`✅ 共有Agent一覧取得完了: ${data.agents.length}件`);
+
+    return data.agents.map((agent) => ({
+      ...agent,
+      createdAt: new Date(agent.createdAt),
+      updatedAt: new Date(agent.updatedAt),
+    }));
+  } catch (error) {
+    console.error('💥 共有Agent一覧取得エラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get shared agent details
+ */
+export async function getSharedAgent(userId: string, agentId: string): Promise<Agent> {
+  try {
+    const baseUrl = getBackendBaseUrl();
+    const headers = await createAuthHeaders();
+
+    console.log(`🔍 共有Agent詳細取得開始: ${userId}/${agentId}`);
+
+    const response = await fetch(`${baseUrl}/agents/shared-agents/${userId}/${agentId}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `共有Agent詳細の取得に失敗しました: ${response.status} ${response.statusText} - ${
+          errorData.message || 'Unknown error'
+        }`
+      );
+    }
+
+    const data: AgentResponse = await response.json();
+    console.log(`✅ 共有Agent詳細取得完了: ${data.agent.name}`);
+
+    return {
+      ...data.agent,
+      createdAt: new Date(data.agent.createdAt),
+      updatedAt: new Date(data.agent.updatedAt),
+    };
+  } catch (error) {
+    console.error('💥 共有Agent詳細取得エラー:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clone shared agent to my agents
+ */
+export async function cloneSharedAgent(userId: string, agentId: string): Promise<Agent> {
+  try {
+    const baseUrl = getBackendBaseUrl();
+    const headers = await createAuthHeaders();
+
+    console.log(`📥 共有Agentクローン開始: ${userId}/${agentId}`);
+
+    const response = await fetch(`${baseUrl}/agents/shared-agents/${userId}/${agentId}/clone`, {
+      method: 'POST',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `共有Agentのクローンに失敗しました: ${response.status} ${response.statusText} - ${
+          errorData.message || 'Unknown error'
+        }`
+      );
+    }
+
+    const data: AgentResponse = await response.json();
+    console.log(`✅ 共有Agentクローン完了: ${data.agent.id}`);
+
+    return {
+      ...data.agent,
+      createdAt: new Date(data.agent.createdAt),
+      updatedAt: new Date(data.agent.updatedAt),
+    };
+  } catch (error) {
+    console.error('💥 共有Agentクローンエラー:', error);
+    throw error;
+  }
+}

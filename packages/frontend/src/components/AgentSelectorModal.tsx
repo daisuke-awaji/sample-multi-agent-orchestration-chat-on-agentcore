@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Bot, MoreHorizontal, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Plus, Bot, MoreHorizontal, Edit2, Trash2, AlertTriangle, Share2 } from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +30,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     createAgent,
     updateAgent,
     deleteAgent,
+    toggleShare,
     initializeStore,
     isLoading,
     error,
@@ -295,6 +297,37 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                       >
                                         <Edit2 className="w-3 h-3" />
                                         <span>{t('common.edit')}</span>
+                                      </button>
+                                      <button
+                                        onMouseDown={(e) => {
+                                          e.stopPropagation();
+                                        }}
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          const wasShared = agent.isShared;
+                                          try {
+                                            await toggleShare(agent.id);
+                                            // 成功時にトースト通知
+                                            toast.success(
+                                              wasShared
+                                                ? t('agent.unshareSuccess')
+                                                : t('agent.shareSuccess'),
+                                              {
+                                                icon: '✅',
+                                              }
+                                            );
+                                          } catch (error) {
+                                            console.error('共有状態の変更に失敗:', error);
+                                            toast.error(t('agent.shareError'));
+                                          }
+                                          setOpenMenuId(null);
+                                        }}
+                                        className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                                      >
+                                        <Share2 className="w-3 h-3" />
+                                        <span>
+                                          {agent.isShared ? t('agent.unshare') : t('agent.share')}
+                                        </span>
                                       </button>
                                       <button
                                         onMouseDown={(e) => {

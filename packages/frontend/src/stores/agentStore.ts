@@ -133,6 +133,42 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     return get().agents.find((agent) => agent.id === id);
   },
 
+  // 共有機能
+  toggleShare: async (id: string) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const updatedAgent = await agentsApi.toggleShareAgent(id);
+
+      set((state) => {
+        const agentIndex = state.agents.findIndex((agent) => agent.id === id);
+        const updatedAgents = [...state.agents];
+
+        if (agentIndex !== -1) {
+          updatedAgents[agentIndex] = updatedAgent;
+        }
+
+        // 選択中のAgentが更新された場合は選択状態も更新
+        const updatedSelectedAgent =
+          state.selectedAgent?.id === id ? updatedAgent : state.selectedAgent;
+
+        return {
+          agents: updatedAgents,
+          selectedAgent: updatedSelectedAgent,
+          isLoading: false,
+          error: null,
+        };
+      });
+
+      return updatedAgent;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Agent共有状態の変更に失敗しました';
+      set({ isLoading: false, error: errorMessage });
+      throw error;
+    }
+  },
+
   // Agent選択
   selectAgent: (agent: Agent | null) => {
     set({ selectedAgent: agent });
