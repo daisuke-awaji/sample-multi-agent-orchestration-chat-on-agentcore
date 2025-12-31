@@ -69,7 +69,7 @@ export { logger } from '../utils/logger.js';
 /**
  * 設定値を検証・表示
  */
-export function validateConfig(): void {
+export async function validateConfig(): Promise<void> {
   const { logger } = await import('../utils/logger.js');
   logger.info('設定値検証開始');
   logger.debug('設定値', config);
