@@ -62,48 +62,16 @@ export const config = parseEnv();
 export const WORKSPACE_DIRECTORY = '/tmp/ws';
 
 /**
- * ロギング設定
- * オブジェクトを自動的に JSON.stringify して CloudWatch で可読性を向上
+ * 統一ロガーをエクスポート
  */
-export const logger = {
-  debug: (...args: unknown[]) => {
-    if (config.LOG_LEVEL === 'debug') {
-      const formattedArgs = args.map((arg) =>
-        typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg
-      );
-      console.log('[DEBUG]', new Date().toISOString(), ...formattedArgs);
-    }
-  },
-  info: (...args: unknown[]) => {
-    if (['debug', 'info'].includes(config.LOG_LEVEL)) {
-      const formattedArgs = args.map((arg) =>
-        typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg
-      );
-      console.log('[INFO]', new Date().toISOString(), ...formattedArgs);
-    }
-  },
-  warn: (...args: unknown[]) => {
-    if (['debug', 'info', 'warn'].includes(config.LOG_LEVEL)) {
-      const formattedArgs = args.map((arg) =>
-        typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg
-      );
-      console.warn('[WARN]', new Date().toISOString(), ...formattedArgs);
-    }
-  },
-  error: (...args: unknown[]) => {
-    const formattedArgs = args.map((arg) =>
-      typeof arg === 'object' && arg !== null ? JSON.stringify(arg) : arg
-    );
-    console.error('[ERROR]', new Date().toISOString(), ...formattedArgs);
-  },
-};
+export { logger } from '../utils/logger.js';
 
 /**
  * 設定値を検証・表示
  */
 export function validateConfig(): void {
+  const { logger } = await import('../utils/logger.js');
   logger.info('設定値検証開始');
-
-  logger.debug('設定値:', config);
+  logger.debug('設定値', config);
   logger.info('設定値検証完了');
 }
