@@ -124,7 +124,7 @@ function formatContext(context: LogContext): string {
 /**
  * ロガークラス
  */
-class Logger implements LoggerInterface {
+export class Logger implements LoggerInterface {
   private config: LoggerConfig;
   private context: LogContext;
 
@@ -233,4 +233,4 @@ export const logger = new Logger(getLoggerConfig());
 /**
  * 型エクスポート
  */
-export type { Logger as LoggerType, LogContext, LogLevel } from './logger-types.js';
+export type { LogContext, LogLevel } from './logger-types.js';
