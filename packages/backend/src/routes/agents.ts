@@ -44,7 +44,7 @@ Please keep the following in mind:
 - Explain technical content in a way that beginners can understand
 - Honestly say "I don't know" when unsure
 - Ask clarifying questions when needed`,
-    enabledTools: ['file_editor', 's3_list_files', 's3_get_presigned_urls', 'tavily_search'],
+    enabledTools: ['file_editor', 's3_list_files', 'tavily_search'],
     scenarios: [
       {
         title: 'defaultAgents.generalAssistant.scenarios.question.title',
@@ -125,7 +125,7 @@ Please keep the following in mind:
 [Available tools]
 - Analyze code files from storage when necessary
 - Provide improved versions of code files when requested`,
-    enabledTools: ['file_editor', 'execute_command', 's3_list_files', 's3_get_presigned_urls'],
+    enabledTools: ['file_editor', 'execute_command', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.codeReview.scenarios.codeReview.title',
@@ -225,7 +225,6 @@ Please keep the following in mind:
       'utility-tools___kb-retrieve',
       'file_editor',
       's3_list_files',
-      's3_get_presigned_urls',
     ],
     scenarios: [
       {
@@ -289,7 +288,6 @@ Please keep the following in mind:
 [How to use tools]
 - Use execute_command to run Python code with pandas, numpy, matplotlib, seaborn, scipy
 - Use s3_list_files to explore available datasets
-- Use s3_get_presigned_urls to share reports or visualizations
 
 [Python libraries and best practices]
 - **pandas**: Data manipulation and analysis (DataFrames, Series operations)
@@ -333,9 +331,8 @@ Please keep the following in mind:
 [Available tools]
 - execute_command: Run Python scripts for data analysis and visualization
 - s3_download_file, s3_upload_file: Access and store data files
-- s3_list_files: Browse available datasets
-- s3_get_presigned_urls: Share results with stakeholders`,
-    enabledTools: ['execute_command', 'file_editor', 's3_list_files', 's3_get_presigned_urls'],
+- s3_list_files: Browse available datasets`,
+    enabledTools: ['execute_command', 'file_editor', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.dataAnalyst.scenarios.analysis.title',
@@ -427,7 +424,6 @@ Please keep the following in mind:
       'tavily_extract',
       'tavily_crawl',
       's3_list_files',
-      's3_get_presigned_urls',
     ],
     scenarios: [
       {
@@ -657,7 +653,7 @@ Use the tools provided by the Office PowerPoint MCP server to manipulate PowerPo
 [Available Tools]
 - Office PowerPoint MCP server tool suite (presentation creation and editing)
 `,
-    enabledTools: ['s3_list_files', 's3_get_presigned_urls'],
+    enabledTools: ['s3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.powerpointCreator.scenarios.newPresentation.title',
@@ -766,7 +762,6 @@ When working with code, I'll ensure:
     enabledTools: [
       'file_editor',
       's3_list_files',
-      's3_get_presigned_urls',
       'tavily_search',
       'code_interpreter',
     ],

@@ -380,45 +380,6 @@ export const LOCAL_TOOLS: MCPTool[] = [
     },
   },
   {
-    name: 's3_get_presigned_urls',
-    description:
-      "Generate presigned URLs in batch for files in user's S3 storage. Get URLs for download or upload. Can process multiple files at once.",
-    inputSchema: {
-      type: 'object',
-      properties: {
-        paths: {
-          oneOf: [
-            { type: 'string' },
-            {
-              type: 'array',
-              items: { type: 'string' },
-            },
-          ],
-          description: 'File path(s) (single string or array of strings)',
-        },
-        operation: {
-          type: 'string',
-          enum: ['download', 'upload'],
-          default: 'download',
-          description: 'Operation type: "download" (for download) or "upload" (for upload)',
-        },
-        expiresIn: {
-          type: 'number',
-          minimum: 60,
-          maximum: 604800,
-          default: 3600,
-          description:
-            'Expiration time for presigned URL (seconds). Default: 3600 (1 hour), Max: 604800 (7 days)',
-        },
-        contentType: {
-          type: 'string',
-          description: 'Content-Type for upload operation (optional)',
-        },
-      },
-      required: ['paths'],
-    },
-  },
-  {
     name: 'file_editor',
     description:
       'Edit or create new files. For moving or renaming files, use the mv command with the execute_command tool. Before use, confirm file contents with the cat command, and for new files, check the directory with the ls command. Replaces text specified in oldString with newString. oldString must be unique within the file and must match exactly including whitespace and indentation. Can only change one location at a time; for multiple changes, call multiple times.',

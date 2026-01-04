@@ -29,7 +29,6 @@ export function generateDefaultContext(
     's3_list_files',
     's3_download_file',
     's3_upload_file',
-    's3_get_presigned_urls',
     's3_sync_folder',
   ];
   const enabledS3Tools = tools.filter((tool) => s3ToolNames.includes(tool.name));
