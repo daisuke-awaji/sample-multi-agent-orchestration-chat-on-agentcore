@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Bot, Users, XCircle, Loader2 } from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -32,8 +33,8 @@ export function AgentDirectoryPage() {
     loadMoreAgents,
   } = useSharedAgentStore();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [localSearchQuery, setLocalSearchQuery] = useState('');
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // デフォルトエージェントを Agent 型に変換
   const defaultAgents = useMemo(() => convertDefaultAgentsToAgents(DEFAULT_AGENTS), []);
@@ -56,6 +57,15 @@ export function AgentDirectoryPage() {
       return name.includes(query) || description.includes(query);
     });
   }, [allAgents, localSearchQuery, t]);
+
+  // URLパラメータから選択されたエージェントを派生させる（useEffectではなくuseMemoを使用）
+  const selectedAgent = useMemo(() => {
+    const agentParam = searchParams.get('agent');
+    if (agentParam && allAgents.length > 0) {
+      return allAgents.find((a) => `${a.createdBy}-${a.id}` === agentParam) || null;
+    }
+    return null;
+  }, [searchParams, allAgents]);
 
   // 初回ロード
   useEffect(() => {
@@ -84,7 +94,14 @@ export function AgentDirectoryPage() {
 
   // エージェントカードクリック
   const handleAgentClick = (agent: Agent) => {
-    setSelectedAgent(agent);
+    // URLパラメータを更新
+    setSearchParams({ agent: `${agent.createdBy}-${agent.id}` });
+  };
+
+  // モーダルをクローズ
+  const handleCloseModal = () => {
+    // URLパラメータを削除
+    setSearchParams({});
   };
 
   return (
@@ -232,7 +249,7 @@ export function AgentDirectoryPage() {
       </div>
 
       {/* 共有エージェント詳細モーダル */}
-      <SharedAgentDetailModal agent={selectedAgent} onClose={() => setSelectedAgent(null)} />
+      <SharedAgentDetailModal agent={selectedAgent} onClose={handleCloseModal} />
     </>
   );
 }

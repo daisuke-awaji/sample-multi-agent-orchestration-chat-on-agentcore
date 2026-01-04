@@ -90,5 +90,106 @@ jobs:
           path: |
             packages/*/dist/
             packages/*/build/
-            api.html
           retention-days: 7
+
+      - name: Upload API documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: |
+            api-backend.html
+            api-agent.html
+          retention-days: 7
+
+  deploy-docs:
+    name: Deploy API Docs to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Download API documentation
+        uses: actions/download-artifact@v4
+        with:
+          name: api-docs
+          path: docs-temp
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build docs directory
+        run: |
+          mkdir -p docs-site
+          mv docs-temp/api-backend.html docs-site/backend.html
+          mv docs-temp/api-agent.html docs-site/agent.html
+          cat > docs-site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Fullstack AgentCore API Documentation</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                line-height: 1.6;
+              }
+              h1 { color: #1976d2; }
+              .api-links {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                margin-top: 30px;
+              }
+              .api-card {
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 20px;
+                text-decoration: none;
+                color: inherit;
+                transition: all 0.2s;
+              }
+              .api-card:hover {
+                border-color: #1976d2;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+              }
+              .api-card h2 {
+                margin-top: 0;
+                color: #1976d2;
+              }
+              .api-card p {
+                margin-bottom: 0;
+                color: #666;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>Fullstack AgentCore API Documentation</h1>
+            <p>Choose an API to view its documentation:</p>
+            <div class="api-links">
+              <a href="backend.html" class="api-card">
+                <h2>Backend API</h2>
+                <p>REST API for user management, agent configuration, and session control (Port 3000)</p>
+              </a>
+              <a href="agent.html" class="api-card">
+                <h2>Agent Runtime API</h2>
+                <p>Streaming AI agent invocation endpoint with NDJSON responses (Port 8080)</p>
+              </a>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-site/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
