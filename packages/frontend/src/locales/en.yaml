@@ -296,6 +296,10 @@ tool:
     fetchError: Tool fetch error
     fetchFailed: Failed to fetch tools
     availableToolsTitle: Available Tools
+    connectionResults: Connection Results
+    connectionErrors: Connection Errors
+    showDetails: Show Details
+    hideDetails: Hide Details
     toolCount: '{{count}} tools'
     samples:
       filesystem: Filesystem Server

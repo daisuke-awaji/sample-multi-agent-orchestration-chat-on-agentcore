@@ -36,19 +36,37 @@ export interface MCPToolInfo {
 }
 
 /**
+ * MCP server connection error information
+ */
+export interface MCPServerError {
+  serverName: string;
+  message: string;
+  details?: string; // Additional error details (e.g., stack trace, stderr output)
+}
+
+/**
+ * Result of fetching tools from MCP configuration
+ */
+export interface MCPToolsFetchResult {
+  tools: MCPToolInfo[];
+  errors: MCPServerError[];
+}
+
+/**
  * Retrieve tool list from MCP configuration
  *
  * @param mcpConfig MCP server configuration
  * @param logger Logger (defaults to console if omitted)
- * @returns Array of tool information
+ * @returns Object containing tools array and errors array
  */
 export async function fetchToolsFromMCPConfig(
   mcpConfig: MCPConfig,
   logger: Logger = defaultLogger
-): Promise<MCPToolInfo[]> {
+): Promise<MCPToolsFetchResult> {
   const servers = getEnabledMCPServers(mcpConfig);
   const clients = createMCPClients(servers, logger);
   const allTools: MCPToolInfo[] = [];
+  const errors: MCPServerError[] = [];
 
   for (let i = 0; i < clients.length; i++) {
     const client = clients[i];
@@ -76,10 +94,32 @@ export async function fetchToolsFromMCPConfig(
 
       logger.info(`✅ Tool retrieval successful: ${serverName} (${tools.length} items)`);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`❌ Tool retrieval failed (${serverName}):`, error);
-      // Skip and continue even if error occurs (retrieve tools from other servers)
+
+      // Capture detailed error information including stack trace
+      let errorDetails: string | undefined;
+      if (error instanceof Error) {
+        // Include stack trace if available
+        errorDetails = error.stack;
+
+        // Also check for any additional error data
+        if ('data' in error && error.data) {
+          errorDetails = `${errorDetails}\n\nAdditional data: ${JSON.stringify(error.data, null, 2)}`;
+        }
+      }
+
+      // Record error information for frontend display
+      errors.push({
+        serverName,
+        message: errorMessage,
+        details: errorDetails,
+      });
     }
   }
 
-  return allTools;
+  return {
+    tools: allTools,
+    errors,
+  };
 }

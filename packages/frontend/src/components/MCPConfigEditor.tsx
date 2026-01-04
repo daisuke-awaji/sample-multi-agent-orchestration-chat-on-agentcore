@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, CheckCircle, Loader2, ChevronDown } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  ChevronDown,
+  XCircle,
+  ChevronRight,
+} from 'lucide-react';
 import type { MCPConfig } from '../types/agent';
-import { fetchLocalMCPTools } from '../api/tools';
+import { fetchLocalMCPTools, type MCPServerError } from '../api/tools';
 
 interface MCPConfigEditorProps {
   config?: MCPConfig;
@@ -86,8 +93,10 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFetchingTools, setIsFetchingTools] = useState(false);
   const [toolsPreview, setToolsPreview] = useState<MCPToolPreview[]>([]);
+  const [serverErrors, setServerErrors] = useState<MCPServerError[]>([]);
   const [showSampleDropdown, setShowSampleDropdown] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
+  const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set());
 
   // ローテーションメッセージ用のuseEffect
   useEffect(() => {
@@ -137,8 +146,9 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
       setIsFetchingTools(true);
       setValidationError(null);
 
-      const tools = await fetchLocalMCPTools(parsed);
-      setToolsPreview(tools);
+      const result = await fetchLocalMCPTools(parsed);
+      setToolsPreview(result.tools);
+      setServerErrors(result.errors);
     } catch (error) {
       setValidationError(
         error instanceof Error
@@ -146,6 +156,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
           : t('tool.mcp.fetchFailed')
       );
       setToolsPreview([]);
+      setServerErrors([]);
     } finally {
       setIsFetchingTools(false);
     }
@@ -161,6 +172,21 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     setShowSampleDropdown(false);
     setValidationError(null);
     setToolsPreview([]);
+    setServerErrors([]);
+    setExpandedErrors(new Set());
+  };
+
+  // エラー詳細の展開/折りたたみ
+  const toggleErrorDetails = (serverName: string) => {
+    setExpandedErrors((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(serverName)) {
+        newSet.delete(serverName);
+      } else {
+        newSet.add(serverName);
+      }
+      return newSet;
+    });
   };
 
   // サーバー名でグループ化
@@ -265,35 +291,90 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
         </div>
       )}
 
-      {/* ツールプレビュー */}
-      {toolsPreview.length > 0 && (
+      {/* ツールプレビューとエラー */}
+      {(toolsPreview.length > 0 || serverErrors.length > 0) && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-700">{t('tool.mcp.availableToolsTitle')}</h3>
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
-            {Object.entries(groupedTools).map(([serverName, tools]) => (
-              <div key={serverName}>
-                <h4 className="text-sm font-medium text-gray-900 mb-2">
-                  {serverName} ({t('tool.mcp.toolCount', { count: tools.length })})
-                </h4>
-                <div className="space-y-2">
-                  {tools.map((tool) => (
-                    <div
-                      key={`${tool.serverName}::${tool.name}`}
-                      className="flex items-start space-x-2 text-sm"
-                    >
-                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-mono text-gray-900">{tool.name}</span>
-                        {tool.description && (
-                          <span className="text-gray-600"> - {tool.description}</span>
-                        )}
+          <h3 className="text-sm font-medium text-gray-700">{t('tool.mcp.connectionResults')}</h3>
+
+          {/* 接続成功したサーバー */}
+          {toolsPreview.length > 0 && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-4">
+              {Object.entries(groupedTools).map(([serverName, tools]) => (
+                <div key={serverName}>
+                  <h4 className="text-sm font-medium text-green-900 mb-2 flex items-center space-x-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span>
+                      {serverName} ({t('tool.mcp.toolCount', { count: tools.length })})
+                    </span>
+                  </h4>
+                  <div className="space-y-2 ml-6">
+                    {tools.map((tool) => (
+                      <div
+                        key={`${tool.serverName}::${tool.name}`}
+                        className="flex items-start space-x-2 text-sm"
+                      >
+                        <div>
+                          <span className="font-mono text-gray-900">{tool.name}</span>
+                          {tool.description && (
+                            <span className="text-gray-600"> - {tool.description}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+
+          {/* 接続失敗したサーバー */}
+          {serverErrors.length > 0 && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-3">
+              <h4 className="text-sm font-medium text-red-900 flex items-center space-x-2">
+                <XCircle className="w-4 h-4 text-red-600" />
+                <span>{t('tool.mcp.connectionErrors')}</span>
+              </h4>
+              <div className="space-y-3 ml-6">
+                {serverErrors.map((error, index) => {
+                  const isExpanded = expandedErrors.has(error.serverName);
+                  return (
+                    <div key={`${error.serverName}-${index}`} className="text-sm">
+                      <div className="font-medium text-red-900">{error.serverName}</div>
+                      <div className="text-red-700 mt-1 text-xs">{error.message}</div>
+
+                      {/* 詳細情報の表示 */}
+                      {error.details && (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleErrorDetails(error.serverName)}
+                            className="inline-flex items-center space-x-1 text-xs text-red-800 hover:text-red-900 transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-3 h-3" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3" />
+                            )}
+                            <span>
+                              {isExpanded ? t('tool.mcp.hideDetails') : t('tool.mcp.showDetails')}
+                            </span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="mt-2 p-3 bg-red-100 rounded border border-red-300 overflow-x-auto">
+                              <pre className="text-xs font-mono text-red-900 whitespace-pre-wrap break-all">
+                                {error.details}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

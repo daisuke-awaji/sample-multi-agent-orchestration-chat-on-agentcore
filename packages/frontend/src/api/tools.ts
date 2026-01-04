@@ -492,19 +492,42 @@ export async function fetchTools(cursor?: string): Promise<{
 }
 
 /**
+ * MCP server error information
+ */
+export interface MCPServerError {
+  serverName: string;
+  message: string;
+  details?: string; // Additional error details (e.g., stack trace, stderr output)
+}
+
+/**
+ * Result of fetching local MCP tools
+ */
+export interface MCPToolsFetchResult {
+  tools: (MCPTool & { serverName: string })[];
+  errors: MCPServerError[];
+}
+
+/**
  * Fetch local MCP tools
  * Retrieve tool list from user-defined MCP server configuration
  * @param mcpConfig MCP server configuration in mcp.json format
- * @returns Tool list (with server name)
+ * @returns Tool list and error information
  */
 export async function fetchLocalMCPTools(
   mcpConfig: Record<string, unknown>
-): Promise<(MCPTool & { serverName: string })[]> {
-  const data = await backendPost<{ tools: (MCPTool & { serverName: string })[] }>('/tools/local', {
+): Promise<MCPToolsFetchResult> {
+  const data = await backendPost<{
+    tools: (MCPTool & { serverName: string })[];
+    errors: MCPServerError[];
+  }>('/tools/local', {
     mcpConfig,
   });
 
-  return data.tools;
+  return {
+    tools: data.tools,
+    errors: data.errors || [],
+  };
 }
 
 /**

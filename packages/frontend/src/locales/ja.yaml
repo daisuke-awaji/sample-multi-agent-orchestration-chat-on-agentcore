@@ -298,6 +298,10 @@ tool:
     fetchError: ツール取得エラー
     fetchFailed: ツール取得に失敗しました
     availableToolsTitle: 利用可能なツール
+    connectionResults: 接続結果
+    connectionErrors: 接続エラー
+    showDetails: 詳細を表示
+    hideDetails: 詳細を閉じる
     toolCount: '{{count}} ツール'
     samples:
       filesystem: Filesystem Server

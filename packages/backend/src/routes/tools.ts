@@ -240,19 +240,23 @@ router.post('/local', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
     });
 
     // Fetch tool list from MCP servers
-    const tools = await fetchToolsFromMCPConfig(mcpConfig, console);
+    const result = await fetchToolsFromMCPConfig(mcpConfig, console);
 
     const response = {
-      tools,
+      tools: result.tools,
+      errors: result.errors,
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         actorId: auth.userId,
-        count: tools.length,
+        count: result.tools.length,
+        errorCount: result.errors.length,
       },
     };
 
-    console.log(`✅ Local MCP tool retrieval completed (${auth.requestId}): ${tools.length} items`);
+    console.log(
+      `✅ Local MCP tool retrieval completed (${auth.requestId}): ${result.tools.length} tools, ${result.errors.length} errors`
+    );
     res.status(200).json(response);
   } catch (error) {
     console.error(`💥 Local MCP tool retrieval error:`, error);
