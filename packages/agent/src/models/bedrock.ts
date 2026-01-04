@@ -16,5 +16,9 @@ export function createBedrockModel(options?: BedrockModelOptions): BedrockModel 
   return new BedrockModel({
     region,
     modelId,
+    clientConfig: {
+      retryMode: 'adaptive', // Adaptive retry mode for rate limiting
+      maxAttempts: 5, // Maximum 5 attempts (1 initial + 4 retries)
+    },
   });
 }
