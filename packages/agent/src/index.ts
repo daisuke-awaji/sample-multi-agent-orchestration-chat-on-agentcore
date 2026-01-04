@@ -177,12 +177,7 @@ const corsOptions = {
     }
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id',
-    'X-Actor-Id',
-  ],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'],
   credentials: true,
   maxAge: 86400, // Preflight cache 24 hours
 };

@@ -16,8 +16,9 @@ info:
     - **Real-time**: Text generation and tool execution displayed in real-time
 
     ## Authentication
-    Requires JWT Bearer Token authentication via `X-Actor-Id` header (internal use).
-    Direct access typically goes through Backend API.
+    Requires JWT Bearer Token in the `Authorization` header.
+    User ID is extracted from JWT payload claims (sub, userId, user_id, or username).
+    Direct access typically goes through Backend API which forwards the JWT.
 
     ## Session Management
     Optionally use `X-Amzn-Bedrock-AgentCore-Runtime-Session-Id` header to manage
@@ -105,7 +106,7 @@ paths:
         ```bash
         curl -X POST http://localhost:8080/invocations \
           -H "Content-Type: application/json" \
-          -H "X-Actor-Id: user-123" \
+          -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
           -d '{"prompt": "Tell me about the weather in Tokyo"}' \
           --no-buffer
         ```
@@ -122,6 +123,17 @@ paths:
       tags:
         - Agent
       parameters:
+        - name: Authorization
+          in: header
+          description: |
+            JWT Bearer Token for authentication.
+            User ID is extracted from JWT payload (sub, userId, user_id, or username).
+            Format: Bearer <token>
+          required: true
+          schema:
+            type: string
+            pattern: '^Bearer .+$'
+            example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         - name: X-Amzn-Bedrock-AgentCore-Runtime-Session-Id
           in: header
           description: |
@@ -132,12 +144,6 @@ paths:
             type: string
             pattern: '^[a-zA-Z0-9-_]{1,200}$'
             example: session-abc123-xyz789
-        - name: X-Actor-Id
-          in: header
-          description: User ID from JWT (set by Backend)
-          required: false
-          schema:
-            type: string
       requestBody:
         required: true
         description: AI agent invocation request
