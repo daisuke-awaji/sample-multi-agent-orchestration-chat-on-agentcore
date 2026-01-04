@@ -716,7 +716,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
           </button>
 
           <button
-            onClick={() => setShowNewDirectoryInput(!showNewDirectoryInput)}
+            onClick={() => setShowNewDirectoryInput(true)}
             className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
           >
             <FolderPlus className="w-3.5 h-3.5" />
@@ -731,39 +731,6 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
             className="hidden"
           />
         </div>
-
-        {/* 新規ディレクトリ入力 */}
-        {showNewDirectoryInput && (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
-            <input
-              type="text"
-              value={newDirectoryName}
-              onChange={(e) => setNewDirectoryName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateDirectory()}
-              placeholder={t('storage.folderNamePlaceholder')}
-              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleCreateDirectory}
-                disabled={!newDirectoryName.trim()}
-                className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {t('storage.create')}
-              </button>
-              <button
-                onClick={() => {
-                  setShowNewDirectoryInput(false);
-                  setNewDirectoryName('');
-                }}
-                className="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* アップロード進捗 */}
         {isUploading && (
@@ -875,7 +842,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
             {/* アイテム一覧 */}
             {!isLoading && (
               <>
-                {items.length === 0 ? (
+                {items.length === 0 && !showNewDirectoryInput ? (
                   <div className="text-center py-12">
                     <Folder className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-sm text-gray-600 mb-2">{t('storage.emptyFolder')}</p>
@@ -894,6 +861,48 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
                         isDeleting={deletingItemPath === item.path}
                       />
                     ))}
+
+                    {/* 新規ディレクトリ入力（リストの末尾） */}
+                    {showNewDirectoryInput && (
+                      <div className="border border-blue-300 rounded-lg p-3 bg-blue-50">
+                        <div className="flex items-center gap-3">
+                          <Folder className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                          <input
+                            type="text"
+                            value={newDirectoryName}
+                            onChange={(e) => setNewDirectoryName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleCreateDirectory();
+                              if (e.key === 'Escape') {
+                                setShowNewDirectoryInput(false);
+                                setNewDirectoryName('');
+                              }
+                            }}
+                            placeholder={t('storage.folderNamePlaceholder')}
+                            className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleCreateDirectory}
+                            disabled={!newDirectoryName.trim()}
+                            className="flex-shrink-0 p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={t('storage.create')}
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowNewDirectoryInput(false);
+                              setNewDirectoryName('');
+                            }}
+                            className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title={t('common.cancel')}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
