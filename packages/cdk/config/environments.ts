@@ -197,7 +197,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     backendApiName: 'agentcore-app-dev-backend-api',
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
-    allowedSignUpEmailDomains: ['amazon.com', 'amazon.jp'],
+    allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
     testUser: {
       username: 'testuser',
       email: 'testuser@amazon.com',

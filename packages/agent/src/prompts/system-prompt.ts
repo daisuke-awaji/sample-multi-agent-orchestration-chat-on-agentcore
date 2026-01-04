@@ -64,6 +64,19 @@ When referencing files in the user's S3 storage in your responses, ALWAYS use re
 ![Image Description](${options.storagePath || '/'}path/to/image.png)
 \`\`\`
 
+**For videos** (will be displayed with inline video player):
+\`\`\`markdown
+![Video Description](${options.storagePath || '/'}path/to/video.mp4)
+\`\`\`
+or
+\`\`\`markdown
+[Video File](${options.storagePath || '/'}path/to/video.mp4)
+\`\`\`
+
+Supported video formats: .mp4, .webm, .mov, .avi, .mkv, .m4v
+Note: Both image syntax \`![alt](url)\` and link syntax \`[text](url)\` work for video files.
+The frontend automatically detects video file extensions and renders an inline video player with controls.
+
 **For other files** (clickable download links):
 \`\`\`markdown
 [File Name](${options.storagePath || '/'}path/to/document.pdf)
