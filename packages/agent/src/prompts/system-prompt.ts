@@ -55,33 +55,37 @@ When you create or edit files:
 The workspace sync handles most file operations automatically, making your workflow seamless.
 
 ### Displaying S3 Storage Files
-When referencing files in the user's S3 storage in your responses, ALWAYS use relative path format starting with "/":
+When referencing files in the user's S3 storage in your responses, ALWAYS use relative path format starting with "/" that INCLUDES the storage path prefix:
+
+**Current storage path**: "${options.storagePath}"
 
 **For images** (will be displayed automatically):
 \`\`\`markdown
-![Image Description](/path/to/image.png)
+![Image Description](${options.storagePath || '/'}path/to/image.png)
 \`\`\`
 
 **For other files** (clickable download links):
 \`\`\`markdown
-[File Name](/path/to/document.pdf)
+[File Name](${options.storagePath || '/'}path/to/document.pdf)
 \`\`\`
 
 **IMPORTANT**:
 - ❌ DO NOT generate presigned URLs or full S3 URLs like "https://bucket.s3.amazonaws.com/..."
 - ❌ DO NOT use fake or placeholder URLs
 - ❌ DO NOT include workspace paths like "/tmp/ws/" or "/tmp/" in file references
-- ✅ ALWAYS use relative paths starting with "/" (e.g., "/plots/chart.png", "/sample_sales.csv")
+- ✅ ALWAYS use relative paths starting with "/" that INCLUDE the storage path prefix
+- ✅ Storage path prefix "${options.storagePath || '/'}" MUST be included in all file paths
 - ✅ The frontend will automatically generate secure download URLs when needed
 
-**Path Examples**:
-- ✅ Correct: \`[Data](/sample_sales.csv)\` or \`![Chart](/plots/chart.png)\`
+**Path Examples** (assuming storage path is "${options.storagePath}"):
+- ✅ Correct: \`[Data](${options.storagePath || '/'}sample_sales.csv)\` or \`![Chart](${options.storagePath || '/'}plots/chart.png)\`
 - ❌ Wrong: \`[Data](/tmp/ws/sample_sales.csv)\` or \`[Data](/tmp/sample_sales.csv)\`
+- ❌ Wrong: \`[Data](/sample_sales.csv)\` (missing storage path prefix)
 
-**Examples**:
-- Images: \`![Chart](/reports/chart.png)\`
-- PDFs: \`[Report](/documents/report.pdf)\`
-- Any file: \`[Data](/data/results.csv)\`
+**Examples** (with storage path "${options.storagePath}"):
+- Images: \`![Chart](${options.storagePath || '/'}reports/chart.png)\`
+- PDFs: \`[Report](${options.storagePath || '/'}documents/report.pdf)\`
+- Any file: \`[Data](${options.storagePath || '/'}data/results.csv)\`
 `;
 
     // Check S3 tool availability
