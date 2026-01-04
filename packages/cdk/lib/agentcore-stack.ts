@@ -102,6 +102,11 @@ export class AgentCoreStack extends cdk.Stack {
   public readonly echoToolTarget: AgentCoreLambdaTarget;
 
   /**
+   * Created Image Generation Tools Lambda Target
+   */
+  public readonly imageGenTarget: AgentCoreLambdaTarget;
+
+  /**
    * Created AgentCore Runtime
    */
   public readonly agentRuntime: AgentCoreRuntime;
@@ -189,6 +194,44 @@ export class AgentCoreStack extends cdk.Stack {
     // Add Lambda Target to Gateway
     this.echoToolTarget.addToGateway(this.gateway.gateway, 'EchoToolGatewayTarget');
 
+    // 3. Create User Storage (needed before Image Generation Tools)
+    this.userStorage = new UserStorage(this, 'UserStorage', {
+      bucketName: `${resourcePrefix}-user-storage`,
+      allowedOrigins: envConfig.allowedOrigins,
+    });
+
+    // 4. Create Image Generation Tools Lambda Target
+    this.imageGenTarget = new AgentCoreLambdaTarget(this, 'ImageGenTarget', {
+      resourcePrefix: resourcePrefix,
+      targetName: 'image-generation',
+      description: 'Lambda function for Nova Canvas image generation',
+      lambdaCodePath: 'packages/lambda-tools/tools/image-generation',
+      toolSchemaPath: 'packages/lambda-tools/tools/image-generation/tool-schema.json',
+      timeout: 60, // Image generation may take longer
+      memorySize: 512, // Larger memory for image processing
+      environment: {
+        LOG_LEVEL: 'INFO',
+        USER_STORAGE_BUCKET: this.userStorage.bucket.bucketName,
+        NOVA_CANVAS_MODEL_ID: 'amazon.nova-canvas-v1:0',
+      },
+    });
+
+    // Grant S3 write permissions for image storage
+    this.userStorage.bucket.grantPut(this.imageGenTarget.lambdaFunction);
+
+    // Grant Bedrock InvokeModel permissions for Nova Canvas
+    this.imageGenTarget.lambdaFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel'],
+        resources: [
+          `arn:aws:bedrock:${this.region}:*:foundation-model/amazon.nova-canvas-v1:0`,
+        ],
+      })
+    );
+
+    // Add Image Generation Target to Gateway
+    this.imageGenTarget.addToGateway(this.gateway.gateway, 'ImageGenGatewayTarget');
+
     // CloudFormation outputs
     new cdk.CfnOutput(this, 'GatewayArn', {
       value: this.gateway.gatewayArn,
@@ -230,7 +273,19 @@ export class AgentCoreStack extends cdk.Stack {
       exportName: `${id}-UtilityToolsLambdaName`,
     });
 
-    // 3. Create AgentCore Memory
+    new cdk.CfnOutput(this, 'ImageGenLambdaArn', {
+      value: this.imageGenTarget.lambdaFunction.functionArn,
+      description: 'Image Generation Lambda Function ARN',
+      exportName: `${id}-ImageGenLambdaArn`,
+    });
+
+    new cdk.CfnOutput(this, 'ImageGenLambdaName', {
+      value: this.imageGenTarget.lambdaFunction.functionName,
+      description: 'Image Generation Lambda Function Name',
+      exportName: `${id}-ImageGenLambdaName`,
+    });
+
+    // 5. Create AgentCore Memory
     const memoryName = props?.memoryName || `${resourcePrefix.replace(/-/g, '_')}_memory`;
     const useBuiltInStrategies = props?.useBuiltInMemoryStrategies ?? true;
     const expirationDays = props?.memoryExpirationDays || envConfig.memoryExpirationDays;
@@ -248,23 +303,14 @@ export class AgentCoreStack extends cdk.Stack {
       },
     });
 
-    // 4. Create User Storage
-    this.userStorage = new UserStorage(this, 'UserStorage', {
-      bucketNamePrefix: envConfig.userStorageBucketPrefix || resourcePrefix,
-      retentionDays: 365,
-      corsAllowedOrigins: envConfig.corsAllowedOrigins,
-      removalPolicy: envConfig.s3RemovalPolicy,
-      autoDeleteObjects: envConfig.s3AutoDeleteObjects,
-    });
-
-    // 5. Create Agents Table
+    // 6. Create Agents Table
     this.agentsTable = new AgentsTable(this, 'AgentsTable', {
       tableNamePrefix: resourcePrefix,
       removalPolicy: envConfig.s3RemovalPolicy, // Use same removal policy as S3
       pointInTimeRecovery: true,
     });
 
-    // 6. Create AgentCore Runtime
+    // 7. Create AgentCore Runtime
     this.agentRuntime = new AgentCoreRuntime(this, 'AgentCoreRuntime', {
       runtimeName: envConfig.runtimeName,
       description: `TypeScript-based Strands Agent Runtime - ${resourcePrefix}`,
@@ -288,7 +334,7 @@ export class AgentCoreStack extends cdk.Stack {
     // Grant User Storage full access to Runtime
     this.userStorage.grantFullAccess(this.agentRuntime.runtime);
 
-    // 7. Create Backend API (Lambda Web Adapter)
+    // 8. Create Backend API (Lambda Web Adapter)
     this.backendApi = new BackendApi(this, 'BackendApi', {
       apiName: envConfig.backendApiName || `${resourcePrefix}-backend-api`,
       cognitoAuth: this.cognitoAuth,
@@ -308,7 +354,7 @@ export class AgentCoreStack extends cdk.Stack {
     // Grant Agents Table read/write access to Backend API
     this.agentsTable.grantReadWrite(this.backendApi.lambdaFunction);
 
-    // 8. Create Frontend
+    // 9. Create Frontend
     this.frontend = new Frontend(this, 'Frontend', {
       resourcePrefix: envConfig.frontendBucketPrefix || resourcePrefix,
       userPoolId: this.cognitoAuth.userPoolId,

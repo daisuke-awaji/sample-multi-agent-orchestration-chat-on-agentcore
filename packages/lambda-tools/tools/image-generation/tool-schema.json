@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "inputSchema": { "type": "object" }
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "nova-canvas-generate",
+      "description": "Amazon Nova Canvasを使用して、テキストプロンプトから高品質な画像を生成します。マーケティング画像、製品モックアップ、クリエイティブコンテンツの作成に最適です。生成された画像はS3に保存され、URLが返却されます。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "画像生成のためのテキストプロンプト（最大1024文字）。具体的で詳細な説明を推奨します。",
+            "maxLength": 1024
+          },
+          "negativePrompt": {
+            "type": "string",
+            "description": "画像に含めたくない要素を指定（例: 'blurry, low quality, distorted'）",
+            "maxLength": 512
+          },
+          "width": {
+            "type": "integer",
+            "description": "画像の幅（ピクセル）。256から2048の範囲で指定可能。",
+            "default": 1024,
+            "minimum": 256,
+            "maximum": 2048
+          },
+          "height": {
+            "type": "integer",
+            "description": "画像の高さ（ピクセル）。256から2048の範囲で指定可能。",
+            "default": 1024,
+            "minimum": 256,
+            "maximum": 2048
+          },
+          "numberOfImages": {
+            "type": "integer",
+            "description": "生成する画像の枚数。1から5の範囲で指定可能。",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "cfgScale": {
+            "type": "number",
+            "description": "プロンプトへの忠実度（1.1-10.0）。高いほどプロンプトに忠実だが、創造性は低下する。",
+            "default": 7.0,
+            "minimum": 1.1,
+            "maximum": 10.0
+          },
+          "seed": {
+            "type": "integer",
+            "description": "再現性のためのシード値（0-2147483647）。同じシードと同じプロンプトで同じ画像を生成できます。",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": ["prompt"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
