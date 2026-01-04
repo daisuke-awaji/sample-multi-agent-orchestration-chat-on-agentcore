@@ -74,6 +74,12 @@ export interface AgentCoreRuntimeProps {
   readonly tavilyApiKeySecretName?: string;
 
   /**
+   * GitHub Token Secret Name (Secrets Manager)（オプション）
+   * 設定されている場合、ランタイムは Secrets Manager から GitHub トークンを取得して gh CLI 認証
+   */
+  readonly githubTokenSecretName?: string;
+
+  /**
    * User Storage バケット名（オプション）
    * S3ストレージツールを使用するために必要
    */
@@ -128,6 +134,7 @@ export class AgentCoreRuntime extends Construct {
 
     // 環境変数を設定
     const environmentVariables: Record<string, string> = {
+      AWS_REGION: props.region || 'us-east-1',
       BEDROCK_MODEL_ID: 'global.anthropic.claude-sonnet-4-5-20250929-v1:0',
       BEDROCK_REGION: props.region || 'us-east-1',
       LOG_LEVEL: 'info',
@@ -151,6 +158,11 @@ export class AgentCoreRuntime extends Construct {
     // Tavily API Key Secret Name の設定
     if (props.tavilyApiKeySecretName) {
       environmentVariables.TAVILY_API_KEY_SECRET_NAME = props.tavilyApiKeySecretName;
+    }
+
+    // GitHub Token Secret Name の設定
+    if (props.githubTokenSecretName) {
+      environmentVariables.GITHUB_TOKEN_SECRET_NAME = props.githubTokenSecretName;
     }
 
     // User Storage バケット名の設定
@@ -278,6 +290,20 @@ export class AgentCoreRuntime extends Construct {
           actions: ['secretsmanager:GetSecretValue'],
           resources: [
             `arn:aws:secretsmanager:${region}:${account}:secret:${props.tavilyApiKeySecretName}*`,
+          ],
+        })
+      );
+    }
+
+    // Secrets Manager アクセス権限（GitHub Token）
+    if (props.githubTokenSecretName) {
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'SecretsManagerGitHubTokenAccess',
+          effect: iam.Effect.ALLOW,
+          actions: ['secretsmanager:GetSecretValue'],
+          resources: [
+            `arn:aws:secretsmanager:${region}:${account}:secret:${props.githubTokenSecretName}*`,
           ],
         })
       );

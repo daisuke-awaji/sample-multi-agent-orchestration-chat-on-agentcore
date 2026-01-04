@@ -615,17 +615,6 @@ Users will primarily request software engineering assistance including bug fixes
         prompt: 'defaultAgents.softwareDeveloper.scenarios.architecture.prompt',
       },
     ],
-    mcpConfig: {
-      mcpServers: {
-        github: {
-          command: 'npx',
-          args: ['-y', '@modelcontextprotocol/server-github'],
-          env: {
-            GITHUB_PERSONAL_ACCESS_TOKEN: 'your_github_token_here',
-          },
-        },
-      },
-    },
   },
   {
     name: 'defaultAgents.powerpointCreator.name',

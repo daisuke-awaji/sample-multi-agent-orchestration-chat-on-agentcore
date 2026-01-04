@@ -52,12 +52,13 @@ This project provides a complete stack for deploying AI agents powered by Amazon
 npm ci
 ```
 
-#### 2. **Configure Tavily API Key (Optional - for web search tools)**
+#### 2. **Configure Secrets (Optional)**
 
-Store the API key in AWS Secrets Manager for your target environment:
+Store API keys and tokens in AWS Secrets Manager for your target environment:
+
+**Tavily API Key** (for web search tools):
 
 ```bash
-# For development environment (default)
 aws secretsmanager create-secret \
   --name "agentcore/default/tavily-api-key" \
   --secret-string "tvly-your-api-key-here" \
@@ -65,8 +66,19 @@ aws secretsmanager create-secret \
 ```
 
 > Get your API key from [Tavily](https://tavily.com/)
-> 
-> **Note**: For local development, you can also set `TAVILY_API_KEY` in `packages/agent/.env` as a fallback.
+
+**GitHub Token** (for GitHub CLI integration):
+
+```bash
+aws secretsmanager create-secret \
+  --name "agentcore/default/github-token" \
+  --secret-string "ghp_your-token-here" \
+  --region ap-northeast-1
+```
+
+> Generate a token from [GitHub Settings](https://github.com/settings/tokens). See [GitHub CLI Integration Guide](docs/github-cli-integration.md) for details.
+
+**Note**: For local development, you can also set these as environment variables in `packages/agent/.env`.
 
 #### 3. **Bootstrap CDK (first time only)**
 ```bash

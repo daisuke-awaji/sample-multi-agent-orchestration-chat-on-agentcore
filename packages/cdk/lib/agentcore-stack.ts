@@ -72,6 +72,12 @@ export interface AgentCoreStackProps extends cdk.StackProps {
    * When set, runtime will retrieve API key from Secrets Manager
    */
   readonly tavilyApiKeySecretName?: string;
+
+  /**
+   * GitHub Token Secret Name (Secrets Manager) (optional)
+   * When set, runtime will retrieve GitHub token from Secrets Manager for gh CLI authentication
+   */
+  readonly githubTokenSecretName?: string;
 }
 
 /**
@@ -271,7 +277,8 @@ export class AgentCoreStack extends cdk.Stack {
         memoryId: this.memory.memoryId,
         enabled: true,
       },
-      tavilyApiKeySecretName: props?.tavilyApiKeySecretName, // Pass Tavily API Key Secret Name
+      tavilyApiKeySecretName: props?.tavilyApiKeySecretName || envConfig.tavilyApiKeySecretName, // Pass Tavily API Key Secret Name
+      githubTokenSecretName: props?.githubTokenSecretName || envConfig.githubTokenSecretName, // Pass GitHub Token Secret Name
       userStorageBucketName: this.userStorage.bucketName, // Pass User Storage bucket name
     });
 

@@ -44,5 +44,6 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Scripts (if not needed for runtime)
-scripts
+# Scripts (exclude test/dev scripts, keep startup.sh)
+scripts/get-jwt-token.sh
+scripts/test-local.sh

@@ -22,6 +22,10 @@ const envSchema = z.object({
   // AgentCore Memory Configuration
   AGENTCORE_MEMORY_ID: z.string().optional(),
 
+  // Secrets Manager Configuration
+  TAVILY_API_KEY_SECRET_NAME: z.string().optional(),
+  GITHUB_TOKEN_SECRET_NAME: z.string().optional(),
+
   // Debug Configuration
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   DEBUG_MCP: z

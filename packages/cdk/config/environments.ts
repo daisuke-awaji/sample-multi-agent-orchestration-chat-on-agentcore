@@ -99,6 +99,13 @@ export interface EnvironmentConfig {
   tavilyApiKeySecretName?: string;
 
   /**
+   * GitHub Token Secret Name (Secrets Manager)
+   * Set for environments to retrieve GitHub token from Secrets Manager
+   * Used for gh CLI authentication
+   */
+  githubTokenSecretName?: string;
+
+  /**
    * Allowed email domains for sign-up (optional)
    * If set, only emails from these domains can sign up
    * Example: ['amazon.com', 'amazon.jp']
@@ -165,6 +172,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     userStorageBucketPrefix: 'agentcore-app',
     backendApiName: 'agentcore-app-backend-api',
     tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
+    githubTokenSecretName: 'agentcore/default/github-token',
     allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
     customDomain: {
       hostName: 'agentchat',
@@ -188,6 +196,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     userStorageBucketPrefix: 'agentcore-app-dev',
     backendApiName: 'agentcore-app-dev-backend-api',
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
+    githubTokenSecretName: 'agentcore/dev/github-token',
     allowedSignUpEmailDomains: ['amazon.com', 'amazon.jp'],
     testUser: {
       username: 'testuser',
@@ -216,6 +225,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     userStorageBucketPrefix: 'agentcore-app-stg',
     backendApiName: 'agentcore-app-stg-backend-api',
     tavilyApiKeySecretName: 'agentcore/stg/tavily-api-key',
+    githubTokenSecretName: 'agentcore/stg/github-token',
   },
 
   prd: {
@@ -234,6 +244,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     userStorageBucketPrefix: 'agentcore-app-prd',
     backendApiName: 'agentcore-app-prd-backend-api',
     tavilyApiKeySecretName: 'agentcore/prd/tavily-api-key',
+    githubTokenSecretName: 'agentcore/prd/github-token',
   },
 };
 

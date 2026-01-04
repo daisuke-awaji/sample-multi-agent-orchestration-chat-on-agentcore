@@ -14,6 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { pipeline } from 'stream/promises';
 import * as crypto from 'crypto';
+import { SyncIgnoreFilter } from './sync-ignore-filter.js';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
@@ -124,6 +125,7 @@ export class WorkspaceSync {
   private storagePath: string;
   private bucketName: string;
   private fileSnapshot: Map<string, FileInfo> = new Map();
+  private ignoreFilter: SyncIgnoreFilter;
 
   constructor(userId: string, storagePath: string) {
     this.userId = userId;
@@ -132,6 +134,9 @@ export class WorkspaceSync {
 
     // ワークスペースディレクトリ
     this.workspaceDir = WORKSPACE_DIRECTORY;
+
+    // Initialize ignore filter with default patterns
+    this.ignoreFilter = new SyncIgnoreFilter();
 
     if (!this.bucketName) {
       logger.warn('[WORKSPACE_SYNC] USER_STORAGE_BUCKET_NAME not configured');
@@ -223,6 +228,13 @@ export class WorkspaceSync {
             try {
               // 相対パスを取得
               const relativePath = item.Key.replace(s3Prefix, '');
+
+              // Check if file should be ignored
+              if (this.ignoreFilter.isIgnored(relativePath)) {
+                logger.debug(`[WORKSPACE_SYNC] Skipping ignored file: ${relativePath}`);
+                continue;
+              }
+
               const localPath = path.join(this.workspaceDir, relativePath);
 
               // ファイルをダウンロード
@@ -255,6 +267,9 @@ export class WorkspaceSync {
       if (errors.length > 0) {
         logger.warn(`[WORKSPACE_SYNC] Download completed with ${errors.length} errors`);
       }
+
+      // Load custom ignore patterns from .syncignore after download
+      this.ignoreFilter.loadFromWorkspace(this.workspaceDir);
     } catch (error) {
       logger.error('[WORKSPACE_SYNC] Download failed:', error);
       throw error;
@@ -430,6 +445,12 @@ export class WorkspaceSync {
           await scanDirectory(fullPath, baseDir);
         } else if (entry.isFile()) {
           const relativePath = path.relative(baseDir, fullPath);
+
+          // Skip ignored files
+          if (this.ignoreFilter.isIgnored(relativePath)) {
+            continue;
+          }
+
           const stats = fs.statSync(fullPath);
           const hash = await this.calculateFileHash(fullPath);
 
