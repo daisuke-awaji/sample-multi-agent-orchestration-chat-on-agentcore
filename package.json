@@ -54,10 +54,13 @@
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "format": "npm run format --workspaces --if-present",
     "format:check": "npm run format:check --workspaces --if-present",
-    "docs:lint": "redocly lint openapi.yaml",
-    "docs:preview": "redocly preview-docs openapi.yaml",
-    "docs:build": "redocly build-docs openapi.yaml -o api.html",
-    "docs:serve": "redocly preview-docs openapi.yaml --port=8081",
+    "docs:lint": "redocly lint openapi-backend.yaml && redocly lint openapi-agent.yaml",
+    "docs:preview:backend": "redocly preview-docs openapi-backend.yaml",
+    "docs:preview:agent": "redocly preview-docs openapi-agent.yaml --port=8082",
+    "docs:build:backend": "redocly build-docs openapi-backend.yaml -o api-backend.html",
+    "docs:build:agent": "redocly build-docs openapi-agent.yaml -o api-agent.html",
+    "docs:build": "npm run docs:build:backend && npm run docs:build:agent",
+    "docs:serve": "redocly preview-docs openapi-backend.yaml --port=8081",
     "prepare": "husky"
   },
   "devDependencies": {

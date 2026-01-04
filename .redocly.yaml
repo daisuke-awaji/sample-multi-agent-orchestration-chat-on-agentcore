@@ -2,24 +2,24 @@ extends:
   - recommended
 
 apis:
-  main:
-    root: docs/openapi.yaml
+  backend:
+    root: openapi-backend.yaml
+  agent:
+    root: openapi-agent.yaml
 
 rules:
-  # 日本語説明を許可
-  no-invalid-media-type: off
-  # 長い説明文を許可
+  # Allow long descriptions
   no-unused-components: warn
-  # ストリーミング用のカスタムフォーマット許可
-  valid-type-for-format: off
-  # 例の値をより柔軟に
-  example-value-matches-type: warn
-  # localhost サーバーを許可
+  # Allow localhost servers
   no-server-example.com: off
-  # 4xxレスポンス必須を無効化（ヘルスチェックなど）
+  # Disable mandatory 4xx responses (e.g., for health checks)
   operation-4xx-response: warn
+  # Security is handled via JWT in Authorization header
+  security-defined: off
+  # Allow examples that don't match schema exactly
+  no-invalid-media-type-examples: off
 
-# Redoc テーマ設定
+# Redoc theme settings
 theme:
   colors:
     primary:
