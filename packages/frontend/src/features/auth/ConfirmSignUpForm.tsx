@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import { confirmSignUpSchema, type ConfirmSignUpFormData } from '../../schemas/auth';
+import { createConfirmSignUpSchema, type ConfirmSignUpFormData } from '../../schemas/auth';
 
 interface ConfirmSignUpFormProps {
   username: string;
@@ -44,7 +44,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
 
     // リアルタイムバリデーション
     try {
-      const fieldSchema = confirmSignUpSchema.shape[name as keyof ConfirmSignUpFormData];
+      const fieldSchema = createConfirmSignUpSchema().shape[name as keyof ConfirmSignUpFormData];
       if (fieldSchema) {
         const testValue = name === 'code' ? value.replace(/\D/g, '').slice(0, 6) : value;
         fieldSchema.parse(testValue);
@@ -74,7 +74,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
 
     try {
       // バリデーション
-      const validatedData = confirmSignUpSchema.parse(formData);
+      const validatedData = createConfirmSignUpSchema().parse(formData);
 
       // 確認実行
       await confirmSignUp(validatedData.username, validatedData.code);

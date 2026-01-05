@@ -418,8 +418,12 @@ error:
   network: Network error
   notFound: Not found
   unauthorized: Authentication required
+  authenticationRequired: Authentication required. Please log in again.
+  tokenExpired: Authentication token has expired. Please log in again.
   forbidden: Access denied
   serverError: Server error
+  apiError: An API error occurred
+  unexpectedError: An unexpected error occurred
   tryAgain: Please try again
   contactSupport: Contact support
 
@@ -463,6 +467,29 @@ validation:
   email: Please enter a valid email address
   passwordMismatch: Passwords do not match
   invalidFormat: Invalid format
+  chat:
+    messageIdRequired: Message ID is required
+    messageContentRequired: Message content is required
+    promptRequired: Please enter a prompt
+    promptMaxLength: Prompt must be 10000 characters or less
+    endpointUrlRequired: Please enter a valid endpoint URL
+  auth:
+    usernameMinLength: Username must be at least 3 characters
+    usernameMaxLength: Username must be 50 characters or less
+    usernameInvalidChars: Username can only contain alphanumeric characters, hyphens, and underscores
+    passwordMinLength: Password must be at least 8 characters
+    passwordMaxLength: Password must be 128 characters or less
+    passwordComplexity: Password must contain at least one lowercase letter, one uppercase letter, and one number
+    emailRequired: Please enter your email address
+    emailInvalid: Please enter a valid email address
+    confirmPasswordRequired: Please enter password confirmation
+    passwordMismatch: Passwords do not match
+    usernameRequired: Username is required
+    codeLength: Verification code must be 6 digits
+    codeInvalid: Verification code must be 6 numeric digits
+    userPoolIdRequired: User Pool ID is required
+    clientIdRequired: Client ID is required
+    regionRequired: Region is required
 
 # Default Agents
 defaultAgents:

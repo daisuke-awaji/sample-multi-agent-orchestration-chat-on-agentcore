@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import { signUpSchema, type SignUpFormData } from '../../schemas/auth';
+import { createSignUpSchema, type SignUpFormData } from '../../schemas/auth';
 
 interface SignUpFormProps {
   onSwitchToLogin: () => void;
@@ -31,10 +31,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
     try {
       if (name === 'confirmPassword') {
         // パスワード確認の場合は全体をチェック
-        signUpSchema.parse({ ...formData, [name]: value });
+        createSignUpSchema().parse({ ...formData, [name]: value });
       } else {
         // その他のフィールドは個別にチェック
-        const fieldSchema = signUpSchema.shape[name as keyof SignUpFormData];
+        const fieldSchema = createSignUpSchema().shape[name as keyof SignUpFormData];
         if (fieldSchema) {
           fieldSchema.parse(value);
         }
@@ -63,7 +63,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
 
     try {
       // バリデーション
-      const validatedData = signUpSchema.parse(formData);
+      const validatedData = createSignUpSchema().parse(formData);
 
       // サインアップ実行
       await signUp(validatedData.username, validatedData.password, validatedData.email);

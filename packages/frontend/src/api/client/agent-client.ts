@@ -3,7 +3,9 @@
  * HTTP client for Agent Service (VITE_AGENT_ENDPOINT)
  */
 
-import { createAuthHeaders } from './base-client';
+import { createAuthHeaders, ApiError } from './base-client';
+import { handleGlobalError } from '../../utils/errorHandler';
+import i18n from '../../i18n';
 
 /**
  * Check if API debugging is enabled
@@ -83,14 +85,9 @@ export async function agentRequest(options: RequestInit = {}): Promise<Response>
 
     // Check for authentication errors
     if (response.status === 401) {
-      const { handleGlobalError } = await import('../../utils/errorHandler');
-      const { ApiError } = await import('./base-client');
-      const error = new ApiError(
-        'Unauthorized',
-        401,
-        'Unauthorized',
-        { message: '認証が必要です' }
-      );
+      const error = new ApiError('Unauthorized', 401, 'Unauthorized', {
+        message: i18n.t('error.unauthorized'),
+      });
       await handleGlobalError(error);
       throw error;
     }
@@ -98,13 +95,12 @@ export async function agentRequest(options: RequestInit = {}): Promise<Response>
     return response;
   } catch (error) {
     logRequestError(method, url, error);
-    
+
     // Handle global errors if not already handled
     if (error instanceof Error && error.message !== 'Unauthorized') {
-      const { handleGlobalError } = await import('../../utils/errorHandler');
       await handleGlobalError(error);
     }
-    
+
     throw error;
   }
 }

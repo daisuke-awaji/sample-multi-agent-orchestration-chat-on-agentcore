@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
 import { Donut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import { loginSchema, type LoginFormData } from '../../schemas/auth';
+import { createLoginSchema, type LoginFormData } from '../../schemas/auth';
 
 interface LoginFormProps {
   onSwitchToSignUp?: () => void;
@@ -31,7 +31,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     // リアルタイムバリデーション
     try {
-      loginSchema.shape[name as keyof LoginFormData].parse(value);
+      createLoginSchema().shape[name as keyof LoginFormData].parse(value);
       setValidationErrors((prev) => ({
         ...prev,
         [name]: '',
@@ -56,7 +56,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       // バリデーション
-      const validatedData = loginSchema.parse(formData);
+      const validatedData = createLoginSchema().parse(formData);
 
       // ログイン実行
       await login(validatedData.username, validatedData.password);

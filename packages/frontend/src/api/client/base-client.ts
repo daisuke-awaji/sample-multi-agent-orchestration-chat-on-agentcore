@@ -4,6 +4,7 @@
  */
 
 import { getValidAccessToken } from '../../lib/cognito';
+import i18n from '../../i18n';
 
 /**
  * Custom error class for API errors
@@ -26,8 +27,8 @@ export class ApiError extends Error {
  * Custom error class for authentication errors
  */
 export class AuthenticationError extends Error {
-  constructor(message: string = '認証が必要です。再ログインしてください。') {
-    super(message);
+  constructor(message?: string) {
+    super(message || i18n.t('error.authenticationRequired'));
     this.name = 'AuthenticationError';
   }
 }

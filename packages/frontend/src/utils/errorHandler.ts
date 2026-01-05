@@ -5,6 +5,7 @@
 
 import toast from 'react-hot-toast';
 import { ApiError, AuthenticationError } from '../api/client/base-client';
+import i18n from '../i18n';
 
 interface AuthStore {
   logout: () => Promise<void>;
@@ -28,8 +29,8 @@ export async function handleGlobalError(error: unknown): Promise<void> {
   // Handle authentication errors (401)
   if (error instanceof ApiError && error.status === 401) {
     console.warn('⚠️ Authentication token expired. Logging out...');
-    
-    toast.error('認証トークンの有効期限が切れました。再度ログインしてください。', {
+
+    toast.error(i18n.t('error.tokenExpired'), {
       duration: 5000,
     });
 
@@ -37,14 +38,14 @@ export async function handleGlobalError(error: unknown): Promise<void> {
     if (authStore && typeof authStore.logout === 'function') {
       await authStore.logout();
     }
-    
+
     return;
   }
 
   // Handle authentication errors (from Cognito)
   if (error instanceof AuthenticationError) {
     console.warn('⚠️ Authentication required. Logging out...');
-    
+
     toast.error(error.message, {
       duration: 5000,
     });
@@ -53,7 +54,7 @@ export async function handleGlobalError(error: unknown): Promise<void> {
     if (authStore && typeof authStore.logout === 'function') {
       await authStore.logout();
     }
-    
+
     return;
   }
 
@@ -67,23 +68,23 @@ export async function handleGlobalError(error: unknown): Promise<void> {
     });
 
     // Show error toast for non-401 errors
-    toast.error(error.message || 'APIエラーが発生しました', {
+    toast.error(error.message || i18n.t('error.apiError'), {
       duration: 4000,
     });
-    
+
     return;
   }
 
   // Handle generic errors
   if (error instanceof Error) {
     console.error('Error:', error.message, error);
-    toast.error(error.message || '予期しないエラーが発生しました');
+    toast.error(error.message || i18n.t('error.unexpectedError'));
     return;
   }
 
   // Unknown error
   console.error('Unknown error:', error);
-  toast.error('予期しないエラーが発生しました');
+  toast.error(i18n.t('error.unexpectedError'));
 }
 
 /**
@@ -93,7 +94,6 @@ export async function handleGlobalError(error: unknown): Promise<void> {
  */
 export function isAuthenticationError(error: unknown): boolean {
   return (
-    (error instanceof ApiError && error.status === 401) ||
-    error instanceof AuthenticationError
+    (error instanceof ApiError && error.status === 401) || error instanceof AuthenticationError
   );
 }

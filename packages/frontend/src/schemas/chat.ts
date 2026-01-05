@@ -1,38 +1,42 @@
 import { z } from 'zod';
+import i18n from '../i18n';
 
-// Message schema
-export const messageSchema = z.object({
-  id: z.string().min(1, 'メッセージIDは必須です'),
-  type: z.enum(['user', 'assistant']),
-  content: z.string().min(1, 'メッセージ内容は必須です'),
-  timestamp: z.date(),
-  isStreaming: z.boolean().optional(),
-});
+// Message schema factory
+export const createMessageSchema = () =>
+  z.object({
+    id: z.string().min(1, i18n.t('validation.chat.messageIdRequired')),
+    type: z.enum(['user', 'assistant']),
+    content: z.string().min(1, i18n.t('validation.chat.messageContentRequired')),
+    timestamp: z.date(),
+    isStreaming: z.boolean().optional(),
+  });
 
-export type MessageData = z.infer<typeof messageSchema>;
+export type MessageData = z.infer<ReturnType<typeof createMessageSchema>>;
 
-// Chat prompt schema
-export const chatPromptSchema = z.object({
-  prompt: z
-    .string()
-    .min(1, 'プロンプトを入力してください')
-    .max(10000, 'プロンプトは10000文字以下で入力してください')
-    .trim(),
-});
+// Chat prompt schema factory
+export const createChatPromptSchema = () =>
+  z.object({
+    prompt: z
+      .string()
+      .min(1, i18n.t('validation.chat.promptRequired'))
+      .max(10000, i18n.t('validation.chat.promptMaxLength'))
+      .trim(),
+  });
 
-export type ChatPromptData = z.infer<typeof chatPromptSchema>;
+export type ChatPromptData = z.infer<ReturnType<typeof createChatPromptSchema>>;
 
-// Agent config schema
-export const agentConfigSchema = z.object({
-  endpoint: z.string().url('有効なエンドポイントURLを入力してください'),
-  cognitoConfig: z.object({
-    userPoolId: z.string().min(1, 'User Pool ID は必須です'),
-    clientId: z.string().min(1, 'Client ID は必須です'),
-    region: z.string().min(1, 'リージョンは必須です'),
-  }),
-});
+// Agent config schema factory
+export const createAgentConfigSchema = () =>
+  z.object({
+    endpoint: z.string().url(i18n.t('validation.chat.endpointUrlRequired')),
+    cognitoConfig: z.object({
+      userPoolId: z.string().min(1, i18n.t('validation.auth.userPoolIdRequired')),
+      clientId: z.string().min(1, i18n.t('validation.auth.clientIdRequired')),
+      region: z.string().min(1, i18n.t('validation.auth.regionRequired')),
+    }),
+  });
 
-export type AgentConfigData = z.infer<typeof agentConfigSchema>;
+export type AgentConfigData = z.infer<ReturnType<typeof createAgentConfigSchema>>;
 
 // Stream event schemas
 export const agentStreamEventSchema = z

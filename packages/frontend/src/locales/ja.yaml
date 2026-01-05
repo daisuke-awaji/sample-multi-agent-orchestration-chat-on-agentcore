@@ -420,8 +420,12 @@ error:
   network: ネットワークエラー
   notFound: 見つかりませんでした
   unauthorized: 認証が必要です
+  authenticationRequired: 認証が必要です。再ログインしてください。
+  tokenExpired: 認証トークンの有効期限が切れました。再度ログインしてください。
   forbidden: アクセスが拒否されました
   serverError: サーバーエラー
+  apiError: APIエラーが発生しました
+  unexpectedError: 予期しないエラーが発生しました
   tryAgain: もう一度お試しください
   contactSupport: サポートにお問い合わせください
 
@@ -465,6 +469,29 @@ validation:
   email: 有効なメールアドレスを入力してください
   passwordMismatch: パスワードが一致しません
   invalidFormat: 入力形式が正しくありません
+  chat:
+    messageIdRequired: メッセージIDは必須です
+    messageContentRequired: メッセージ内容は必須です
+    promptRequired: プロンプトを入力してください
+    promptMaxLength: プロンプトは10000文字以下で入力してください
+    endpointUrlRequired: 有効なエンドポイントURLを入力してください
+  auth:
+    usernameMinLength: ユーザー名は3文字以上で入力してください
+    usernameMaxLength: ユーザー名は50文字以下で入力してください
+    usernameInvalidChars: ユーザー名は英数字、ハイフン、アンダースコアのみ使用できます
+    passwordMinLength: パスワードは8文字以上で入力してください
+    passwordMaxLength: パスワードは128文字以下で入力してください
+    passwordComplexity: パスワードには小文字、大文字、数字をそれぞれ1文字以上含める必要があります
+    emailRequired: メールアドレスを入力してください
+    emailInvalid: 有効なメールアドレスを入力してください
+    confirmPasswordRequired: パスワード（確認）を入力してください
+    passwordMismatch: パスワードが一致しません
+    usernameRequired: ユーザー名が必要です
+    codeLength: 確認コードは6桁で入力してください
+    codeInvalid: 確認コードは6桁の数字で入力してください
+    userPoolIdRequired: User Pool ID は必須です
+    clientIdRequired: Client ID は必須です
+    regionRequired: リージョンは必須です
 
 # デフォルトエージェント
 defaultAgents:
