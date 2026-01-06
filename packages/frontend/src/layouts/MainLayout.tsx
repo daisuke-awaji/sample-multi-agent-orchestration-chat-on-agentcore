@@ -4,8 +4,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { Menu, Bot } from 'lucide-react';
+import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Menu, Bot, SquarePen } from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,7 @@ import { AgentSelectorModal } from '../components/AgentSelectorModal';
 import type { Agent } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
 import { getPageTitleKey } from '../config/routes';
+import { useSessionStore } from '../stores/sessionStore';
 
 export function MainLayout() {
   const { isSidebarOpen, isMobileView, setSidebarOpen, setMobileView, setNarrowDesktop } =
@@ -24,6 +25,7 @@ export function MainLayout() {
   const { t } = useTranslation();
   const selectedAgent = useSelectedAgent();
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const { clearActiveSession } = useSessionStore();
 
   // ページタイトルを取得
   const getPageTitle = () => {
@@ -62,6 +64,14 @@ export function MainLayout() {
   // Agent選択処理
   const handleAgentSelect = (agent: Agent | null) => {
     console.log('Agent selected:', agent?.name || 'None');
+  };
+
+  // 新しいチャット作成処理
+  const handleNewChat = (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.button === 1) {
+      return;
+    }
+    clearActiveSession();
   };
 
   const pageTitle = getPageTitle();
@@ -138,6 +148,16 @@ export function MainLayout() {
               <h1 className="text-base font-semibold text-gray-900 truncate">{pageTitle}</h1>
             </button>
           )}
+
+          <Link
+            to="/chat"
+            onClick={handleNewChat}
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            aria-label={t('sidebar.newChat')}
+            title={t('sidebar.newChat')}
+          >
+            <SquarePen className="w-5 h-5" />
+          </Link>
         </header>
       )}
 
