@@ -7,7 +7,7 @@ import express, { Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
 import { gatewayService } from '../services/agentcore-gateway.js';
 import { fetchToolsFromMCPConfig, MCPConfig } from '../mcp/index.js';
-import { BUILTIN_TOOLS } from '../data/builtin-tools.js';
+import { allMCPToolDefinitions } from '@fullstack-agentcore/tool-definitions';
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     const result = await gatewayService.listTools(idToken, cursor);
 
     // Include builtin tools only in the first page (when cursor is not present)
-    const tools = cursor ? result.tools : [...BUILTIN_TOOLS, ...result.tools];
+    const tools = cursor ? result.tools : [...allMCPToolDefinitions, ...result.tools];
 
     const response = {
       tools,
@@ -54,7 +54,7 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     };
 
     console.log(
-      `✅ Tool list retrieval completed (${auth.requestId}): ${tools.length} items (builtin: ${cursor ? 0 : BUILTIN_TOOLS.length}, gateway: ${result.tools.length})`,
+      `✅ Tool list retrieval completed (${auth.requestId}): ${tools.length} items (builtin: ${cursor ? 0 : allMCPToolDefinitions.length}, gateway: ${result.tools.length})`,
       result.nextCursor ? { nextCursor: 'present' } : { nextCursor: 'none' }
     );
 
@@ -112,7 +112,7 @@ router.post('/search', jwtAuthMiddleware, async (req: AuthenticatedRequest, res:
     const trimmedQuery = query.trim().toLowerCase();
 
     // Search in builtin tools (local search)
-    const builtinResults = BUILTIN_TOOLS.filter(
+    const builtinResults = allMCPToolDefinitions.filter(
       (tool) =>
         tool.name.toLowerCase().includes(trimmedQuery) ||
         (tool.description && tool.description.toLowerCase().includes(trimmedQuery))

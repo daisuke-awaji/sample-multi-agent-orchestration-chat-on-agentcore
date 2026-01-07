@@ -80,6 +80,9 @@ cdk.context.json
 dist/
 build/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Temporary files
 tmp/
 temp/

@@ -177,8 +177,8 @@ export class BackendApi extends Construct {
     // Lambda関数の作成（Docker Image Function）
     this.lambdaFunction = new lambda.DockerImageFunction(this, 'BackendApiFunction', {
       functionName: `${apiName}-function`,
-      code: lambda.DockerImageCode.fromImageAsset(props.dockerContextPath || 'packages/backend', {
-        file: props.dockerFileName || 'Dockerfile.lambda',
+      code: lambda.DockerImageCode.fromImageAsset(props.dockerContextPath || '.', {
+        file: props.dockerFileName || 'docker/backend.Dockerfile',
         platform: Platform.LINUX_AMD64,
       }),
       architecture: lambda.Architecture.X86_64,

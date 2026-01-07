@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
+import { s3ListFilesDefinition } from '@fullstack-agentcore/tool-definitions';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';
@@ -110,36 +110,9 @@ function formatExpiryTime(seconds: number): string {
  * S3 List Files Tool
  */
 export const s3ListFilesTool = tool({
-  name: 's3_list_files',
-  description:
-    'Retrieve a list of files and directories in user S3 storage. Can explore contents under the specified path. Optionally generate presigned URLs for direct browser access.',
-  inputSchema: z.object({
-    path: z.string().default('/').describe('Directory path to list (default: root "/")'),
-    recursive: z
-      .boolean()
-      .default(false)
-      .describe('Whether to retrieve subdirectories recursively (default: false)'),
-    maxResults: z
-      .number()
-      .min(1)
-      .max(1000)
-      .default(100)
-      .describe('Maximum number of results to retrieve (1-1000, default: 100)'),
-    includePresignedUrls: z
-      .boolean()
-      .default(false)
-      .describe(
-        'Whether to generate presigned URLs for files (default: false). URLs allow direct browser access and expire after specified time.'
-      ),
-    presignedUrlExpiry: z
-      .number()
-      .min(60)
-      .max(86400)
-      .default(3600)
-      .describe(
-        'Presigned URL expiration time in seconds (60-86400, default: 3600 = 1 hour). Only used when includePresignedUrls is true.'
-      ),
-  }),
+  name: s3ListFilesDefinition.name,
+  description: s3ListFilesDefinition.description,
+  inputSchema: s3ListFilesDefinition.zodSchema,
   callback: async (input) => {
     const { path, recursive, maxResults, includePresignedUrls, presignedUrlExpiry } = input;
 

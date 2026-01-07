@@ -8,7 +8,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { RuntimeAuthorizerConfiguration } from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { Construct } from 'constructs';
-import * as path from 'path';
 import { CognitoAuth } from './cognito-auth.js';
 import { AgentCoreGateway } from './agentcore-gateway.js';
 
@@ -128,10 +127,11 @@ export class AgentCoreRuntime extends Construct {
   constructor(scope: Construct, id: string, props: AgentCoreRuntimeProps) {
     super(scope, id);
 
-    const agentCodePath = props.agentCodePath || path.join(__dirname, '../../../agent');
-
     // Agent Runtime Artifact を作成
-    const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromAsset(agentCodePath);
+    // Docker context: プロジェクトルート, Dockerfile: docker/agent.Dockerfile
+    const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromAsset('.', {
+      file: 'docker/agent.Dockerfile',
+    });
 
     // 認証設定
     let authorizerConfiguration: RuntimeAuthorizerConfiguration | undefined;

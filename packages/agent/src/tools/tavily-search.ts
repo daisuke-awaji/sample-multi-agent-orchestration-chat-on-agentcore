@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
+import { tavilySearchDefinition } from '@fullstack-agentcore/tool-definitions';
 import { logger } from '../config/index.js';
 import { getTavilyApiKey } from './tavily-common.js';
 
@@ -140,41 +140,9 @@ function formatSearchResults(response: TavilySearchResponse): string {
  * Tavily Search Tool
  */
 export const tavilySearchTool = tool({
-  name: 'tavily_search',
-  description:
-    'Execute high-quality web searches using Tavily API. Retrieve comprehensive search results for latest information, news, and general topics.',
-  inputSchema: z.object({
-    query: z.string().describe('Search query (required)'),
-    searchDepth: z
-      .enum(['basic', 'advanced'])
-      .default('basic')
-      .describe('Search depth. basic uses 1 credit, advanced uses 2 credits'),
-    topic: z
-      .enum(['general', 'news'])
-      .default('general')
-      .describe('Search category. news for latest information, general for general search'),
-    maxResults: z
-      .number()
-      .min(1)
-      .max(20)
-      .default(5)
-      .describe('Maximum number of search results to retrieve (1-20)'),
-    includeAnswer: z.boolean().default(true).describe('Include LLM-generated summary answer'),
-    timeRange: z
-      .enum(['day', 'week', 'month', 'year', 'd', 'w', 'm', 'y'])
-      .optional()
-      .describe('Time range filter (filter by past period)'),
-    includeDomains: z.array(z.string()).optional().describe('List of domains to include in search'),
-    excludeDomains: z
-      .array(z.string())
-      .optional()
-      .describe('List of domains to exclude from search'),
-    includeImages: z.boolean().default(false).describe('Retrieve related images'),
-    country: z
-      .string()
-      .optional()
-      .describe('Prioritize results from specific country (e.g., japan, united states)'),
-  }),
+  name: tavilySearchDefinition.name,
+  description: tavilySearchDefinition.description,
+  inputSchema: tavilySearchDefinition.zodSchema,
   callback: async (input) => {
     const {
       query,

@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
+import { fileEditorDefinition } from '@fullstack-agentcore/tool-definitions';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { logger } from '../config/index.js';
 import { getCurrentContext } from '../context/request-context.js';
@@ -22,55 +22,9 @@ function isSingleOccurrence(str: string, substr: string): boolean | undefined {
  * File Editor Tool
  */
 export const fileEditorTool = tool({
-  name: 'file_editor',
-  description: `
-This tool edits files. For moving/renaming, use the execute_command tool with 'mv' instead.
-
-Before using:
-1. Use execute_command with 'cat' to understand file contents/context
-2. For new files: verify directory path with 'ls' command
-
-The tool replaces ONE occurrence of oldString with newString.
-
-CRITICAL REQUIREMENTS:
-
-1. UNIQUENESS: oldString must uniquely identify the change:
-   - Include 3-5 lines before change
-   - Include 3-5 lines after change
-   - Match whitespace/indentation exactly
-
-2. SINGLE INSTANCE: One change per call:
-   - Separate calls for multiple instances
-   - Each needs unique context
-
-3. VERIFY FIRST:
-   - Check instance count
-   - Gather context for multiple instances
-   - Plan separate calls
-
-WARNINGS:
-- Fails on multiple matches
-- Fails on inexact matches
-- Wrong changes if context insufficient
-
-Best Practices:
-- Write idiomatic, working code
-- Don't break code
-- Use absolute paths
-- For new files: empty oldString, contents as newString
-- Bundle multiple edits to same file in one message
-`,
-  inputSchema: z.object({
-    filePath: z
-      .string()
-      .describe('The absolute path to the file to modify (must be absolute, not relative)'),
-    oldString: z
-      .string()
-      .describe(
-        'The text to replace (must be unique within the file, and must match the file contents exactly, including all whitespace and indentation)'
-      ),
-    newString: z.string().describe('The edited text to replace the oldString'),
-  }),
+  name: fileEditorDefinition.name,
+  description: fileEditorDefinition.description,
+  inputSchema: fileEditorDefinition.zodSchema,
   callback: async (input) => {
     const { filePath, oldString, newString } = input;
 

@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
+import { executeCommandDefinition } from '@fullstack-agentcore/tool-definitions';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
@@ -84,22 +84,9 @@ function truncateOutput(output: string, maxLength: number = 4000): string {
  * Command execution tool
  */
 export const executeCommandTool = tool({
-  name: 'execute_command',
-  description:
-    'Execute shell commands and return results. Can be used for file operations, information gathering, and development task automation.',
-  inputSchema: z.object({
-    command: z.string().describe('Shell command to execute'),
-    workingDirectory: z
-      .string()
-      .optional()
-      .describe('Working directory (current directory if not specified)'),
-    timeout: z
-      .number()
-      .min(1000)
-      .max(600000)
-      .default(120000)
-      .describe('Timeout in milliseconds (default: 120s, max: 600s)'),
-  }),
+  name: executeCommandDefinition.name,
+  description: executeCommandDefinition.description,
+  inputSchema: executeCommandDefinition.zodSchema,
   callback: async (input) => {
     const { command, workingDirectory, timeout } = input;
 

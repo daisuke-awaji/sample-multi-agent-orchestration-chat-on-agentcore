@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
+import { novaCanvasDefinition } from '@fullstack-agentcore/tool-definitions';
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { config, logger } from '../../config/index.js';
@@ -172,50 +172,9 @@ function formatResults(
  * Amazon Nova Canvas Tool
  */
 export const novaCanvasTool = tool({
-  name: 'nova_canvas',
-  description:
-    'Generate images using Amazon Nova Canvas on Bedrock. Convert text prompts into high-quality images with configurable size and seed for reproducibility.',
-  inputSchema: z.object({
-    prompt: z
-      .string()
-      .min(1)
-      .max(1024)
-      .describe('Text prompt describing the image to generate (required, max 1024 characters)'),
-    width: z
-      .number()
-      .default(512)
-      .refine((val) => VALID_DIMENSIONS.includes(val), {
-        message: 'Width must be 512, 768, or 1024',
-      })
-      .describe('Image width in pixels (512, 768, or 1024, default: 512)'),
-    height: z
-      .number()
-      .default(512)
-      .refine((val) => VALID_DIMENSIONS.includes(val), {
-        message: 'Height must be 512, 768, or 1024',
-      })
-      .describe('Image height in pixels (512, 768, or 1024, default: 512)'),
-    numberOfImages: z
-      .number()
-      .min(1)
-      .max(5)
-      .default(1)
-      .describe('Number of images to generate (1-5, default: 1)'),
-    seed: z
-      .number()
-      .min(0)
-      .max(858993459)
-      .optional()
-      .describe('Random seed for reproducible generation (0-858993459, optional)'),
-    saveToS3: z
-      .boolean()
-      .default(true)
-      .describe('Whether to save generated images to S3 storage (default: true)'),
-    outputPath: z
-      .string()
-      .optional()
-      .describe('Custom output filename (default: auto-generated with timestamp)'),
-  }),
+  name: novaCanvasDefinition.name,
+  description: novaCanvasDefinition.description,
+  inputSchema: novaCanvasDefinition.zodSchema,
   callback: async (input) => {
     const { prompt, width, height, numberOfImages, seed: userSeed, saveToS3, outputPath } = input;
 
