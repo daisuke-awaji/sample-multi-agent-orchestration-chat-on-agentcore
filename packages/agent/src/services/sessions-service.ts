@@ -197,6 +197,49 @@ export class SessionsService {
       throw error;
     }
   }
+
+  /**
+   * Update session title
+   */
+  async updateSessionTitle(userId: string, sessionId: string, title: string): Promise<void> {
+    if (!this.isConfigured()) {
+      logger.warn('[SessionsService] Not configured, skipping title update');
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    try {
+      await this.client.send(
+        new UpdateItemCommand({
+          TableName: this.tableName,
+          Key: marshall({ userId, sessionId }),
+          UpdateExpression: 'SET title = :title, updatedAt = :updatedAt',
+          ExpressionAttributeValues: marshall({
+            ':title': title,
+            ':updatedAt': now,
+          }),
+          ConditionExpression: 'attribute_exists(userId) AND attribute_exists(sessionId)',
+        })
+      );
+
+      logger.info('[SessionsService] Updated session title:', {
+        userId,
+        sessionId,
+        title,
+      });
+    } catch (error: unknown) {
+      if ((error as { name?: string }).name === 'ConditionalCheckFailedException') {
+        logger.warn('[SessionsService] Session not found for title update:', {
+          userId,
+          sessionId,
+        });
+        return;
+      }
+      logger.error('[SessionsService] Error updating session title:', { error });
+      throw error;
+    }
+  }
 }
 
 // Singleton instance
