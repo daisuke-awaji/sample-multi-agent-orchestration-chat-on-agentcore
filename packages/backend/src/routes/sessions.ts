@@ -12,8 +12,9 @@ const router = Router();
 
 /**
  * Session list retrieval endpoint
- * GET /sessions?limit=50&nextToken=xxx
+ * GET /sessions
  * JWT authentication required - Use user ID as actorId
+ * Returns all sessions sorted by creation date (newest first)
  */
 router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -37,19 +38,13 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
       });
     }
 
-    // Parse pagination parameters from query string
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-    const nextToken = req.query.nextToken as string | undefined;
-
     console.log(`📋 Session list retrieval started (${auth.requestId}):`, {
       userId: actorId,
       username: auth.username,
-      limit,
-      hasNextToken: !!nextToken,
     });
 
     const memoryService = createAgentCoreMemoryService();
-    const result = await memoryService.listSessions(actorId, limit, nextToken);
+    const result = await memoryService.listSessions(actorId);
 
     console.log(
       `✅ Session list retrieval completed (${auth.requestId}): ${result.sessions.length} items, hasMore: ${result.hasMore}`

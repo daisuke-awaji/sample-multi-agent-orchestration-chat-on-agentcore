@@ -82,46 +82,12 @@ interface SessionEventsResponse {
 }
 
 /**
- * Fetch sessions options
- */
-export interface FetchSessionsOptions {
-  limit?: number;
-  nextToken?: string;
-}
-
-/**
- * Fetch sessions result
- */
-export interface FetchSessionsResult {
-  sessions: SessionSummary[];
-  nextToken?: string;
-  hasMore: boolean;
-}
-
-/**
  * Fetch session list
- * @param options Pagination options
- * @returns Session list with next page information
+ * @returns All sessions sorted by creation date (newest first)
  */
-export async function fetchSessions(options?: FetchSessionsOptions): Promise<FetchSessionsResult> {
-  const params = new URLSearchParams();
-
-  if (options?.limit) {
-    params.append('limit', options.limit.toString());
-  }
-
-  if (options?.nextToken) {
-    params.append('nextToken', options.nextToken);
-  }
-
-  const url = params.toString() ? `/sessions?${params.toString()}` : '/sessions';
-  const data = await backendGet<SessionsResponse>(url);
-
-  return {
-    sessions: data.sessions,
-    nextToken: data.metadata.nextToken,
-    hasMore: data.metadata.hasMore,
-  };
+export async function fetchSessions(): Promise<SessionSummary[]> {
+  const data = await backendGet<SessionsResponse>('/sessions');
+  return data.sessions;
 }
 
 /**

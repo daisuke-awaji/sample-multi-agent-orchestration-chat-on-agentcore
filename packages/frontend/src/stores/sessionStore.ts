@@ -6,12 +6,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { customAlphabet } from 'nanoid';
-import {
-  fetchSessions,
-  fetchSessionEvents,
-  type SessionSummary,
-  type ConversationMessage,
-} from '../api/sessions';
+import { fetchSessions, fetchSessionEvents } from '../api/sessions';
+import type { SessionSummary, ConversationMessage } from '../api/sessions';
 
 // AWS AgentCore sessionId constraints: [a-zA-Z0-9][a-zA-Z0-9-_]*
 // Custom nanoid with alphanumeric characters only (excluding hyphens and underscores)
@@ -29,11 +25,6 @@ interface SessionState {
   sessionsError: string | null;
   hasLoadedOnce: boolean; // Initial load completion flag
 
-  // Pagination related
-  nextSessionsToken: string | null;
-  hasMoreSessions: boolean;
-  isLoadingMoreSessions: boolean;
-
   activeSessionId: string | null;
   sessionEvents: ConversationMessage[];
   isLoadingEvents: boolean;
@@ -47,7 +38,6 @@ interface SessionState {
  */
 interface SessionActions {
   loadSessions: () => Promise<void>;
-  loadMoreSessions: () => Promise<void>; // Load next page
   selectSession: (sessionId: string) => Promise<void>;
   setActiveSessionId: (sessionId: string) => void;
   clearActiveSession: () => void;
@@ -73,11 +63,6 @@ export const useSessionStore = create<SessionStore>()(
       sessionsError: null,
       hasLoadedOnce: false, // Initial load completion flag
 
-      // Pagination related
-      nextSessionsToken: null,
-      hasMoreSessions: false,
-      isLoadingMoreSessions: false,
-
       activeSessionId: null,
       sessionEvents: [],
       isLoadingEvents: false,
@@ -89,21 +74,17 @@ export const useSessionStore = create<SessionStore>()(
         try {
           set({ isLoadingSessions: true, sessionsError: null });
 
-          console.log('🔄 Loading session list...');
-          const result = await fetchSessions({ limit: 50 });
+          console.log('🔄 Loading all sessions...');
+          const sessions = await fetchSessions();
 
           set({
-            sessions: result.sessions,
-            nextSessionsToken: result.nextToken || null,
-            hasMoreSessions: result.hasMore,
+            sessions,
             isLoadingSessions: false,
             sessionsError: null,
             hasLoadedOnce: true, // Set initial load completion flag
           });
 
-          console.log(
-            `✅ Session list loaded: ${result.sessions.length} items, hasMore: ${result.hasMore}`
-          );
+          console.log(`✅ Session list loaded: ${sessions.length} items`);
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Failed to load session list';
@@ -111,52 +92,9 @@ export const useSessionStore = create<SessionStore>()(
 
           set({
             sessions: [],
-            nextSessionsToken: null,
-            hasMoreSessions: false,
             isLoadingSessions: false,
             sessionsError: errorMessage,
             hasLoadedOnce: true, // Mark as initial load completed even on error
-          });
-        }
-      },
-
-      loadMoreSessions: async () => {
-        const { nextSessionsToken, hasMoreSessions, isLoadingMoreSessions, sessions } = get();
-
-        // Do nothing if already loading or no more pages
-        if (isLoadingMoreSessions || !hasMoreSessions || !nextSessionsToken) {
-          return;
-        }
-
-        try {
-          set({ isLoadingMoreSessions: true, sessionsError: null });
-
-          console.log('🔄 Loading additional sessions...');
-          const result = await fetchSessions({
-            limit: 50,
-            nextToken: nextSessionsToken,
-          });
-
-          // Append new sessions to existing sessions
-          set({
-            sessions: [...sessions, ...result.sessions],
-            nextSessionsToken: result.nextToken || null,
-            hasMoreSessions: result.hasMore,
-            isLoadingMoreSessions: false,
-            sessionsError: null,
-          });
-
-          console.log(
-            `✅ Additional sessions loaded: ${result.sessions.length} items added, hasMore: ${result.hasMore}`
-          );
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to load additional sessions';
-          console.error('💥 Additional sessions loading error:', error);
-
-          set({
-            isLoadingMoreSessions: false,
-            sessionsError: errorMessage,
           });
         }
       },
@@ -228,12 +166,8 @@ export const useSessionStore = create<SessionStore>()(
       },
 
       refreshSessions: async () => {
-        // Reload from the beginning on refresh
-        set({
-          sessions: [],
-          nextSessionsToken: null,
-          hasMoreSessions: false,
-        });
+        // Reload all sessions
+        set({ sessions: [] });
         const { loadSessions } = get();
         console.log('🔄 Refreshing session list...');
         await loadSessions();

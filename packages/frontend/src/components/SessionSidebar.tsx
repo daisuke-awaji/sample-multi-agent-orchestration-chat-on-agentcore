@@ -85,10 +85,7 @@ export function SessionSidebar() {
     sessionsError,
     hasLoadedOnce,
     activeSessionId,
-    hasMoreSessions,
-    isLoadingMoreSessions,
     loadSessions,
-    loadMoreSessions,
     clearActiveSession,
   } = useSessionStore();
   const { isSidebarOpen, isMobileView, toggleSidebar } = useUIStore();
@@ -100,9 +97,6 @@ export function SessionSidebar() {
   // Detect new sessions
   const prevSessionIdsRef = useRef<Set<string>>(new Set());
   const [newSessionIds, setNewSessionIds] = useState<Set<string>>(new Set());
-
-  // Infinite scroll - Monitor bottom of session list
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   // Initial load
   useEffect(() => {
@@ -137,35 +131,6 @@ export function SessionSidebar() {
 
     prevSessionIdsRef.current = currentIds;
   }, [sessions]);
-
-  // Infinite scroll - Monitor bottom with Intersection Observer
-  useEffect(() => {
-    const currentTrigger = loadMoreTriggerRef.current;
-    if (!currentTrigger || !hasMoreSessions || isLoadingMoreSessions) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Load next page when bottom element is visible
-        if (entries[0].isIntersecting && hasMoreSessions && !isLoadingMoreSessions) {
-          console.log('🔄 Infinite scroll: Loading next page');
-          loadMoreSessions();
-        }
-      },
-      {
-        root: null, // viewport
-        rootMargin: '100px', // Start loading slightly early
-        threshold: 0.1,
-      }
-    );
-
-    observer.observe(currentTrigger);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMoreSessions, isLoadingMoreSessions, loadMoreSessions]);
 
   // Start new chat
   const handleNewChat = (e: React.MouseEvent) => {
@@ -396,23 +361,6 @@ export function SessionSidebar() {
                   isNew={newSessionIds.has(session.sessionId)}
                 />
               ))}
-
-              {/* Trigger element for infinite scroll */}
-              {hasMoreSessions && <div ref={loadMoreTriggerRef} className="h-4" />}
-
-              {/* Loading more indicator */}
-              {isLoadingMoreSessions && (
-                <div className="py-4">
-                  <LoadingIndicator message={t('chat.loadingMoreSessions')} spacing="none" />
-                </div>
-              )}
-
-              {/* All loaded message */}
-              {!hasMoreSessions && sessions.length >= 50 && (
-                <div className="py-2 text-center text-xs text-gray-400">
-                  {t('chat.allSessionsLoaded')}
-                </div>
-              )}
             </div>
           )}
         </div>
