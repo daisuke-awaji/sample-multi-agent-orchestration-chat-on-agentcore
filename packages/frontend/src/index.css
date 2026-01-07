@@ -31,6 +31,10 @@
     @apply bg-white text-gray-900;
   }
 
+  .message-error {
+    @apply bg-red-50 text-gray-900 border border-red-200;
+  }
+
   .input-field {
     @apply w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent resize-none;
   }

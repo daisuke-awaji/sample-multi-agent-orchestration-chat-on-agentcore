@@ -13,6 +13,51 @@ import { WorkspaceSyncHook } from './session/workspace-sync-hook.js';
 import type { SessionConfig } from './session/types.js';
 import { WorkspaceSync } from './services/workspace-sync.js';
 import { logger } from './config/index.js';
+import { Message, TextBlock } from '@strands-agents/sdk';
+
+/**
+ * Sanitize error message to remove sensitive information
+ * @param error Error object or unknown value
+ * @returns Sanitized error message safe for storage and display
+ */
+function sanitizeErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+
+  // Remove sensitive information patterns
+  return (
+    message
+      // Remove Bearer tokens
+      .replace(/Bearer [A-Za-z0-9\-_.]+/gi, '[TOKEN]')
+      // Remove AWS credentials and long alphanumeric strings (potential keys/secrets)
+      .replace(/AKIA[A-Z0-9]{16}/g, '[AWS_KEY]')
+      .replace(/[a-zA-Z0-9/+]{40,}/g, '[REDACTED]')
+      // Remove file paths that might contain usernames
+      .replace(/\/home\/[^/\s]+/g, '/home/[USER]')
+      .replace(/\/Users\/[^/\s]+/g, '/Users/[USER]')
+      // Remove potential email addresses
+      .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL]')
+      // Limit message length to prevent extremely long error messages
+      .substring(0, 500)
+  );
+}
+
+/**
+ * Create error message for session storage
+ * @param error Error object
+ * @param requestId Request ID for tracking
+ * @returns Message object formatted for storage
+ */
+function createErrorMessage(error: unknown, requestId: string): Message {
+  const errorName = error instanceof Error ? error.name : 'UnknownError';
+  const sanitizedMessage = sanitizeErrorMessage(error);
+
+  const errorText = `[SYSTEM_ERROR]\nAn error occurred.\nType: ${errorName}\nDetails: ${sanitizedMessage}\nRequest ID: ${requestId}\n[/SYSTEM_ERROR]`;
+
+  return new Message({
+    role: 'assistant',
+    content: [new TextBlock(errorText)],
+  });
+}
 
 /**
  * Safely serialize Strands Agents streaming events
@@ -379,12 +424,29 @@ app.post('/invocations', async (req: Request, res: Response) => {
         error: streamError,
       });
 
+      // Save error message to session history (if session is configured)
+      if (sessionConfig) {
+        try {
+          const errorMessage = createErrorMessage(streamError, contextMeta.requestId);
+          await sessionStorage.appendMessage(sessionConfig, errorMessage);
+          logger.info('💾 Error message saved to session history:', {
+            requestId: contextMeta.requestId,
+            sessionId: sessionConfig.sessionId,
+          });
+        } catch (saveError) {
+          logger.error('⚠️ Failed to save error message to session:', saveError);
+          // Continue even if save fails - still send error event to client
+        }
+      }
+
       // Send error event
       const errorEvent = {
         type: 'serverErrorEvent',
         error: {
-          message: streamError instanceof Error ? streamError.message : 'Unknown streaming error',
+          message: sanitizeErrorMessage(streamError),
           requestId: contextMeta.requestId,
+          // Include flag to indicate this error was saved to history
+          savedToHistory: !!sessionConfig,
         },
       };
       res.write(`${JSON.stringify(errorEvent)}\n`);

@@ -4,6 +4,7 @@
 common:
   loading: Loading...
   error: An error occurred
+  errorOccurred: An error occurred
   save: Save
   saving: Saving...
   cancel: Cancel
