@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import type { ChatState, Message, MessageContent, ToolUse, ToolResult } from '../types/index';
+import type {
+  ChatState,
+  Message,
+  MessageContent,
+  ToolUse,
+  ToolResult,
+  ImageAttachment,
+} from '../types/index';
 import { streamAgentResponse } from '../api/agent';
 import type { ConversationMessage } from '../api/sessions';
 import { useAgentStore } from './agentStore';
@@ -10,9 +17,18 @@ import { useSessionStore } from './sessionStore';
 import { useMemoryStore } from './memoryStore';
 import { useSettingsStore } from './settingsStore';
 
-// ヘルパー関数: 文字列コンテンツをMessageContent配列に変換
-const stringToContents = (text: string): MessageContent[] => {
-  return text ? [{ type: 'text', text }] : [];
+// ヘルパー関数: 画像をBase64に変換
+const convertImageToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      // data:image/png;base64, の部分を除去
+      resolve(base64.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };
 
 // ヘルパー関数: MessageContentを追加
@@ -69,7 +85,7 @@ const updateToolUseStatus = (
 interface ChatActions {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => string;
   updateMessage: (id: string, updates: Partial<Message>) => void;
-  sendPrompt: (prompt: string, sessionId: string) => Promise<void>;
+  sendPrompt: (prompt: string, sessionId: string, images?: ImageAttachment[]) => Promise<void>;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -108,7 +124,7 @@ export const useChatStore = create<ChatStore>()(
         }));
       },
 
-      sendPrompt: async (prompt: string, sessionId: string) => {
+      sendPrompt: async (prompt: string, sessionId: string, images?: ImageAttachment[]) => {
         const { addMessage, updateMessage } = get();
 
         // 新規セッションかどうかを判定（セッション一覧更新に使用）
@@ -118,10 +134,34 @@ export const useChatStore = create<ChatStore>()(
         try {
           set({ isLoading: true, error: null });
 
+          // ユーザーメッセージを構築
+          const userContents: MessageContent[] = [];
+
+          // テキストを追加
+          if (prompt.trim()) {
+            userContents.push({ type: 'text', text: prompt });
+          }
+
+          // 画像を追加
+          if (images && images.length > 0) {
+            for (const image of images) {
+              userContents.push({
+                type: 'image',
+                image: {
+                  id: image.id,
+                  fileName: image.fileName,
+                  mimeType: image.mimeType,
+                  size: image.size,
+                  previewUrl: image.previewUrl,
+                },
+              });
+            }
+          }
+
           // ユーザーメッセージを追加
           addMessage({
             type: 'user',
-            contents: stringToContents(prompt),
+            contents: userContents,
           });
 
           // アシスタントの応答メッセージを作成（ストリーミング用）
@@ -146,6 +186,19 @@ export const useChatStore = create<ChatStore>()(
           // 選択中のモデルIDを取得
           const { selectedModelId } = useSettingsStore.getState();
 
+          // 画像をBase64に変換
+          let imageData: Array<{ base64: string; mimeType: string }> | undefined;
+          if (images && images.length > 0) {
+            imageData = await Promise.all(
+              images
+                .filter((img) => img.file)
+                .map(async (img) => ({
+                  base64: await convertImageToBase64(img.file!),
+                  mimeType: img.mimeType,
+                }))
+            );
+          }
+
           const agentConfig = selectedAgent
             ? {
                 modelId: selectedModelId,
@@ -154,11 +207,13 @@ export const useChatStore = create<ChatStore>()(
                 storagePath: currentPath,
                 memoryEnabled: isMemoryEnabled,
                 mcpConfig: selectedAgent.mcpConfig as Record<string, unknown> | undefined,
+                images: imageData,
               }
             : {
                 modelId: selectedModelId,
                 storagePath: currentPath,
                 memoryEnabled: isMemoryEnabled,
+                images: imageData,
               };
 
           // デバッグログ

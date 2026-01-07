@@ -14,6 +14,7 @@ import type { SessionConfig } from './session/types.js';
 import { WorkspaceSync } from './services/workspace-sync.js';
 import { logger } from './config/index.js';
 import { Message, TextBlock } from '@strands-agents/sdk';
+import type { ContentBlock } from '@strands-agents/sdk';
 
 /**
  * Sanitize error message to remove sensitive information
@@ -251,6 +252,14 @@ app.get('/ping', (req: Request, res: Response) => {
 });
 
 /**
+ * Image data for multimodal input
+ */
+interface ImageData {
+  base64: string;
+  mimeType: string;
+}
+
+/**
  * Agent invocation request type definition
  */
 interface InvocationRequest {
@@ -262,6 +271,7 @@ interface InvocationRequest {
   memoryEnabled?: boolean; // Optional: Whether to enable long-term memory (default: false)
   memoryTopK?: number; // Optional: Number of long-term memories to retrieve (default: 10)
   mcpConfig?: Record<string, unknown>; // Optional: User-defined MCP server configuration
+  images?: ImageData[]; // Optional: Array of images for multimodal input
 }
 
 /**
@@ -280,6 +290,7 @@ app.post('/invocations', async (req: Request, res: Response) => {
       memoryEnabled,
       memoryTopK,
       mcpConfig,
+      images,
     } = req.body as InvocationRequest;
 
     if (!prompt?.trim()) {
@@ -379,8 +390,48 @@ app.post('/invocations', async (req: Request, res: Response) => {
     try {
       logger.info('🔄 Agent streaming started:', { requestId: contextMeta.requestId });
 
+      // Build input content blocks (text + images for multimodal)
+      const inputContent: ContentBlock[] = [];
+
+      // Add text content if present
+      if (prompt.trim()) {
+        inputContent.push(new TextBlock(prompt));
+      }
+
+      // Add image content blocks for multimodal input
+      if (images && images.length > 0) {
+        // Dynamic import to handle ImageBlock
+        const { ImageBlock } = await import('@strands-agents/sdk');
+        for (const image of images) {
+          // Convert base64 string to Uint8Array
+          const binaryString = Buffer.from(image.base64, 'base64');
+          const bytes = new Uint8Array(binaryString);
+
+          // Map mimeType to format
+          const formatMap: Record<string, 'png' | 'jpg' | 'jpeg' | 'gif' | 'webp'> = {
+            'image/png': 'png',
+            'image/jpeg': 'jpeg',
+            'image/jpg': 'jpg',
+            'image/gif': 'gif',
+            'image/webp': 'webp',
+          };
+          const format = formatMap[image.mimeType] || 'png';
+
+          inputContent.push(
+            new ImageBlock({
+              format,
+              source: { bytes },
+            })
+          );
+        }
+        logger.info(`🖼️ Added ${images.length} image(s) to input`);
+      }
+
+      // Use ContentBlock[] if we have images, otherwise use prompt string
+      const agentInput = inputContent.length > 1 || images?.length ? inputContent : prompt;
+
       // Send streaming events as NDJSON
-      for await (const event of agent.stream(prompt)) {
+      for await (const event of agent.stream(agentInput)) {
         // For messageAddedEvent, save in real-time (only if sessionId exists)
         if (event.type === 'messageAddedEvent' && event.message && sessionConfig) {
           try {

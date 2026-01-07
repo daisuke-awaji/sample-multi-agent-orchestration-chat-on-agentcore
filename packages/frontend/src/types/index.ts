@@ -24,12 +24,34 @@ export interface ToolResult {
   isError?: boolean;
 }
 
+// Image Attachment types
+export interface ImageAttachment {
+  id: string;
+  file?: File;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  previewUrl?: string;
+  base64?: string;
+}
+
+// Image attachment configuration constants
+export const IMAGE_ATTACHMENT_CONFIG = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_COUNT: 4,
+  ACCEPTED_TYPES: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const,
+  ACCEPTED_EXTENSIONS: ['.png', '.jpg', '.jpeg', '.webp', '.gif'] as const,
+} as const;
+
+export type AcceptedImageType = (typeof IMAGE_ATTACHMENT_CONFIG.ACCEPTED_TYPES)[number];
+
 // Message Content types
 export interface MessageContent {
-  type: 'text' | 'toolUse' | 'toolResult';
+  type: 'text' | 'toolUse' | 'toolResult' | 'image';
   text?: string;
   toolUse?: ToolUse;
   toolResult?: ToolResult;
+  image?: ImageAttachment;
 }
 
 // Message types

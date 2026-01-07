@@ -144,6 +144,11 @@ chat:
   inputHelp: Shift + Enter で改行、Enter で送信
   searchChatsDescription: チャット検索機能は今後開発する予定です。
   searchChatsFeature: 過去の会話履歴をキーワードで検索できるようになります。
+  imageAttachment:
+    attach: 画像を添付
+    invalidType: 無効なファイル形式です。PNG、JPEG、WebP、またはGIFを選択してください。
+    tooLarge: ファイルサイズが大きすぎます。最大5MBまでです。
+    maxReached: 添付できる画像は最大4枚までです。
 
 # エージェント
 agent:

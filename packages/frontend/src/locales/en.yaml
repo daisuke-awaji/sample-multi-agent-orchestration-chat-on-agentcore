@@ -142,6 +142,11 @@ chat:
   inputHelp: Shift + Enter for new line, Enter to send
   searchChatsDescription: Chat search functionality is under development.
   searchChatsFeature: You will be able to search past conversation history by keywords.
+  imageAttachment:
+    attach: Attach image
+    invalidType: Invalid file type. Please select PNG, JPEG, WebP, or GIF.
+    tooLarge: File is too large. Maximum size is 5MB.
+    maxReached: Maximum of 4 images can be attached.
 
 # Agent
 agent:

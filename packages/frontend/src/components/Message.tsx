@@ -235,6 +235,17 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                       />
                     ) : null;
 
+                  case 'image':
+                    return content.image ? (
+                      <div key={`image-${index}`} className="inline-block mr-2 mb-2">
+                        <img
+                          src={content.image.previewUrl || ''}
+                          alt={content.image.fileName}
+                          className="max-w-xs max-h-48 object-contain rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    ) : null;
+
                   default:
                     return (
                       <div key={`unknown-${index}`} className="text-gray-500 text-sm">
