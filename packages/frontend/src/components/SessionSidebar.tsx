@@ -36,8 +36,6 @@ interface SessionItemProps {
 }
 
 function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
-  const { t } = useTranslation();
-
   // Check if this is a sub-agent session
   const isSubAgent = session.sessionId.endsWith('_subagent');
 
@@ -53,19 +51,18 @@ function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
       <div className="flex items-center gap-2">
         <span
           className={`
-          font-medium text-sm leading-tight flex-shrink-0
-          ${isActive ? 'text-gray-900' : 'text-gray-900 group-hover:text-gray-700'}
+          font-mono text-sm leading-tight truncate
+          ${
+            isSubAgent
+              ? 'text-gray-500'
+              : isActive
+                ? 'text-gray-900'
+                : 'text-gray-900 group-hover:text-gray-700'
+          }
         `}
         >
-          {isSubAgent ? t('chat.subAgentSessionLabel') : t('chat.sessionNameLabel')}
-        </span>
-        <span
-          className={`
-          text-xs leading-tight font-mono text-gray-500 truncate
-          ${isActive ? 'text-gray-600' : 'text-gray-500 group-hover:text-gray-600'}
-        `}
-        >
-          {session.sessionId}
+          {isSubAgent && <span className="text-xs">{'[Sub] '}</span>}
+          {session.title}
         </span>
       </div>
     </Link>

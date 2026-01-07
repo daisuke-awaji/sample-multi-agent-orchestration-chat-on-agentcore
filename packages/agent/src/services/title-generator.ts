@@ -2,13 +2,13 @@
  * Session Title Generator Service
  * Generates concise session titles using LLM
  */
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { logger } from '../config/index.js';
 
 /**
  * Default model for title generation (lightweight, fast)
  */
-const DEFAULT_MODEL_ID = 'anthropic.claude-3-haiku-20240307-v1:0';
+const DEFAULT_MODEL_ID = 'global.amazon.nova-2-lite-v1:0';
 
 /**
  * Title Generator using Bedrock LLM
@@ -40,20 +40,17 @@ export class TitleGenerator {
       });
 
       const response = await this.client.send(
-        new InvokeModelCommand({
+        new ConverseCommand({
           modelId: this.modelId,
-          contentType: 'application/json',
-          accept: 'application/json',
-          body: JSON.stringify({
-            anthropic_version: 'bedrock-2023-05-31',
-            max_tokens: 100,
-            messages: [
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-          }),
+          messages: [
+            {
+              role: 'user',
+              content: [{ text: prompt }],
+            },
+          ],
+          inferenceConfig: {
+            maxTokens: 100,
+          },
         })
       );
 
@@ -95,22 +92,17 @@ ${truncatedAssistantMessage ? `Assistant: ${truncatedAssistantMessage}` : ''}
   /**
    * Parse the LLM response and extract the title
    */
-  private parseResponse(response: { body?: Uint8Array }): string {
-    if (!response.body) {
+  private parseResponse(response: {
+    output?: { message?: { content?: Array<{ text?: string }> } };
+  }): string {
+    if (!response.output?.message?.content || response.output.message.content.length === 0) {
       throw new Error('Empty response from Bedrock');
     }
 
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    const content = response.output.message.content;
 
-    // Extract text from Claude response format
-    const content = responseBody.content;
-    if (!content || !Array.isArray(content) || content.length === 0) {
-      throw new Error('Invalid response format from Bedrock');
-    }
-
-    const textBlock = content.find(
-      (block: { type: string; text?: string }) => block.type === 'text'
-    );
+    // Extract text from Converse API response format
+    const textBlock = content.find((block) => block.text);
     if (!textBlock || !textBlock.text) {
       throw new Error('No text content in response');
     }

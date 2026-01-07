@@ -39,31 +39,10 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
 
     // Check if DynamoDB Sessions Table is configured
     if (!sessionsDynamoDBService.isConfigured()) {
-      // Fallback to AgentCore Memory if DynamoDB is not configured
-      console.warn('⚠️ Sessions Table not configured, falling back to AgentCore Memory');
-
-      if (!config.agentcore.memoryId) {
-        return res.status(500).json({
-          error: 'Configuration Error',
-          message: 'Neither Sessions Table nor AgentCore Memory ID is configured',
-          requestId: auth.requestId,
-        });
-      }
-
-      const memoryService = createAgentCoreMemoryService();
-      const result = await memoryService.listSessions(actorId);
-
-      return res.status(200).json({
-        sessions: result.sessions,
-        metadata: {
-          requestId: auth.requestId,
-          timestamp: new Date().toISOString(),
-          actorId,
-          count: result.sessions.length,
-          nextToken: result.nextToken,
-          hasMore: result.hasMore,
-          source: 'agentcore-memory',
-        },
+      return res.status(500).json({
+        error: 'Configuration Error',
+        message: 'Sessions Table is not configured',
+        requestId: auth.requestId,
       });
     }
 

@@ -21,6 +21,7 @@ interface StackOutputs {
   GatewayMcpEndpoint?: string;
   UserStorageBucketName?: string;
   AgentsTableName?: string;
+  SessionsTableName?: string;
 }
 
 const STACK_NAME = process.env.STACK_NAME || 'AgentCoreApp';
@@ -91,38 +92,29 @@ VITE_AGENT_ENDPOINT=http://localhost:8080/invocations
 function createBackendEnv(outputs: StackOutputs): string {
   return `# Backend API Server Configuration
 
-# =============================================================================
-# サーバー設定
-# =============================================================================
+# サーバー
 PORT=3000
 NODE_ENV=development
 
-# =============================================================================
 # CORS設定
-# =============================================================================
 CORS_ALLOWED_ORIGINS=*
 
-# =============================================================================
-# JWT / JWKS 設定
-# =============================================================================
+# JWT / JWKS
 COGNITO_USER_POOL_ID=${outputs.UserPoolId || ''}
 COGNITO_REGION=${outputs.Region || ''}
 
-# =============================================================================
-# AgentCore Memory 設定
-# =============================================================================
+# AgentCore Memory
 AGENTCORE_MEMORY_ID=${outputs.MemoryId || ''}
 AGENTCORE_GATEWAY_ENDPOINT=${outputs.GatewayMcpEndpoint || ''}
 
-# =============================================================================
-# User Storage 設定
-# =============================================================================
+# User Storage
 USER_STORAGE_BUCKET_NAME=${outputs.UserStorageBucketName || ''}
 
-# =============================================================================
-# Agents Table 設定
-# =============================================================================
+# Agents Table
 AGENTS_TABLE_NAME=${outputs.AgentsTableName || ''}
+
+# Sessions Table
+SESSIONS_TABLE_NAME=${outputs.SessionsTableName || ''}
 `;
 }
 
@@ -146,6 +138,9 @@ AGENTCORE_GATEWAY_ENDPOINT=${outputs.GatewayMcpEndpoint || ''}
 
 # User Storage
 USER_STORAGE_BUCKET_NAME=${outputs.UserStorageBucketName || ''}
+
+# Sessions Table
+SESSIONS_TABLE_NAME=${outputs.SessionsTableName || ''}
 
 # Server Configuration
 PORT=8080
@@ -182,6 +177,7 @@ async function main() {
       'GatewayMcpEndpoint',
       'UserStorageBucketName',
       'AgentsTableName',
+      'SessionsTableName',
     ];
 
     const missingOutputs = requiredOutputs.filter((key) => !outputs[key]);

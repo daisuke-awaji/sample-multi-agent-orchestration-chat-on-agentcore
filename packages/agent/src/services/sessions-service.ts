@@ -39,8 +39,9 @@ export class SessionsService {
   private client: DynamoDBClient;
   private tableName: string;
 
-  constructor(tableName?: string, region: string = 'us-east-1') {
-    this.client = new DynamoDBClient({ region });
+  constructor(tableName?: string, region?: string) {
+    const actualRegion = region || process.env.AWS_REGION || 'us-east-1';
+    this.client = new DynamoDBClient({ region: actualRegion });
     this.tableName = tableName || process.env.SESSIONS_TABLE_NAME || '';
 
     if (!this.tableName) {
