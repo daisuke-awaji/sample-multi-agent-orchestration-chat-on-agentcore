@@ -28,7 +28,7 @@ export class TitleGenerator {
    * Generate a session title from conversation content
    * @param userMessage First user message
    * @param assistantMessage First assistant response (optional)
-   * @returns Generated title (20-30 characters)
+   * @returns Generated title (15-30 characters)
    */
   async generateTitle(userMessage: string, assistantMessage?: string): Promise<string> {
     try {
@@ -76,20 +76,20 @@ export class TitleGenerator {
     const truncatedUserMessage = userMessage.substring(0, 500);
     const truncatedAssistantMessage = assistantMessage?.substring(0, 500) || '';
 
-    return `以下の会話内容から、簡潔なセッションタイトルを生成してください。
+    return `Generate a concise session title from the following conversation.
 
-## 要件
-- 15〜30文字程度
-- 会話の主題を端的に表現
-- 日本語で出力（英語の技術用語はそのまま可）
-- タイトルのみを出力（説明や記号は不要）
-- 「〜について」「〜の質問」などの冗長な表現は避ける
+## Requirements
+- 3 to 8 words (approximately 15-40 characters)
+- Capture the main topic or intent of the conversation
+- Use the same language as the user's message
+- Output ONLY the title (no explanations, quotes, or punctuation)
+- Avoid generic phrases like "Question about...", "Help with...", "Discussion of..."
 
-## 会話内容
-ユーザー: ${truncatedUserMessage}
-${truncatedAssistantMessage ? `AI: ${truncatedAssistantMessage}` : ''}
+## Conversation
+User: ${truncatedUserMessage}
+${truncatedAssistantMessage ? `Assistant: ${truncatedAssistantMessage}` : ''}
 
-## タイトル:`;
+## Title:`;
   }
 
   /**
@@ -118,11 +118,11 @@ ${truncatedAssistantMessage ? `AI: ${truncatedAssistantMessage}` : ''}
     // Clean up the title
     let title = textBlock.text.trim();
 
-    // Remove quotes if present
-    title = title.replace(/^["'「」『』]+|["'「」『』]+$/g, '');
+    // Remove quotes if present (supports various quote styles)
+    title = title.replace(/^["'「」『』""'']+|["'「」『』""'']+$/g, '');
 
-    // Remove common prefixes
-    title = title.replace(/^(タイトル[:：]\s*)/i, '');
+    // Remove common prefixes in multiple languages
+    title = title.replace(/^(Title[:：]\s*|タイトル[:：]\s*)/i, '');
 
     // Truncate if too long
     if (title.length > 50) {
