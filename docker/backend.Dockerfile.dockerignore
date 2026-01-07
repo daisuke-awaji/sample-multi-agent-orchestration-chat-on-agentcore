@@ -1,0 +1,10 @@
+node_modules/
+dist/
+cdk.out/
+.git/
+.github/
+packages/frontend/
+packages/agent/
+packages/cdk/
+packages/client/
+packages/lambda-tools/

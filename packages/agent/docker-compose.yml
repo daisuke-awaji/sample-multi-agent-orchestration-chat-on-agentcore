@@ -1,6 +1,8 @@
 services:
   agentcore-agent:
-    build: .
+    build:
+      context: ../..
+      dockerfile: docker/agent.Dockerfile
     image: agentcore-agent:latest
     container_name: agentcore-agent-dev
     ports:
