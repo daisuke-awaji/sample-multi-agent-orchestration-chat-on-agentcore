@@ -6,6 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle } from 'lucide-react';
 import type { Message as MessageType } from '../types/index';
 import { TypingIndicator } from './TypingIndicator';
 import { ToolUseBlock } from './ToolUseBlock';
@@ -195,6 +196,14 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                 : 'message-bubble message-assistant'
           } ${message.isStreaming ? 'bg-opacity-90' : ''}`}
         >
+          {/* エラーアイコン表示 */}
+          {message.isError && (
+            <div className="flex items-center gap-2 mb-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="text-sm font-medium">{t('common.errorOccurred')}</span>
+            </div>
+          )}
+
           {/* メッセージ内容 */}
           <div className="prose prose-sm max-w-none">
             <div className="message-contents space-y-2">

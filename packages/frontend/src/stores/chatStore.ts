@@ -282,10 +282,21 @@ export const useChatStore = create<ChatStore>()(
                 }
               },
               onError: (error: Error) => {
-                // エラーメッセージで更新
+                // エラーメッセージをアシスタントの応答として追加（isErrorフラグ付き）
+                const { messages } = get();
+                const currentMessage = messages.find((msg) => msg.id === assistantMessageId);
+
+                // 既存のcontentsを保持しつつエラーメッセージを追加
+                const existingContents = currentMessage?.contents || [];
+                const errorContent = {
+                  type: 'text' as const,
+                  text: `エラーが発生しました: ${error.message}`,
+                };
+
                 updateMessage(assistantMessageId, {
-                  contents: stringToContents(`エラーが発生しました: ${error.message}`),
+                  contents: [...existingContents, errorContent],
                   isStreaming: false,
+                  isError: true, // エラーフラグをセット
                 });
 
                 set({
@@ -327,6 +338,17 @@ export const useChatStore = create<ChatStore>()(
       loadSessionHistory: (conversationMessages: ConversationMessage[]) => {
         console.log(`📖 会話履歴を復元中: ${conversationMessages.length}件のメッセージ`);
 
+        // Helper function to check if message contains error marker
+        const isErrorMessage = (contents: MessageContent[]): boolean => {
+          return contents.some(
+            (content) =>
+              content.type === 'text' &&
+              content.text &&
+              (content.text.includes('[SYSTEM_ERROR]') ||
+                content.text.startsWith('エラーが発生しました:'))
+          );
+        };
+
         // ConversationMessage を Message 型に変換
         const messages: Message[] = conversationMessages.map((convMsg) => ({
           id: convMsg.id,
@@ -334,6 +356,7 @@ export const useChatStore = create<ChatStore>()(
           contents: convMsg.contents, // contents配列をそのまま使用
           timestamp: new Date(convMsg.timestamp),
           isStreaming: false, // 履歴データはストリーミング中ではない
+          isError: convMsg.type === 'assistant' && isErrorMessage(convMsg.contents), // エラーメッセージを検出
         }));
 
         set({

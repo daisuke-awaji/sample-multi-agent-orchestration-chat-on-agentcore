@@ -39,6 +39,7 @@ export interface Message {
   contents: MessageContent[]; // Changed from single content string to multiple content blocks
   timestamp: Date;
   isStreaming?: boolean;
+  isError?: boolean; // Flag to indicate this message contains an error
 }
 
 // Legacy support for single content string (backward compatibility)
@@ -141,6 +142,7 @@ export interface ServerErrorEvent extends AgentStreamEvent {
   error: {
     message: string;
     requestId: string;
+    savedToHistory?: boolean; // Indicates if error was saved to session history
   };
 }
 
