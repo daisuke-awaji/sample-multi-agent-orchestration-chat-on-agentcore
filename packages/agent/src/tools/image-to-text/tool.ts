@@ -3,7 +3,6 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { z } from 'zod';
 import {
   BedrockRuntimeClient,
   ConverseCommand,
@@ -15,15 +14,7 @@ import { readFile } from 'fs/promises';
 import { config, logger } from '../../config/index.js';
 import { getCurrentContext } from '../../context/request-context.js';
 import type { ImageToTextResult, ImageFormat, ImageSource } from './types.js';
-
-// Vision models with global inference profile
-const VISION_MODELS = [
-  'global.anthropic.claude-sonnet-4-5-20250929-v1:0', // Claude Sonnet 4.5
-  'global.anthropic.claude-haiku-4-5-20251001-v1:0', // Claude Haiku 4.5
-  'global.amazon.nova-2-lite-v1:0', // Nova Lite (デフォルト)
-] as const;
-
-const DEFAULT_VISION_MODEL = 'global.amazon.nova-2-lite-v1:0';
+import { imageToTextDefinition } from '@fullstack-agentcore/tool-definitions';
 
 // Create Bedrock Runtime client
 const bedrockClient = new BedrockRuntimeClient({ region: config.BEDROCK_REGION });
@@ -247,32 +238,9 @@ function formatResults(result: ImageToTextResult): string {
  * Image to Text Tool
  */
 export const imageToTextTool = tool({
-  name: 'image_to_text',
-  description:
-    'Analyze images and convert them to text descriptions using Bedrock Converse API. Supports S3 URIs and local file paths. Use vision-capable models to extract text, describe content, or analyze images. **Important: Use S3 URI format (s3://bucket/key) for images stored in S3, not presigned URLs.**',
-  inputSchema: z.object({
-    imagePath: z
-      .string()
-      .min(1)
-      .describe(
-        'Image path in one of the following formats:\n' +
-          '1. Local file path: /absolute/path/to/image.png or ./relative/path/to/image.png\n' +
-          '2. S3 URI: s3://bucket-name/path/to/image.png (recommended for S3 stored images)\n' +
-          '**IMPORTANT: Do NOT use presigned URLs (https://bucket.s3.amazonaws.com/...). Use S3 URI format instead.**'
-      ),
-    prompt: z
-      .string()
-      .optional()
-      .default('Describe this image in detail.')
-      .describe('Analysis prompt for the image (default: describe the image)'),
-    modelId: z
-      .enum(VISION_MODELS)
-      .optional()
-      .default(DEFAULT_VISION_MODEL)
-      .describe(
-        'Vision model to use (global inference profile). Options: Claude Sonnet 4.5, Claude Haiku 4.5, Nova 2 Lite'
-      ),
-  }),
+  name: imageToTextDefinition.name,
+  description: imageToTextDefinition.description,
+  inputSchema: imageToTextDefinition.zodSchema,
   callback: async (input) => {
     const { imagePath, prompt, modelId } = input;
 

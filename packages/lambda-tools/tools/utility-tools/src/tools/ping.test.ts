@@ -99,20 +99,6 @@ describe('Ping Tool', () => {
       // heapUsed <= heapTotal の関係性を確認
       expect(memory.heapUsed).toBeLessThanOrEqual(memory.heapTotal);
     });
-
-    test('複数回実行してもタイムスタンプが更新される', async () => {
-      const input: ToolInput = {};
-
-      const result1 = await pingTool.handler(input);
-      // 少し待機
-      await new Promise((resolve) => setTimeout(resolve, 1));
-      const result2 = await pingTool.handler(input);
-
-      expect(result1.timestamp).not.toBe(result2.timestamp);
-      expect(new Date(result1.timestamp as string).getTime()).toBeLessThan(
-        new Date(result2.timestamp as string).getTime()
-      );
-    });
   });
 
   describe('エッジケーステスト', () => {

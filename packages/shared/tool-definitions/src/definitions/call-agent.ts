@@ -5,38 +5,20 @@ import type { ToolDefinition } from '../types.js';
 export const callAgentSchema = z.object({
   action: z
     .enum(['list_agents', 'start_task', 'status'])
-    .describe(
-      "Action to perform: 'list_agents' to discover available agents, 'start_task' to start new task, 'status' to check task status"
-    ),
+    .describe("Action: 'list_agents' to list, 'start_task' to start, 'status' to check"),
+
+  // start_task parameters
   agentId: z
     .string()
     .optional()
-    .describe(
-      'Agent ID to invoke (required for start_task). Use list_agents action first to discover available agent IDs.'
-    ),
-  query: z
-    .string()
-    .optional()
-    .describe('Query or task to send to the agent (required for start_task)'),
-  modelId: z
-    .string()
-    .optional()
-    .describe('Model ID to use for the sub-agent (optional, defaults to agent config)'),
-  taskId: z.string().optional().describe('Task ID to check (required for status action)'),
-  waitForCompletion: z
-    .boolean()
-    .default(false)
-    .describe('Whether to wait for task completion with polling (default: false)'),
-  pollingInterval: z.number().default(30).describe('Polling interval in seconds (default: 30)'),
-  maxWaitTime: z
-    .number()
-    .default(1200)
-    .describe('Maximum wait time in seconds (default: 1200 = 20 minutes)'),
+    .describe('Agent ID (required for start_task, e.g., "web-researcher")'),
+  query: z.string().optional().describe('Query to send to the agent (required for start_task)'),
+  modelId: z.string().optional().describe('Model ID to use (optional, defaults to agent config)'),
   storagePath: z
     .string()
     .optional()
     .describe(
-      "S3 storage path for the sub-agent workspace. If omitted, inherits the parent agent's storage path. Use this to share files between agents or specify a different workspace."
+      'S3 storage path for sub-agent (e.g., "/project-a/"). Inherits from parent if not specified.'
     ),
   sessionId: z
     .string()
@@ -44,12 +26,44 @@ export const callAgentSchema = z.object({
     .describe(
       'Session ID for sub-agent conversation history. If not specified, auto-generated as "<33-char-alphanumeric>_subagent" (same format as regular user sessions).'
     ),
+
+  // status parameters
+  taskId: z.string().optional().describe('Task ID (required for status action)'),
+
+  // Polling options (for status action)
+  waitForCompletion: z
+    .boolean()
+    .default(false)
+    .describe('Wait for completion with polling (default: false)'),
+  pollingInterval: z.number().default(30).describe('Polling interval in seconds (default: 30)'),
+  maxWaitTime: z.number().default(1200).describe('Max wait time in seconds (default: 1200)'),
 });
 
 export const callAgentDefinition: ToolDefinition<typeof callAgentSchema> = {
   name: 'call_agent',
-  description:
-    'Invoke specialized sub-agents asynchronously to handle specific tasks requiring different expertise. Use list_agents first to discover available agents, then start_task to invoke them. Sub-agents run independently with no shared history and can run for extended periods.',
+  description: `Invoke specialized sub-agents asynchronously to handle specific tasks that require different expertise.
+
+**Available Actions:**
+- 'list_agents': Get list of available agents with their IDs and descriptions
+- 'start_task': Start a new sub-agent task (returns taskId)
+- 'status': Check task status (with optional polling until completion)
+
+**To discover available agents:**
+First use action='list_agents' to get the current list of agents with their agentIds.
+Then use those agentIds with action='start_task' to invoke them.
+
+**Usage Pattern:**
+1. List agents: action='list_agents'
+2. Start task: action='start_task', agentId='<agentId from list>', query='...'
+3. Check status: action='status', taskId='task_xxx'
+   - Set waitForCompletion=true to wait for results (with polling)
+   - Set waitForCompletion=false for immediate status check
+
+**Important:**
+- Sub-agents run independently with no shared history
+- Tasks can run for minutes or hours
+- Use polling (waitForCompletion=true) for shorter tasks
+- Use immediate checks (waitForCompletion=false) for long-running tasks`,
   zodSchema: callAgentSchema,
   jsonSchema: zodToJsonSchema(callAgentSchema),
 };
