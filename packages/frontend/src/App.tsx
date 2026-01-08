@@ -27,7 +27,7 @@ function App() {
     // AgentStoreを初期化
     initializeAgentStore();
 
-    // 既存のセッションを確認
+    // Check existing session
     const checkExistingSession = async () => {
       try {
         setLoading(true);
@@ -38,7 +38,7 @@ function App() {
         }
       } catch (error) {
         console.error('Session check error:', error);
-        // セッションチェックエラーはユーザーに表示しない（単に未認証として扱う）
+        // Do not display session check errors to user (treat as unauthenticated)
       } finally {
         setLoading(false);
       }
