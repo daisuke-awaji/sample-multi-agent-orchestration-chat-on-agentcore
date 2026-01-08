@@ -288,6 +288,7 @@ export class AgentCoreRuntime extends Construct {
         actions: [
           'bedrock:InvokeModel',
           'bedrock:InvokeModelWithResponseStream',
+          'bedrock:StartAsyncInvoke', // Nova Reel 用の非同期ジョブ開始
           'bedrock:GetAsyncInvoke',
           'bedrock:ListAsyncInvokes',
         ],
@@ -347,6 +348,27 @@ export class AgentCoreRuntime extends Construct {
           actions: ['secretsmanager:GetSecretValue'],
           resources: [
             `arn:aws:secretsmanager:${region}:${account}:secret:${props.githubTokenSecretName}*`,
+          ],
+        })
+      );
+    }
+
+    // S3 アクセス権限（User Storage & Nova Reel 出力用）
+    if (props.userStorageBucketName) {
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'S3UserStorageAccess',
+          effect: iam.Effect.ALLOW,
+          actions: [
+            's3:GetObject',
+            's3:PutObject',
+            's3:DeleteObject',
+            's3:ListBucket',
+            's3:HeadObject',
+          ],
+          resources: [
+            `arn:aws:s3:::${props.userStorageBucketName}`,
+            `arn:aws:s3:::${props.userStorageBucketName}/*`,
           ],
         })
       );
