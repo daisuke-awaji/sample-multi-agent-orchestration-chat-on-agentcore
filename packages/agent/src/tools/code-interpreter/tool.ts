@@ -6,6 +6,7 @@ import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
 import { logger } from '../../config/index.js';
 import { AgentCoreCodeInterpreterClient } from './client.js';
+import { getCurrentStoragePath } from '../../context/request-context.js';
 import type {
   InitSessionAction,
   ExecuteCodeAction,
@@ -34,10 +35,14 @@ export const codeInterpreterTool = tool({
     logger.info(`🧮 CodeInterpreter execution started: ${input.action}`);
 
     try {
-      // Create client (with default settings)
+      // Get storage path from request context
+      const storagePath = getCurrentStoragePath();
+
+      // Create client (with default settings and storagePath)
       const client = new AgentCoreCodeInterpreterClient({
         autoCreate: true,
         persistSessions: true,
+        storagePath: storagePath,
       });
 
       // Branch processing by action
@@ -99,15 +104,28 @@ export const codeInterpreterTool = tool({
       if (result.status === 'success') {
         logger.info(`✅ CodeInterpreter execution successful: ${input.action}`);
 
+        // Add warning for executeCode and executeCommand about downloadFiles requirement
+        const needsDownloadWarning =
+          input.action === 'executeCode' || input.action === 'executeCommand';
+
         // Format content appropriately
         const content = result.content[0];
+        let formattedResult = '';
+
         if (content.json) {
-          return `Execution Result:\nOperation: ${input.action}\nResult: ${JSON.stringify(content.json, null, 2)}`;
+          formattedResult = `Execution Result:\nOperation: ${input.action}\nResult: ${JSON.stringify(content.json, null, 2)}`;
         } else if (content.text) {
-          return `Execution Result:\nOperation: ${input.action}\nOutput:\n${content.text}`;
+          formattedResult = `Execution Result:\nOperation: ${input.action}\nOutput:\n${content.text}`;
         } else {
-          return `Execution Result:\nOperation: ${input.action}\nResult: ${JSON.stringify(content)}`;
+          formattedResult = `Execution Result:\nOperation: ${input.action}\nResult: ${JSON.stringify(content)}`;
         }
+
+        // Add warning if needed
+        if (needsDownloadWarning) {
+          formattedResult += `\n\n⚠️ IMPORTANT: If you created files (images, videos, data files, etc.), you MUST use the 'downloadFiles' action before referencing them in your response. Files remain in the isolated CodeInterpreter environment until downloaded to /tmp/ws.`;
+        }
+
+        return formattedResult;
       } else {
         logger.error(`❌ CodeInterpreter execution error: ${input.action}`);
         const errorText = result.content[0]?.text || JSON.stringify(result.content);

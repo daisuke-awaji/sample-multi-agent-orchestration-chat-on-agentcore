@@ -43,12 +43,14 @@ export class AgentCoreCodeInterpreterClient {
   private persistSessions: boolean;
   private defaultSession: string;
   private client: BedrockAgentCoreClient;
+  private storagePath: string;
 
   constructor(options: CodeInterpreterOptions = {}) {
     this.region = options.region || process.env.AWS_REGION || 'us-east-1';
     this.identifier = options.identifier || 'aws.codeinterpreter.v1';
     this.autoCreate = options.autoCreate ?? true;
     this.persistSessions = options.persistSessions ?? true;
+    this.storagePath = options.storagePath || '';
 
     if (options.sessionName) {
       this.defaultSession = options.sessionName;
@@ -62,7 +64,7 @@ export class AgentCoreCodeInterpreterClient {
     logger.info(
       `CodeInterpreter initialized: session='${this.defaultSession}', ` +
         `identifier='${this.identifier}', autoCreate=${this.autoCreate}, ` +
-        `persistSessions=${this.persistSessions}`
+        `persistSessions=${this.persistSessions}, storagePath='${this.storagePath}'`
     );
   }
 
@@ -679,9 +681,17 @@ print(result_file)
           // Write file to local filesystem
           fs.writeFileSync(localPath, fileData);
 
+          // Generate user-facing path (relative path with storagePath prefix)
+          const filename = path.basename(localPath);
+          const userPath =
+            this.storagePath && this.storagePath !== '/'
+              ? `${this.storagePath}/${filename}`
+              : `/${filename}`;
+
           downloadedFiles.push({
             sourcePath: sourcePath,
             localPath: localPath,
+            userPath: userPath,
             size: result.size,
           });
 
@@ -699,10 +709,28 @@ print(result_file)
         };
       }
 
+      // Generate instruction for using userPath
+      const exampleFile = downloadedFiles[0];
+      const exampleExt = exampleFile ? path.extname(exampleFile.userPath).toLowerCase() : '';
+      const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(exampleExt);
+      const isVideo = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'].includes(exampleExt);
+
+      let instruction = `✅ Files downloaded successfully. Use 'userPath' for references:\n`;
+
+      if (isImage) {
+        instruction += `Example: ![Image Description](${exampleFile.userPath})`;
+      } else if (isVideo) {
+        instruction += `Example: ![Video Description](${exampleFile.userPath}) or [Video](${exampleFile.userPath})`;
+      } else {
+        instruction += `Example: [File Name](${exampleFile.userPath})`;
+      }
+
       const responseData: DownloadResult = {
         downloadedFiles: downloadedFiles,
         totalFiles: downloadedFiles.length,
         destinationDir: action.destinationDir,
+        storagePath: this.storagePath,
+        instruction: instruction,
       };
 
       if (errors.length > 0) {

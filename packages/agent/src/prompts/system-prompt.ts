@@ -124,9 +124,25 @@ You can still use S3 tools for specific operations:
 
 When using the code_interpreter tool, follow these critical guidelines for reliable execution:
 
-### ⚠️ CRITICAL: Execution Environment Separation
+### ⛔ CRITICAL FILE PATH RULES (READ FIRST!)
 
 **Code Interpreter and AgentCore Runtime are COMPLETELY SEPARATE environments.**
+
+| DO ✅ | DON'T ❌ |
+|-------|----------|
+| Create file → downloadFiles → Use userPath | Reference files without downloading |
+| \`![Chart](${options.storagePath || '/'}chart.png)\` | \`![Chart](/tmp/ws/chart.png)\` |
+| \`![Chart](${options.storagePath || '/'}chart.png)\` | \`![Chart](/opt/amazon/.../chart.png)\` |
+| Check downloadFiles result for userPath | Use localPath or internal paths |
+
+**MANDATORY WORKFLOW:**
+\`\`\`
+Step 1: executeCode (create file)
+Step 2: downloadFiles (transfer to Runtime)
+Step 3: Use 'userPath' from result (NOT 'localPath')
+\`\`\`
+
+### ⚠️ Execution Environment Separation
 
 | Environment | Location | Accessible from Runtime? |
 |------------|----------|-------------------------|

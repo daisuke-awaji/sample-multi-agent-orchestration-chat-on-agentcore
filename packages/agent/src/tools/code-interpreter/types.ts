@@ -134,6 +134,7 @@ export interface CodeInterpreterOptions {
   sessionName?: string;
   autoCreate?: boolean;
   persistSessions?: boolean;
+  storagePath?: string; // User's storage path for generating correct file references
 }
 
 /**
@@ -142,6 +143,7 @@ export interface CodeInterpreterOptions {
 export interface DownloadedFile {
   sourcePath: string;
   localPath: string;
+  userPath: string; // User-facing path for references (e.g., /storage/filename.png)
   size: number;
 }
 
@@ -152,5 +154,7 @@ export interface DownloadResult {
   downloadedFiles: DownloadedFile[];
   totalFiles: number;
   destinationDir: string;
+  storagePath?: string; // Storage path prefix for instruction
+  instruction?: string; // Instruction for using userPath
   errors?: string[];
 }
