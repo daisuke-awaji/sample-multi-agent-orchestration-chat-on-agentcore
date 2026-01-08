@@ -42,7 +42,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
   const [deleteConfirmAgent, setDeleteConfirmAgent] = useState<Agent | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  // モーダルが開かれたときに初期化
+  // Initialize when modal opens
   useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => {
@@ -54,7 +54,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     }
   }, [isOpen]);
 
-  // メニュー外クリックで閉じる
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = () => {
       setOpenMenuId(null);
@@ -66,14 +66,14 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     };
   }, []);
 
-  // Agent選択
+  // Select agent
   const handleAgentSelect = (agent: Agent) => {
     selectAgent(agent);
     onAgentSelect(agent);
     onClose();
   };
 
-  // Agent作成
+  // Create agent
   const handleCreateAgent = async (data: CreateAgentInput) => {
     const newAgent = await createAgent(data);
     setMode('list');
@@ -81,7 +81,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     onAgentSelect(newAgent);
   };
 
-  // Agent更新
+  // Update agent
   const handleUpdateAgent = async (data: CreateAgentInput) => {
     if (!editingAgent) return;
 
@@ -93,7 +93,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     setEditingAgent(null);
   };
 
-  // Agent削除
+  // Delete agent
   const handleDeleteAgent = async (agent: Agent) => {
     await deleteAgent(agent.agentId);
     setDeleteConfirmAgent(null);
@@ -105,7 +105,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     }
   };
 
-  // 3点メニュートグル
+  // 3-dot menu toggle
   const toggleMenu = (agentId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setOpenMenuId(openMenuId === agentId ? null : agentId);
@@ -298,7 +298,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                           const wasShared = agent.isShared;
                                           try {
                                             await toggleShare(agent.agentId);
-                                            // 成功時にトースト通知
+                                            // Show toast on success
                                             toast.success(
                                               wasShared
                                                 ? t('agent.unshareSuccess')

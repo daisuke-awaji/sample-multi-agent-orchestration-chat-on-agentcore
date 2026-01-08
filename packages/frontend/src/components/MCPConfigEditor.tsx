@@ -98,7 +98,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   const [messageIndex, setMessageIndex] = useState(0);
   const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set());
 
-  // ローテーションメッセージ用のuseEffect
+  // useEffect for rotation message
   useEffect(() => {
     if (!isFetchingTools) {
       setMessageIndex(0);
@@ -113,28 +113,28 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     return () => clearInterval(interval);
   }, [isFetchingTools, t]);
 
-  // JSON テキストを変更
+  // Change JSON text
   const handleTextChange = (text: string) => {
     setJsonText(text);
     setValidationError(null);
 
-    // 空の場合は undefined を返す
+    // Return undefined if empty
     if (!text.trim()) {
       onChange(undefined);
       setToolsPreview([]);
       return;
     }
 
-    // JSON のパース試行（リアルタイムではバリデーションしない）
+    // Try parsing JSON (no real-time validation)
     try {
       const parsed = JSON.parse(text);
       onChange(parsed);
     } catch {
-      // パースエラーは保存時にチェックするため、ここでは無視
+      // Parse errors checked on save, ignore here
     }
   };
 
-  // ツールをプレビュー
+  // Preview tool
   const handleFetchTools = async () => {
     try {
       if (!jsonText.trim()) {
@@ -162,7 +162,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     }
   };
 
-  // サンプルを挿入
+  // Insert sample
   const handleInsertSample = (sampleKey: keyof ReturnType<typeof SAMPLE_CONFIGS>) => {
     const samples = SAMPLE_CONFIGS(t);
     const sample = samples[sampleKey];
@@ -176,7 +176,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     setExpandedErrors(new Set());
   };
 
-  // エラー詳細の展開/折りたたみ
+  // Expand/collapse error details
   const toggleErrorDetails = (serverName: string) => {
     setExpandedErrors((prev) => {
       const newSet = new Set(prev);
@@ -189,7 +189,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
     });
   };
 
-  // サーバー名でグループ化
+  // Group by server name
   const groupedTools = toolsPreview.reduce(
     (acc, tool) => {
       if (!acc[tool.serverName]) {
@@ -203,7 +203,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 説明 */}
+      {/* Description */}
       <div className="text-sm text-gray-600">
         <p>{t('tool.mcp.description')}</p>
       </div>
@@ -281,7 +281,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
         </button>
       </div>
 
-      {/* バリデーションエラー */}
+      {/* Validationエラー */}
       {validationError && (
         <div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />

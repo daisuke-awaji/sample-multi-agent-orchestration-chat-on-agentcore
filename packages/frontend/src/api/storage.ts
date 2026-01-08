@@ -90,7 +90,7 @@ export async function listStorageItems(path: string = '/'): Promise<ListStorageR
 }
 
 /**
- * ファイルアップロード用の署名付きURLを生成
+ * Upload file用の署名付きURLを生成
  */
 export async function generateUploadUrl(
   fileName: string,
@@ -208,7 +208,7 @@ export async function downloadFolder(
     throw new Error('Folder is empty');
   }
 
-  // ZIPファイルを作成
+  // Create ZIP file
   const zip = new JSZip();
   let downloadedCount = 0;
 
@@ -230,7 +230,7 @@ export async function downloadFolder(
     }
 
     try {
-      // ファイルをダウンロード (direct S3 fetch, not using backend client)
+      // Download file (direct S3 fetch, not using backend client)
       const response = await fetch(file.downloadUrl, { signal });
 
       if (!response.ok) {

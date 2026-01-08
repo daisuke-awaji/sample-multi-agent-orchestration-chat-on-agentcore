@@ -38,14 +38,14 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
 
   const AgentIcon = (icons[agent.icon as keyof typeof icons] as LucideIcon) || icons.Bot;
 
-  // 自分のエージェントか判定（userId ベースで比較）
+  // Check if own agent (compare by userId)
   const isOwnAgent = user?.userId === agent.userId;
 
-  // マイエージェントに追加
+  // Add to my agents
   const handleAddToMyAgents = async () => {
     setIsCloning(true);
     try {
-      // デフォルトエージェント（userId === 'system'）の場合は新規作成
+      // Create new if default agent (userId === "system")
       if (agent.userId === 'system') {
         await createAgent({
           name: agent.name,
@@ -60,7 +60,7 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
           mcpConfig: agent.mcpConfig,
         });
       } else {
-        // 共有エージェントの場合はクローン
+        // Clone if shared agent
         if (!agent.userId) {
           toast.error(t('agentDirectory.userIdNotFound'));
           return;
@@ -79,12 +79,12 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
     }
   };
 
-  // 共有を解除する
+  // Unshare
   const handleUnshare = async () => {
     setIsUnsharing(true);
     try {
       await toggleShareAgent(agent.agentId);
-      await fetchSharedAgents(); // 共有エージェント一覧を更新
+      await fetchSharedAgents(); // Update shared agent list
       toast.success(t('agentDirectory.unshareSuccess'));
       onClose();
     } catch (error) {

@@ -24,7 +24,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
   const { t } = useTranslation();
   const isUser = message.type === 'user';
 
-  // toolUse/toolResult を含むメッセージかどうか判定
+  // Check if message contains toolUse/toolResult
   const hasToolContent = message.contents.some(
     (content) => content.type === 'toolUse' || content.type === 'toolResult'
   );
@@ -41,7 +41,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
     return videoExtensions.some((ext) => lowerPath.endsWith(ext));
   };
 
-  // Markdownカスタムコンポーネント（メモ化で参照を安定させる）
+  // Markdown custom component (stabilize reference with memoization)
   const markdownComponents = useMemo(
     () => ({
       // Custom link renderer for S3 files
@@ -88,12 +88,12 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
         const language = match ? match[1] : '';
 
         if (!inline && match) {
-          // Mermaid図の場合
+          // For Mermaid diagram
           if (language === 'mermaid') {
             return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
           }
 
-          // その他のコードブロック
+          // Other code blocks
           return (
             <SyntaxHighlighter
               style={oneLight}
@@ -107,14 +107,14 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           );
         }
 
-        // インラインコード
+        // Inline code
         return (
           <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
             {children}
           </code>
         );
       },
-      // テーブルのスタイル調整
+      // Adjust table style
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       table: ({ children, ...props }: any) => (
         <div className="overflow-x-auto my-4">
@@ -138,7 +138,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           {children}
         </td>
       ),
-      // 引用のスタイル
+      // Quote style
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       blockquote: ({ children, ...props }: any) => (
         <blockquote
@@ -148,7 +148,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           {children}
         </blockquote>
       ),
-      // 段落: ブロック要素（動画など）が含まれる場合はdivを使用
+      // Paragraph: Use div if contains block elements (like video)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       p: ({ children, ...props }: any) => {
         // Check if any child contains a div (which happens when S3Video is rendered)
@@ -175,7 +175,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       },
     }),
     []
-  ); // 依存配列を空にして、コンポーネントの生存期間中は同じ参照を保持
+  ); // Empty dependency array to keep same reference during component lifetime
 
   return (
     <div

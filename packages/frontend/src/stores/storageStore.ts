@@ -53,7 +53,7 @@ const loadExpandedFolders = (): Set<string> => {
   } catch (error) {
     console.error('Failed to load expanded folders from localStorage:', error);
   }
-  return new Set(['/']); // デフォルトでルートを展開
+  return new Set(['/']); // Expand root by default
 };
 
 // localStorageに展開フォルダを保存
@@ -276,7 +276,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
     await get().loadItems();
   },
 
-  // エラーをクリア
+  // Clear errors
   clearError: () => {
     set({ error: null });
   },

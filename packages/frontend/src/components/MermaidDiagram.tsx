@@ -7,10 +7,10 @@ interface MermaidDiagramProps {
   className?: string;
 }
 
-// Mermaidの初期化（一度だけ実行）
+// Initialize Mermaid (run once)
 let isInitialized = false;
 
-// 一意なIDを生成する関数
+// Function to generate unique ID
 const generateUniqueId = () => {
   return `mermaid-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
@@ -66,13 +66,13 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
   }, []);
 
   useEffect(() => {
-    // 前のタイマーをクリア
+    // Clear previous timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     const renderChart = async () => {
-      // コンポーネントがアンマウントされている場合は処理を停止
+      // Stop processing if component unmounted
       if (!mountedRef.current || !chart.trim()) {
         if (mountedRef.current) {
           setIsValidSyntax(null);
@@ -81,7 +81,7 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
         return;
       }
 
-      // 現在のチャートと同じ場合はスキップ（無限レンダリング防止）
+      // Skip if same as current chart (prevent infinite rendering)
       if (currentChartRef.current === chart.trim()) {
         return;
       }
@@ -90,31 +90,31 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
       setIsRendering(true);
 
       try {
-        // まず構文チェックを行う
+        // First check syntax
         await mermaid.parse(chart);
 
-        // コンポーネントがまだマウントされているかチェック
+        // Check if component still mounted
         if (!mountedRef.current) {
           return;
         }
 
         setIsValidSyntax(true);
 
-        // 一意なIDを生成
+        // Generate unique ID
         const uniqueId = generateUniqueId();
 
-        // Mermaidでレンダリング（DOM操作なし、SVGのみ取得）
+        // Render with Mermaid (no DOM manipulation, only get SVG)
         const { svg } = await mermaid.render(uniqueId, chart);
 
-        // レンダリング完了後、まだマウントされているかチェック
+        // Check if still mounted after rendering
         if (!mountedRef.current) {
           return;
         }
 
-        // SVGをstateに設定（ReactがDOM管理）
+        // Set SVG to state (React manages DOM)
         setSvgContent(svg);
       } catch (error) {
-        // エラーが発生した場合
+        // If error occurs
         console.warn('Mermaid rendering error:', error);
 
         if (mountedRef.current) {
@@ -128,7 +128,7 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
       }
     };
 
-    // Debounce処理: 100ms待ってからレンダリングを実行
+    // Debounce: Execute rendering after 100ms wait
     debounceTimerRef.current = window.setTimeout(renderChart, 100);
 
     return () => {
@@ -138,7 +138,7 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
     };
   }, [chart]);
 
-  // アンマウント時のクリーンアップ
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false;
@@ -152,7 +152,7 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
     <div
       className={`mermaid-diagram overflow-x-auto my-4 ${className}`}
       style={{
-        // Mermaid SVGのスタイル調整
+        // Adjust Mermaid SVG style
         fontSize: 'inherit',
         fontFamily: 'inherit',
         minHeight: isValidSyntax === null ? '20px' : undefined,
@@ -176,5 +176,5 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
   );
 };
 
-// React.memoでラップしてプロパティが変わらない限り再レンダリングを防ぐ
+// Wrap with React.memo to prevent re-renders unless props change
 export const MermaidDiagram = React.memo(MermaidDiagramComponent);

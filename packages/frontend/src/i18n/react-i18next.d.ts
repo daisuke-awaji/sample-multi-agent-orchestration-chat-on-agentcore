@@ -1,6 +1,6 @@
 import 'react-i18next';
 
-// TypeScript で翻訳キーの補完を有効化
+// Enable TypeScript translation key completion
 declare module 'react-i18next' {
   interface CustomTypeOptions {
     defaultNS: 'translation';

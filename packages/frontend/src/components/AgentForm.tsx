@@ -50,12 +50,12 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // AI生成関連の状態
+  // AI generation related state
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { tools } = useToolStore();
 
-  // バリデーション
+  // Validation
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -141,7 +141,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
       ),
     }));
 
-    // エラーをクリア
+    // Clear errors
     if (errors[`scenario_${field}_${index}`]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -151,7 +151,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
     }
   };
 
-  // AI生成機能
+  // AI generation feature
   const handleAIGeneration = async () => {
     if (!formData.name.trim() || !formData.description.trim()) {
       return;
@@ -187,7 +187,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           );
           currentParseState = newParseState;
 
-          // システムプロンプトの更新
+          // System promptの更新
           if (updates.systemPrompt !== undefined) {
             setFormData((prev) => ({
               ...prev,
@@ -253,7 +253,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                 {t('agent.basicSettings')}
               </h2>
 
-              {/* Agent名 */}
+              {/* Agent name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                   {t('agent.nameAndIcon')}
@@ -290,7 +290,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                 )}
               </div>
 
-              {/* 説明 */}
+              {/* Description */}
               <div>
                 <label
                   htmlFor="description"
@@ -323,7 +323,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                 )}
               </div>
 
-              {/* システムプロンプト */}
+              {/* System prompt */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label htmlFor="systemPrompt" className="text-sm font-medium text-gray-700">

@@ -46,7 +46,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   isLoading: false,
   error: null,
 
-  // Agent CRUD操作
+  // Agent CRUD operations
   createAgent: async (input: CreateAgentInput) => {
     set({ isLoading: true, error: null });
 
@@ -170,7 +170,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     }
   },
 
-  // Agent選択
+  // Select agent
   selectAgent: (agent: Agent | null) => {
     set({ selectedAgent: agent });
     saveSelectedAgentIdToStorage(agent?.agentId || null);

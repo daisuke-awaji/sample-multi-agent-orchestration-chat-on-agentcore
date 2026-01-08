@@ -116,7 +116,7 @@ export interface BeforeToolsEvent extends AgentStreamEvent {
       name?: string;
       input?: Record<string, unknown>;
       toolUseId?: string;
-      text?: string; // textBlock用
+      text?: string; // For textBlock
       [key: string]: unknown;
     }>;
   };

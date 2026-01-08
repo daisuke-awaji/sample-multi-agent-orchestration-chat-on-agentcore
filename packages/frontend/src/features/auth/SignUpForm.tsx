@@ -27,13 +27,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
       [name]: value,
     }));
 
-    // リアルタイムバリデーション
+    // Real-time validation
     try {
       if (name === 'confirmPassword') {
-        // パスワード確認の場合は全体をチェック
+        // Check entire form for password confirmation
         createSignUpSchema().parse({ ...formData, [name]: value });
       } else {
-        // その他のフィールドは個別にチェック
+        // Check other fields individually
         const fieldSchema = createSignUpSchema().shape[name as keyof SignUpFormData];
         if (fieldSchema) {
           fieldSchema.parse(value);
@@ -52,7 +52,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
       }
     }
 
-    // エラーをクリア
+    // Clear errors
     if (error) {
       clearError();
     }
@@ -62,14 +62,14 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToLogin }) => {
     e.preventDefault();
 
     try {
-      // バリデーション
+      // Validation
       const validatedData = createSignUpSchema().parse(formData);
 
-      // サインアップ実行
+      // Execute signup
       await signUp(validatedData.username, validatedData.password, validatedData.email);
     } catch (err) {
       if (err instanceof ZodError && err.issues) {
-        // Zodバリデーションエラー
+        // Zod validation error
         const errors: Record<string, string> = {};
         err.issues.forEach((issue) => {
           if (issue.path?.[0]) {

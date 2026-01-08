@@ -58,7 +58,7 @@ function StorageItemComponent({
   const { t } = useTranslation();
 
   const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // カードのクリックイベントを止める
+    e.stopPropagation(); // Stop card click event
 
     const confirmMessage =
       item.type === 'directory'
@@ -71,7 +71,7 @@ function StorageItemComponent({
   };
 
   const handleDownloadClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // カードのクリックイベントを止める
+    e.stopPropagation(); // Stop card click event
     onDownload(item);
   };
 
@@ -79,7 +79,7 @@ function StorageItemComponent({
     if (item.type === 'directory') {
       onNavigate(item.path);
     } else {
-      // ファイルの場合はダウンロード
+      // Download if file
       onDownload(item);
     }
   };
@@ -108,7 +108,7 @@ function StorageItemComponent({
     onContextMenu(e, item);
   };
 
-  // ファイルアイコンを取得
+  // Get file icon
   const fileIconConfig = item.type === 'file' ? getFileIcon(item.name) : null;
   const FileIcon = fileIconConfig?.icon;
 
@@ -221,7 +221,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const folderContextMenuRef = useRef<HTMLDivElement>(null);
 
-  // フォルダダウンロード関連の状態
+  // Folder download related state
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
     current: 0,
@@ -235,20 +235,20 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   const [downloadError, setDownloadError] = useState<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // URLハッシュからパスを取得
+  // Get path from URL hash
   const getPathFromHash = (): string => {
     const hash = window.location.hash;
     const match = hash.match(/#storage=(.+)/);
     return match ? decodeURIComponent(match[1]) : '/';
   };
 
-  // URLハッシュにパスを設定
+  // Set path to URL hash
   const setPathToHash = (path: string) => {
     const newHash = `#storage=${encodeURIComponent(path)}`;
     window.history.pushState(null, '', newHash);
   };
 
-  // URLハッシュをクリア
+  // Clear URL hash
   const clearHash = () => {
     if (window.location.hash.startsWith('#storage=')) {
       window.history.pushState(null, '', window.location.pathname + window.location.search);
@@ -258,34 +258,34 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   // モーダル表示時にデータを読み込み
   useEffect(() => {
     if (isOpen) {
-      // URLハッシュが明示的に設定されている場合はそれを使用、
-      // なければ現在選択中のパス（currentPath）を使用
+      // Use URL hash if explicitly set,
+      // otherwise use currently selected path (currentPath)
       const hasExplicitHash = window.location.hash.startsWith('#storage=');
       const initialPath = hasExplicitHash ? getPathFromHash() : currentPath || '/';
 
-      // 初期表示時にもURLハッシュを設定（履歴を追加）
+      // Set URL hash on initial display (add to history)
       setPathToHash(initialPath);
       loadItems(initialPath);
-      // フォルダツリーも読み込み
+      // Also load folder tree
       loadFolderTree();
     } else {
-      // モーダルを閉じたらURLハッシュをクリア
+      // Clear URL hash when closing modal
       clearHash();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // ブラウザバック/フォワードの検知
+  // Detect browser back/forward
   useEffect(() => {
     if (!isOpen) return;
 
     const handleHashChange = () => {
       if (window.location.hash.startsWith('#storage=')) {
         const pathFromHash = getPathFromHash();
-        // 直接ストアのメソッドを呼び出す
+        // Call store method directly
         useStorageStore.getState().loadItems(pathFromHash);
       } else {
-        // ハッシュがない場合はモーダルを閉じる
+        // Close modal if no hash
         onClose();
       }
     };
@@ -298,7 +298,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     };
   }, [isOpen, onClose]);
 
-  // コンテキストメニューの外部クリックを検知
+  // Detect outside click of context menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
@@ -320,7 +320,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     }
   }, [contextMenu, folderContextMenu]);
 
-  // パスナビゲーション
+  // Path navigation
   const handleNavigate = (path: string) => {
     setPathToHash(path);
     loadItems(path);
@@ -331,10 +331,10 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     loadItems('/');
   };
 
-  // パンくずリスト作成
+  // Create breadcrumb list
   const pathSegments = currentPath.split('/').filter(Boolean);
 
-  // ファイルアップロード（バッチ処理）
+  // File upload (batch processing)
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
@@ -349,7 +349,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     await uploadFiles(fileArray);
   };
 
-  // ディレクトリエントリから再帰的にファイルとディレクトリを取得
+  // Recursively get files and directories from directory entry
   const readDirectoryEntry = async (
     directoryEntry: FileSystemDirectoryEntry,
     path: string = ''
@@ -369,7 +369,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
 
     const entries = await readEntries();
 
-    // エントリがない場合は空のディレクトリ
+    // Empty directory if no entry
     if (entries.length === 0) {
       directories.push(path);
       return { files, directories };
@@ -423,18 +423,18 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     const items = e.dataTransfer.items;
 
     if (!items) {
-      // フォールバック: 通常のファイルリスト
+      // Fallback: Normal file list
       const files = e.dataTransfer.files;
       await handleFileSelect(files);
       return;
     }
 
-    // DataTransferItemを使用してフォルダを処理
+    // Process folder using DataTransferItem
     const allFiles: Array<{ file: File; relativePath: string }> = [];
     const allDirectories: string[] = [];
 
-    // 【重要】DataTransferItemListは同期的にしかアクセスできないため、
-    // 最初にすべてのエントリを同期的に取得する
+    // [IMPORTANT] DataTransferItemList can only be accessed synchronously,
+    // so get all entries synchronously first
     const entries: FileSystemEntry[] = [];
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -446,17 +446,17 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       }
     }
 
-    // エントリを取得した後で、非同期処理を実行
+    // Execute async processing after getting entries
     for (const entry of entries) {
       if (entry.isFile) {
-        // ファイルの場合
+        // If file
         const fileEntry = entry as FileSystemFileEntry;
         const file = await new Promise<File>((resolve, reject) => {
           fileEntry.file(resolve, reject);
         });
         allFiles.push({ file, relativePath: file.name });
       } else if (entry.isDirectory) {
-        // ディレクトリの場合、再帰的に読み取り
+        // If directory, read recursively
         const dirEntry = entry as FileSystemDirectoryEntry;
         const result = await readDirectoryEntry(dirEntry, entry.name);
         allFiles.push(...result.files);
@@ -464,9 +464,9 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       }
     }
 
-    // 空のディレクトリを先に作成
+    // Create empty directory first
     for (const dirPath of allDirectories) {
-      // dirPathの最後のセグメントをディレクトリ名として、親パスを計算
+      // Calculate parent path using last segment of dirPath as directory name
       const pathParts = dirPath.split('/');
       const dirName = pathParts[pathParts.length - 1];
       const parentPath =
@@ -479,13 +479,13 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       await createDirectory(dirName, parentPath);
     }
 
-    // すべてのファイルをバッチアップロード
+    // Batch upload all files
     if (allFiles.length > 0) {
       await uploadFiles(allFiles);
     }
   };
 
-  // ディレクトリ作成
+  // Create directory
   const handleCreateDirectory = async () => {
     if (!newDirectoryName.trim()) return;
 
@@ -504,13 +504,13 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   // ダウンロード
   const handleDownload = async (item: StorageItem) => {
     if (item.type === 'directory') {
-      // フォルダの場合はZIPダウンロード
+      // ZIP download for folders
       await handleFolderDownload(item.path, item.name);
     } else {
-      // ファイルの場合は署名付きURLでダウンロード
+      // Download with signed URL for files
       try {
         const downloadUrl = await generateDownloadUrl(item.path);
-        // 新しいタブでダウンロードURLを開く
+        // Open download URL in new tab
         window.open(downloadUrl, '_blank');
       } catch (error) {
         console.error('Download error:', error);
@@ -518,7 +518,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     }
   };
 
-  // コンテンツパネルのコンテキストメニュー表示
+  // Show context menu of content panel
   const handleContextMenu = (e: React.MouseEvent, item: StorageItem) => {
     e.preventDefault();
     e.stopPropagation();
@@ -530,7 +530,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     });
   };
 
-  // フォルダツリーのコンテキストメニュー表示
+  // Show context menu of folder tree
   const handleFolderContextMenu = (e: React.MouseEvent, node: FolderNode) => {
     e.preventDefault();
     e.stopPropagation();
@@ -613,7 +613,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     setDownloadProgress({ current: 0, total: 0, percentage: 0, currentFile: '' });
     setIsDownloadModalOpen(true);
 
-    // AbortControllerを作成
+    // Create AbortController
     abortControllerRef.current = new AbortController();
 
     try {

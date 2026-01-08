@@ -10,7 +10,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // エラー状態に基づくスタイル（白背景統一、アイコンのみ変更）
+  // Style based on error state (unified white background, change icon only)
   const getResultStyles = () => {
     if (toolResult.isError) {
       return {
@@ -46,10 +46,10 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
 
   const resultStyles = getResultStyles();
 
-  // 結果の内容を整形
+  // Format result content
   const formattedContent = (() => {
     try {
-      // JSONかどうか確認
+      // Check if JSON
       const parsed = JSON.parse(toolResult.content);
       return {
         isJson: true,

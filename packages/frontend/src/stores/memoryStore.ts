@@ -24,7 +24,7 @@ interface MemoryState {
 
   // ローディング状態
   isLoading: boolean;
-  isDeleting: string | null; // 削除中のレコードID
+  isDeleting: string | null; // Record ID being deleted
 
   // エラー状態
   error: string | null;
@@ -47,7 +47,7 @@ export const useMemoryStore = create<MemoryState>()(
   persist(
     (set, get) => ({
       // 初期状態
-      isMemoryEnabled: true, // デフォルトはON
+      isMemoryEnabled: true, // Default is ON
       records: [],
       isLoading: false,
       isDeleting: null,
@@ -132,7 +132,7 @@ export const useMemoryStore = create<MemoryState>()(
       },
 
       /**
-       * エラーをクリア
+       * Clear errors
        */
       clearError: () => {
         set({ error: null });

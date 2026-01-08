@@ -13,7 +13,7 @@ interface StoragePathDisplayProps {
 export function StoragePathDisplay({ onClick }: StoragePathDisplayProps) {
   const { currentPath } = useStorageStore();
 
-  // パスを短縮表示（最大40文字）
+  // Display shortened path (max 40 characters)
   const displayPath = currentPath.length > 40 ? '...' + currentPath.slice(-37) : currentPath;
 
   return (

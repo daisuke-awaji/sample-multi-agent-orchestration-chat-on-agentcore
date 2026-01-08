@@ -28,7 +28,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // 確認コードは数字のみ、6桁まで
+    // Confirmation code: digits only, up to 6 digits
     if (name === 'code') {
       const numericValue = value.replace(/\D/g, '').slice(0, 6);
       setFormData((prev) => ({
@@ -42,7 +42,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
       }));
     }
 
-    // リアルタイムバリデーション
+    // Real-time validation
     try {
       const fieldSchema = createConfirmSignUpSchema().shape[name as keyof ConfirmSignUpFormData];
       if (fieldSchema) {
@@ -62,7 +62,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
       }
     }
 
-    // エラーをクリア
+    // Clear errors
     if (error) {
       clearError();
     }
@@ -73,17 +73,17 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
     e.preventDefault();
 
     try {
-      // バリデーション
+      // Validation
       const validatedData = createConfirmSignUpSchema().parse(formData);
 
-      // 確認実行
+      // Execute confirmation
       await confirmSignUp(validatedData.username, validatedData.code);
 
-      // 成功時はログイン画面へ
+      // Redirect to login screen on success
       onSwitchToLogin();
     } catch (err) {
       if (err instanceof ZodError && err.issues) {
-        // Zodバリデーションエラー
+        // Zod validation error
         const errors: Record<string, string> = {};
         err.issues.forEach((issue) => {
           if (issue.path?.[0]) {
@@ -101,7 +101,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
       await resendCode(username);
       setResendSuccess(true);
     } catch {
-      // エラーは authStore で処理済み
+      // Error already handled by authStore
     }
   };
 

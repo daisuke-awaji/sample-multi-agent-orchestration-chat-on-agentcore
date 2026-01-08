@@ -26,7 +26,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevLoadingRef = useRef(isLoading);
 
-  // テキストエリアの自動リサイズ
+  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -35,24 +35,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [input]);
 
-  // ローディング完了時にフォーカスを戻す
+  // Return focus when loading completes
   useEffect(() => {
-    // ローディングが完了した時（true → false）にフォーカスを戻す
+    // Return focus when loading completes (true → false)
     if (prevLoadingRef.current && !isLoading) {
       textareaRef.current?.focus();
     }
     prevLoadingRef.current = isLoading;
   }, [isLoading]);
 
-  // シナリオプロンプトの自動入力
+  // Auto-fill scenario prompt
   useEffect(() => {
     if (getScenarioPrompt) {
       const scenarioPrompt = getScenarioPrompt();
       if (scenarioPrompt) {
-        // 次のフレームで実行してカスケードレンダリングを防ぐ
+        // Execute in next frame to prevent cascade rendering
         requestAnimationFrame(() => {
           setInput(scenarioPrompt);
-          // フォーカスを当ててカーソルを末尾に移動
+          // Focus and move cursor to end
           setTimeout(() => {
             if (textareaRef.current) {
               textareaRef.current.focus();
@@ -66,8 +66,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // エラーがある場合のみクリア（不要な再レンダリングを防ぐ）
-    // エラーは送信時または新しいメッセージ受信時にクリアされるため、ここでは削除
+    // Clear only if error exists (prevent unnecessary re-renders)
+    // Error cleared on send or new message, so delete here
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,22 +78,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
 
     try {
-      // 送信するメッセージを保存
+      // Save message to send
       const messageToSend = input.trim();
 
-      // 入力フィールドを即座にクリア
+      // Clear input field immediately
       setInput('');
 
-      // 送信後にテキストエリアにフォーカスを戻す
+      // Return focus to textarea after sending
       textareaRef.current?.focus();
 
-      // 新規セッションの場合は先にセッション作成
+      // Create session first for new session
       let targetSessionId = sessionId;
       if (!targetSessionId) {
         targetSessionId = onCreateSession();
       }
 
-      // メッセージ送信（非同期で継続）
+      // Send message (continue asynchronously)
       await sendPrompt(messageToSend, targetSessionId);
     } catch (err) {
       console.error('メッセージ送信エラー:', err);
@@ -101,19 +101,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // IME変換中は何もしない
+    // Do nothing during IME composition
     if (e.nativeEvent.isComposing) {
       return;
     }
 
     if (sendBehavior === 'enter') {
-      // Enter で送信、Shift+Enter で改行
+      // Send with Enter, newline with Shift+Enter
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSubmit(e);
       }
     } else {
-      // Cmd/Ctrl+Enter で送信、Enter で改行
+      // Send with Cmd/Ctrl+Enter, newline with Enter
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         handleSubmit(e);

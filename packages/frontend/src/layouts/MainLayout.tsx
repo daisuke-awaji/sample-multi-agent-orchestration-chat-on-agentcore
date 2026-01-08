@@ -27,25 +27,25 @@ export function MainLayout() {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const { clearActiveSession } = useSessionStore();
 
-  // ページタイトルを取得
+  // Get page title
   const getPageTitle = () => {
     const path = location.pathname;
 
-    // チャットページの場合はエージェント名を返す
+    // Return agent name for chat page
     if (path.startsWith('/chat')) {
       return selectedAgent ? translateIfKey(selectedAgent.name, t) : '汎用アシスタント';
     }
 
-    // ルート設定から翻訳キーを取得
+    // Get translation key from route config
     const titleKey = getPageTitleKey(path);
     return titleKey ? t(titleKey) : '';
   };
 
-  // ページアイコンを取得
+  // Get page icon
   const getPageIcon = () => {
     const path = location.pathname;
 
-    // チャットページの場合はエージェントアイコンを返す
+    // Return agent icon for chat page
     if (path.startsWith('/chat') && selectedAgent?.icon) {
       const AgentIcon = (icons[selectedAgent.icon as keyof typeof icons] as LucideIcon) || Bot;
       return <AgentIcon className="w-5 h-5 text-gray-700 flex-shrink-0" />;
@@ -54,19 +54,19 @@ export function MainLayout() {
     return null;
   };
 
-  // タイトルクリック処理
+  // Handle title click
   const handleTitleClick = () => {
     if (location.pathname.startsWith('/chat')) {
       setIsAgentModalOpen(true);
     }
   };
 
-  // Agent選択処理
+  // Handle agent selection
   const handleAgentSelect = (agent: Agent | null) => {
     console.log('Agent selected:', agent?.name || 'None');
   };
 
-  // 新しいチャット作成処理
+  // Handle new chat creation
   const handleNewChat = (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.button === 1) {
       return;
@@ -78,7 +78,7 @@ export function MainLayout() {
   const pageIcon = getPageIcon();
   const isChatPage = location.pathname.startsWith('/chat');
 
-  // レスポンシブ対応: 3段階のブレークポイント
+  // Responsive design: 3 breakpoints
   // - < 768px: モバイル（完全非表示、ハンバーガーメニューのみ）
   // - 768px - 1024px: ナローデスクトップ（自動折りたたみ）
   // - > 1024px: ワイドデスクトップ（ユーザー設定に従う）
@@ -94,19 +94,19 @@ export function MainLayout() {
       setNarrowDesktop(isNarrow);
 
       if (isMobile) {
-        // モバイル: サイドバーを閉じる（オーバーレイ形式）
+        // Mobile: Close sidebar (overlay style)
         setSidebarOpen(false);
       } else if (isNarrow) {
-        // ナローデスクトップ: 自動的に折りたたむ
+        // Narrow desktop: Auto collapse
         setSidebarOpen(false);
       }
-      // ワイドデスクトップ(> 1024px)の場合は何もしない（ユーザー設定を保持）
+      // Wide desktop (> 1024px): Do nothing (preserve user settings)
     };
 
-    // 初回チェック
+    // Initial check
     handleResize();
 
-    // リスナー登録
+    // Register listener
     mobileQuery.addEventListener('change', handleResize);
     narrowDesktopQuery.addEventListener('change', handleResize);
 
@@ -116,7 +116,7 @@ export function MainLayout() {
     };
   }, [setSidebarOpen, setMobileView, setNarrowDesktop]);
 
-  // オーバーレイのクリック処理（モバイル時のみ）
+  // Handle overlay click (mobile only)
   const handleOverlayClick = () => {
     if (isMobileView) {
       setSidebarOpen(false);
@@ -170,7 +170,7 @@ export function MainLayout() {
 
       {/* サイドバー */}
       {isMobileView ? (
-        // モバイル時: オーバーレイサイドバー
+        // Mobile: Overlay sidebar
         <div
           className={`
             fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out
@@ -180,7 +180,7 @@ export function MainLayout() {
           <SessionSidebar />
         </div>
       ) : (
-        // デスクトップ時: 通常のサイドバー
+        // Desktop: Normal sidebar
         <div
           className={`
             transition-all duration-300 ease-in-out flex-shrink-0
@@ -198,7 +198,7 @@ export function MainLayout() {
         <Outlet />
       </div>
 
-      {/* Agent選択モーダル */}
+      {/* Select agentモーダル */}
       <AgentSelectorModal
         isOpen={isAgentModalOpen}
         onClose={() => setIsAgentModalOpen(false)}

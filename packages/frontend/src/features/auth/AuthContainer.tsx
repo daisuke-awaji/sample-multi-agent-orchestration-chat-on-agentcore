@@ -13,7 +13,7 @@ export const AuthContainer: React.FC = () => {
   const { needsConfirmation, pendingUsername, setNeedsConfirmation } = useAuthStore();
   const [resetPasswordEmail, setResetPasswordEmail] = useState<string>('');
 
-  // 確認が必要な場合は /confirm へリダイレクト
+  // Redirect to /confirm if confirmation needed
   useEffect(() => {
     if (needsConfirmation && pendingUsername && location.pathname !== '/confirm') {
       navigate('/confirm', { replace: true });
