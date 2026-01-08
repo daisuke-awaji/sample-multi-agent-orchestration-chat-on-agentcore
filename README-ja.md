@@ -135,6 +135,7 @@ AWS_REGION=eu-west-1 AWS_DEFAULT_REGION=eu-west-1 CDK_DEFAULT_REGION=eu-west-1 n
 ### 技術ドキュメント
 - [💻 ローカル開発環境のセットアップ](docs/local-development-setup.md) - 環境セットアップの自動化
 - [🔐 JWT認証システム](docs/jwt-authentication.md) - 認証の詳細
+- [🚀 PR自動デプロイ](docs/pr-auto-deploy-setup.md) - GitHub Actions による PR 環境の自動デプロイ
 - [📊 アーキテクチャ図](docs/fullstack-agentcore-architecture.drawio.png)
 
 ## 🛠️ 開発

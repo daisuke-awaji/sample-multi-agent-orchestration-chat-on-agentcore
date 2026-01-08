@@ -138,6 +138,7 @@ After deployment, the CloudFormation stack outputs will include the Frontend URL
 ### Technical Documentation
 - [💻 Local Development Setup](docs/local-development-setup.md) - Environment setup automation
 - [🔐 JWT Authentication System](docs/jwt-authentication.md) - Authentication details
+- [🚀 PR Auto Deploy](docs/pr-auto-deploy-setup.md) - Automatic PR environment deployment with GitHub Actions
 - [📊 Architecture Diagram](docs/fullstack-agentcore-architecture.drawio.png)
 
 ## 🛠️ Development

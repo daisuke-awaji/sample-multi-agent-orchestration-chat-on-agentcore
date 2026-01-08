@@ -8,7 +8,7 @@ import * as cdk from 'aws-cdk-lib';
 /**
  * Environment name
  */
-export type Environment = 'default' | 'dev' | 'stg' | 'prd';
+export type Environment = 'default' | 'dev' | 'stg' | 'prd' | string; // Allow dynamic PR environments
 
 /**
  * Environment-specific configuration interface
@@ -242,11 +242,57 @@ export const environments: Record<Environment, EnvironmentConfig> = {
 
 /**
  * Get environment configuration
+ * @param env Environment name (dev, stg, prd, or pr-{number})
+ * @returns Environment configuration
  */
 export function getEnvironmentConfig(env: Environment): EnvironmentConfig {
+  // Check if it's a PR environment (e.g., pr-123)
+  if (env.startsWith('pr-')) {
+    return getPrEnvironmentConfig(env);
+  }
+
   const config = environments[env];
   if (!config) {
-    throw new Error(`Unknown environment: ${env}. Valid values are: dev, stg, prd`);
+    throw new Error(`Unknown environment: ${env}. Valid values are: dev, stg, prd, or pr-{number}`);
   }
   return config;
+}
+
+/**
+ * Generate PR environment configuration dynamically
+ * @param env PR environment name (e.g., pr-123)
+ * @returns PR environment configuration
+ */
+function getPrEnvironmentConfig(env: string): EnvironmentConfig {
+  const prNumber = env.replace('pr-', '');
+
+  // Validate PR number
+  if (!/^\d+$/.test(prNumber)) {
+    throw new Error(`Invalid PR environment name: ${env}. Expected format: pr-{number}`);
+  }
+
+  // Generate PR-specific configuration based on dev environment
+  const baseConfig = environments.dev;
+
+  return {
+    env: env as Environment,
+    awsRegion: baseConfig.awsRegion,
+    resourcePrefix: `agentcore-pr-${prNumber}`,
+    runtimeName: `agentcore_pr_${prNumber}`,
+    deletionProtection: false,
+    corsAllowedOrigins: ['*'], // Allow all origins for PR environments
+    memoryExpirationDays: 7, // Short retention for PR environments
+    s3RemovalPolicy: cdk.RemovalPolicy.DESTROY,
+    s3AutoDeleteObjects: true,
+    cognitoDeletionProtection: false,
+    logRetentionDays: 3, // Short retention for PR environments
+    frontendBucketPrefix: `agentcore-pr-${prNumber}`,
+    userStorageBucketPrefix: `agentcore-pr-${prNumber}`,
+    backendApiName: `agentcore-pr-${prNumber}-backend-api`,
+    tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key', // Use dev secrets
+    githubTokenSecretName: 'agentcore/dev/github-token', // Use dev secrets
+    allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
+    // No custom domain for PR environments
+    // No test user for PR environments
+  };
 }

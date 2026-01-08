@@ -13,10 +13,18 @@ const envName: Environment = envContext || 'default';
 // 環境設定を取得
 const envConfig = getEnvironmentConfig(envName);
 
-// スタック名: AgentCoreApp (デフォルト), AgentCoreAppDev, AgentCoreAppStg, AgentCoreAppPrd
-const stackName = envContext
-  ? `AgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`
-  : 'AgentCoreApp';
+// スタック名: AgentCoreApp (デフォルト), AgentCoreAppDev, AgentCoreAppStg, AgentCoreAppPrd, AgentCoreAppPr123
+let stackName: string;
+if (!envContext) {
+  stackName = 'AgentCoreApp';
+} else if (envName.startsWith('pr-')) {
+  // PR environment: AgentCoreAppPr123
+  const prNumber = envName.replace('pr-', '');
+  stackName = `AgentCoreAppPr${prNumber}`;
+} else {
+  // Standard environment: capitalize first letter
+  stackName = `AgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`;
+}
 
 // スタックを作成
 new AgentCoreStack(app, stackName, {
