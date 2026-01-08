@@ -66,14 +66,14 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     };
   }, []);
 
-  // Agent選択
+  // Select agent
   const handleAgentSelect = (agent: Agent) => {
     selectAgent(agent);
     onAgentSelect(agent);
     onClose();
   };
 
-  // Agent作成
+  // Create agent
   const handleCreateAgent = async (data: CreateAgentInput) => {
     const newAgent = await createAgent(data);
     setMode('list');
@@ -81,7 +81,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     onAgentSelect(newAgent);
   };
 
-  // Agent更新
+  // Update agent
   const handleUpdateAgent = async (data: CreateAgentInput) => {
     if (!editingAgent) return;
 
@@ -93,7 +93,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     setEditingAgent(null);
   };
 
-  // Agent削除
+  // Delete agent
   const handleDeleteAgent = async (agent: Agent) => {
     await deleteAgent(agent.agentId);
     setDeleteConfirmAgent(null);
@@ -105,7 +105,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     }
   };
 
-  // 3点メニュートグル
+  // 3-dot menu toggle
   const toggleMenu = (agentId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setOpenMenuId(openMenuId === agentId ? null : agentId);

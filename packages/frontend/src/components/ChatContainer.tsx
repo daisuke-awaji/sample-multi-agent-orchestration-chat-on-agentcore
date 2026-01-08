@@ -32,12 +32,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ sessionId, onCreat
   const getScenarioPrompt = () => {
     const prompt = selectedScenarioPrompt;
     if (prompt) {
-      setSelectedScenarioPrompt(null); // 一度だけ使用
+      setSelectedScenarioPrompt(null); // Use only once
     }
     return prompt;
   };
 
-  // Agent選択処理
+  // Handle agent selection
   const handleAgentSelect = (agent: Agent | null) => {
     console.log('Agent selected:', agent?.name || 'None');
   };
@@ -76,7 +76,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ sessionId, onCreat
         getScenarioPrompt={getScenarioPrompt}
       />
 
-      {/* Agent選択モーダル */}
+      {/* Select agentモーダル */}
       <AgentSelectorModal
         isOpen={isAgentModalOpen}
         onClose={() => setIsAgentModalOpen(false)}

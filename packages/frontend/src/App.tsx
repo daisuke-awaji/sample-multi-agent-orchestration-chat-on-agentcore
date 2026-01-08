@@ -24,7 +24,7 @@ function App() {
     // Initialize global error handler with auth store
     initializeErrorHandler({ logout });
 
-    // AgentStoreを初期化
+    // Initialize AgentStore
     initializeAgentStore();
 
     // Check existing session

@@ -51,7 +51,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
       [name]: value,
     }));
 
-    // リアルタイムバリデーション
+    // Real-time validation
     try {
       if (name === 'confirmPassword') {
         resetPasswordSchema.parse({ ...formData, [name]: value });
@@ -80,19 +80,19 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
     e.preventDefault();
 
     try {
-      // バリデーション
+      // Validation
       const validatedData = resetPasswordSchema.parse(formData);
 
       setIsLoading(true);
       setError(null);
 
-      // パスワードリセット実行
+      // Execute password reset
       await confirmResetPassword(email, validatedData.code, validatedData.newPassword);
 
-      // 成功表示
+      // Show success
       setIsSuccess(true);
 
-      // 2秒後にログイン画面へ
+      // Redirect to login screen after 2 seconds
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();

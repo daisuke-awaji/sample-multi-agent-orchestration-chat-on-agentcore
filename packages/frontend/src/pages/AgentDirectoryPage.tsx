@@ -101,7 +101,7 @@ export function AgentDirectoryPage() {
 
       {/* メインコンテンツ */}
       <div className="flex-1 overflow-y-auto p-6">
-        {/* 説明文 */}
+        {/* Description文 */}
         <p className="text-sm text-gray-600 mb-6">{t('agentDirectory.description')}</p>
 
         {/* 検索セクション */}
@@ -193,7 +193,7 @@ export function AgentDirectoryPage() {
                       </div>
                     </div>
 
-                    {/* 説明 */}
+                    {/* Description */}
                     <p className="text-sm text-gray-600 line-clamp-2 mb-3">
                       {translateIfKey(agent.description, t)}
                     </p>

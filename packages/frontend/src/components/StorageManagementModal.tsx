@@ -58,7 +58,7 @@ function StorageItemComponent({
   const { t } = useTranslation();
 
   const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // カードのクリックイベントを止める
+    e.stopPropagation(); // Stop card click event
 
     const confirmMessage =
       item.type === 'directory'
@@ -71,7 +71,7 @@ function StorageItemComponent({
   };
 
   const handleDownloadClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // カードのクリックイベントを止める
+    e.stopPropagation(); // Stop card click event
     onDownload(item);
   };
 
@@ -613,7 +613,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     setDownloadProgress({ current: 0, total: 0, percentage: 0, currentFile: '' });
     setIsDownloadModalOpen(true);
 
-    // AbortControllerを作成
+    // Create AbortController
     abortControllerRef.current = new AbortController();
 
     try {

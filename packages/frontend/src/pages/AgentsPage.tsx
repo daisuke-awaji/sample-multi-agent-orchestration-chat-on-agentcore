@@ -35,7 +35,7 @@ export function AgentsPage() {
             {/* Coming Soon タイトル */}
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">{t('agent.comingSoon')}</h2>
 
-            {/* 説明文 */}
+            {/* Description文 */}
             <div className="space-y-3 mb-8">
               <p className="text-gray-600 text-base">{t('agent.searchAgentsDescription')}</p>
               <p className="text-gray-500 text-sm">{t('agent.searchAgentsFeature')}</p>

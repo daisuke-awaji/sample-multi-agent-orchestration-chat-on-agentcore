@@ -175,7 +175,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       },
     }),
     []
-  ); // 依存配列を空にして、コンポーネントの生存期間中は同じ参照を保持
+  ); // Empty dependency array to keep same reference during component lifetime
 
   return (
     <div

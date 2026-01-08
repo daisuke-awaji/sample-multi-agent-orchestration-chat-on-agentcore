@@ -27,7 +27,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     const value = e.target.value;
     setEmail(value);
 
-    // リアルタイムバリデーション
+    // Real-time validation
     try {
       emailSchema.shape.email.parse(value);
       setValidationError('');
@@ -46,16 +46,16 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     e.preventDefault();
 
     try {
-      // バリデーション
+      // Validation
       emailSchema.parse({ email });
 
       setIsLoading(true);
       setError(null);
 
-      // パスワードリセットコード送信
+      // Send password reset code
       await forgotPassword(email);
 
-      // 成功したら次の画面へ
+      // Go to next screen on success
       if (onCodeSent) {
         onCodeSent(email);
       }

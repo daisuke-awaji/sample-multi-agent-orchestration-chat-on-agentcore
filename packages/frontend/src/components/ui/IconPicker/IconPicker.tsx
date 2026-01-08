@@ -46,7 +46,7 @@ export const IconPicker: React.FC<IconPickerProps> = ({
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 68, // 各行の高さ（正方形ボタン + gap）
+    estimateSize: () => 68, // Height of each row (square button + gap)
     overscan: 5,
   });
 

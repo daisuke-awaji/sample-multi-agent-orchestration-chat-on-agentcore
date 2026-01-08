@@ -84,7 +84,7 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
     setIsUnsharing(true);
     try {
       await toggleShareAgent(agent.agentId);
-      await fetchSharedAgents(); // 共有エージェント一覧を更新
+      await fetchSharedAgents(); // Update shared agent list
       toast.success(t('agentDirectory.unshareSuccess'));
       onClose();
     } catch (error) {

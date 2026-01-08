@@ -13,8 +13,8 @@ const en = load(enYaml) as Record<string, unknown>;
 
 // i18n 初期化
 i18n
-  .use(LanguageDetector) // ブラウザ言語の自動検出
-  .use(initReactI18next) // React への統合
+  .use(LanguageDetector) // Auto-detect browser language
+  .use(initReactI18next) // Integrate with React
   .init({
     resources: {
       ja: {
@@ -24,9 +24,9 @@ i18n
         translation: en,
       },
     },
-    fallbackLng: 'en', // フォールバック言語
-    supportedLngs: ['ja', 'en'], // サポートする言語
-    debug: import.meta.env.DEV, // 開発モードでデバッグログを有効化
+    fallbackLng: 'en', // Fallback language
+    supportedLngs: ['ja', 'en'], // Supported languages
+    debug: import.meta.env.DEV, // Enable debug logs in development mode
 
     interpolation: {
       escapeValue: false, // React already escapes by default
@@ -56,14 +56,14 @@ i18n
     detection: {
       // 言語検出の優先順位
       order: ['localStorage', 'navigator'],
-      // localStorage のキー名
+      // localStorage key name
       lookupLocalStorage: 'i18nextLng',
       // キャッシュする言語
       caches: ['localStorage'],
     },
 
     react: {
-      useSuspense: false, // Suspense を無効化（必要に応じて有効化可能）
+      useSuspense: false, // Disable Suspense (can enable if needed)
     },
   });
 

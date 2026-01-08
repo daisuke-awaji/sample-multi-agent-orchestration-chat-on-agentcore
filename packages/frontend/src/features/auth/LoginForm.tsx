@@ -29,7 +29,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       [name]: value,
     }));
 
-    // リアルタイムバリデーション
+    // Real-time validation
     try {
       createLoginSchema().shape[name as keyof LoginFormData].parse(value);
       setValidationErrors((prev) => ({
@@ -45,7 +45,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       }
     }
 
-    // エラーをクリア
+    // Clear errors
     if (error) {
       clearError();
     }
@@ -55,14 +55,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
 
     try {
-      // バリデーション
+      // Validation
       const validatedData = createLoginSchema().parse(formData);
 
-      // ログイン実行
+      // Execute login
       await login(validatedData.username, validatedData.password);
     } catch (err) {
       if (err instanceof ZodError && err.issues) {
-        // Zodバリデーションエラー
+        // Zod validation error
         const errors: Record<string, string> = {};
         err.issues.forEach((issue) => {
           if (issue.path?.[0]) {

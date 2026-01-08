@@ -49,11 +49,11 @@ export function useSessionSync(): UseSessionSyncReturn {
       } else {
         console.log('⏳ 新規セッション作成中、URL同期をスキップ');
       }
-      return; // どちらの場合もここでreturn
+      return; // Return here in both cases
     }
 
     if (!urlSessionId) {
-      // /chat の場合：新規チャット準備
+      // For /chat: prepare new chat
       if (activeSessionId) {
         console.log('🗑️ 新規チャット準備のためアクティブセッションをクリア');
         clearActiveSession();

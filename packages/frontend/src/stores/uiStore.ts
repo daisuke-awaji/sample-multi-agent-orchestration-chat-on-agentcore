@@ -83,8 +83,8 @@ export const useUIStore = create<UIState>()(
         }),
     }),
     {
-      name: 'ui-storage', // localStorage のキー名
-      partialize: (state) => ({ isSidebarOpen: state.isSidebarOpen }), // 永続化する項目を指定
+      name: 'ui-storage', // localStorage key name
+      partialize: (state) => ({ isSidebarOpen: state.isSidebarOpen }), // Specify items to persist
     }
   )
 );

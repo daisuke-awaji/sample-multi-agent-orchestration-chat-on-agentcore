@@ -203,7 +203,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 説明 */}
+      {/* Description */}
       <div className="text-sm text-gray-600">
         <p>{t('tool.mcp.description')}</p>
       </div>
@@ -281,7 +281,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
         </button>
       </div>
 
-      {/* バリデーションエラー */}
+      {/* Validationエラー */}
       {validationError && (
         <div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />

@@ -93,7 +93,7 @@ function ToolItem({ tool }: ToolItemProps) {
             )}
           </div>
 
-          {/* 説明 */}
+          {/* Description */}
           {tool.description && (
             <p className="text-gray-600 text-sm mt-1 leading-relaxed">{tool.description}</p>
           )}
@@ -291,7 +291,7 @@ export function ToolsPage() {
             </h2>
           </div>
 
-          {/* 説明文 */}
+          {/* Description文 */}
           {!searchQuery && (
             <p className="text-xs text-gray-500 mb-4">{t('tool.toolsPageDescription')}</p>
           )}

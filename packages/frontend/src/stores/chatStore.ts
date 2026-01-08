@@ -296,7 +296,7 @@ export const useChatStore = create<ChatStore>()(
                 updateMessage(assistantMessageId, {
                   contents: [...existingContents, errorContent],
                   isStreaming: false,
-                  isError: true, // エラーフラグをセット
+                  isError: true, // Set error flag
                 });
 
                 set({
@@ -353,15 +353,15 @@ export const useChatStore = create<ChatStore>()(
         const messages: Message[] = conversationMessages.map((convMsg) => ({
           id: convMsg.id,
           type: convMsg.type,
-          contents: convMsg.contents, // contents配列をそのまま使用
+          contents: convMsg.contents, // Use contents array as is
           timestamp: new Date(convMsg.timestamp),
-          isStreaming: false, // 履歴データはストリーミング中ではない
-          isError: convMsg.type === 'assistant' && isErrorMessage(convMsg.contents), // エラーメッセージを検出
+          isStreaming: false, // History data is not streaming
+          isError: convMsg.type === 'assistant' && isErrorMessage(convMsg.contents), // Detect error message
         }));
 
         set({
           messages,
-          error: null, // エラーをクリア
+          error: null, // Clear errors
         });
 
         console.log(`✅ 会話履歴の復元完了: ${messages.length}件のメッセージ`);

@@ -143,7 +143,7 @@ export const streamAgentResponse = async (
 
         // 改行で分割してNDJSONを処理
         const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // 最後の不完全な行を保持
+        buffer = lines.pop() || ''; // Keep last incomplete line
 
         for (const line of lines) {
           const trimmed = line.trim();

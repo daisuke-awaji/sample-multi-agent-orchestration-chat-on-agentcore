@@ -61,7 +61,7 @@ export function MainLayout() {
     }
   };
 
-  // Agent選択処理
+  // Handle agent selection
   const handleAgentSelect = (agent: Agent | null) => {
     console.log('Agent selected:', agent?.name || 'None');
   };
@@ -198,7 +198,7 @@ export function MainLayout() {
         <Outlet />
       </div>
 
-      {/* Agent選択モーダル */}
+      {/* Select agentモーダル */}
       <AgentSelectorModal
         isOpen={isAgentModalOpen}
         onClose={() => setIsAgentModalOpen(false)}
