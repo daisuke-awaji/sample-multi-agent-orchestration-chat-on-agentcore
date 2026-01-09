@@ -489,6 +489,12 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
   const handleCreateDirectory = async () => {
     if (!newDirectoryName.trim()) return;
 
+    // バリデーション: 半角スペースまたは全角スペースを含む場合はエラー
+    if (/[\s\u3000]/.test(newDirectoryName)) {
+      alert(t('storage.folderNameSpaceError'));
+      return;
+    }
+
     await createDirectory(newDirectoryName);
     setNewDirectoryName('');
     setShowNewDirectoryInput(false);

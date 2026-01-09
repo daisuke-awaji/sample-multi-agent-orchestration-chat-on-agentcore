@@ -364,6 +364,7 @@ storage:
   dragAndDropHint: ファイルをドラッグ&ドロップするか、アップロードボタンをクリックしてください
   dropFiles: ファイルをドロップ
   folderNamePlaceholder: フォルダ名を入力
+  folderNameSpaceError: フォルダ名にスペースを含めることはできません
   itemCount: '{{count}} 件のアイテム • 最大ファイルサイズ: 5MB'
 
   # フォルダダウンロード進捗

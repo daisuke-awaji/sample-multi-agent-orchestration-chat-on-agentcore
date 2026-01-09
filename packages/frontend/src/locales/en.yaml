@@ -362,6 +362,7 @@ storage:
   dragAndDropHint: Drag and drop files or click the upload button
   dropFiles: Drop files
   folderNamePlaceholder: Enter folder name
+  folderNameSpaceError: Folder name cannot contain spaces
   itemCount: '{{count}} items • Max file size: 5MB'
 
   # Folder download progress
