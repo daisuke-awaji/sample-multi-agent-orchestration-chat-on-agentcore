@@ -128,9 +128,10 @@ export class AgentCoreRuntime extends Construct {
   constructor(scope: Construct, id: string, props: AgentCoreRuntimeProps) {
     super(scope, id);
 
-    // Agent Runtime Artifact を作成
-    // Docker context: プロジェクトルート, Dockerfile: docker/agent.Dockerfile
-    // Platform: ARM64 (Bedrock AgentCore Runtime requires ARM64 architecture)
+    // Platform: ARM64 (Amazon Bedrock AgentCore Runtime requires ARM64 architecture)
+    // Note: This works seamlessly on Apple Silicon Macs (native ARM64).
+    // For x86_64 systems (GitHub Actions), QEMU emulation is used to build ARM64 images.
+    // See .github/workflows/auto-deploy.yml for QEMU setup.
     const agentRuntimeArtifact = agentcore.AgentRuntimeArtifact.fromAsset('.', {
       file: 'docker/agent.Dockerfile',
       platform: Platform.LINUX_ARM64,
