@@ -122,6 +122,20 @@ router.get(
         });
       }
 
+      // Verify session ownership via DynamoDB
+      const sessionsDynamoDBService = getSessionsDynamoDBService();
+      if (sessionsDynamoDBService.isConfigured()) {
+        const session = await sessionsDynamoDBService.getSession(actorId, sessionId);
+        if (!session) {
+          console.warn(`⚠️ Access denied to session (${auth.requestId}): ${sessionId}`);
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You do not have permission to access this session',
+            requestId: auth.requestId,
+          });
+        }
+      }
+
       console.log(`💬 Session conversation history retrieval started (${auth.requestId}):`, {
         userId: actorId,
         username: auth.username,
@@ -198,10 +212,23 @@ router.delete(
         sessionId,
       });
 
+      // Verify session ownership before deletion
+      const sessionsDynamoDBService = getSessionsDynamoDBService();
+      if (sessionsDynamoDBService.isConfigured()) {
+        const session = await sessionsDynamoDBService.getSession(actorId, sessionId);
+        if (!session) {
+          console.warn(`⚠️ Access denied to delete session (${auth.requestId}): ${sessionId}`);
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'You do not have permission to delete this session',
+            requestId: auth.requestId,
+          });
+        }
+      }
+
       const errors: string[] = [];
 
       // Delete from DynamoDB
-      const sessionsDynamoDBService = getSessionsDynamoDBService();
       if (sessionsDynamoDBService.isConfigured()) {
         try {
           await sessionsDynamoDBService.deleteSession(actorId, sessionId);
