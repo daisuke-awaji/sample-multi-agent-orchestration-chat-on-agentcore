@@ -187,6 +187,32 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     [processAndAttachImages]
   );
 
+  // Handle paste from clipboard (screenshots)
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            imageFiles.push(file);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault(); // Prevent image data from being pasted as text
+        processAndAttachImages(imageFiles);
+      }
+      // Allow normal text paste if no images
+    },
+    [processAndAttachImages]
+  );
+
   // Cleanup: Release Object URLs on component unmount
   useEffect(() => {
     return () => {
@@ -322,6 +348,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             value={input}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={t('chat.messageInputPlaceholder')}
             className="w-full px-4 py-3 pr-12 pb-12 border border-gray-200 rounded-2xl focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-transparent resize-none min-h-[72px] max-h-[200px] bg-white"
             rows={2}
