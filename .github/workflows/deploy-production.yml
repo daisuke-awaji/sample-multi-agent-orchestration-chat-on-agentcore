@@ -1,0 +1,85 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up QEMU for cross-platform Docker builds (x86_64 -> ARM64)
+      # Required because AgentCore Runtime only supports ARM64 architecture
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::891376971424:role/GitHubActionsRole
+          aws-region: ap-northeast-1
+          role-session-name: github-actions-deploy-prd-${{ github.run_id }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bootstrap CDK (if needed)
+        run: |
+          echo "Checking CDK bootstrap status..."
+          npx cdk bootstrap || echo "Bootstrap already completed or failed"
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          npx cdk deploy --require-approval never --all -c env=prd
+
+      - name: Get deployment outputs
+        id: outputs
+        run: |
+          STACK_NAME="AgentCoreAppPrd"
+
+          FRONTEND_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${STACK_NAME} \
+            --query 'Stacks[0].Outputs[?OutputKey==`FrontendUrl`].OutputValue' \
+            --output text \
+            --region ap-northeast-1 || echo "N/A")
+
+          BACKEND_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${STACK_NAME} \
+            --query 'Stacks[0].Outputs[?OutputKey==`BackendApiUrl`].OutputValue' \
+            --output text \
+            --region ap-northeast-1 || echo "N/A")
+
+          RUNTIME_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${STACK_NAME} \
+            --query 'Stacks[0].Outputs[?OutputKey==`RuntimeInvocationEndpoint`].OutputValue' \
+            --output text \
+            --region ap-northeast-1 || echo "N/A")
+
+          echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Stack:** \`${STACK_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** ${FRONTEND_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend API:** ${BACKEND_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runtime:** ${RUNTIME_URL}" >> $GITHUB_STEP_SUMMARY

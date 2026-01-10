@@ -1,0 +1,22 @@
+extends:
+  - recommended
+
+apis:
+  backend:
+    root: openapi-backend.yaml
+  agent:
+    root: openapi-agent.yaml
+
+rules:
+  # Allow long descriptions
+  no-unused-components: warn
+  # Allow localhost servers
+  no-server-example.com: off
+  # Disable mandatory 4xx responses (e.g., for health checks)
+  operation-4xx-response: warn
+  # Security is handled via JWT in Authorization header
+  security-defined: off
+  # Allow examples that don't match schema exactly
+  no-invalid-media-type-examples: off
+  # Allow examples that don't perfectly match schema format
+  no-invalid-schema-examples: off

@@ -14,7 +14,7 @@ import { translateIfKey } from '../utils/agent-translation';
 import { useSharedAgentStore } from '../stores/sharedAgentStore';
 import { useAgentStore } from '../stores/agentStore';
 import { useAuthStore } from '../stores/authStore';
-import { toggleShareAgent, createAgent } from '../api/agents';
+import { createAgent } from '../api/agents';
 import { useUIStore } from '../stores/uiStore';
 
 interface SharedAgentDetailModalProps {
@@ -29,7 +29,7 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { cloneAgent, fetchSharedAgents } = useSharedAgentStore();
-  const { initializeStore: refreshAgents } = useAgentStore();
+  const { initializeStore: refreshAgents, toggleShare } = useAgentStore();
   const [isCloning, setIsCloning] = React.useState(false);
   const [isUnsharing, setIsUnsharing] = React.useState(false);
   const { isMobileView } = useUIStore();
@@ -83,7 +83,7 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
   const handleUnshare = async () => {
     setIsUnsharing(true);
     try {
-      await toggleShareAgent(agent.agentId);
+      await toggleShare(agent.agentId); // Update agentStore
       await fetchSharedAgents(); // Update shared agent list
       toast.success(t('agentDirectory.unshareSuccess'));
       onClose();
