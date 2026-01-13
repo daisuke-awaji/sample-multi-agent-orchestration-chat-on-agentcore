@@ -1,6 +1,7 @@
 /**
  * MCP client factory
  * Generate appropriate McpClient for each transport
+ * Includes in-memory caching for client reuse
  */
 
 import { McpClient } from '@strands-agents/sdk';
@@ -11,6 +12,42 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { logger } from '../config/index.js';
 import type { MCPServerConfig, StdioMCPServer, HttpMCPServer, SseMCPServer } from './types.js';
 import { MCPConfigError } from './types.js';
+
+/**
+ * In-memory cache for MCP clients
+ * Key: Normalized JSON string of server configurations
+ * Value: Array of McpClient instances
+ */
+const clientCache = new Map<string, McpClient[]>();
+
+/**
+ * Generate cache key from server configurations
+ * Normalizes and sorts configurations to ensure consistent keys
+ *
+ * @param servers Array of server names and configurations
+ * @returns Cache key string
+ */
+function generateCacheKey(servers: Array<{ name: string; config: MCPServerConfig }>): string {
+  // Normalize and sort by server name for consistent cache keys
+  const normalized = servers
+    .map((s) => ({
+      name: s.name,
+      config: s.config,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return JSON.stringify(normalized);
+}
+
+/**
+ * Clear the MCP client cache
+ * Useful for testing and cleanup scenarios
+ */
+export function clearMCPClientCache(): void {
+  const cacheSize = clientCache.size;
+  clientCache.clear();
+  logger.info(`🧹 MCP client cache cleared (${cacheSize} entries removed)`);
+}
 
 /**
  * Create client for stdio transport
@@ -140,6 +177,7 @@ export function createMCPClient(name: string, config: MCPServerConfig): McpClien
 
 /**
  * Generate McpClient array from multiple MCP server configurations
+ * Uses in-memory caching to reuse clients for identical configurations
  *
  * @param servers Array of server names and configurations
  * @returns Array of McpClient instances
@@ -147,6 +185,20 @@ export function createMCPClient(name: string, config: MCPServerConfig): McpClien
 export function createMCPClients(
   servers: Array<{ name: string; config: MCPServerConfig }>
 ): McpClient[] {
+  // Generate cache key from configuration
+  const cacheKey = generateCacheKey(servers);
+
+  // Check cache first
+  const cached = clientCache.get(cacheKey);
+  if (cached) {
+    logger.info(
+      `♻️ Reusing cached MCP clients (${cached.length} items, cache key: ${cacheKey.substring(0, 50)}...)`
+    );
+    return cached;
+  }
+
+  // Create new clients if cache miss
+  logger.info('💾 Creating new MCP clients (cache miss)');
   const clients: McpClient[] = [];
 
   for (const { name, config } of servers) {
@@ -159,6 +211,12 @@ export function createMCPClients(
       // Skip and continue even if error occurs (create other clients)
     }
   }
+
+  // Store in cache
+  clientCache.set(cacheKey, clients);
+  logger.info(
+    `💾 Cached MCP clients (${clients.length} items, cache key: ${cacheKey.substring(0, 50)}...)`
+  );
 
   return clients;
 }

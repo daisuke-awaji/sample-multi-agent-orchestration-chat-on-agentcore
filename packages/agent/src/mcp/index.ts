@@ -18,4 +18,4 @@ export type {
   MCPConfigError,
 } from './types.js';
 export { getEnabledMCPServers } from './config-loader.js';
-export { createMCPClient, createMCPClients } from './client-factory.js';
+export { createMCPClient, createMCPClients, clearMCPClientCache } from './client-factory.js';
