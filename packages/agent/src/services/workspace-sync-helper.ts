@@ -40,8 +40,8 @@ export function validateStoragePath(storagePath: string): void {
     );
   }
 
-  // Prevent absolute paths that could escape the user namespace
-  if (storagePath.startsWith('/') && storagePath.startsWith('//')) {
+  // Prevent protocol-relative paths that could redirect to external systems
+  if (storagePath.startsWith('//')) {
     throw new Error('Invalid storage path: protocol-relative paths are not allowed');
   }
 
