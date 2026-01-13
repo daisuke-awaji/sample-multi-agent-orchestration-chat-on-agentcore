@@ -824,12 +824,10 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
             <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-amber-800">
-                {t('storage.largeSizeWarningTitle', 'Large Storage Directory')}
+                {t('storage.largeSizeWarningTitle')}
               </p>
               <p className="text-sm text-amber-700 mt-1">
                 {t('storage.largeSizeWarningMessage', {
-                  defaultValue:
-                    'This directory contains {{size}} of data ({{count}} files). Sync may take some time when starting a session.',
                   size: formatSizeForWarning(sizeWarning.totalSize),
                   count: sizeWarning.fileCount,
                 })}

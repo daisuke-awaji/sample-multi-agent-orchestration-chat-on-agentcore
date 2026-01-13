@@ -367,6 +367,10 @@ storage:
   folderNameSpaceError: フォルダ名にスペースを含めることはできません
   itemCount: '{{count}} 件のアイテム • 最大ファイルサイズ: 5MB'
 
+  # 大容量ディレクトリの警告
+  largeSizeWarningTitle: 大容量のストレージディレクトリ
+  largeSizeWarningMessage: 'このディレクトリには {{size}} のデータ（{{count}} ファイル）が含まれています。セッション開始時の同期に時間がかかる場合があります。'
+
   # フォルダダウンロード進捗
   downloadProgress:
     downloading: ダウンロード中

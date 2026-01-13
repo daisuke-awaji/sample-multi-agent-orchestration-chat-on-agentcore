@@ -365,6 +365,10 @@ storage:
   folderNameSpaceError: Folder name cannot contain spaces
   itemCount: '{{count}} items • Max file size: 5MB'
 
+  # Large directory size warning
+  largeSizeWarningTitle: Large Storage Directory
+  largeSizeWarningMessage: 'This directory contains {{size}} of data ({{count}} files). Sync may take some time when starting a session.'
+
   # Folder download progress
   downloadProgress:
     downloading: Downloading
