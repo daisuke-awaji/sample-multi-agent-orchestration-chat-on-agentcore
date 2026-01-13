@@ -11,7 +11,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SessionSidebar } from '../components/SessionSidebar';
 import { useUIStore } from '../stores/uiStore';
-import { useSelectedAgent } from '../stores/agentStore';
+import { useSelectedAgent, useAgentStore } from '../stores/agentStore';
 import { AgentSelectorModal } from '../components/AgentSelectorModal';
 import type { Agent } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
@@ -25,6 +25,7 @@ export function MainLayout() {
   const location = useLocation();
   const { t } = useTranslation();
   const selectedAgent = useSelectedAgent();
+  const isAgentLoading = useAgentStore((state) => state.isLoading);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const { clearActiveSession } = useSessionStore();
 
@@ -78,6 +79,7 @@ export function MainLayout() {
   const pageTitle = getPageTitle();
   const pageIcon = getPageIcon();
   const isChatPage = location.pathname.startsWith('/chat');
+  const showSkeleton = isChatPage && isAgentLoading;
 
   // Responsive design: 3 breakpoints
   // - < 768px: モバイル（完全非表示、ハンバーガーメニューのみ）
@@ -155,17 +157,26 @@ export function MainLayout() {
             <Menu className="w-5 h-5" />
           </button>
 
-          {pageTitle && (
-            <button
-              onClick={handleTitleClick}
-              className={`flex items-center gap-2 flex-1 min-w-0 ${
-                isChatPage ? 'hover:bg-gray-50 rounded-lg p-2 transition-colors' : 'cursor-default'
-              }`}
-              disabled={!isChatPage}
-            >
-              {pageIcon}
-              <h1 className="text-base font-semibold text-gray-900 truncate">{pageTitle}</h1>
-            </button>
+          {showSkeleton ? (
+            <div className="flex items-center gap-2 flex-1 min-w-0 p-2">
+              <div className="w-5 h-5 bg-gray-200 rounded animate-pulse flex-shrink-0" />
+              <div className="h-5 bg-gray-200 rounded animate-pulse w-32" />
+            </div>
+          ) : (
+            pageTitle && (
+              <button
+                onClick={handleTitleClick}
+                className={`flex items-center gap-2 flex-1 min-w-0 ${
+                  isChatPage
+                    ? 'hover:bg-gray-50 rounded-lg p-2 transition-colors'
+                    : 'cursor-default'
+                }`}
+                disabled={!isChatPage}
+              >
+                {pageIcon}
+                <h1 className="text-base font-semibold text-gray-900 truncate">{pageTitle}</h1>
+              </button>
+            )
           )}
 
           {isChatPage && (
