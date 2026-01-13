@@ -42,7 +42,8 @@ export interface ToolResult {
 export type MessageContent =
   | { type: 'text'; text: string }
   | { type: 'toolUse'; toolUse: ToolUse }
-  | { type: 'toolResult'; toolResult: ToolResult };
+  | { type: 'toolResult'; toolResult: ToolResult }
+  | { type: 'image'; image: { base64: string; mimeType: string; fileName?: string } };
 
 /**
  * Conversation message type definition

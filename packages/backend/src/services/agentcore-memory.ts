@@ -94,7 +94,8 @@ export interface ToolResult {
 export type MessageContent =
   | { type: 'text'; text: string }
   | { type: 'toolUse'; toolUse: ToolUse }
-  | { type: 'toolResult'; toolResult: ToolResult };
+  | { type: 'toolResult'; toolResult: ToolResult }
+  | { type: 'image'; image: { base64: string; mimeType: string; fileName?: string } };
 
 /**
  * Event information type definition (formatted for Frontend)
@@ -129,6 +130,10 @@ interface StrandsContentBlock {
   input?: Record<string, unknown>;
   content?: unknown;
   status?: string;
+  // ImageBlock fields
+  format?: string;
+  base64?: string;
+  source?: { bytes?: Uint8Array };
 }
 
 /**
@@ -191,6 +196,29 @@ function convertToMessageContents(contentBlocks: StrandsContentBlock[]): Message
                   ? block.content
                   : JSON.stringify(block.content || {}),
               isError: block.status === 'error' || false,
+            },
+          });
+        }
+        break;
+
+      case 'imageBlock':
+        // Handle serialized ImageBlock (base64 format from converters.ts)
+        if ('base64' in block && typeof block.base64 === 'string' && block.format) {
+          // Map format to mimeType
+          const formatToMimeType: Record<string, string> = {
+            png: 'image/png',
+            jpeg: 'image/jpeg',
+            jpg: 'image/jpeg',
+            gif: 'image/gif',
+            webp: 'image/webp',
+          };
+          const mimeType = formatToMimeType[block.format] || 'image/png';
+
+          messageContents.push({
+            type: 'image',
+            image: {
+              base64: block.base64,
+              mimeType,
             },
           });
         }

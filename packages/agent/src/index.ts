@@ -14,6 +14,7 @@ import type { SessionConfig } from './session/types.js';
 import { WorkspaceSync } from './services/workspace-sync.js';
 import { logger } from './config/index.js';
 import { Message, TextBlock } from '@strands-agents/sdk';
+import type { ContentBlock } from '@strands-agents/sdk';
 
 /**
  * Sanitize error message to remove sensitive information
@@ -252,7 +253,11 @@ app.use(cors(corsOptions));
 const sessionStorage = createSessionStorage();
 
 // Configure to receive request body as JSON
-app.use(express.json());
+app.use(
+  express.json({
+    limit: '100mb',
+  })
+);
 
 // Apply request context middleware (endpoints requiring authentication)
 app.use('/invocations', requestContextMiddleware);
@@ -269,6 +274,92 @@ app.get('/ping', (req: Request, res: Response) => {
 });
 
 /**
+ * Image data for multimodal input
+ */
+interface ImageData {
+  base64: string;
+  mimeType: string;
+}
+
+/**
+ * Server-side image validation configuration
+ */
+const IMAGE_VALIDATION_CONFIG = {
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_IMAGES: 4,
+  ALLOWED_MIME_TYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'],
+  // Magic numbers for image format verification
+  MAGIC_NUMBERS: {
+    'image/png': [0x89, 0x50, 0x4e, 0x47],
+    'image/jpeg': [0xff, 0xd8, 0xff],
+    'image/jpg': [0xff, 0xd8, 0xff],
+    'image/gif': [0x47, 0x49, 0x46],
+    'image/webp': [0x52, 0x49, 0x46, 0x46], // RIFF header
+  } as Record<string, number[]>,
+};
+
+/**
+ * Validate image data on server-side
+ * @param images Array of image data to validate
+ * @returns Validation result with error message if invalid
+ */
+function validateImageData(images: ImageData[]): { valid: boolean; error?: string } {
+  // Check image count
+  if (images.length > IMAGE_VALIDATION_CONFIG.MAX_IMAGES) {
+    return {
+      valid: false,
+      error: `Maximum ${IMAGE_VALIDATION_CONFIG.MAX_IMAGES} images allowed, received ${images.length}`,
+    };
+  }
+
+  for (let i = 0; i < images.length; i++) {
+    const image = images[i];
+
+    // Check MIME type
+    if (!IMAGE_VALIDATION_CONFIG.ALLOWED_MIME_TYPES.includes(image.mimeType)) {
+      return {
+        valid: false,
+        error: `Image ${i + 1}: Invalid MIME type '${image.mimeType}'. Allowed types: ${IMAGE_VALIDATION_CONFIG.ALLOWED_MIME_TYPES.join(', ')}`,
+      };
+    }
+
+    // Decode base64 and check file size
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(image.base64, 'base64');
+    } catch {
+      return {
+        valid: false,
+        error: `Image ${i + 1}: Invalid base64 encoding`,
+      };
+    }
+
+    if (buffer.length >= IMAGE_VALIDATION_CONFIG.MAX_FILE_SIZE) {
+      const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
+      return {
+        valid: false,
+        error: `Image ${i + 1}: File size (${sizeMB}MB) exceeds 5MB limit`,
+      };
+    }
+
+    // Validate magic number matches declared MIME type
+    const magicBytes = IMAGE_VALIDATION_CONFIG.MAGIC_NUMBERS[image.mimeType];
+    if (magicBytes) {
+      const fileHeader = Array.from(buffer.slice(0, magicBytes.length));
+      const isValidMagic = magicBytes.every((byte, idx) => fileHeader[idx] === byte);
+      if (!isValidMagic) {
+        return {
+          valid: false,
+          error: `Image ${i + 1}: File content does not match declared MIME type '${image.mimeType}'`,
+        };
+      }
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
  * Agent invocation request type definition
  */
 interface InvocationRequest {
@@ -280,6 +371,7 @@ interface InvocationRequest {
   memoryEnabled?: boolean; // Optional: Whether to enable long-term memory (default: false)
   memoryTopK?: number; // Optional: Number of long-term memories to retrieve (default: 10)
   mcpConfig?: Record<string, unknown>; // Optional: User-defined MCP server configuration
+  images?: ImageData[]; // Optional: Array of images for multimodal input
 }
 
 /**
@@ -298,12 +390,25 @@ app.post('/invocations', async (req: Request, res: Response) => {
       memoryEnabled,
       memoryTopK,
       mcpConfig,
+      images,
     } = req.body as InvocationRequest;
 
     if (!prompt?.trim()) {
       return res.status(400).json({
         error: 'Empty prompt provided',
       });
+    }
+
+    // Server-side image validation
+    if (images && images.length > 0) {
+      const validation = validateImageData(images);
+      if (!validation.valid) {
+        logger.warn('🖼️ Image validation failed:', { error: validation.error });
+        return res.status(400).json({
+          error: validation.error,
+        });
+      }
+      logger.info(`🖼️ Image validation passed: ${images.length} image(s)`);
     }
 
     // Set storagePath in context
@@ -397,8 +502,48 @@ app.post('/invocations', async (req: Request, res: Response) => {
     try {
       logger.info('🔄 Agent streaming started:', { requestId: contextMeta.requestId });
 
+      // Build input content blocks (text + images for multimodal)
+      const inputContent: ContentBlock[] = [];
+
+      // Add text content if present
+      if (prompt.trim()) {
+        inputContent.push(new TextBlock(prompt));
+      }
+
+      // Add image content blocks for multimodal input
+      if (images && images.length > 0) {
+        // Dynamic import to handle ImageBlock
+        const { ImageBlock } = await import('@strands-agents/sdk');
+        for (const image of images) {
+          // Convert base64 string to Uint8Array
+          const binaryString = Buffer.from(image.base64, 'base64');
+          const bytes = new Uint8Array(binaryString);
+
+          // Map mimeType to format
+          const formatMap: Record<string, 'png' | 'jpg' | 'jpeg' | 'gif' | 'webp'> = {
+            'image/png': 'png',
+            'image/jpeg': 'jpeg',
+            'image/jpg': 'jpg',
+            'image/gif': 'gif',
+            'image/webp': 'webp',
+          };
+          const format = formatMap[image.mimeType] || 'png';
+
+          inputContent.push(
+            new ImageBlock({
+              format,
+              source: { bytes },
+            })
+          );
+        }
+        logger.info(`🖼️ Added ${images.length} image(s) to input`);
+      }
+
+      // Use ContentBlock[] if we have images, otherwise use prompt string
+      const agentInput = inputContent.length > 1 || images?.length ? inputContent : prompt;
+
       // Send streaming events as NDJSON
-      for await (const event of agent.stream(prompt)) {
+      for await (const event of agent.stream(agentInput)) {
         // For messageAddedEvent, save in real-time (only if sessionId exists)
         if (event.type === 'messageAddedEvent' && event.message && sessionConfig) {
           try {

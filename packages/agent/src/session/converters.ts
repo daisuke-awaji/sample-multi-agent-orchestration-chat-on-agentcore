@@ -4,6 +4,7 @@
 import {
   Message,
   TextBlock,
+  ImageBlock,
   type Role,
   type ContentBlock,
   type JSONValue,
@@ -35,6 +36,15 @@ interface ToolResultData {
 type ToolData = ToolUseData | ToolResultData;
 
 /**
+ * ImageBlock データの型定義（シリアライズ用）
+ */
+interface ImageBlockData {
+  type: 'imageBlock';
+  format: 'png' | 'jpeg' | 'gif' | 'webp';
+  base64: string;
+}
+
+/**
  * AgentCore Memory のConversational Payload型定義
  */
 export interface ConversationalPayload {
@@ -52,12 +62,17 @@ export interface BlobPayload {
 }
 
 /**
+ * シリアライズ可能なコンテンツブロック型
+ */
+type SerializableContentBlock = ContentBlock | ImageBlockData;
+
+/**
  * blob データの内容型定義（新形式）
  */
 interface BlobData {
   messageType: 'content';
   role: string;
-  content: ContentBlock[];
+  content: SerializableContentBlock[];
 }
 
 /**
@@ -80,6 +95,33 @@ interface LegacyBlobData {
 export type AgentCorePayload = ConversationalPayload | BlobPayload;
 
 /**
+ * ImageBlockをシリアライズ可能な形式に変換
+ * @param block ImageBlock
+ * @returns ImageBlockData (Base64形式)
+ */
+function serializeImageBlock(block: ContentBlock): ImageBlockData | null {
+  if (block.type !== 'imageBlock') return null;
+
+  // ImageBlock の source から bytes を取得
+  const imageBlock = block as unknown as {
+    type: 'imageBlock';
+    format?: string;
+    source?: { bytes?: Uint8Array };
+  };
+
+  if (!imageBlock.source?.bytes) return null;
+
+  // Uint8Array を Base64 に変換
+  const base64 = Buffer.from(imageBlock.source.bytes).toString('base64');
+
+  return {
+    type: 'imageBlock',
+    format: (imageBlock.format as ImageBlockData['format']) || 'png',
+    base64,
+  };
+}
+
+/**
  * Strands Message から AgentCore Payload に変換
  * @param message Strands Message
  * @returns AgentCore Payload (ConversationalPayload or BlobPayload)
@@ -96,7 +138,7 @@ export function messageToAgentCorePayload(message: Message): AgentCorePayload {
     };
   }
 
-  // content 配列にテキスト以外（toolUse/toolResult）が含まれるかチェック
+  // content 配列にテキスト以外（toolUse/toolResult/imageBlock）が含まれるかチェック
   const hasNonTextContent = message.content.some((block) => block.type !== 'textBlock');
 
   // テキストのみのシンプルなメッセージの場合は conversational payload
@@ -113,11 +155,20 @@ export function messageToAgentCorePayload(message: Message): AgentCorePayload {
     }
   }
 
-  // 複雑なメッセージ（toolUse/toolResult含む、または複数のコンテンツブロック）は blob payload
+  // 複雑なメッセージ（toolUse/toolResult/imageBlock含む、または複数のコンテンツブロック）は blob payload
+  // ImageBlock は Base64 にシリアライズして保存
+  const serializedContent: SerializableContentBlock[] = message.content.map((block) => {
+    if (block.type === 'imageBlock') {
+      const serialized = serializeImageBlock(block);
+      if (serialized) return serialized;
+    }
+    return block;
+  });
+
   const blobData: BlobData = {
     messageType: 'content',
     role: message.role,
-    content: message.content,
+    content: serializedContent,
   };
 
   // JSON文字列にシリアライズしてからUint8Arrayにエンコード
@@ -202,9 +253,27 @@ export function agentCorePayloadToMessage(payload: AgentCorePayload): Message {
 
         // 新形式: content配列全体を保存
         if (blobData.messageType === 'content') {
+          // ImageBlockData を ImageBlock に復元
+          const restoredContent: ContentBlock[] = blobData.content.map((block) => {
+            // ImageBlockData の場合は ImageBlock に復元
+            if (
+              block.type === 'imageBlock' &&
+              'base64' in block &&
+              typeof (block as ImageBlockData).base64 === 'string'
+            ) {
+              const imageData = block as ImageBlockData;
+              const bytes = new Uint8Array(Buffer.from(imageData.base64, 'base64'));
+              return new ImageBlock({
+                format: imageData.format,
+                source: { bytes },
+              });
+            }
+            return block as ContentBlock;
+          });
+
           return new Message({
             role: strandsRole,
-            content: blobData.content,
+            content: restoredContent,
           });
         }
 

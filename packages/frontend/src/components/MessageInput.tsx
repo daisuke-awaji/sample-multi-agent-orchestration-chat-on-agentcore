@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Paperclip } from 'lucide-react';
+import { nanoid } from 'nanoid';
 import { useChatStore } from '../stores/chatStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { StoragePathDisplay } from './StoragePathDisplay';
 import { StorageManagementModal } from './StorageManagementModal';
 import { ModelSelector } from './ui/ModelSelector';
+import { ImagePreview } from './ImagePreview';
+import type { ImageAttachment } from '../types/index';
+import { IMAGE_ATTACHMENT_CONFIG } from '../types/index';
 
 interface MessageInputProps {
   sessionId: string | null;
@@ -26,8 +30,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   );
   const isLoading = sessionState?.isLoading || false;
   const [input, setInput] = useState('');
+  const [attachedImages, setAttachedImages] = useState<ImageAttachment[]>([]);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const prevLoadingRef = useRef(isLoading);
 
   // Auto-resize textarea
@@ -47,6 +54,176 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
     prevLoadingRef.current = isLoading;
   }, [isLoading]);
+
+  // Validate image file
+  const validateImageFile = useCallback(
+    (file: File): string | null => {
+      if (!IMAGE_ATTACHMENT_CONFIG.ACCEPTED_TYPES.includes(file.type as never)) {
+        return t('chat.imageAttachment.invalidType');
+      }
+      if (file.size >= IMAGE_ATTACHMENT_CONFIG.MAX_FILE_SIZE) {
+        return t('chat.imageAttachment.tooLarge');
+      }
+      return null;
+    },
+    [t]
+  );
+
+  // Validate total size
+  const validateTotalSize = useCallback(
+    (currentImages: ImageAttachment[], newFiles: File[]): string | null => {
+      const currentTotal = currentImages.reduce((sum, img) => sum + img.size, 0);
+      const newTotal = newFiles.reduce((sum, file) => sum + file.size, 0);
+      if (currentTotal + newTotal > IMAGE_ATTACHMENT_CONFIG.MAX_TOTAL_SIZE) {
+        return t('chat.imageAttachment.totalSizeExceeded');
+      }
+      return null;
+    },
+    [t]
+  );
+
+  // Process and attach image files
+  const processAndAttachImages = useCallback(
+    (files: FileList | File[]) => {
+      const fileArray = Array.from(files);
+      const remainingSlots = IMAGE_ATTACHMENT_CONFIG.MAX_COUNT - attachedImages.length;
+
+      if (remainingSlots <= 0) {
+        alert(t('chat.imageAttachment.maxReached'));
+        return;
+      }
+
+      const filesToProcess = fileArray.slice(0, remainingSlots);
+
+      // Validate individual files
+      const validFiles: File[] = [];
+      for (const file of filesToProcess) {
+        const error = validateImageFile(file);
+        if (error) {
+          alert(`${file.name}: ${error}`);
+          continue;
+        }
+        validFiles.push(file);
+      }
+
+      // Validate total size
+      const totalSizeError = validateTotalSize(attachedImages, validFiles);
+      if (totalSizeError) {
+        alert(totalSizeError);
+        return;
+      }
+
+      const newImages: ImageAttachment[] = [];
+      for (const file of validFiles) {
+        const previewUrl = URL.createObjectURL(file);
+        newImages.push({
+          id: nanoid(),
+          file,
+          fileName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          previewUrl,
+        });
+      }
+
+      if (newImages.length > 0) {
+        setAttachedImages((prev) => [...prev, ...newImages]);
+      }
+    },
+    [attachedImages, validateImageFile, validateTotalSize, t]
+  );
+
+  // Remove image
+  const handleRemoveImage = useCallback((id: string) => {
+    setAttachedImages((prev) => {
+      const imageToRemove = prev.find((img) => img.id === id);
+      if (imageToRemove?.previewUrl) {
+        URL.revokeObjectURL(imageToRemove.previewUrl);
+      }
+      return prev.filter((img) => img.id !== id);
+    });
+  }, []);
+
+  // Handle file input change
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        processAndAttachImages(e.target.files);
+        e.target.value = '';
+      }
+    },
+    [processAndAttachImages]
+  );
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const imageFiles = Array.from(files).filter((file) =>
+          IMAGE_ATTACHMENT_CONFIG.ACCEPTED_TYPES.includes(file.type as never)
+        );
+        if (imageFiles.length > 0) {
+          processAndAttachImages(imageFiles);
+        }
+      }
+    },
+    [processAndAttachImages]
+  );
+
+  // Handle paste from clipboard (screenshots)
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            imageFiles.push(file);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault(); // Prevent image data from being pasted as text
+        processAndAttachImages(imageFiles);
+      }
+      // Allow normal text paste if no images
+    },
+    [processAndAttachImages]
+  );
+
+  // Cleanup: Release Object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      attachedImages.forEach((img) => {
+        if (img.previewUrl) {
+          URL.revokeObjectURL(img.previewUrl);
+        }
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-fill scenario prompt
   useEffect(() => {
@@ -77,16 +254,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!input.trim() || isLoading) {
+    const hasContent = input.trim() || attachedImages.length > 0;
+    if (!hasContent || isLoading) {
       return;
     }
 
     try {
       // Save message to send
       const messageToSend = input.trim();
+      const imagesToSend = [...attachedImages];
 
       // Clear input field immediately
       setInput('');
+      setAttachedImages([]);
 
       // Return focus to textarea after sending
       textareaRef.current?.focus();
@@ -98,9 +278,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       }
 
       // Send message (continue asynchronously)
-      await sendPrompt(messageToSend, targetSessionId);
+      await sendPrompt(messageToSend, targetSessionId, imagesToSend);
+
+      // Release Object URLs after sending
+      imagesToSend.forEach((img) => {
+        if (img.previewUrl) {
+          URL.revokeObjectURL(img.previewUrl);
+        }
+      });
     } catch (err) {
-      console.error('メッセージ送信エラー:', err);
+      console.error('Message send error:', err);
     }
   };
 
@@ -130,36 +317,69 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       className="sticky bottom-0 left-0 right-0 z-30 bg-white p-4"
       style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
     >
-      {/* ストレージパス表示 */}
+      {/* Storage path display */}
       <div className="max-w-4xl mx-auto mb-2">
         <StoragePathDisplay onClick={() => setIsStorageModalOpen(true)} />
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-        <div className="relative">
-          {/* テキスト入力エリア - 2行分のスペースを確保 */}
+        <div
+          className={`relative ${isDragging ? 'ring-2 ring-blue-400 ring-opacity-50 rounded-2xl' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {/* Image preview */}
+          <ImagePreview images={attachedImages} onRemove={handleRemoveImage} disabled={isLoading} />
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={IMAGE_ATTACHMENT_CONFIG.ACCEPTED_TYPES.join(',')}
+            multiple
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {/* Text input area - Reserve space for 2 rows */}
           <textarea
             ref={textareaRef}
             value={input}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={t('chat.messageInputPlaceholder')}
             className="w-full px-4 py-3 pr-12 pb-12 border border-gray-200 rounded-2xl focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-transparent resize-none min-h-[72px] max-h-[200px] bg-white"
             rows={2}
             style={{ height: 'auto' }}
           />
 
-          {/* モデルセレクター - 下部に配置 */}
-          <div className="absolute bottom-3 left-1.5 flex items-center">
+          {/* Model selector - Positioned at bottom */}
+          <div className="absolute bottom-3 left-1.5 flex items-center gap-1">
             <ModelSelector />
+            {/* Image attachment button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || attachedImages.length >= IMAGE_ATTACHMENT_CONFIG.MAX_COUNT}
+              className={`p-1.5 rounded-md transition-colors ${
+                isLoading || attachedImages.length >= IMAGE_ATTACHMENT_CONFIG.MAX_COUNT
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+              title={t('chat.imageAttachment.attach')}
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* 送信ボタン */}
+          {/* Send button */}
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={(!input.trim() && attachedImages.length === 0) || isLoading}
             className={`absolute right-2 bottom-2 w-8 h-8 rounded-md flex items-center justify-center transition-all duration-200 ${
-              !input.trim() || isLoading
+              (!input.trim() && attachedImages.length === 0) || isLoading
                 ? 'text-gray-400 cursor-not-allowed'
                 : 'text-black hover:bg-gray-100'
             }`}
@@ -173,7 +393,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       </form>
 
-      {/* ストレージ管理モーダル */}
+      {/* Storage management modal */}
       <StorageManagementModal
         isOpen={isStorageModalOpen}
         onClose={() => setIsStorageModalOpen(false)}

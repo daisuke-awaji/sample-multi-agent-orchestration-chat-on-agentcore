@@ -36,6 +36,7 @@ interface AgentConfig {
   memoryEnabled?: boolean;
   memoryTopK?: number;
   mcpConfig?: Record<string, unknown>;
+  images?: Array<{ base64: string; mimeType: string }>;
 }
 
 /**
@@ -85,6 +86,10 @@ export const streamAgentResponse = async (
 
   if (agentConfig?.mcpConfig) {
     requestBody.mcpConfig = agentConfig.mcpConfig;
+  }
+
+  if (agentConfig?.images && agentConfig.images.length > 0) {
+    requestBody.images = agentConfig.images;
   }
 
   const body = JSON.stringify(requestBody);
