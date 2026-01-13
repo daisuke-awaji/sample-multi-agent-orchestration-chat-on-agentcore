@@ -58,6 +58,8 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
         sessionId: session.sessionId,
         title: session.title,
         agentId: session.agentId,
+        workingDirectory: session.workingDirectory,
+        modelId: session.modelId,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
       })),
@@ -169,6 +171,128 @@ router.get(
           error instanceof Error
             ? error.message
             : 'Failed to retrieve session conversation history',
+        requestId: auth.requestId,
+      });
+    }
+  }
+);
+
+/**
+ * Session update endpoint
+ * PATCH /sessions/:sessionId
+ * JWT authentication required - Use user ID as actorId
+ * Updates session settings (agentId, workingDirectory, modelId, title)
+ */
+router.patch(
+  '/:sessionId',
+  jwtAuthMiddleware,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const auth = getCurrentAuth(req);
+      const actorId = auth.userId;
+      const { sessionId } = req.params;
+      const { agentId, workingDirectory, modelId, title } = req.body;
+
+      if (!actorId) {
+        return res.status(400).json({
+          error: 'Invalid authentication',
+          message: 'Failed to retrieve user ID',
+          requestId: auth.requestId,
+        });
+      }
+
+      if (!sessionId) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Session ID is not specified',
+          requestId: auth.requestId,
+        });
+      }
+
+      console.log(`🔧 Session update started (${auth.requestId}):`, {
+        userId: actorId,
+        username: auth.username,
+        sessionId,
+        updates: { agentId, workingDirectory, modelId, title },
+      });
+
+      const sessionsDynamoDBService = getSessionsDynamoDBService();
+
+      // Check if DynamoDB Sessions Table is configured
+      if (!sessionsDynamoDBService.isConfigured()) {
+        return res.status(500).json({
+          error: 'Configuration Error',
+          message: 'Sessions Table is not configured',
+          requestId: auth.requestId,
+        });
+      }
+
+      // Verify session ownership
+      const existingSession = await sessionsDynamoDBService.getSession(actorId, sessionId);
+      if (!existingSession) {
+        return res.status(404).json({
+          error: 'Not Found',
+          message: 'Session not found or you do not have permission to update it',
+          requestId: auth.requestId,
+        });
+      }
+
+      // Build updates object (only include provided fields)
+      const updates: {
+        agentId?: string | null;
+        workingDirectory?: string;
+        modelId?: string;
+        title?: string;
+      } = {};
+
+      if (agentId !== undefined) {
+        updates.agentId = agentId;
+      }
+      if (workingDirectory !== undefined) {
+        updates.workingDirectory = workingDirectory;
+      }
+      if (modelId !== undefined) {
+        updates.modelId = modelId;
+      }
+      if (title !== undefined) {
+        updates.title = title;
+      }
+
+      // Perform update
+      const updatedSession = await sessionsDynamoDBService.updateSession(
+        actorId,
+        sessionId,
+        updates
+      );
+
+      console.log(`✅ Session update completed (${auth.requestId}):`, {
+        sessionId,
+        updates,
+      });
+
+      res.status(200).json({
+        session: {
+          sessionId: updatedSession.sessionId,
+          title: updatedSession.title,
+          agentId: updatedSession.agentId,
+          workingDirectory: updatedSession.workingDirectory,
+          modelId: updatedSession.modelId,
+          createdAt: updatedSession.createdAt,
+          updatedAt: updatedSession.updatedAt,
+        },
+        metadata: {
+          requestId: auth.requestId,
+          timestamp: new Date().toISOString(),
+          actorId,
+        },
+      });
+    } catch (error) {
+      const auth = getCurrentAuth(req);
+      console.error(`💥 Session update error (${auth.requestId}):`, error);
+
+      res.status(500).json({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to update session',
         requestId: auth.requestId,
       });
     }

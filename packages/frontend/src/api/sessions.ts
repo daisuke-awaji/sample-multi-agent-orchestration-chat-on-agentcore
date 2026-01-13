@@ -3,7 +3,7 @@
  * Client for calling Backend session API
  */
 
-import { backendGet } from './client/backend-client';
+import { backendGet, backendPatch } from './client/backend-client';
 
 /**
  * Session information type definition
@@ -14,6 +14,18 @@ export interface SessionSummary {
   createdAt: string;
   updatedAt: string;
   agentId?: string;
+  workingDirectory?: string;
+  modelId?: string;
+}
+
+/**
+ * Update session input type definition
+ */
+export interface UpdateSessionInput {
+  agentId?: string | null;
+  workingDirectory?: string;
+  modelId?: string;
+  title?: string;
 }
 
 /**
@@ -98,4 +110,18 @@ export async function fetchSessions(): Promise<SessionSummary[]> {
 export async function fetchSessionEvents(sessionId: string): Promise<ConversationMessage[]> {
   const data = await backendGet<SessionEventsResponse>(`/sessions/${sessionId}/events`);
   return data.events;
+}
+
+/**
+ * Update session settings
+ * @param sessionId Session ID
+ * @param updates Updates to apply
+ * @returns Updated session
+ */
+export async function updateSession(
+  sessionId: string,
+  updates: UpdateSessionInput
+): Promise<SessionSummary> {
+  const data = await backendPatch<{ session: SessionSummary }>(`/sessions/${sessionId}`, updates);
+  return data.session;
 }

@@ -7,8 +7,8 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { customAlphabet } from 'nanoid';
 import toast from 'react-hot-toast';
-import { fetchSessions, fetchSessionEvents } from '../api/sessions';
-import type { SessionSummary, ConversationMessage } from '../api/sessions';
+import { fetchSessions, fetchSessionEvents, updateSession } from '../api/sessions';
+import type { SessionSummary, ConversationMessage, UpdateSessionInput } from '../api/sessions';
 import { ApiError } from '../api/client/base-client';
 import i18n from '../i18n';
 
@@ -18,6 +18,15 @@ const generateSessionId = customAlphabet(
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
   33
 );
+
+/**
+ * Session configuration type (per-session settings)
+ */
+export interface SessionConfig {
+  agentId: string | null;
+  workingDirectory: string;
+  modelId: string;
+}
 
 /**
  * Session store state type definition
@@ -34,6 +43,9 @@ interface SessionState {
   eventsError: string | null;
 
   isCreatingSession: boolean; // New session creation in progress flag
+
+  // Session-specific configuration cache (in-memory)
+  sessionConfigs: Record<string, SessionConfig>;
 }
 
 /**
@@ -52,6 +64,12 @@ interface SessionActions {
   finalizeNewSession: () => void; // Finalize new session creation (clear flag)
   addOptimisticSession: (sessionId: string, title?: string) => void; // Optimistically add session to sidebar
   updateSessionTitle: (sessionId: string, title: string) => void; // Update session title
+
+  // Session configuration actions
+  getSessionConfig: (sessionId: string) => SessionConfig | null;
+  setSessionConfig: (sessionId: string, config: SessionConfig) => void;
+  saveSessionConfig: (sessionId: string, config: Partial<SessionConfig>) => Promise<void>;
+  initializeSessionConfigs: () => void;
 }
 
 /**
@@ -74,6 +92,9 @@ export const useSessionStore = create<SessionStore>()(
       eventsError: null,
       isCreatingSession: false, // New session creation in progress flag
 
+      // Session-specific configuration cache
+      sessionConfigs: {},
+
       // Actions
       loadSessions: async () => {
         try {
@@ -88,6 +109,9 @@ export const useSessionStore = create<SessionStore>()(
             sessionsError: null,
             hasLoadedOnce: true, // Set initial load completion flag
           });
+
+          // Initialize session configs from loaded sessions
+          get().initializeSessionConfigs();
 
           console.log(`✅ Session list loaded: ${sessions.length} items`);
         } catch (error) {
@@ -246,6 +270,104 @@ export const useSessionStore = create<SessionStore>()(
 
         set({ sessions: updatedSessions });
         console.log(`📝 Updated session title: ${sessionId} - "${title}"`);
+      },
+
+      // Session configuration actions
+      getSessionConfig: (sessionId: string) => {
+        const { sessionConfigs } = get();
+        return sessionConfigs[sessionId] || null;
+      },
+
+      setSessionConfig: (sessionId: string, config: SessionConfig) => {
+        const { sessionConfigs } = get();
+        set({
+          sessionConfigs: {
+            ...sessionConfigs,
+            [sessionId]: config,
+          },
+        });
+        console.log(`📦 Set session config for ${sessionId}:`, config);
+      },
+
+      saveSessionConfig: async (sessionId: string, config: Partial<SessionConfig>) => {
+        try {
+          // Build update payload
+          const updates: UpdateSessionInput = {};
+          if (config.agentId !== undefined) {
+            updates.agentId = config.agentId;
+          }
+          if (config.workingDirectory !== undefined) {
+            updates.workingDirectory = config.workingDirectory;
+          }
+          if (config.modelId !== undefined) {
+            updates.modelId = config.modelId;
+          }
+
+          // Skip if no updates
+          if (Object.keys(updates).length === 0) {
+            console.log(`⏭️ No config updates to save for session ${sessionId}`);
+            return;
+          }
+
+          console.log(`💾 Saving session config for ${sessionId}:`, updates);
+          const updatedSession = await updateSession(sessionId, updates);
+
+          // Update local state
+          const { sessions, sessionConfigs } = get();
+
+          // Update sessions list
+          const updatedSessions = sessions.map((s) =>
+            s.sessionId === sessionId
+              ? {
+                  ...s,
+                  agentId: updatedSession.agentId,
+                  workingDirectory: updatedSession.workingDirectory,
+                  modelId: updatedSession.modelId,
+                  updatedAt: updatedSession.updatedAt,
+                }
+              : s
+          );
+
+          // Update config cache
+          const existingConfig = sessionConfigs[sessionId];
+          const newConfig: SessionConfig = {
+            agentId: config.agentId ?? existingConfig?.agentId ?? null,
+            workingDirectory: config.workingDirectory ?? existingConfig?.workingDirectory ?? '/',
+            modelId: config.modelId ?? existingConfig?.modelId ?? '',
+          };
+
+          set({
+            sessions: updatedSessions,
+            sessionConfigs: {
+              ...sessionConfigs,
+              [sessionId]: newConfig,
+            },
+          });
+
+          console.log(`✅ Session config saved for ${sessionId}`);
+        } catch (error) {
+          console.error(`💥 Failed to save session config for ${sessionId}:`, error);
+          // Don't throw - allow UI to continue working even if save fails
+        }
+      },
+
+      initializeSessionConfigs: () => {
+        const { sessions, sessionConfigs } = get();
+        const newConfigs: Record<string, SessionConfig> = { ...sessionConfigs };
+
+        for (const session of sessions) {
+          // Only initialize if not already cached
+          if (!newConfigs[session.sessionId]) {
+            newConfigs[session.sessionId] = {
+              agentId: session.agentId || null,
+              workingDirectory: session.workingDirectory || '/',
+              modelId: session.modelId || '',
+            };
+          }
+        }
+
+        set({ sessionConfigs: newConfigs });
+        console.log(`📦 Initialized session configs for ${sessions.length} sessions`);
       },
     }),
     {

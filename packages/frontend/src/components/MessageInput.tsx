@@ -4,6 +4,7 @@ import { Send, Loader2, Paperclip } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useChatStore } from '../stores/chatStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useSessionStore } from '../stores/sessionStore';
 import { StoragePathDisplay } from './StoragePathDisplay';
 import { StorageManagementModal } from './StorageManagementModal';
 import { ModelSelector } from './ui/ModelSelector';
@@ -25,6 +26,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const { t } = useTranslation();
   const { sendPrompt } = useChatStore();
   const { sendBehavior } = useSettingsStore();
+  const { saveSessionConfig } = useSessionStore();
   const sessionState = useChatStore((state) =>
     sessionId ? (state.sessions[sessionId] ?? null) : null
   );
@@ -357,7 +359,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
           {/* Model selector - Positioned at bottom */}
           <div className="absolute bottom-3 left-1.5 flex items-center gap-1">
-            <ModelSelector />
+            <ModelSelector
+              onModelChange={(modelId) => {
+                if (sessionId) {
+                  saveSessionConfig(sessionId, { modelId });
+                }
+              }}
+            />
             {/* Image attachment button */}
             <button
               type="button"
@@ -397,6 +405,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       <StorageManagementModal
         isOpen={isStorageModalOpen}
         onClose={() => setIsStorageModalOpen(false)}
+        onWorkingDirectoryChange={(path) => {
+          if (sessionId) {
+            saveSessionConfig(sessionId, { workingDirectory: path });
+          }
+        }}
       />
     </div>
   );

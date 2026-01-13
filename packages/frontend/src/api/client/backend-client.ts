@@ -127,3 +127,16 @@ export async function backendPut<T>(endpoint: string, body?: unknown): Promise<T
 export async function backendDelete<T>(endpoint: string): Promise<T> {
   return backendRequest<T>(endpoint, { method: 'DELETE' });
 }
+
+/**
+ * PATCH request helper
+ * @param endpoint - API endpoint
+ * @param body - Request body
+ * @returns Response data
+ */
+export async function backendPatch<T>(endpoint: string, body?: unknown): Promise<T> {
+  return backendRequest<T>(endpoint, {
+    method: 'PATCH',
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}

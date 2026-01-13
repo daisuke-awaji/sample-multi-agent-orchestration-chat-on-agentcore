@@ -40,6 +40,7 @@ import { DownloadProgressModal } from './ui/DownloadProgressModal';
 interface StorageManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onWorkingDirectoryChange?: (path: string) => void;
 }
 
 /**
@@ -200,7 +201,11 @@ function StorageItemComponent({
 /**
  * Storage Management Modal
  */
-export function StorageManagementModal({ isOpen, onClose }: StorageManagementModalProps) {
+export function StorageManagementModal({
+  isOpen,
+  onClose,
+  onWorkingDirectoryChange,
+}: StorageManagementModalProps) {
   const { t } = useTranslation();
   const {
     currentPath,
@@ -224,6 +229,12 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     toggleFolderExpand,
     setAgentWorkingDirectory,
   } = useStorageStore();
+
+  // Handler for setting working directory with callback notification
+  const handleSetWorkingDirectory = (path: string) => {
+    setAgentWorkingDirectory(path);
+    onWorkingDirectoryChange?.(path);
+  };
 
   const [newDirectoryName, setNewDirectoryName] = useState('');
   const [showNewDirectoryInput, setShowNewDirectoryInput] = useState(false);
@@ -964,7 +975,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
                         onNavigate={handleNavigate}
                         onDownload={handleDownload}
                         onContextMenu={handleContextMenu}
-                        onSetWorkingDirectory={setAgentWorkingDirectory}
+                        onSetWorkingDirectory={handleSetWorkingDirectory}
                         isDeleting={deletingItemPath === item.path}
                       />
                     ))}
@@ -1049,7 +1060,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
               <>
                 <button
                   onClick={() => {
-                    setAgentWorkingDirectory(contextMenu.path);
+                    handleSetWorkingDirectory(contextMenu.path);
                     setContextMenu(null);
                   }}
                   className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 transition-colors"
@@ -1105,7 +1116,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
           >
             <button
               onClick={() => {
-                setAgentWorkingDirectory(folderContextMenu.path);
+                handleSetWorkingDirectory(folderContextMenu.path);
                 setFolderContextMenu(null);
               }}
               className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 transition-colors"

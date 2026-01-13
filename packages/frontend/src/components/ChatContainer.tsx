@@ -10,6 +10,7 @@ import { MessageInput } from './MessageInput';
 import { AgentSelectorModal } from './AgentSelectorModal';
 import type { Agent } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
+import { useSessionConfig } from '../hooks/useSessionConfig';
 
 interface ChatContainerProps {
   sessionId: string | null;
@@ -23,6 +24,9 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ sessionId, onCreat
   const { isMobileView } = useUIStore();
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [selectedScenarioPrompt, setSelectedScenarioPrompt] = useState<string | null>(null);
+
+  // Session configuration hook
+  const { saveCurrentConfigToSession } = useSessionConfig({ sessionId });
 
   // Handle scenario click
   const handleScenarioClick = (prompt: string) => {
@@ -39,8 +43,12 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ sessionId, onCreat
   };
 
   // Handle agent selection
-  const handleAgentSelect = (agent: Agent | null) => {
+  const handleAgentSelect = async (agent: Agent | null) => {
     console.log('Agent selected:', agent?.name || 'None');
+    // Save to session if we have an active session
+    if (sessionId) {
+      await saveCurrentConfigToSession();
+    }
   };
 
   return (

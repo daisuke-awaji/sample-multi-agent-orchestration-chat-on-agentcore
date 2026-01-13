@@ -8,7 +8,11 @@ import { ChevronDown, Sparkles } from 'lucide-react';
 import { AVAILABLE_MODELS, getModelById } from '../../../config/models';
 import { useSettingsStore } from '../../../stores/settingsStore';
 
-export const ModelSelector: React.FC = () => {
+interface ModelSelectorProps {
+  onModelChange?: (modelId: string) => void;
+}
+
+export const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange }) => {
   const { selectedModelId, setSelectedModelId } = useSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -35,6 +39,8 @@ export const ModelSelector: React.FC = () => {
   const handleModelSelect = (modelId: string) => {
     setSelectedModelId(modelId);
     setIsOpen(false);
+    // Notify parent of change for session config saving
+    onModelChange?.(modelId);
   };
 
   return (
