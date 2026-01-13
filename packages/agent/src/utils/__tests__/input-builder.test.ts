@@ -121,17 +121,18 @@ describe('buildInputContent', () => {
       }
     });
 
-    it('should default to PNG format for unknown mime types', () => {
+    it('should throw error for unknown mime types (security: defense in depth)', () => {
       const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/unknown' }];
 
-      const result = buildInputContent('Test', images);
+      expect(() => buildInputContent('Test', images)).toThrow(
+        "Unsupported image MIME type: 'image/unknown'"
+      );
+    });
 
-      expect(Array.isArray(result)).toBe(true);
-      if (Array.isArray(result)) {
-        const imageBlock = result[1] as { type: string; format: string; source: unknown };
-        expect(imageBlock.type).toBe('imageBlock');
-        expect(imageBlock.format).toBe('png');
-      }
+    it('should throw error for potentially dangerous mime types', () => {
+      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/svg+xml' }];
+
+      expect(() => buildInputContent('Test', images)).toThrow('Unsupported image MIME type');
     });
 
     it('should convert base64 to bytes in source', () => {

@@ -32,7 +32,7 @@ export function buildInputContent(prompt: string, images?: ImageData[]): Content
     const binaryString = Buffer.from(image.base64, 'base64');
     const bytes = new Uint8Array(binaryString);
 
-    // Map mimeType to format
+    // Map mimeType to format (explicit whitelist for security)
     const formatMap: Record<string, 'png' | 'jpg' | 'jpeg' | 'gif' | 'webp'> = {
       'image/png': 'png',
       'image/jpeg': 'jpeg',
@@ -40,7 +40,14 @@ export function buildInputContent(prompt: string, images?: ImageData[]): Content
       'image/gif': 'gif',
       'image/webp': 'webp',
     };
-    const format = formatMap[image.mimeType] || 'png';
+    const format = formatMap[image.mimeType];
+
+    // Reject unknown MIME types for security (defense in depth)
+    if (!format) {
+      throw new Error(
+        `Unsupported image MIME type: '${image.mimeType}'. Allowed types: ${Object.keys(formatMap).join(', ')}`
+      );
+    }
 
     inputContent.push(
       new ImageBlock({
