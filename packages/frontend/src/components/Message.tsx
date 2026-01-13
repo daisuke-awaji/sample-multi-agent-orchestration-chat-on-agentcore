@@ -83,27 +83,46 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
         return <img src={src} alt={alt} {...props} />;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      code: ({ inline, className, children, ...props }: any) => {
+      code: ({ className, children, ...props }: any) => {
         const match = /language-(\w+)/.exec(className || '');
         const language = match ? match[1] : '';
 
-        if (!inline && match) {
+        // Check if this is a code block (not inline)
+        // Since react-markdown v9+ may not provide `inline` reliably,
+        // we check if content has newlines or has a language class
+        const codeString = String(children);
+        const hasNewline = codeString.includes('\n');
+        const isCodeBlock = hasNewline || Boolean(className);
+
+        if (isCodeBlock && match) {
           // For Mermaid diagram
           if (language === 'mermaid') {
             return <MermaidDiagram chart={String(children).replace(/\n$/, '')} />;
           }
 
-          // Other code blocks
+          // Code blocks with language specification
           return (
             <SyntaxHighlighter
               style={oneLight}
               language={language}
               PreTag="div"
-              className="rounded-lg"
+              className="rounded-lg text-sm"
               {...props}
             >
               {String(children).replace(/\n$/, '')}
             </SyntaxHighlighter>
+          );
+        }
+
+        if (isCodeBlock && !match) {
+          // Code blocks without language specification
+          return (
+            <code
+              className="block whitespace-pre-wrap bg-[#fafafa] text-gray-800 p-4 rounded-lg text-sm overflow-x-auto font-mono"
+              {...props}
+            >
+              {children}
+            </code>
           );
         }
 
