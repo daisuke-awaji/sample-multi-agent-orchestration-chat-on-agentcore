@@ -11,11 +11,16 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          rootDir: '../../',
+          outDir: './dist',
+        },
       },
     ],
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@fullstack-agentcore/tool-definitions$': '<rootDir>/../shared/tool-definitions/src/index.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testTimeout: 30000,
