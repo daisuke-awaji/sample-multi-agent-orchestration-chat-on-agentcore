@@ -348,8 +348,6 @@ storage:
   upload: アップロード
   uploadFolder: フォルダをアップロード
   newFolder: 新規フォルダ
-  setAsWorkingDirectory: このディレクトリを作業ディレクトリに設定
-  setAsWorkingDirectoryShort: 作業ディレクトリに設定
   createFolder: フォルダを作成
   create: 作成
   download: ダウンロード

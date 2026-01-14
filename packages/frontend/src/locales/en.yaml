@@ -346,8 +346,6 @@ storage:
   upload: Upload
   uploadFolder: Upload Folder
   newFolder: New Folder
-  setAsWorkingDirectory: Set this directory as working directory
-  setAsWorkingDirectoryShort: Set as working dir
   download: Download
   downloadFolder: Download Folder
   createFolder: Create Folder

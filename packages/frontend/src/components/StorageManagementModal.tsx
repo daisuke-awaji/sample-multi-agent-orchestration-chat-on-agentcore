@@ -815,7 +815,6 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
           >
             <FolderCog className="w-3.5 h-3.5" />
             <span className="hidden md:inline">{t('storage.setAsWorkingDirectory')}</span>
-            <span className="md:hidden">{t('storage.setAsWorkingDirectoryShort')}</span>
           </button>
 
           <input
