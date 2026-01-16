@@ -4,6 +4,7 @@
 
 import { randomUUID } from 'crypto';
 import { SchedulerEventPayload } from '../types/index.js';
+import { AgentsService, MCPConfig } from './agents-service.js';
 
 /**
  * Encode ARN in Agent URL for AgentCore Runtime
@@ -28,6 +29,8 @@ interface AgentInvocationRequest {
   enabledTools?: string[];
   targetUserId: string;
   sessionId?: string;
+  systemPrompt?: string;
+  mcpConfig?: MCPConfig;
 }
 
 /**
@@ -45,10 +48,12 @@ interface AgentInvocationResponse {
  */
 export class AgentInvoker {
   private readonly agentApiUrl: string;
+  private readonly agentsService: AgentsService;
 
-  constructor(agentApiUrl: string) {
+  constructor(agentApiUrl: string, agentsService: AgentsService) {
     // Encode ARN in URL if needed
     this.agentApiUrl = encodeAgentUrl(agentApiUrl);
+    this.agentsService = agentsService;
     console.log('AgentInvoker initialized with URL:', this.agentApiUrl);
   }
 
@@ -59,12 +64,42 @@ export class AgentInvoker {
     payload: SchedulerEventPayload,
     authToken: string
   ): Promise<AgentInvocationResponse> {
+    // Fetch Agent configuration from DynamoDB
+    console.log('Fetching Agent configuration:', {
+      userId: payload.userId,
+      agentId: payload.agentId,
+    });
+
+    const agent = await this.agentsService.getAgent(payload.userId, payload.agentId);
+
+    if (!agent) {
+      console.error('Agent not found:', {
+        userId: payload.userId,
+        agentId: payload.agentId,
+      });
+      return {
+        requestId: '',
+        success: false,
+        error: `Agent not found: ${payload.agentId}`,
+      };
+    }
+
+    console.log('Agent configuration fetched:', {
+      name: agent.name,
+      systemPrompt: agent.systemPrompt.substring(0, 100) + '...',
+      enabledTools: agent.enabledTools,
+      hasMcpConfig: !!agent.mcpConfig,
+    });
+
+    // Build request with Agent configuration
     const request: AgentInvocationRequest = {
       prompt: payload.prompt,
       targetUserId: payload.userId,
-      modelId: payload.modelId,
-      enabledTools: payload.enabledTools,
       sessionId: payload.sessionId,
+      modelId: payload.modelId, // Use modelId from trigger payload if specified
+      systemPrompt: agent.systemPrompt, // Always use Agent's systemPrompt
+      enabledTools: agent.enabledTools, // Always use Agent's enabledTools
+      mcpConfig: agent.mcpConfig, // Include MCP configuration if available
     };
 
     console.log('Invoking Agent API:', {
@@ -72,10 +107,13 @@ export class AgentInvoker {
       triggerId: payload.triggerId,
       userId: payload.userId,
       agentId: payload.agentId,
+      hasSystemPrompt: !!request.systemPrompt,
+      enabledToolsCount: request.enabledTools?.length || 0,
+      hasMcpConfig: !!request.mcpConfig,
     });
 
-    // Generate session ID if not provided
-    const actualSessionId = payload.sessionId || `session-${randomUUID()}`;
+    // Generate session ID if not provided (with _event suffix for event-triggered sessions)
+    const actualSessionId = payload.sessionId || `${randomUUID()}_event`;
 
     try {
       const response = await fetch(this.agentApiUrl, {
@@ -153,13 +191,13 @@ export class AgentInvoker {
   /**
    * Create AgentInvoker from environment variables
    */
-  static fromEnvironment(): AgentInvoker {
+  static fromEnvironment(agentsService: AgentsService): AgentInvoker {
     const agentApiUrl = process.env.AGENT_API_URL;
 
     if (!agentApiUrl) {
       throw new Error('AGENT_API_URL environment variable is required');
     }
 
-    return new AgentInvoker(agentApiUrl);
+    return new AgentInvoker(agentApiUrl, agentsService);
   }
 }

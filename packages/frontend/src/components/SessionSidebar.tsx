@@ -36,8 +36,9 @@ interface SessionItemProps {
 }
 
 function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
-  // Check if this is a sub-agent session
+  // Check if this is a sub-agent session or event-triggered session
   const isSubAgent = session.sessionId.endsWith('_subagent');
+  const isEventTriggered = session.sessionId.endsWith('_event');
 
   return (
     <Link
@@ -53,7 +54,7 @@ function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
           className={`
           text-sm leading-tight truncate
           ${
-            isSubAgent
+            isSubAgent || isEventTriggered
               ? 'text-gray-500'
               : isActive
                 ? 'text-gray-700'
@@ -61,6 +62,7 @@ function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
           }
         `}
         >
+          {isEventTriggered && <span className="text-xs">{'[Event] '}</span>}
           {isSubAgent && <span className="text-xs">{'[Sub] '}</span>}
           {session.title}
         </span>

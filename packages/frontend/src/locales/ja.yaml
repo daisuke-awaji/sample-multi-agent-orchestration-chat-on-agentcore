@@ -496,6 +496,8 @@ triggers:
     title: トリガー設定
     createTitle: 新規トリガー作成
     editTitle: トリガーを編集
+    basicInfo: 基本情報
+    basicInfoDescription: トリガーの名前、説明、実行するエージェントを設定します
     name: トリガー名
     namePlaceholder: 例 - 日次レポート生成
     nameRequired: トリガー名は必須です
@@ -507,7 +509,10 @@ triggers:
     type: トリガータイプ
     typeSchedule: スケジュール
     typeEvent: イベント（準備中）
+    scheduleConfig: スケジュール設定
+    scheduleConfigDescription: トリガーを実行する日時を設定します
     inputMessage: 入力メッセージ
+    inputMessageDescription: エージェントに送信するメッセージを入力してください
     inputMessagePlaceholder: エージェントに送信するメッセージ
     inputMessageRequired: 入力メッセージは必須です
     save: 保存

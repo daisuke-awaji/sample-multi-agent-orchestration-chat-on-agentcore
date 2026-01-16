@@ -291,6 +291,7 @@ export class AgentCoreStack extends cdk.Stack {
     const triggerLambda = new TriggerLambda(this, 'TriggerLambda', {
       resourcePrefix,
       triggersTable: triggersTable.table,
+      agentsTable: this.agentsTable.table,
       agentApiUrl: '', // Will be set after Runtime is created
       cognitoUserPoolId: this.cognitoAuth.userPoolId,
       cognitoClientId: this.cognitoAuth.machineUserClientId,

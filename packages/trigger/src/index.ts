@@ -3,13 +3,14 @@
  * Handles EventBridge Scheduler events to invoke Agent API
  */
 
+import { SchedulerEvent } from './types/index.js';
 import { handleSchedulerEvent } from './handlers/schedule-handler.js';
 
 /**
  * AWS Lambda handler
  * This function is invoked by EventBridge Scheduler
  */
-export const handler = async (event: any) => {
+export const handler = async (event: SchedulerEvent) => {
   console.log('Lambda invoked with event:', JSON.stringify(event, null, 2));
 
   try {

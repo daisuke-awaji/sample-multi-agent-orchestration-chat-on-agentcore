@@ -200,7 +200,16 @@ export function optionalJwtAuthMiddleware(
 
 /**
  * Determine if the JWT token is from a machine user (Client Credentials Flow)
- * Machine users have no username or cognito:username claim and token_use is 'access'
+ *
+ * Client Credentials Flow characteristics:
+ * 1. No username or cognito:username claim
+ * 2. sub claim is either missing or equals client_id
+ * 3. token_use is 'access'
+ *
+ * Regular user tokens (Authorization Code Flow):
+ * - Have cognito:username or username claim
+ * - sub claim contains user UUID (different from client_id)
+ * - Can be either 'access' or 'id' token_use
  */
 function isMachineUserToken(payload?: CognitoJWTPayload): boolean {
   if (!payload) return false;
@@ -208,8 +217,18 @@ function isMachineUserToken(payload?: CognitoJWTPayload): boolean {
   // Check for user identifier claims
   const hasUserIdentifier = payload['cognito:username'] || payload['username'];
 
-  // Machine user: no user identifier and token_use is 'access'
-  return !hasUserIdentifier && payload.token_use === 'access';
+  // Check if sub exists and is different from client_id
+  // For regular users: sub is a UUID different from client_id
+  // For machine users: sub is either missing or equals client_id
+  const hasUserSub = payload.sub && payload.sub !== payload.client_id;
+
+  // If has user identifier or valid user sub, it's a regular user
+  if (hasUserIdentifier || hasUserSub) {
+    return false;
+  }
+
+  // Machine user: no user identifiers and token_use is 'access'
+  return payload.token_use === 'access';
 }
 
 /**

@@ -24,6 +24,16 @@ export interface TokenInfo {
 /**
  * Parse JWT token and extract authentication information
  * Distinguishes between regular users (Authorization Code Flow) and machine users (Client Credentials Flow)
+ *
+ * Client Credentials Flow characteristics:
+ * 1. No username or cognito:username claim
+ * 2. sub claim is either missing or equals client_id
+ * 3. token_use is 'access'
+ *
+ * Regular user tokens (Authorization Code Flow):
+ * - Have cognito:username or username claim
+ * - sub claim contains user UUID (different from client_id)
+ * - Can be either 'access' or 'id' token_use
  */
 export function parseJWTToken(authHeader?: string): TokenInfo {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -34,10 +44,16 @@ export function parseJWTToken(authHeader?: string): TokenInfo {
     const token = authHeader.substring(7); // Remove 'Bearer '
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
 
-    // Client Credentials Flow detection:
-    // - cognito:username does not exist
-    // - token_use === "access"
-    const isMachineUser = !payload['cognito:username'] && payload['token_use'] === 'access';
+    // Check for user identifier claims
+    const hasUserIdentifier = payload['cognito:username'] || payload['username'];
+
+    // Check if sub exists and is different from client_id
+    // For regular users: sub is a UUID different from client_id
+    // For machine users: sub is either missing or equals client_id
+    const hasUserSub = payload['sub'] && payload['sub'] !== payload['client_id'];
+
+    // If has user identifier or valid user sub, it's a regular user
+    const isMachineUser = !hasUserIdentifier && !hasUserSub && payload['token_use'] === 'access';
 
     if (isMachineUser) {
       return {

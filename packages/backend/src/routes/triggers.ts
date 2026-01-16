@@ -584,7 +584,9 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
     }
 
     // Update trigger status
-    await triggersService.updateTrigger(userId, triggerId, { enabled: true });
+    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
+      enabled: true,
+    });
 
     // Enable EventBridge Schedule if exists
     if (trigger.type === 'schedule') {
@@ -602,13 +604,27 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
     console.log(`✅ Trigger enabled successfully (${auth.requestId})`);
 
     res.status(200).json({
-      success: true,
-      message: 'Trigger enabled',
+      trigger: {
+        id: updatedTrigger.id,
+        name: updatedTrigger.name,
+        description: updatedTrigger.description,
+        type: updatedTrigger.type,
+        enabled: updatedTrigger.enabled,
+        agentId: updatedTrigger.agentId,
+        prompt: updatedTrigger.prompt,
+        sessionId: updatedTrigger.sessionId,
+        modelId: updatedTrigger.modelId,
+        enabledTools: updatedTrigger.enabledTools,
+        scheduleConfig: updatedTrigger.scheduleConfig,
+        eventConfig: updatedTrigger.eventConfig,
+        createdAt: updatedTrigger.createdAt,
+        updatedAt: updatedTrigger.updatedAt,
+        lastExecutedAt: updatedTrigger.lastExecutedAt,
+      },
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
-        triggerId,
       },
     });
   } catch (error) {
@@ -667,7 +683,9 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
     }
 
     // Update trigger status
-    await triggersService.updateTrigger(userId, triggerId, { enabled: false });
+    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
+      enabled: false,
+    });
 
     // Disable EventBridge Schedule if exists
     if (trigger.type === 'schedule') {
@@ -685,13 +703,27 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
     console.log(`✅ Trigger disabled successfully (${auth.requestId})`);
 
     res.status(200).json({
-      success: true,
-      message: 'Trigger disabled',
+      trigger: {
+        id: updatedTrigger.id,
+        name: updatedTrigger.name,
+        description: updatedTrigger.description,
+        type: updatedTrigger.type,
+        enabled: updatedTrigger.enabled,
+        agentId: updatedTrigger.agentId,
+        prompt: updatedTrigger.prompt,
+        sessionId: updatedTrigger.sessionId,
+        modelId: updatedTrigger.modelId,
+        enabledTools: updatedTrigger.enabledTools,
+        scheduleConfig: updatedTrigger.scheduleConfig,
+        eventConfig: updatedTrigger.eventConfig,
+        createdAt: updatedTrigger.createdAt,
+        updatedAt: updatedTrigger.updatedAt,
+        lastExecutedAt: updatedTrigger.lastExecutedAt,
+      },
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
-        triggerId,
       },
     });
   } catch (error) {
@@ -718,7 +750,8 @@ router.get(
       const auth = getCurrentAuth(req);
       const userId = auth.userId;
       const { id: triggerId } = req.params;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const nextToken = req.query.nextToken as string | undefined;
 
       if (!userId) {
         return res.status(400).json({
@@ -732,6 +765,7 @@ router.get(
         userId,
         triggerId,
         limit,
+        hasNextToken: !!nextToken,
       });
 
       const triggersService = getTriggersDynamoDBService();
@@ -754,29 +788,49 @@ router.get(
         });
       }
 
-      const executions = await triggersService.getExecutions(triggerId, limit);
+      // Decode nextToken if provided
+      let exclusiveStartKey: Record<string, any> | undefined;
+      if (nextToken) {
+        try {
+          exclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+        } catch {
+          return res.status(400).json({
+            error: 'Invalid Parameter',
+            message: 'Invalid nextToken format',
+            requestId: auth.requestId,
+          });
+        }
+      }
+
+      const result = await triggersService.getExecutions(triggerId, limit, exclusiveStartKey);
+
+      // Encode lastEvaluatedKey as nextToken
+      const responseNextToken = result.lastEvaluatedKey
+        ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
+        : undefined;
 
       console.log(
-        `✅ Execution history retrieval completed (${auth.requestId}): ${executions.length} items`
+        `✅ Execution history retrieval completed (${auth.requestId}): ${result.executions.length} items, hasMore: ${!!responseNextToken}`
       );
 
       res.status(200).json({
-        executions: executions.map((execution) => ({
+        executions: result.executions.map((execution) => ({
           executionId: execution.executionId,
           triggerId: execution.triggerId,
-          startedAt: execution.startedAt,
-          completedAt: execution.completedAt,
+          startTime: execution.startedAt,
+          endTime: execution.completedAt,
           status: execution.status,
           requestId: execution.requestId,
           sessionId: execution.sessionId,
           error: execution.error,
         })),
+        nextToken: responseNextToken,
         metadata: {
           requestId: auth.requestId,
           timestamp: new Date().toISOString(),
           userId,
           triggerId,
-          count: executions.length,
+          count: result.executions.length,
         },
       });
     } catch (error) {

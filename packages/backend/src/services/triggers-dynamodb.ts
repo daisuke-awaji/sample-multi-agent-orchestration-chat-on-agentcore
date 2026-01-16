@@ -70,6 +70,11 @@ export interface TriggerExecution {
   ttl: number;
 }
 
+export interface GetExecutionsResult {
+  executions: TriggerExecution[];
+  lastEvaluatedKey?: Record<string, any>;
+}
+
 export interface CreateTriggerInput {
   userId: string;
   name: string;
@@ -306,9 +311,13 @@ export class TriggersDynamoDBService {
   }
 
   /**
-   * Get execution history for a trigger
+   * Get execution history for a trigger with pagination support
    */
-  async getExecutions(triggerId: string, limit: number = 50): Promise<TriggerExecution[]> {
+  async getExecutions(
+    triggerId: string,
+    limit: number = 20,
+    exclusiveStartKey?: Record<string, any>
+  ): Promise<GetExecutionsResult> {
     const result = await this.client.send(
       new QueryCommand({
         TableName: this.tableName,
@@ -319,14 +328,16 @@ export class TriggersDynamoDBService {
         }),
         Limit: limit,
         ScanIndexForward: false, // Most recent first
+        ExclusiveStartKey: exclusiveStartKey ? marshall(exclusiveStartKey) : undefined,
       })
     );
 
-    if (!result.Items || result.Items.length === 0) {
-      return [];
-    }
-
-    return result.Items.map((item) => unmarshall(item) as TriggerExecution);
+    return {
+      executions: result.Items
+        ? result.Items.map((item) => unmarshall(item) as TriggerExecution)
+        : [],
+      lastEvaluatedKey: result.LastEvaluatedKey ? unmarshall(result.LastEvaluatedKey) : undefined,
+    };
   }
 }
 

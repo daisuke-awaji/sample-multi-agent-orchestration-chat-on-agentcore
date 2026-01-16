@@ -195,6 +195,22 @@ export interface SchedulerEventPayload {
 }
 
 /**
+ * EventBridge Scheduler event structure
+ * This is the event format sent by EventBridge Scheduler to Lambda
+ */
+export interface SchedulerEvent {
+  version: string;
+  id: string;
+  'detail-type': string;
+  source: string;
+  account: string;
+  time: string;
+  region: string;
+  resources: string[];
+  detail: SchedulerEventPayload;
+}
+
+/**
  * EventBridge custom event payload (future)
  */
 export interface CustomEventPayload {

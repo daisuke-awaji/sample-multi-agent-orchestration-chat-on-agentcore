@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CalendarRange, Plus } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { TriggerList } from '../components/triggers/TriggerList';
@@ -14,6 +15,7 @@ import type { Trigger } from '../types/trigger';
 import toast from 'react-hot-toast';
 
 export function EventsPage() {
+  const { t } = useTranslation();
   const { triggers, isLoading, fetchTriggers, enableTrigger, disableTrigger, deleteTrigger } =
     useTriggerStore();
 
@@ -28,38 +30,38 @@ export function EventsPage() {
   useEffect(() => {
     fetchTriggers().catch((error) => {
       console.error('Failed to fetch triggers:', error);
-      toast.error('トリガーの取得に失敗しました');
+      toast.error(t('triggers.messages.fetchError'));
     });
-  }, [fetchTriggers]);
+  }, [fetchTriggers, t]);
 
   // Handle toggle trigger
   const handleToggle = async (triggerId: string, enabled: boolean) => {
     try {
       if (enabled) {
         await enableTrigger(triggerId);
-        toast.success('トリガーを有効化しました');
+        toast.success(t('triggers.messages.enableSuccess'));
       } else {
         await disableTrigger(triggerId);
-        toast.success('トリガーを無効化しました');
+        toast.success(t('triggers.messages.disableSuccess'));
       }
     } catch (error) {
       console.error('Failed to toggle trigger:', error);
-      toast.error('トリガーの状態変更に失敗しました');
+      toast.error(t('triggers.messages.toggleError'));
     }
   };
 
   // Handle delete trigger
   const handleDelete = async (triggerId: string) => {
-    if (!confirm('このトリガーを削除してもよろしいですか？')) {
+    if (!confirm(t('triggers.messages.deleteConfirm'))) {
       return;
     }
 
     try {
       await deleteTrigger(triggerId);
-      toast.success('トリガーを削除しました');
+      toast.success(t('triggers.messages.deleteSuccess'));
     } catch (error) {
       console.error('Failed to delete trigger:', error);
-      toast.error('トリガーの削除に失敗しました');
+      toast.error(t('triggers.messages.deleteError'));
     }
   };
 
@@ -105,39 +107,30 @@ export function EventsPage() {
 
   return (
     <>
-      <PageHeader icon={CalendarRange} title="イベント連携" />
+      <PageHeader
+        icon={CalendarRange}
+        title={t('navigation.events')}
+        actions={
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            {t('triggers.create')}
+          </button>
+        }
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-5xl mx-auto">
-          {/* Header Actions */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">トリガー管理</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                スケジュールに基づいてエージェントを自動実行します
-              </p>
-            </div>
-
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              新規作成
-            </button>
-          </div>
-
-          {/* Trigger List */}
-          <TriggerList
-            triggers={triggers}
-            isLoading={isLoading}
-            onEdit={handleEdit}
-            onToggle={handleToggle}
-            onViewHistory={handleViewHistory}
-            onDelete={handleDelete}
-          />
-        </div>
+        <TriggerList
+          triggers={triggers}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onToggle={handleToggle}
+          onViewHistory={handleViewHistory}
+          onDelete={handleDelete}
+        />
       </div>
 
       {/* Modals */}

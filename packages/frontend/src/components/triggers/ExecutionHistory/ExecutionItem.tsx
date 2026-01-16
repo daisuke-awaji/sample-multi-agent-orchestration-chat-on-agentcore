@@ -63,6 +63,14 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
           textColor: 'text-blue-700',
           label: t('triggers.history.inProgress'),
         };
+      default:
+        return {
+          icon: <Clock className="w-5 h-5 text-gray-600" />,
+          bgColor: 'bg-gray-50',
+          borderColor: 'border-gray-200',
+          textColor: 'text-gray-700',
+          label: status || 'Unknown',
+        };
     }
   };
 

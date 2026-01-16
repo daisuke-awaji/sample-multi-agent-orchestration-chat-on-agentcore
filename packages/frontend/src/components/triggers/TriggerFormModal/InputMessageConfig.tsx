@@ -20,22 +20,25 @@ export function InputMessageConfig({
   const { t } = useTranslation();
 
   return (
-    <div className="border-t pt-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-gray-900">
           {t('triggers.form.inputMessage')} <span className="text-red-500">*</span>
-        </label>
+        </h3>
+        <p className="text-sm text-gray-500 mt-1">{t('triggers.form.inputMessageDescription')}</p>
+      </div>
+
+      <div>
         <textarea
           value={inputMessage}
           onChange={(e) => onChange(e.target.value)}
           placeholder={t('triggers.form.inputMessagePlaceholder')}
           disabled={disabled}
           maxLength={2000}
-          rows={6}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
+          rows={8}
+          className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
         />
-        <div className="flex justify-between items-center mt-2">
-          <p className="text-xs text-gray-500">{t('triggers.form.inputMessagePlaceholder')}</p>
+        <div className="flex justify-end items-center mt-2">
           <p className="text-xs text-gray-500">{inputMessage.length} / 2000</p>
         </div>
       </div>

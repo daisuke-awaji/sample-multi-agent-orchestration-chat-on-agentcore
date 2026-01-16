@@ -41,7 +41,7 @@ export function TriggerCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-sm transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">

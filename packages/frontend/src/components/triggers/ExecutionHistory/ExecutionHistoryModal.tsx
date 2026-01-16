@@ -82,7 +82,7 @@ export function ExecutionHistoryModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalHeader>
         <div>
           <h2 className="text-xl font-bold text-gray-900">{t('triggers.history.title')}</h2>
@@ -91,7 +91,7 @@ export function ExecutionHistoryModal({
         <ModalCloseButton />
       </ModalHeader>
 
-      <ModalContent>
+      <ModalContent className="h-[600px] overflow-y-auto">
         <ExecutionList
           executions={executions}
           isLoading={isLoading}

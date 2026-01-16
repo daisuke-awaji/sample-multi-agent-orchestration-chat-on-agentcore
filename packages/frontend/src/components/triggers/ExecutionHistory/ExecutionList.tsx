@@ -1,11 +1,11 @@
 /**
  * ExecutionList Component
  *
- * List of execution records with details
+ * Table list of execution records
  */
 
 import { useTranslation } from 'react-i18next';
-import { ExecutionItem } from './ExecutionItem';
+import { CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { LoadingIndicator } from '../../ui/LoadingIndicator';
 import type { ExecutionRecord } from '../../../types/trigger';
 
@@ -18,6 +18,55 @@ export interface ExecutionListProps {
 
 export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: ExecutionListProps) {
   const { t } = useTranslation();
+
+  // Format duration
+  const formatDuration = (ms?: number): string => {
+    if (!ms) return '-';
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  // Format date
+  const formatDate = (dateStr: string): string => {
+    return new Date(dateStr).toLocaleString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  // Status icon and label
+  const getStatusDisplay = (status: ExecutionRecord['status']) => {
+    switch (status) {
+      case 'success':
+        return {
+          icon: <CheckCircle className="w-5 h-5 text-green-600" />,
+          label: t('triggers.history.success'),
+          textColor: 'text-green-700',
+        };
+      case 'failure':
+        return {
+          icon: <XCircle className="w-5 h-5 text-red-600" />,
+          label: t('triggers.history.failure'),
+          textColor: 'text-red-700',
+        };
+      case 'in_progress':
+        return {
+          icon: <Clock className="w-5 h-5 text-blue-600 animate-spin" />,
+          label: t('triggers.history.inProgress'),
+          textColor: 'text-blue-700',
+        };
+      default:
+        return {
+          icon: <Clock className="w-5 h-5 text-gray-600" />,
+          label: status || 'Unknown',
+          textColor: 'text-gray-700',
+        };
+    }
+  };
 
   if (isLoading && executions.length === 0) {
     return (
@@ -37,9 +86,68 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
 
   return (
     <div className="space-y-4">
-      {executions.map((execution) => (
-        <ExecutionItem key={execution.executionId} execution={execution} />
-      ))}
+      {/* Executions Table */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Started At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Completed At
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Duration
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Execution ID
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {executions.map((execution) => {
+              const statusDisplay = getStatusDisplay(execution.status);
+              const duration =
+                execution.endTime && execution.startTime
+                  ? new Date(execution.endTime).getTime() - new Date(execution.startTime).getTime()
+                  : execution.duration;
+
+              return (
+                <tr key={execution.executionId} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {statusDisplay.icon}
+                      <span className={`text-sm font-medium ${statusDisplay.textColor}`}>
+                        {statusDisplay.label}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{formatDate(execution.startTime)}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {execution.endTime ? formatDate(execution.endTime) : '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{formatDuration(duration)}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-xs text-gray-500 font-mono truncate max-w-xs">
+                      {execution.executionId}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {/* Load More Button */}
       {hasMore && (
@@ -48,9 +156,26 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
             type="button"
             onClick={onLoadMore}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? t('common.loading') : t('triggers.history.loadMore')}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('common.loading')}
+              </>
+            ) : (
+              <>
+                {t('triggers.history.loadMore')}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </>
+            )}
           </button>
         </div>
       )}

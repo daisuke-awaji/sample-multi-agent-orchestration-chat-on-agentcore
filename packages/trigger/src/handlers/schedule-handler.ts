@@ -3,25 +3,11 @@
  * Triggered by EventBridge Scheduler to invoke Agent API
  */
 
-import { SchedulerEventPayload } from '../types/index.js';
+import { SchedulerEvent } from '../types/index.js';
 import { AuthService } from '../services/auth-service.js';
 import { AgentInvoker } from '../services/agent-invoker.js';
 import { ExecutionRecorder } from '../services/execution-recorder.js';
-
-/**
- * EventBridge Scheduler event structure
- */
-interface SchedulerEvent {
-  version: string;
-  id: string;
-  'detail-type': string;
-  source: string;
-  account: string;
-  time: string;
-  region: string;
-  resources: string[];
-  detail: SchedulerEventPayload;
-}
+import { createAgentsService } from '../services/agents-service.js';
 
 /**
  * Lambda handler response
@@ -55,7 +41,8 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
 
   try {
     authService = AuthService.fromEnvironment();
-    agentInvoker = AgentInvoker.fromEnvironment();
+    const agentsService = createAgentsService();
+    agentInvoker = AgentInvoker.fromEnvironment(agentsService);
     executionRecorder = ExecutionRecorder.fromEnvironment();
   } catch (error) {
     console.error('Failed to initialize services:', error);

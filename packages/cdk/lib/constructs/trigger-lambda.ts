@@ -20,6 +20,11 @@ export interface TriggerLambdaProps {
   readonly triggersTable: dynamodb.ITable;
 
   /**
+   * Agents DynamoDB table
+   */
+  readonly agentsTable: dynamodb.ITable;
+
+  /**
    * Agent API URL for invocations
    */
   readonly agentApiUrl: string;
@@ -131,6 +136,7 @@ export class TriggerLambda extends Construct {
       environment: {
         NODE_ENV: 'production',
         TRIGGERS_TABLE_NAME: props.triggersTable.tableName,
+        AGENTS_TABLE_NAME: props.agentsTable.tableName,
         AGENT_API_URL: props.agentApiUrl,
         COGNITO_DOMAIN: props.cognitoDomain,
         COGNITO_CLIENT_ID: props.cognitoClientId,
@@ -153,6 +159,9 @@ export class TriggerLambda extends Construct {
 
     // Grant DynamoDB read/write permissions
     props.triggersTable.grantReadWriteData(this.lambdaFunction);
+    
+    // Grant DynamoDB read permissions for Agents table
+    props.agentsTable.grantReadData(this.lambdaFunction);
 
     // Grant Cognito access for Machine User authentication
     this.lambdaFunction.addToRolePolicy(

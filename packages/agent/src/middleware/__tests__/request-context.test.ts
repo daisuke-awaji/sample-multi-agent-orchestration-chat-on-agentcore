@@ -85,9 +85,24 @@ describe('parseJWTToken', () => {
   });
 
   describe('machine user (Client Credentials Flow)', () => {
-    it('should detect machine user without cognito:username and token_use=access', () => {
+    it('should detect machine user when sub equals client_id', () => {
       const token = createMockJWT({
-        sub: 'client-id-123',
+        sub: 'machine-client-id',
+        token_use: 'access',
+        scope: 'agentcore/batch.execute',
+        client_id: 'machine-client-id',
+      });
+
+      const result = parseJWTToken(token);
+      expect(result).toEqual({
+        isMachineUser: true,
+        clientId: 'machine-client-id',
+        scopes: ['agentcore/batch.execute'],
+      });
+    });
+
+    it('should detect machine user without sub claim', () => {
+      const token = createMockJWT({
         token_use: 'access',
         scope: 'agentcore/batch.execute',
         client_id: 'machine-client-id',
@@ -103,7 +118,7 @@ describe('parseJWTToken', () => {
 
     it('should handle multiple scopes', () => {
       const token = createMockJWT({
-        sub: 'client-id-123',
+        sub: 'machine-client-id',
         token_use: 'access',
         scope: 'agentcore/batch.execute agentcore/admin openid',
         client_id: 'machine-client-id',
@@ -119,7 +134,7 @@ describe('parseJWTToken', () => {
 
     it('should handle machine user without scope', () => {
       const token = createMockJWT({
-        sub: 'client-id-123',
+        sub: 'machine-client-id',
         token_use: 'access',
         client_id: 'machine-client-id',
       });
@@ -160,6 +175,20 @@ describe('parseJWTToken', () => {
       expect(result).toEqual({
         isMachineUser: false,
         userId: 'user@example.com',
+      });
+    });
+
+    it('should not be machine user if sub differs from client_id (regular user access token)', () => {
+      const token = createMockJWT({
+        sub: 'user-uuid-456',
+        token_use: 'access',
+        client_id: 'app-client-id',
+      });
+
+      const result = parseJWTToken(token);
+      expect(result).toEqual({
+        isMachineUser: false,
+        userId: 'user-uuid-456',
       });
     });
   });
