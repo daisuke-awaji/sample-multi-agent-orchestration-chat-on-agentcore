@@ -17,6 +17,8 @@ import {
 import { TriggerBasicInfo } from './TriggerBasicInfo';
 import { ScheduleConfig } from './ScheduleConfig';
 import { InputMessageConfig } from './InputMessageConfig';
+import { AgentExecutionConfig } from './AgentExecutionConfig';
+import { EventTypeSelector, type EventType } from './EventTypeSelector';
 import { useTriggerStore } from '../../../stores/triggerStore';
 import type { Trigger, CreateTriggerRequest, UpdateTriggerRequest } from '../../../types/trigger';
 import toast from 'react-hot-toast';
@@ -50,12 +52,17 @@ interface FormData {
   cronExpression: string;
   timezone: string;
   inputMessage: string;
+  modelId?: string;
+  workingDirectory?: string;
 }
 
 export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFormModalProps) {
   const { t } = useTranslation();
   const { createTrigger, updateTrigger } = useTriggerStore();
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
+    trigger ? 'schedule' : null
+  );
 
   const isEditMode = !!trigger;
 
@@ -69,6 +76,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
         cronExpression: trigger.scheduleConfig.expression,
         timezone: trigger.scheduleConfig.timezone || 'Asia/Tokyo',
         inputMessage: trigger.prompt,
+        modelId: trigger.modelId,
+        workingDirectory: trigger.workingDirectory,
       };
     }
     return {
@@ -78,6 +87,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
       cronExpression: '0 0 * * ? *',
       timezone: 'Asia/Tokyo',
       inputMessage: '',
+      modelId: undefined,
+      workingDirectory: undefined,
     };
   });
 
@@ -92,6 +103,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           cronExpression: trigger.scheduleConfig.expression,
           timezone: trigger.scheduleConfig.timezone || 'Asia/Tokyo',
           inputMessage: trigger.prompt,
+          modelId: trigger.modelId,
+          workingDirectory: trigger.workingDirectory,
         });
       }
     } else {
@@ -102,6 +115,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
         cronExpression: '0 0 * * ? *',
         timezone: 'Asia/Tokyo',
         inputMessage: '',
+        modelId: undefined,
+        workingDirectory: undefined,
       });
     }
   }, [trigger]);
@@ -142,6 +157,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           description: formData.description || undefined,
           agentId: formData.agentId,
           prompt: formData.inputMessage,
+          modelId: formData.modelId,
+          workingDirectory: formData.workingDirectory,
           scheduleConfig: {
             expression: formData.cronExpression,
             timezone: formData.timezone,
@@ -158,6 +175,8 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           agentId: formData.agentId,
           type: 'schedule',
           prompt: formData.inputMessage,
+          modelId: formData.modelId,
+          workingDirectory: formData.workingDirectory,
           scheduleConfig: {
             expression: formData.cronExpression,
             timezone: formData.timezone,
@@ -186,7 +205,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" className="!max-w-[95vw] !w-[95vw]">
       <ModalHeader>
         <ModalTitle>
           {isEditMode ? t('triggers.form.editTitle') : t('triggers.form.createTitle')}
@@ -195,28 +214,61 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
       </ModalHeader>
 
       <ModalContent>
-        <div className="space-y-6">
-          {/* Basic Info */}
-          <TriggerBasicInfo
-            name={formData.name}
-            description={formData.description}
-            agentId={formData.agentId}
-            onNameChange={(name: string) => setFormData({ ...formData, name })}
-            onDescriptionChange={(description: string) => setFormData({ ...formData, description })}
-            onAgentIdChange={(agentId: string) => setFormData({ ...formData, agentId })}
-            disabled={isSaving}
-          />
+        <div className="space-y-8">
+          {/* 2-Column Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-8">
+              {/* Basic Info */}
+              <TriggerBasicInfo
+                name={formData.name}
+                description={formData.description}
+                agentId={formData.agentId}
+                onNameChange={(name: string) => setFormData({ ...formData, name })}
+                onDescriptionChange={(description: string) =>
+                  setFormData({ ...formData, description })
+                }
+                onAgentIdChange={(agentId: string) => setFormData({ ...formData, agentId })}
+                disabled={isSaving}
+              />
 
-          {/* Schedule Config */}
-          <ScheduleConfig
-            cronExpression={formData.cronExpression}
-            timezone={formData.timezone}
-            onCronChange={(cronExpression: string) => setFormData({ ...formData, cronExpression })}
-            onTimezoneChange={(timezone: string) => setFormData({ ...formData, timezone })}
-            disabled={isSaving}
-          />
+              {/* Agent Execution Config */}
+              <AgentExecutionConfig
+                modelId={formData.modelId}
+                workingDirectory={formData.workingDirectory}
+                onModelIdChange={(modelId) => setFormData({ ...formData, modelId })}
+                onWorkingDirectoryChange={(workingDirectory) =>
+                  setFormData({ ...formData, workingDirectory })
+                }
+                disabled={isSaving}
+              />
+            </div>
 
-          {/* Input Message */}
+            {/* Right Column */}
+            <div className="space-y-8">
+              {/* Event Type Selector */}
+              <EventTypeSelector
+                selectedType={selectedEventType}
+                onSelect={setSelectedEventType}
+                disabled={isSaving}
+              />
+
+              {/* Event Type Configuration */}
+              {selectedEventType === 'schedule' && (
+                <ScheduleConfig
+                  cronExpression={formData.cronExpression}
+                  timezone={formData.timezone}
+                  onCronChange={(cronExpression: string) =>
+                    setFormData({ ...formData, cronExpression })
+                  }
+                  onTimezoneChange={(timezone: string) => setFormData({ ...formData, timezone })}
+                  disabled={isSaving}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Input Message - Full Width */}
           <InputMessageConfig
             inputMessage={formData.inputMessage}
             onChange={(inputMessage: string) => setFormData({ ...formData, inputMessage })}

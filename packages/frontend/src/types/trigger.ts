@@ -16,6 +16,7 @@ export interface Trigger {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleConfig;
   eventConfig?: EventConfig;
@@ -56,6 +57,7 @@ export interface CreateTriggerRequest {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleConfig;
   eventConfig?: EventConfig;
@@ -68,6 +70,7 @@ export interface UpdateTriggerRequest {
   prompt?: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleConfig;
 }

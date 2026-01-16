@@ -20,7 +20,7 @@ export function InputMessageConfig({
   const { t } = useTranslation();
 
   return (
-    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+    <div>
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">
           {t('triggers.form.inputMessage')} <span className="text-red-500">*</span>
@@ -35,7 +35,7 @@ export function InputMessageConfig({
           placeholder={t('triggers.form.inputMessagePlaceholder')}
           disabled={disabled}
           maxLength={2000}
-          rows={8}
+          rows={6}
           className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
         />
         <div className="flex justify-end items-center mt-2">

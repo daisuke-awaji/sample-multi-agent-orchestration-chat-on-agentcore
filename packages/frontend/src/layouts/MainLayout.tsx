@@ -20,8 +20,14 @@ import { useSessionStore } from '../stores/sessionStore';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 export function MainLayout() {
-  const { isSidebarOpen, isMobileView, setSidebarOpen, setMobileView, setNarrowDesktop } =
-    useUIStore();
+  const {
+    isSidebarOpen,
+    isMobileView,
+    mobileHeaderAction,
+    setSidebarOpen,
+    setMobileView,
+    setNarrowDesktop,
+  } = useUIStore();
   const location = useLocation();
   const { t } = useTranslation();
   const selectedAgent = useSelectedAgent();
@@ -190,6 +196,9 @@ export function MainLayout() {
               <SquarePen className="w-5 h-5" />
             </Link>
           )}
+
+          {/* Render mobile header action from store */}
+          {mobileHeaderAction}
         </header>
       )}
 

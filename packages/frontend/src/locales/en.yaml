@@ -532,6 +532,8 @@ triggers:
     timezone: Timezone
     preview: Preview
     nextExecutions: Next Executions
+    customExpression: 'Custom Cron Expression'
+    customExpressionHint: 'AWS EventBridge format: minute hour day month weekday year (e.g., 0 0 * * ? *)'
     invalidExpression: Invalid cron expression
   
   # Status
@@ -574,6 +576,24 @@ triggers:
   empty:
     title: No Triggers
     description: Click the Create New button to create a schedule trigger
+  
+  # Event Type Selection
+  eventTypes:
+    title: Trigger Type
+    selectTitle: Select Trigger Type
+    selectDescription: Choose the type of trigger to execute
+    change: Change
+    comingSoon: This feature is under development
+    comingSoonBadge: Coming Soon
+    schedule:
+      label: Schedule
+      description: Execute automatically on schedule
+    slack:
+      label: Slack Event Integration
+      description: Trigger on Slack events
+    github:
+      label: GitHub Integration
+      description: Trigger on GitHub events
 
 # Home Page
 home:

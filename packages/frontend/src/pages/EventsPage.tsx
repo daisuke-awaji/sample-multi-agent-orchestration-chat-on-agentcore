@@ -3,14 +3,15 @@
  * Manage scheduled agent executions
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarRange, Plus } from 'lucide-react';
+import { CalendarRange, CalendarPlus } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { TriggerList } from '../components/triggers/TriggerList';
 import { TriggerFormModal } from '../components/triggers/TriggerFormModal';
 import { ExecutionHistoryModal } from '../components/triggers/ExecutionHistory';
 import { useTriggerStore } from '../stores/triggerStore';
+import { useUIStore } from '../stores/uiStore';
 import type { Trigger } from '../types/trigger';
 import toast from 'react-hot-toast';
 
@@ -18,6 +19,7 @@ export function EventsPage() {
   const { t } = useTranslation();
   const { triggers, isLoading, fetchTriggers, enableTrigger, disableTrigger, deleteTrigger } =
     useTriggerStore();
+  const { setMobileHeaderAction } = useUIStore();
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -26,6 +28,12 @@ export function EventsPage() {
   const [historyTriggerId, setHistoryTriggerId] = useState<string>('');
   const [historyTriggerName, setHistoryTriggerName] = useState<string>('');
 
+  // Handle create trigger - memoized to prevent infinite loop in useEffect
+  const handleCreate = useCallback(() => {
+    setSelectedTrigger(null);
+    setIsFormModalOpen(true);
+  }, []);
+
   // Fetch triggers on mount
   useEffect(() => {
     fetchTriggers().catch((error) => {
@@ -33,6 +41,24 @@ export function EventsPage() {
       toast.error(t('triggers.messages.fetchError'));
     });
   }, [fetchTriggers, t]);
+
+  // Set mobile header action on mount, clear on unmount
+  useEffect(() => {
+    setMobileHeaderAction(
+      <button
+        onClick={handleCreate}
+        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+        aria-label={t('triggers.create')}
+      >
+        <CalendarPlus className="w-5 h-5" />
+      </button>
+    );
+
+    // Cleanup: clear mobile header action when leaving the page
+    return () => {
+      setMobileHeaderAction(null);
+    };
+  }, [setMobileHeaderAction, t, handleCreate]);
 
   // Handle toggle trigger
   const handleToggle = async (triggerId: string, enabled: boolean) => {
@@ -44,9 +70,11 @@ export function EventsPage() {
         await disableTrigger(triggerId);
         toast.success(t('triggers.messages.disableSuccess'));
       }
+      // Note: No need to call fetchTriggers() - optimistic update handles state
     } catch (error) {
       console.error('Failed to toggle trigger:', error);
-      toast.error(t('triggers.messages.toggleError'));
+      // Error is already handled by store with rollback
+      // toast.error is already shown by the store
     }
   };
 
@@ -81,12 +109,6 @@ export function EventsPage() {
     }
   };
 
-  // Handle create trigger
-  const handleCreate = () => {
-    setSelectedTrigger(null);
-    setIsFormModalOpen(true);
-  };
-
   // Handle form modal close
   const handleFormModalClose = () => {
     setIsFormModalOpen(false);
@@ -111,18 +133,34 @@ export function EventsPage() {
         icon={CalendarRange}
         title={t('navigation.events')}
         actions={
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            {t('triggers.create')}
-          </button>
+          <>
+            {/* Desktop: Icon + Text */}
+            <button
+              onClick={handleCreate}
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <CalendarPlus className="w-5 h-5" />
+              {t('triggers.create')}
+            </button>
+            {/* Mobile: Icon Only - not shown in PageHeader (handled by MainLayout) */}
+            <button
+              onClick={handleCreate}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label={t('triggers.create')}
+            >
+              <CalendarPlus className="w-5 h-5" />
+            </button>
+          </>
         }
       />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
+        {/* Description Section */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-600 leading-relaxed">{t('triggers.pageDescription')}</p>
+        </div>
+
         <TriggerList
           triggers={triggers}
           isLoading={isLoading}

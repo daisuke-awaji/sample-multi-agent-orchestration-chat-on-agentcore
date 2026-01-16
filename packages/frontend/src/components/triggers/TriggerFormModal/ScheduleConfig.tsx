@@ -25,7 +25,7 @@ export function ScheduleConfig({
   const { t } = useTranslation();
 
   return (
-    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+    <div>
       <div className="mb-4">
         <h3 className="text-base font-semibold text-gray-900">
           {t('triggers.form.scheduleConfig')}

@@ -80,6 +80,7 @@ export interface Trigger {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
 
   // Type-specific configuration
@@ -132,6 +133,7 @@ export interface CreateTriggerRequest {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: Omit<ScheduleTriggerConfig, 'schedulerArn' | 'scheduleGroupName'>;
   eventConfig?: Omit<EventTriggerConfig, 'ruleArn'>;
@@ -158,6 +160,7 @@ export interface TriggerResponse {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleTriggerConfig;
   eventConfig?: EventTriggerConfig;
@@ -191,6 +194,7 @@ export interface SchedulerEventPayload {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
 }
 

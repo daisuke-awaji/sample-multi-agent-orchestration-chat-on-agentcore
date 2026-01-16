@@ -24,6 +24,11 @@ export interface CronPresetButtonsProps {
   onCustom: () => void;
 
   /**
+   * Whether custom mode is active
+   */
+  isCustom?: boolean;
+
+  /**
    * Whether buttons are disabled
    */
   disabled?: boolean;
@@ -33,6 +38,7 @@ export function CronPresetButtons({
   selectedExpression,
   onSelect,
   onCustom,
+  isCustom = false,
   disabled = false,
 }: CronPresetButtonsProps) {
   const { t } = useTranslation();
@@ -61,7 +67,9 @@ export function CronPresetButtons({
         type="button"
         onClick={onCustom}
         disabled={disabled}
-        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+          isCustom ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {t('triggers.cron.presetCustom')}
       </button>

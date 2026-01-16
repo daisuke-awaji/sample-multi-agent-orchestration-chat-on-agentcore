@@ -16,6 +16,7 @@ interface TriggerStore {
   triggers: Trigger[];
   isLoading: boolean;
   error: string | null;
+  togglingIds: Set<string>; // IDs of triggers currently being toggled
 
   // Actions
   fetchTriggers: () => Promise<void>;
@@ -34,6 +35,7 @@ export const useTriggerStore = create<TriggerStore>((set, get) => ({
   triggers: [],
   isLoading: false,
   error: null,
+  togglingIds: new Set<string>(),
 
   // Fetch all triggers
   fetchTriggers: async () => {
@@ -127,60 +129,90 @@ export const useTriggerStore = create<TriggerStore>((set, get) => ({
     }
   },
 
-  // Enable trigger
+  // Enable trigger (with optimistic update)
   enableTrigger: async (triggerId: string) => {
-    set({ isLoading: true, error: null });
+    const currentTrigger = get().triggers.find((t) => t.id === triggerId);
+    if (!currentTrigger) return;
+
+    // Optimistic update: immediately update UI
+    set((state) => {
+      const newTogglingIds = new Set(state.togglingIds);
+      newTogglingIds.add(triggerId);
+
+      return {
+        togglingIds: newTogglingIds,
+        triggers: state.triggers.map((t) => (t.id === triggerId ? { ...t, enabled: true } : t)),
+      };
+    });
 
     try {
-      const updatedTrigger = await triggersApi.enableTrigger(triggerId);
+      await triggersApi.enableTrigger(triggerId);
 
+      // Success: remove from toggling IDs
       set((state) => {
-        const triggerIndex = state.triggers.findIndex((t) => t.id === triggerId);
-        const updatedTriggers = [...state.triggers];
-
-        if (triggerIndex !== -1) {
-          updatedTriggers[triggerIndex] = updatedTrigger;
-        }
-
-        return {
-          triggers: updatedTriggers,
-          isLoading: false,
-          error: null,
-        };
+        const newTogglingIds = new Set(state.togglingIds);
+        newTogglingIds.delete(triggerId);
+        return { togglingIds: newTogglingIds };
       });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'トリガーの有効化に失敗しました';
-      set({ isLoading: false, error: errorMessage });
+
+      // Error: rollback and remove from toggling IDs
+      set((state) => {
+        const newTogglingIds = new Set(state.togglingIds);
+        newTogglingIds.delete(triggerId);
+
+        return {
+          togglingIds: newTogglingIds,
+          triggers: state.triggers.map((t) => (t.id === triggerId ? currentTrigger : t)),
+          error: errorMessage,
+        };
+      });
       throw error;
     }
   },
 
-  // Disable trigger
+  // Disable trigger (with optimistic update)
   disableTrigger: async (triggerId: string) => {
-    set({ isLoading: true, error: null });
+    const currentTrigger = get().triggers.find((t) => t.id === triggerId);
+    if (!currentTrigger) return;
+
+    // Optimistic update: immediately update UI
+    set((state) => {
+      const newTogglingIds = new Set(state.togglingIds);
+      newTogglingIds.add(triggerId);
+
+      return {
+        togglingIds: newTogglingIds,
+        triggers: state.triggers.map((t) => (t.id === triggerId ? { ...t, enabled: false } : t)),
+      };
+    });
 
     try {
-      const updatedTrigger = await triggersApi.disableTrigger(triggerId);
+      await triggersApi.disableTrigger(triggerId);
 
+      // Success: remove from toggling IDs
       set((state) => {
-        const triggerIndex = state.triggers.findIndex((t) => t.id === triggerId);
-        const updatedTriggers = [...state.triggers];
-
-        if (triggerIndex !== -1) {
-          updatedTriggers[triggerIndex] = updatedTrigger;
-        }
-
-        return {
-          triggers: updatedTriggers,
-          isLoading: false,
-          error: null,
-        };
+        const newTogglingIds = new Set(state.togglingIds);
+        newTogglingIds.delete(triggerId);
+        return { togglingIds: newTogglingIds };
       });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'トリガーの無効化に失敗しました';
-      set({ isLoading: false, error: errorMessage });
+
+      // Error: rollback and remove from toggling IDs
+      set((state) => {
+        const newTogglingIds = new Set(state.togglingIds);
+        newTogglingIds.delete(triggerId);
+
+        return {
+          togglingIds: newTogglingIds,
+          triggers: state.triggers.map((t) => (t.id === triggerId ? currentTrigger : t)),
+          error: errorMessage,
+        };
+      });
       throw error;
     }
   },

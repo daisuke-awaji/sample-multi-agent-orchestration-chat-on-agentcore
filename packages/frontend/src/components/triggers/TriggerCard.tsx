@@ -3,9 +3,12 @@
  * Displays individual trigger information with action buttons
  */
 
-import { Clock, Bot, Calendar, CheckCircle, XCircle, Edit, Trash2, History } from 'lucide-react';
+import { Clock, Bot, Calendar, Edit, Trash2, History, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Trigger, ScheduleConfig } from '../../types/trigger';
 import { useAgentStore } from '../../stores/agentStore';
+import { useTriggerStore } from '../../stores/triggerStore';
+import { translateIfKey } from '../../utils/agent-translation';
 
 interface TriggerCardProps {
   trigger: Trigger;
@@ -22,9 +25,12 @@ export function TriggerCard({
   onViewHistory,
   onDelete,
 }: TriggerCardProps) {
+  const { t } = useTranslation();
   const { getAgent } = useAgentStore();
+  const togglingIds = useTriggerStore((state) => state.togglingIds);
   const agent = getAgent(trigger.agentId);
   const isEnabled = trigger.enabled;
+  const isToggling = togglingIds.has(trigger.id);
   const config = trigger.scheduleConfig as ScheduleConfig;
 
   // Format last execution time
@@ -41,46 +47,63 @@ export function TriggerCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-sm transition-shadow">
-      {/* Header */}
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-sm transition-shadow flex flex-col h-full">
+      {/* Header with Toggle */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">{trigger.name}</h3>
-            {isEnabled ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                <CheckCircle className="w-3.5 h-3.5" />
-                有効
+        <div className="flex-1 min-w-0 pr-4">
+          <h3 className="text-lg font-semibold text-gray-900 truncate mb-2">{trigger.name}</h3>
+          {trigger.description && (
+            <p className="text-sm text-gray-600 line-clamp-2">{trigger.description}</p>
+          )}
+        </div>
+
+        {/* Toggle Switch */}
+        <div className="flex-shrink-0">
+          <button
+            onClick={() => onToggle(trigger.id, !isEnabled)}
+            disabled={isToggling}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed ${
+              isEnabled ? 'bg-amber-500 focus:ring-amber-400' : 'bg-gray-200 focus:ring-gray-400'
+            }`}
+            role="switch"
+            aria-checked={isEnabled}
+            aria-label={isEnabled ? '有効' : '無効'}
+          >
+            {isToggling ? (
+              <span className="inline-block w-full flex items-center justify-center">
+                <Loader2 className="w-3 h-3 text-white animate-spin" />
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                <XCircle className="w-3.5 h-3.5" />
-                無効
-              </span>
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
             )}
-          </div>
-          {trigger.description && <p className="text-sm text-gray-600">{trigger.description}</p>}
+          </button>
         </div>
       </div>
 
       {/* Schedule Info */}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-4 flex-1">
         <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Clock className="w-4 h-4 text-gray-400" />
+          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <span className="font-medium">スケジュール:</span>
-          <span>{config?.expression || 'N/A'}</span>
+          <span className="truncate">{config?.expression || 'N/A'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Calendar className="w-4 h-4 text-gray-400" />
+          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <span className="font-medium">タイムゾーン:</span>
-          <span>{config?.timezone || 'N/A'}</span>
+          <span className="truncate">{config?.timezone || 'N/A'}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Bot className="w-4 h-4 text-gray-400" />
+          <Bot className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <span className="font-medium">エージェント:</span>
-          <span>{agent?.name || trigger.agentId}</span>
+          <span className="truncate">
+            {agent ? translateIfKey(agent.name, t) : trigger.agentId}
+          </span>
         </div>
       </div>
 
@@ -95,39 +118,34 @@ export function TriggerCard({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+        {/* Edit Button */}
         <button
           onClick={() => onEdit(trigger)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 md:flex-initial"
+          aria-label="編集"
         >
           <Edit className="w-4 h-4" />
-          編集
+          <span className="hidden md:inline">編集</span>
         </button>
 
+        {/* History Button */}
         <button
           onClick={() => onViewHistory(trigger.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 md:flex-initial"
+          aria-label="履歴"
         >
           <History className="w-4 h-4" />
-          履歴
+          <span className="hidden md:inline">履歴</span>
         </button>
 
-        <button
-          onClick={() => onToggle(trigger.id, !isEnabled)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            isEnabled
-              ? 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              : 'text-white bg-green-600 hover:bg-green-700'
-          }`}
-        >
-          {isEnabled ? '無効化' : '有効化'}
-        </button>
-
+        {/* Delete Button */}
         <button
           onClick={() => onDelete(trigger.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors ml-auto"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex-1 md:flex-initial md:ml-auto"
+          aria-label="削除"
         >
           <Trash2 className="w-4 h-4" />
-          削除
+          <span className="hidden md:inline">削除</span>
         </button>
       </div>
     </div>

@@ -7,15 +7,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CronPresetButtons } from './CronPresetButtons';
-import { CronFieldSelector } from './CronFieldSelector';
 import { CronPreview } from './CronPreview';
-import {
-  parseCronExpression,
-  buildCronExpression,
-  validateCronExpression,
-  CRON_PRESETS,
-  TIMEZONES,
-} from './cronUtils';
+import { validateCronExpression, CRON_PRESETS, TIMEZONES } from './cronUtils';
 
 export interface CronBuilderProps {
   value: string;
@@ -38,16 +31,6 @@ export function CronBuilder({
   const isPreset = CRON_PRESETS.some((preset) => preset.expression === value);
   const [isCustom, setIsCustom] = useState(!isPreset);
 
-  // Parse current value to get fields
-  const fields = parseCronExpression(value) || {
-    minute: '0',
-    hour: '0',
-    dayOfMonth: '*',
-    month: '*',
-    dayOfWeek: '?',
-    year: '*',
-  };
-
   // Handle preset selection
   const handlePresetSelect = (presetExpression: string) => {
     setIsCustom(false);
@@ -59,22 +42,8 @@ export function CronBuilder({
     setIsCustom(true);
   };
 
-  // Handle field change
-  const handleFieldChange = (field: string, newValue: string) => {
-    const newFields = { ...fields, [field]: newValue };
-
-    // Ensure day of month and day of week exclusivity
-    if (field === 'dayOfMonth') {
-      if (newValue !== '?') {
-        newFields.dayOfWeek = '?';
-      }
-    } else if (field === 'dayOfWeek') {
-      if (newValue !== '?') {
-        newFields.dayOfMonth = '?';
-      }
-    }
-
-    const expression = buildCronExpression(newFields);
+  // Handle custom expression input
+  const handleCustomInput = (expression: string) => {
     onChange(expression);
   };
 
@@ -82,11 +51,6 @@ export function CronBuilder({
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">{t('triggers.cron.title')}</h3>
-      </div>
-
       {/* Timezone Selector */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -115,16 +79,30 @@ export function CronBuilder({
           selectedExpression={value}
           onSelect={handlePresetSelect}
           onCustom={handleCustomToggle}
+          isCustom={isCustom}
           disabled={disabled}
         />
       </div>
 
-      {/* Custom Fields (shown when custom mode is active) */}
-      {isCustom && (
-        <div>
-          <CronFieldSelector fields={fields} onChange={handleFieldChange} disabled={disabled} />
-        </div>
-      )}
+      {/* Custom Expression Input (shown when custom mode is active) */}
+      <div
+        className={`transition-all duration-200 ${
+          isCustom ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'
+        }`}
+      >
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('triggers.cron.customExpression')}
+        </label>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => handleCustomInput(e.target.value)}
+          disabled={disabled || !isCustom}
+          placeholder="0 0 * * ? *"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
+        />
+        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.customExpressionHint')}</p>
+      </div>
 
       {/* Preview */}
       <div>

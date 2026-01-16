@@ -481,7 +481,7 @@ events:
 triggers:
   # ページ
   pageTitle: トリガー管理
-  pageDescription: スケジュールに基づいてエージェントを自動実行します
+  pageDescription: スケジュールに基づいてエージェントを自動実行するトリガーを作成・管理できます。定期的なタスクの自動化や、特定の時刻にエージェントを起動してデータ収集やレポート生成などを行うことができます。
   
   # アクション
   create: 新規作成
@@ -515,6 +515,14 @@ triggers:
     inputMessageDescription: エージェントに送信するメッセージを入力してください
     inputMessagePlaceholder: エージェントに送信するメッセージ
     inputMessageRequired: 入力メッセージは必須です
+    modelId: モデルID
+    optional: オプション
+    selectModel: モデルを選択...
+    useDefault: デフォルトを使用
+    modelIdHint: 特定のモデルを指定しない場合、エージェントのデフォルトモデルが使用されます
+    workingDirectory: 作業ディレクトリ
+    selectDirectory: ディレクトリを選択...
+    workingDirectoryHint: エージェントが作業するディレクトリを指定します。指定しない場合、デフォルトのディレクトリが使用されます
     save: 保存
     saving: 保存中...
     cancel: キャンセル
@@ -539,6 +547,8 @@ triggers:
     timezone: タイムゾーン
     preview: 設定プレビュー
     nextExecutions: 次回実行予定
+    customExpression: 'カスタムCron式'
+    customExpressionHint: 'AWS EventBridge形式: 分 時 日 月 曜日 年 (例: 0 0 * * ? *)'
     invalidExpression: 無効なCron式です
   
   # ステータス
@@ -581,6 +591,24 @@ triggers:
   empty:
     title: トリガーがありません
     description: 新規作成ボタンからスケジュールトリガーを作成してください
+  
+  # イベントタイプ選択
+  eventTypes:
+    title: トリガータイプ
+    selectTitle: トリガータイプを選択
+    selectDescription: 実行するトリガーのタイプを選択してください
+    change: 変更
+    comingSoon: この機能は実装予定です
+    comingSoonBadge: Coming Soon
+    schedule:
+      label: スケジュール
+      description: 定期的に自動実行
+    slack:
+      label: Slack イベント連携
+      description: Slack イベントをトリガーに実行
+    github:
+      label: GitHub 連携
+      description: GitHub イベントをトリガーに実行
 
 # ホームページ
 home:
