@@ -11,6 +11,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --passWithNoTests --forceExit",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest integration.test.ts --forceExit",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --watch",
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --coverage",
     "clean": "rimraf dist"
