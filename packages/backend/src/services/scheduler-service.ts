@@ -21,6 +21,7 @@ export interface SchedulePayload {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
 }
 

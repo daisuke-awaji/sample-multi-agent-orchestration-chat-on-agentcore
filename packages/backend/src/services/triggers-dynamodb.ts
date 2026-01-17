@@ -45,6 +45,7 @@ export interface Trigger {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleTriggerConfig;
   eventConfig?: EventTriggerConfig;
@@ -84,6 +85,7 @@ export interface CreateTriggerInput {
   prompt: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: Omit<ScheduleTriggerConfig, 'schedulerArn' | 'scheduleGroupName'>;
   eventConfig?: Omit<EventTriggerConfig, 'ruleArn'>;
@@ -96,6 +98,7 @@ export interface UpdateTriggerInput {
   prompt?: string;
   sessionId?: string;
   modelId?: string;
+  workingDirectory?: string;
   enabledTools?: string[];
   enabled?: boolean;
   scheduleConfig?: Partial<ScheduleTriggerConfig>;
@@ -143,6 +146,7 @@ export class TriggersDynamoDBService {
       prompt: input.prompt,
       sessionId: input.sessionId,
       modelId: input.modelId,
+      workingDirectory: input.workingDirectory,
       enabledTools: input.enabledTools,
       scheduleConfig: input.scheduleConfig,
       eventConfig: input.eventConfig,
@@ -247,6 +251,10 @@ export class TriggersDynamoDBService {
     if (updates.modelId !== undefined) {
       updateParts.push('modelId = :modelId');
       attributeValues[':modelId'] = updates.modelId;
+    }
+    if (updates.workingDirectory !== undefined) {
+      updateParts.push('workingDirectory = :workingDirectory');
+      attributeValues[':workingDirectory'] = updates.workingDirectory;
     }
     if (updates.enabledTools !== undefined) {
       updateParts.push('enabledTools = :enabledTools');

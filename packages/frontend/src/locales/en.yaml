@@ -508,6 +508,14 @@ triggers:
     inputMessage: Input Message
     inputMessagePlaceholder: Message to send to the agent
     inputMessageRequired: Input message is required
+    modelId: Model ID
+    optional: Optional
+    selectModel: Select a model...
+    useDefault: Use Default
+    modelIdHint: If no specific model is specified, the agent's default model will be used
+    workingDirectory: Working Directory
+    selectDirectory: Select a directory...
+    workingDirectoryHint: Specify the directory for the agent to work in. If not specified, the root directory (/) will be used
     save: Save
     saving: Saving...
     cancel: Cancel

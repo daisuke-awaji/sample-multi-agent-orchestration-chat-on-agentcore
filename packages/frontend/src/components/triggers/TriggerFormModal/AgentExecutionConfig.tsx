@@ -81,10 +81,6 @@ export function AgentExecutionConfig({
     setIsDirectorySelectorOpen(false);
   };
 
-  const handleManualDirectoryChange = (value: string) => {
-    onWorkingDirectoryChange(value || undefined);
-  };
-
   // Flatten folder tree for dropdown
   const flattenFolderTree = (
     nodes: typeof folderTree,
@@ -178,73 +174,58 @@ export function AgentExecutionConfig({
           <span className="text-gray-400 ml-1 text-xs">({t('triggers.form.optional')})</span>
         </label>
 
-        <div className="space-y-2">
-          {/* Dropdown selector */}
-          <div ref={directoryDropdownRef} className="relative">
-            <button
-              type="button"
-              onClick={() => !disabled && setIsDirectorySelectorOpen(!isDirectorySelectorOpen)}
-              disabled={disabled}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <FolderCog className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                {workingDirectory ? (
-                  <span className="font-mono text-xs truncate">{workingDirectory}</span>
-                ) : (
-                  <span className="text-gray-400">{t('triggers.form.selectDirectory')}</span>
-                )}
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${
-                  isDirectorySelectorOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {isDirectorySelectorOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-64 overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={handleClearDirectory}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors text-gray-500"
-                >
-                  {t('triggers.form.useDefault')}
-                </button>
-                <div className="border-t border-gray-200 my-1" />
-                {folders.map((folder) => (
-                  <button
-                    key={folder.path}
-                    type="button"
-                    onClick={() => handleDirectorySelect(folder.path)}
-                    className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                      folder.path === workingDirectory ? 'bg-blue-50' : ''
-                    }`}
-                    style={{ paddingLeft: `${12 + folder.depth * 16}px` }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs text-gray-900 truncate">
-                        {folder.path}
-                      </span>
-                      {folder.path === workingDirectory && (
-                        <div className="w-2 h-2 rounded-full bg-blue-600 ml-2 flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Manual input */}
-          <input
-            type="text"
-            value={workingDirectory || ''}
-            onChange={(e) => handleManualDirectoryChange(e.target.value)}
-            placeholder="/path/to/directory"
+        <div ref={directoryDropdownRef} className="relative">
+          <button
+            type="button"
+            onClick={() => !disabled && setIsDirectorySelectorOpen(!isDirectorySelectorOpen)}
             disabled={disabled}
-            className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <FolderCog className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              {workingDirectory ? (
+                <span className="font-mono text-xs truncate">{workingDirectory}</span>
+              ) : (
+                <span className="text-gray-400">{t('triggers.form.selectDirectory')}</span>
+              )}
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${
+                isDirectorySelectorOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {isDirectorySelectorOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-64 overflow-y-auto">
+              <button
+                type="button"
+                onClick={handleClearDirectory}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors text-gray-500"
+              >
+                {t('triggers.form.useDefault')}
+              </button>
+              <div className="border-t border-gray-200 my-1" />
+              {folders.map((folder) => (
+                <button
+                  key={folder.path}
+                  type="button"
+                  onClick={() => handleDirectorySelect(folder.path)}
+                  className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                    folder.path === workingDirectory ? 'bg-blue-50' : ''
+                  }`}
+                  style={{ paddingLeft: `${12 + folder.depth * 16}px` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs text-gray-900 truncate">{folder.path}</span>
+                    {folder.path === workingDirectory && (
+                      <div className="w-2 h-2 rounded-full bg-blue-600 ml-2 flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="text-xs text-gray-500 mt-1">{t('triggers.form.workingDirectoryHint')}</p>

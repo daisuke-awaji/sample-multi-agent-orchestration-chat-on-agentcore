@@ -522,7 +522,7 @@ triggers:
     modelIdHint: 特定のモデルを指定しない場合、エージェントのデフォルトモデルが使用されます
     workingDirectory: 作業ディレクトリ
     selectDirectory: ディレクトリを選択...
-    workingDirectoryHint: エージェントが作業するディレクトリを指定します。指定しない場合、デフォルトのディレクトリが使用されます
+    workingDirectoryHint: エージェントが作業するディレクトリを指定します。指定しない場合、ルートディレクトリ（/）が使用されます
     save: 保存
     saving: 保存中...
     cancel: キャンセル

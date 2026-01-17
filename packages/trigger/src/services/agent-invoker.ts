@@ -26,6 +26,7 @@ function encodeAgentUrl(url: string): string {
 interface AgentInvocationRequest {
   prompt: string;
   modelId?: string;
+  storagePath?: string;
   enabledTools?: string[];
   targetUserId: string;
   sessionId?: string;
@@ -97,6 +98,7 @@ export class AgentInvoker {
       targetUserId: payload.userId,
       sessionId: payload.sessionId,
       modelId: payload.modelId, // Use modelId from trigger payload if specified
+      storagePath: payload.workingDirectory, // Use workingDirectory as storagePath
       systemPrompt: agent.systemPrompt, // Always use Agent's systemPrompt
       enabledTools: agent.enabledTools, // Always use Agent's enabledTools
       mcpConfig: agent.mcpConfig, // Include MCP configuration if available

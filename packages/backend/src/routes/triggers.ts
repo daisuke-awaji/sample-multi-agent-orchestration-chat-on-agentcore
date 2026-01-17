@@ -59,6 +59,7 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
         prompt: trigger.prompt,
         sessionId: trigger.sessionId,
         modelId: trigger.modelId,
+        workingDirectory: trigger.workingDirectory,
         enabledTools: trigger.enabledTools,
         scheduleConfig: trigger.scheduleConfig,
         eventConfig: trigger.eventConfig,
@@ -142,6 +143,7 @@ router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
         prompt: trigger.prompt,
         sessionId: trigger.sessionId,
         modelId: trigger.modelId,
+        workingDirectory: trigger.workingDirectory,
         enabledTools: trigger.enabledTools,
         scheduleConfig: trigger.scheduleConfig,
         eventConfig: trigger.eventConfig,
@@ -192,6 +194,7 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
       prompt,
       sessionId,
       modelId,
+      workingDirectory,
       enabledTools,
       scheduleConfig,
       eventConfig,
@@ -241,6 +244,7 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
       prompt,
       sessionId,
       modelId,
+      workingDirectory,
       enabledTools,
       scheduleConfig,
       eventConfig,
@@ -268,6 +272,7 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
             prompt,
             sessionId,
             modelId,
+            workingDirectory,
             enabledTools,
           },
           targetArn,
@@ -307,6 +312,7 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
         prompt: trigger.prompt,
         sessionId: trigger.sessionId,
         modelId: trigger.modelId,
+        workingDirectory: trigger.workingDirectory,
         enabledTools: trigger.enabledTools,
         scheduleConfig: trigger.scheduleConfig,
         eventConfig: trigger.eventConfig,
@@ -374,8 +380,17 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       });
     }
 
-    const { name, description, agentId, prompt, sessionId, modelId, enabledTools, scheduleConfig } =
-      req.body;
+    const {
+      name,
+      description,
+      agentId,
+      prompt,
+      sessionId,
+      modelId,
+      workingDirectory,
+      enabledTools,
+      scheduleConfig,
+    } = req.body;
 
     // Update trigger in DynamoDB
     const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
@@ -385,6 +400,7 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       prompt,
       sessionId,
       modelId,
+      workingDirectory,
       enabledTools,
       scheduleConfig,
     });
@@ -407,6 +423,10 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
               prompt: prompt || existingTrigger.prompt,
               sessionId: sessionId !== undefined ? sessionId : existingTrigger.sessionId,
               modelId: modelId !== undefined ? modelId : existingTrigger.modelId,
+              workingDirectory:
+                workingDirectory !== undefined
+                  ? workingDirectory
+                  : existingTrigger.workingDirectory,
               enabledTools: enabledTools || existingTrigger.enabledTools,
             },
             targetArn,
@@ -431,6 +451,7 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
         prompt: updatedTrigger.prompt,
         sessionId: updatedTrigger.sessionId,
         modelId: updatedTrigger.modelId,
+        workingDirectory: updatedTrigger.workingDirectory,
         enabledTools: updatedTrigger.enabledTools,
         scheduleConfig: updatedTrigger.scheduleConfig,
         eventConfig: updatedTrigger.eventConfig,
@@ -614,6 +635,7 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
         prompt: updatedTrigger.prompt,
         sessionId: updatedTrigger.sessionId,
         modelId: updatedTrigger.modelId,
+        workingDirectory: updatedTrigger.workingDirectory,
         enabledTools: updatedTrigger.enabledTools,
         scheduleConfig: updatedTrigger.scheduleConfig,
         eventConfig: updatedTrigger.eventConfig,
@@ -713,6 +735,7 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
         prompt: updatedTrigger.prompt,
         sessionId: updatedTrigger.sessionId,
         modelId: updatedTrigger.modelId,
+        workingDirectory: updatedTrigger.workingDirectory,
         enabledTools: updatedTrigger.enabledTools,
         scheduleConfig: updatedTrigger.scheduleConfig,
         eventConfig: updatedTrigger.eventConfig,
