@@ -17,7 +17,7 @@ export interface ExecutionListProps {
 }
 
 export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: ExecutionListProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Format duration
   const formatDuration = (ms?: number): string => {
@@ -26,9 +26,10 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
     return `${(ms / 1000).toFixed(2)}s`;
   };
 
-  // Format date
+  // Format date with i18n locale
   const formatDate = (dateStr: string): string => {
-    return new Date(dateStr).toLocaleString('ja-JP', {
+    const locale = i18n.language === 'ja' ? 'ja-JP' : 'en-US';
+    return new Date(dateStr).toLocaleString(locale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

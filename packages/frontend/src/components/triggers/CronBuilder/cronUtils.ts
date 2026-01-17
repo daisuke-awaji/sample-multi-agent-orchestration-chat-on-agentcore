@@ -7,6 +7,8 @@
  * Example: 0 9 * * MON-FRI * (Every weekday at 9:00 AM)
  */
 
+import type { TFunction } from 'i18next';
+
 export interface CronFields {
   minute: string;
   hour: string;
@@ -105,9 +107,18 @@ export function validateCronExpression(expression: string): boolean {
 }
 
 /**
+ * Get translated day name
+ */
+function getDayName(day: string, t: TFunction): string {
+  const key = `triggers.cronDescription.days.${day}`;
+  const translated = t(key);
+  return translated !== key ? translated : day;
+}
+
+/**
  * Generate human-readable description of cron expression
  */
-export function getCronDescription(expression: string, t: (key: string) => string): string {
+export function getCronDescription(expression: string, t: TFunction): string {
   const fields = parseCronExpression(expression);
   if (!fields) {
     return t('triggers.cron.invalidExpression');
@@ -127,7 +138,7 @@ export function getCronDescription(expression: string, t: (key: string) => strin
   } else if (fields.minute === '0') {
     // Handle in hour section
   } else {
-    parts.push(`${fields.minute}分`);
+    parts.push(t('triggers.cronDescription.minute', { value: fields.minute }));
   }
 
   // Hour
@@ -141,38 +152,34 @@ export function getCronDescription(expression: string, t: (key: string) => strin
 
   // Day of month
   if (fields.dayOfMonth !== '?' && fields.dayOfMonth !== '*') {
-    parts.push(`${fields.dayOfMonth}日`);
+    parts.push(t('triggers.cronDescription.day', { value: fields.dayOfMonth }));
   }
 
   // Day of week
   if (fields.dayOfWeek !== '?' && fields.dayOfWeek !== '*') {
-    const dayNames: Record<string, string> = {
-      MON: '月曜',
-      TUE: '火曜',
-      WED: '水曜',
-      THU: '木曜',
-      FRI: '金曜',
-      SAT: '土曜',
-      SUN: '日曜',
-    };
-
     if (fields.dayOfWeek.includes('-')) {
       const [start, end] = fields.dayOfWeek.split('-');
-      parts.push(`${dayNames[start]}〜${dayNames[end]}`);
+      parts.push(
+        t('triggers.cronDescription.dayRange', {
+          start: getDayName(start, t),
+          end: getDayName(end, t),
+        })
+      );
     } else if (fields.dayOfWeek.includes(',')) {
+      const separator = t('triggers.cronDescription.dayList');
       const days = fields.dayOfWeek
         .split(',')
-        .map((d) => dayNames[d])
-        .join('、');
+        .map((d) => getDayName(d, t))
+        .join(separator);
       parts.push(days);
     } else {
-      parts.push(dayNames[fields.dayOfWeek] || fields.dayOfWeek);
+      parts.push(getDayName(fields.dayOfWeek, t));
     }
   }
 
   // Month
   if (fields.month !== '*') {
-    parts.push(`${fields.month}月`);
+    parts.push(t('triggers.cronDescription.month', { value: fields.month }));
   }
 
   return parts.join(' ') || expression;
@@ -290,10 +297,11 @@ function calculateNextExecution(from: Date, fields: CronFields): Date | null {
 }
 
 /**
- * Format date for display
+ * Format date for display with locale support
  */
-export function formatExecutionTime(date: Date): string {
-  return date.toLocaleString('ja-JP', {
+export function formatExecutionTime(date: Date, locale?: string): string {
+  const displayLocale = locale || 'en-US';
+  return date.toLocaleString(displayLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -315,32 +323,63 @@ export const TIMEZONES = [
 ];
 
 /**
- * Day of week options
+ * Day of week option keys for i18n
  */
-export const DAY_OF_WEEK_OPTIONS = [
-  { value: 'MON', label: '月曜' },
-  { value: 'TUE', label: '火曜' },
-  { value: 'WED', label: '水曜' },
-  { value: 'THU', label: '木曜' },
-  { value: 'FRI', label: '金曜' },
-  { value: 'SAT', label: '土曜' },
-  { value: 'SUN', label: '日曜' },
+export const DAY_OF_WEEK_OPTION_KEYS = [
+  { value: 'MON', labelKey: 'MON' },
+  { value: 'TUE', labelKey: 'TUE' },
+  { value: 'WED', labelKey: 'WED' },
+  { value: 'THU', labelKey: 'THU' },
+  { value: 'FRI', labelKey: 'FRI' },
+  { value: 'SAT', labelKey: 'SAT' },
+  { value: 'SUN', labelKey: 'SUN' },
 ];
 
 /**
- * Month options
+ * Get day of week options with translated labels
  */
-export const MONTH_OPTIONS = [
-  { value: '1', label: '1月' },
-  { value: '2', label: '2月' },
-  { value: '3', label: '3月' },
-  { value: '4', label: '4月' },
-  { value: '5', label: '5月' },
-  { value: '6', label: '6月' },
-  { value: '7', label: '7月' },
-  { value: '8', label: '8月' },
-  { value: '9', label: '9月' },
-  { value: '10', label: '10月' },
-  { value: '11', label: '11月' },
-  { value: '12', label: '12月' },
+export function getDayOfWeekOptions(t: TFunction): Array<{ value: string; label: string }> {
+  return DAY_OF_WEEK_OPTION_KEYS.map(({ value, labelKey }) => ({
+    value,
+    label: t(`triggers.cronDescription.days.${labelKey}`),
+  }));
+}
+
+/**
+ * Month option keys for i18n
+ */
+export const MONTH_OPTION_KEYS = [
+  { value: '1', labelKey: '1' },
+  { value: '2', labelKey: '2' },
+  { value: '3', labelKey: '3' },
+  { value: '4', labelKey: '4' },
+  { value: '5', labelKey: '5' },
+  { value: '6', labelKey: '6' },
+  { value: '7', labelKey: '7' },
+  { value: '8', labelKey: '8' },
+  { value: '9', labelKey: '9' },
+  { value: '10', labelKey: '10' },
+  { value: '11', labelKey: '11' },
+  { value: '12', labelKey: '12' },
 ];
+
+/**
+ * Get month options with translated labels
+ */
+export function getMonthOptions(t: TFunction): Array<{ value: string; label: string }> {
+  return MONTH_OPTION_KEYS.map(({ value, labelKey }) => ({
+    value,
+    label: t(`triggers.cronDescription.months.${labelKey}`),
+  }));
+}
+
+// Legacy exports for backward compatibility
+export const DAY_OF_WEEK_OPTIONS = DAY_OF_WEEK_OPTION_KEYS.map(({ value }) => ({
+  value,
+  label: value, // Will be translated at usage
+}));
+
+export const MONTH_OPTIONS = MONTH_OPTION_KEYS.map(({ value }) => ({
+  value,
+  label: value, // Will be translated at usage
+}));

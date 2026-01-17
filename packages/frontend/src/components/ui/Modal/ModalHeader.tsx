@@ -22,7 +22,9 @@ export const ModalIcon: React.FC<ModalIconProps> = ({ icon: Icon, className }) =
 };
 
 export const ModalTitle: React.FC<ModalTitleProps> = ({ children, className }) => {
-  return <h1 className={cn('text-2xl font-bold text-gray-900', className)}>{children}</h1>;
+  return (
+    <h1 className={cn('md:text-2xl sm:text-xl font-bold text-gray-900', className)}>{children}</h1>
+  );
 };
 
 export const ModalCloseButton: React.FC<ModalCloseButtonProps> = ({ onClose, className }) => {

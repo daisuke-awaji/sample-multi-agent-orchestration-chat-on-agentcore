@@ -165,31 +165,31 @@ export function TriggerCard({
         {/* Edit Button */}
         <button
           onClick={() => onEdit(trigger)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 md:flex-initial"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial"
           aria-label={t('triggers.edit')}
         >
-          <Edit className="w-4 h-4" />
-          <span className="hidden md:inline">{t('triggers.edit')}</span>
+          <Edit className="w-4 h-4 flex-shrink-0" />
+          <span className="hidden lg:inline">{t('triggers.edit')}</span>
         </button>
 
         {/* History Button */}
         <button
           onClick={() => onViewHistory(trigger.id)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 md:flex-initial"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial"
           aria-label={t('triggers.viewHistory')}
         >
-          <History className="w-4 h-4" />
-          <span className="hidden md:inline">{t('triggers.viewHistory')}</span>
+          <History className="w-4 h-4 flex-shrink-0" />
+          <span className="hidden lg:inline">{t('triggers.viewHistory')}</span>
         </button>
 
         {/* Delete Button */}
         <button
           onClick={() => onDelete(trigger.id)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors flex-1 md:flex-initial md:ml-auto"
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial lg:ml-auto"
           aria-label={t('triggers.delete')}
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="hidden md:inline">{t('triggers.delete')}</span>
+          <Trash2 className="w-4 h-4 flex-shrink-0" />
+          <span className="hidden lg:inline">{t('triggers.delete')}</span>
         </button>
       </div>
     </div>

@@ -26,7 +26,7 @@ export interface CronPreviewProps {
 }
 
 export function CronPreview({ expression, timezone, isValid }: CronPreviewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (!isValid) {
     return (
@@ -58,7 +58,7 @@ export function CronPreview({ expression, timezone, isValid }: CronPreviewProps)
             {nextExecutions.map((date, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-gray-600 pl-6">
                 <span className="text-gray-400">{index + 1}.</span>
-                <span className="font-mono">{formatExecutionTime(date)}</span>
+                <span className="font-mono">{formatExecutionTime(date, i18n.language)}</span>
               </div>
             ))}
           </div>

@@ -2,6 +2,7 @@
  * EventSourceSelector Component
  *
  * Card-based selector for event-driven trigger sources (S3, GitHub, etc.)
+ * Includes expandable details section showing EventBridge rule configuration.
  */
 
 import { useEffect, useState } from 'react';
@@ -61,6 +62,7 @@ export function EventSourceSelector({
   const [eventSources, setEventSources] = useState<EventSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchEventSources = async () => {
@@ -124,6 +126,52 @@ export function EventSourceSelector({
     );
   }
 
+  /**
+   * Toggle details expansion for a specific event source
+   */
+  const toggleDetails = (sourceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedDetails((prev) => {
+      const next = new Set(prev);
+      if (next.has(sourceId)) {
+        next.delete(sourceId);
+      } else {
+        next.add(sourceId);
+      }
+      return next;
+    });
+  };
+
+  /**
+   * Render event pattern details section
+   */
+  const renderEventPatternDetails = (source: EventSource) => {
+    if (!source.eventPattern) return null;
+
+    const isExpanded = expandedDetails.has(source.id);
+
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={(e) => toggleDetails(source.id, e)}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors w-full"
+        >
+          <LucideIcons.ChevronRight
+            className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          />
+          <span>{t('triggers.eventSource.ruleDetails')}</span>
+        </button>
+
+        {isExpanded && (
+          <pre className="mt-2 p-3 bg-gray-50 rounded text-xs font-mono text-gray-700 overflow-x-auto animate-subtle-fade-in">
+            {JSON.stringify(source.eventPattern, null, 2)}
+          </pre>
+        )}
+      </div>
+    );
+  };
+
   // Grid card selector
   return (
     <div className="space-y-3">
@@ -131,45 +179,62 @@ export function EventSourceSelector({
         {t('triggers.eventSource.label')}
       </label>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {eventSources.map((source) => {
           const Icon = getIconComponent(source.icon);
           const isSelected = value === source.id;
+          const hasEventPattern = !!source.eventPattern;
 
           return (
-            <button
+            <div
               key={source.id}
-              type="button"
-              onClick={() => !disabled && onChange(source.id)}
-              disabled={disabled}
               className={`
-                p-4 rounded-lg border text-left transition-all h-[88px]
+                rounded-lg border transition-all
                 ${
                   isSelected
-                    ? 'border-blue-300 bg-white'
-                    : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50 bg-white'
+                    ? 'border-blue-300 bg-white ring-1 ring-blue-100'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
                 }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'}
+                ${disabled ? 'opacity-50' : ''}
               `}
             >
-              <div className="flex items-start gap-3">
-                {/* Icon */}
-                <div
-                  className={`
-                    flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
-                    ${isSelected ? 'bg-blue-600' : 'bg-gray-100'}
-                  `}
-                >
-                  <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
-                </div>
+              {/* Main card content - clickable */}
+              <button
+                type="button"
+                onClick={() => !disabled && onChange(source.id)}
+                disabled={disabled}
+                className={`
+                  p-4 w-full text-left
+                  ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Icon */}
+                  <div
+                    className={`
+                      flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
+                      ${isSelected ? 'bg-blue-600' : 'bg-gray-100'}
+                    `}
+                  >
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
+                  </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{source.name}</p>
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{source.description}</p>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900">{source.name}</p>
+                      {isSelected && <LucideIcons.Check className="w-4 h-4 text-blue-600" />}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{source.description}</p>
+                  </div>
                 </div>
-              </div>
-            </button>
+              </button>
+
+              {/* Event pattern details - expandable section */}
+              {hasEventPattern && (
+                <div className="px-4 pb-4">{renderEventPatternDetails(source)}</div>
+              )}
+            </div>
           );
         })}
       </div>

@@ -265,7 +265,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" className="!max-w-[95vw] !w-[95vw]">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalHeader>
         <ModalTitle>
           {isEditMode ? t('triggers.form.editTitle') : t('triggers.form.createTitle')}

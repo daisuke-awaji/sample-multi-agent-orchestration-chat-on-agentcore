@@ -647,6 +647,7 @@ triggers:
     noSourcesAvailable: イベントソースが設定されていません
     selectPlaceholder: イベントソースを選択...
     helpText: トリガーを発火させるイベントソースを選択してください
+    ruleDetails: EventBridge ルール詳細
 
   # カード表示
   card:
@@ -660,6 +661,65 @@ triggers:
     notExecuted: 未実行
     enabled: 有効
     disabled: 無効
+
+  # イベントパターン表示
+  eventPattern:
+    source: ソース
+    eventType: イベントタイプ
+    # Detail type mappings
+    detailTypes:
+      objectCreated: オブジェクト作成
+      objectDeleted: オブジェクト削除
+      objectRestoreCompleted: オブジェクト復元完了
+      push: プッシュ
+      pullRequest: プルリクエスト
+      issues: Issue
+      issueComment: Issueコメント
+      ec2StateChange: EC2インスタンス状態変更
+      pipelineStateChange: パイプライン実行状態変更
+      ecsTaskStateChange: ECSタスク状態変更
+    # Detail label mappings
+    labels:
+      bucketName: バケット名
+      objectKey: オブジェクトキー
+      objectSize: サイズ
+      objectEtag: ETag
+      action: アクション
+      repository: リポジトリ
+      branch: ブランチ
+      state: 状態
+      instanceId: インスタンスID
+      detailType: イベントタイプ
+      region: リージョン
+
+  # Cron description
+  cronDescription:
+    minute: '{{value}}分'
+    day: '{{value}}日'
+    month: '{{value}}月'
+    dayRange: '{{start}}〜{{end}}'
+    dayList: '、'
+    days:
+      MON: 月曜
+      TUE: 火曜
+      WED: 水曜
+      THU: 木曜
+      FRI: 金曜
+      SAT: 土曜
+      SUN: 日曜
+    months:
+      '1': 1月
+      '2': 2月
+      '3': 3月
+      '4': 4月
+      '5': 5月
+      '6': 6月
+      '7': 7月
+      '8': 8月
+      '9': 9月
+      '10': 10月
+      '11': 11月
+      '12': 12月
 
 # ホームページ
 home:

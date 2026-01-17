@@ -101,7 +101,7 @@ export class TriggerEventSources extends Construct {
       cdk.Tags.of(rule).add('EventSourceId', ruleConfig.id);
     }
 
-    // Export event source metadata for frontend (exclude eventPattern)
+    // Export event source metadata for frontend (include eventPattern for detailed display)
     const frontendConfig = props.eventRules
       .filter(r => r.enabled)
       .map(r => ({
@@ -109,6 +109,7 @@ export class TriggerEventSources extends Construct {
         name: r.name,
         description: r.description,
         icon: r.icon,
+        eventPattern: r.eventPattern,
       }));
 
     this.eventSourcesConfig = JSON.stringify(frontendConfig);

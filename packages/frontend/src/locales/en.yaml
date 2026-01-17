@@ -492,13 +492,17 @@ triggers:
   delete: Delete
   enable: Enable
   disable: Disable
-  viewHistory: View Execution History
+  viewHistory: Execution History
 
   # Form
   form:
     title: Trigger Settings
     createTitle: Create New Trigger
     editTitle: Edit Trigger
+    basicInfo: Basic Information
+    basicInfoDescription: Configure trigger name, description, and the agent to execute
+    scheduleConfig: Schedule Configuration
+    scheduleConfigDescription: Configure the date and time to execute the trigger
     name: Trigger Name
     namePlaceholder: 'e.g. - Daily Report Generation'
     nameRequired: Trigger name is required
@@ -635,6 +639,7 @@ triggers:
     loadError: Failed to load event sources
     helpText: Select which event should trigger this agent
     eventSourceRequired: Please select an event source
+    ruleDetails: EventBridge Rule Details
 
   # Card Display
   card:
@@ -648,6 +653,65 @@ triggers:
     notExecuted: Not Executed
     enabled: Enabled
     disabled: Disabled
+
+  # Event Pattern Display
+  eventPattern:
+    source: Source
+    eventType: Event Type
+    # Detail type mappings
+    detailTypes:
+      objectCreated: Object Created
+      objectDeleted: Object Deleted
+      objectRestoreCompleted: Object Restore Completed
+      push: Push
+      pullRequest: Pull Request
+      issues: Issue
+      issueComment: Issue Comment
+      ec2StateChange: EC2 Instance State Change
+      pipelineStateChange: Pipeline Execution State Change
+      ecsTaskStateChange: ECS Task State Change
+    # Detail label mappings
+    labels:
+      bucketName: Bucket Name
+      objectKey: Object Key
+      objectSize: Size
+      objectEtag: ETag
+      action: Action
+      repository: Repository
+      branch: Branch
+      state: State
+      instanceId: Instance ID
+      detailType: Event Type
+      region: Region
+
+  # Cron description
+  cronDescription:
+    minute: '{{value}} min'
+    day: '{{value}}th'
+    month: '{{value}}'
+    dayRange: '{{start}} to {{end}}'
+    dayList: ', '
+    days:
+      MON: Monday
+      TUE: Tuesday
+      WED: Wednesday
+      THU: Thursday
+      FRI: Friday
+      SAT: Saturday
+      SUN: Sunday
+    months:
+      '1': January
+      '2': February
+      '3': March
+      '4': April
+      '5': May
+      '6': June
+      '7': July
+      '8': August
+      '9': September
+      '10': October
+      '11': November
+      '12': December
 
 # Home Page
 home:
