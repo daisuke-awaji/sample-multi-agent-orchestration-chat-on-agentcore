@@ -3,7 +3,7 @@
  * Triggered by EventBridge Scheduler to invoke Agent API
  */
 
-import { SchedulerEvent } from '../types/index.js';
+import { SchedulerEvent, EventDrivenContext } from '../types/index.js';
 import { AuthService } from '../services/auth-service.js';
 import { AgentInvoker } from '../services/agent-invoker.js';
 import { ExecutionRecorder } from '../services/execution-recorder.js';
@@ -75,9 +75,35 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
     console.log('Obtaining Machine User token...');
     const tokenResponse = await authService.getMachineUserToken();
 
-    // Step 2: Invoke Agent API
+    // Step 2: Build event-driven context
+    const eventContext: EventDrivenContext = {
+      triggerId,
+      executionTime: new Date().toISOString(),
+      eventBridge: {
+        id: event.id,
+        source: event.source,
+        detailType: event['detail-type'],
+        account: event.account,
+        region: event.region,
+        time: event.time,
+        resources: event.resources,
+      },
+      eventDetail: payload as unknown as Record<string, unknown>,
+    };
+
+    console.log('Event context prepared:', {
+      triggerId: eventContext.triggerId,
+      source: eventContext.eventBridge.source,
+      detailType: eventContext.eventBridge.detailType,
+    });
+
+    // Step 3: Invoke Agent API with event context
     console.log('Invoking Agent API...');
-    const invocationResponse = await agentInvoker.invoke(payload, tokenResponse.accessToken);
+    const invocationResponse = await agentInvoker.invoke(
+      payload,
+      tokenResponse.accessToken,
+      eventContext
+    );
 
     if (!invocationResponse.success) {
       // Record failure

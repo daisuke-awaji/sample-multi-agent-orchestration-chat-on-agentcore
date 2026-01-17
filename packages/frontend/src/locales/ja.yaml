@@ -548,7 +548,7 @@ triggers:
     preview: 設定プレビュー
     nextExecutions: 次回実行予定
     customExpression: 'カスタムCron式'
-    customExpressionHint: 'AWS EventBridge形式: 分 時 日 月 曜日 年 (例: 0 0 * * ? *)'
+    customExpressionHint: 'cron形式: 分 時 日 月 曜日 年 (例: 0 0 * * ? *)'
     invalidExpression: 無効なCron式です
   
   # ステータス

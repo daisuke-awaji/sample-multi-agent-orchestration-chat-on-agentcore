@@ -37,5 +37,6 @@ export const handler = async (event: SchedulerEvent) => {
 export * from './types/index.js';
 export * from './services/auth-service.js';
 export * from './services/agent-invoker.js';
+export * from './services/prompt-builder.js';
 export * from './services/execution-recorder.js';
 export * from './handlers/schedule-handler.js';

@@ -222,3 +222,50 @@ export interface CustomEventPayload {
   userId: string;
   eventData: Record<string, unknown>;
 }
+
+/**
+ * Generic event-driven context for any EventBridge event
+ * This structure supports arbitrary event sources without requiring source-specific interfaces
+ */
+export interface EventDrivenContext {
+  // Execution Metadata
+  /** Trigger ID from the application */
+  triggerId: string;
+
+  /** Human-readable trigger name */
+  triggerName?: string;
+
+  /** Actual execution timestamp (ISO 8601) */
+  executionTime: string;
+
+  // EventBridge Standard Fields
+  eventBridge: {
+    /** Unique event ID */
+    id: string;
+
+    /** Event source (e.g., "aws.scheduler", "custom.slack", "com.github") */
+    source: string;
+
+    /** Event type (e.g., "Scheduled Event", "Pull Request", "Message Posted") */
+    detailType: string;
+
+    /** AWS account ID */
+    account: string;
+
+    /** AWS region */
+    region: string;
+
+    /** Event timestamp from EventBridge */
+    time: string;
+
+    /** Associated AWS resources */
+    resources: string[];
+  };
+
+  // Event Payload (Schema-less)
+  /**
+   * Raw event detail - structure depends on event source
+   * Could be Slack message, GitHub webhook, S3 event, custom payload, etc.
+   */
+  eventDetail: Record<string, unknown>;
+}

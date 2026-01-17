@@ -3,8 +3,9 @@
  */
 
 import { randomUUID } from 'crypto';
-import { SchedulerEventPayload } from '../types/index.js';
+import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
 import { AgentsService, MCPConfig } from './agents-service.js';
+import { buildEventDrivenSystemPrompt } from './prompt-builder.js';
 
 /**
  * Encode ARN in Agent URL for AgentCore Runtime
@@ -60,10 +61,14 @@ export class AgentInvoker {
 
   /**
    * Invoke Agent with Machine User authentication
+   * @param payload - Scheduler event payload
+   * @param authToken - Machine user authentication token
+   * @param eventContext - Optional event-driven context for building system prompt
    */
   async invoke(
     payload: SchedulerEventPayload,
-    authToken: string
+    authToken: string,
+    eventContext?: EventDrivenContext
   ): Promise<AgentInvocationResponse> {
     // Fetch Agent configuration from DynamoDB
     console.log('Fetching Agent configuration:', {
@@ -92,6 +97,17 @@ export class AgentInvoker {
       hasMcpConfig: !!agent.mcpConfig,
     });
 
+    // Build system prompt with event context if provided
+    const systemPrompt = eventContext
+      ? buildEventDrivenSystemPrompt(agent.systemPrompt, eventContext)
+      : agent.systemPrompt;
+
+    console.log('System prompt preparation:', {
+      hasEventContext: !!eventContext,
+      originalLength: agent.systemPrompt.length,
+      finalLength: systemPrompt.length,
+    });
+
     // Build request with Agent configuration
     const request: AgentInvocationRequest = {
       prompt: payload.prompt,
@@ -99,7 +115,7 @@ export class AgentInvoker {
       sessionId: payload.sessionId,
       modelId: payload.modelId, // Use modelId from trigger payload if specified
       storagePath: payload.workingDirectory, // Use workingDirectory as storagePath
-      systemPrompt: agent.systemPrompt, // Always use Agent's systemPrompt
+      systemPrompt, // Use event-driven system prompt if context provided, otherwise original
       enabledTools: agent.enabledTools, // Always use Agent's enabledTools
       mcpConfig: agent.mcpConfig, // Include MCP configuration if available
     };
