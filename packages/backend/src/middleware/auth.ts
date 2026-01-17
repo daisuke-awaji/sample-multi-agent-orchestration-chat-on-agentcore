@@ -199,6 +199,39 @@ export function optionalJwtAuthMiddleware(
 }
 
 /**
+ * Determine if the JWT token is from a machine user (Client Credentials Flow)
+ *
+ * Client Credentials Flow characteristics:
+ * 1. No username or cognito:username claim
+ * 2. sub claim is either missing or equals client_id
+ * 3. token_use is 'access'
+ *
+ * Regular user tokens (Authorization Code Flow):
+ * - Have cognito:username or username claim
+ * - sub claim contains user UUID (different from client_id)
+ * - Can be either 'access' or 'id' token_use
+ */
+function isMachineUserToken(payload?: CognitoJWTPayload): boolean {
+  if (!payload) return false;
+
+  // Check for user identifier claims
+  const hasUserIdentifier = payload['cognito:username'] || payload['username'];
+
+  // Check if sub exists and is different from client_id
+  // For regular users: sub is a UUID different from client_id
+  // For machine users: sub is either missing or equals client_id
+  const hasUserSub = payload.sub && payload.sub !== payload.client_id;
+
+  // If has user identifier or valid user sub, it's a regular user
+  if (hasUserIdentifier || hasUserSub) {
+    return false;
+  }
+
+  // Machine user: no user identifiers and token_use is 'access'
+  return payload.token_use === 'access';
+}
+
+/**
  * Authentication information type definition
  */
 export interface AuthInfo {
@@ -209,19 +242,31 @@ export interface AuthInfo {
   groups: string[];
   tokenUse?: 'access' | 'id';
   requestId?: string;
+  /** Whether the token is from a machine user (Client Credentials Flow) */
+  isMachineUser: boolean;
+  /** Client ID (for machine users) */
+  clientId?: string;
+  /** OAuth scopes (for machine users) */
+  scopes?: string[];
 }
 
 /**
  * Helper function to get current authentication information
  */
 export function getCurrentAuth(req: AuthenticatedRequest): AuthInfo {
+  const payload = req.jwt;
+  const machineUser = isMachineUserToken(payload);
+
   return {
-    authenticated: !!req.jwt,
-    userId: req.userId,
-    username: req.jwt?.['cognito:username'] || req.jwt?.username,
-    email: req.jwt?.email,
-    groups: req.jwt?.['cognito:groups'] || [],
-    tokenUse: req.jwt?.token_use,
+    authenticated: !!payload,
+    userId: machineUser ? undefined : req.userId,
+    username: payload?.['cognito:username'] || payload?.username,
+    email: payload?.email,
+    groups: payload?.['cognito:groups'] || [],
+    tokenUse: payload?.token_use,
     requestId: req.requestId,
+    isMachineUser: machineUser,
+    clientId: machineUser ? payload?.client_id : undefined,
+    scopes: payload?.scope?.split(' '),
   };
 }

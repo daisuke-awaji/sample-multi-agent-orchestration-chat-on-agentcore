@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=@fullstack-agentcore/tool-definitions && npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run build --workspace=@fullstack-agentcore/tool-definitions && npm run test --workspaces --if-present",
     "test:integration": "npm run test:integration --workspace=@fullstack-agentcore/backend",
     "setup-env": "tsx scripts/setup-env.ts",
     "dev": "concurrently -n \"frontend,backend,agent\" -c \"cyan,magenta,yellow\" \"npm:frontend:dev\" \"npm:backend:dev\" \"npm:agent:dev\"",
@@ -69,6 +69,7 @@
     "@eslint/js": "^9.39.2",
     "@redocly/cli": "^2.14.4",
     "concurrently": "^9.1.2",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",

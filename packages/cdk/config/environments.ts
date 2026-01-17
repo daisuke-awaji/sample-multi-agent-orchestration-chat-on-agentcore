@@ -150,6 +150,65 @@ export interface EnvironmentConfig {
      */
     password: string;
   };
+
+  /**
+   * Event rules configuration (optional)
+   * Predefined EventBridge rules that users can subscribe to for triggers
+   */
+  eventRules?: EventRuleConfig[];
+}
+
+/**
+ * Event rule configuration
+ * Defines EventBridge rules that trigger Lambda when events match the pattern
+ */
+export interface EventRuleConfig {
+  /**
+   * Unique identifier (e.g., "s3-upload", "github-push")
+   */
+  id: string;
+
+  /**
+   * Display name (e.g., "S3 File Upload")
+   */
+  name: string;
+
+  /**
+   * Description
+   */
+  description: string;
+
+  /**
+   * EventBridge event pattern
+   * Matches events to trigger the Lambda function
+   */
+  eventPattern: {
+    /**
+     * Event source (e.g., ["aws.s3"], ["com.github"])
+     */
+    source: string[];
+
+    /**
+     * Event detail type (e.g., ["Object Created"], ["Push"])
+     */
+    detailType: string[];
+
+    /**
+     * Optional detail filters
+     * Example: { bucket: { name: ["my-bucket"] } }
+     */
+    detail?: Record<string, unknown>;
+  };
+
+  /**
+   * Icon name for frontend display (optional)
+   */
+  icon?: string;
+
+  /**
+   * Whether this rule is enabled
+   */
+  enabled: boolean;
 }
 
 /**
@@ -174,6 +233,32 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
     githubTokenSecretName: 'agentcore/default/github-token',
     allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
+    customDomain: {
+      hostName: "agentchat",
+      domainName: "geeawa.net"
+    },
+    eventRules: [
+      {
+        id: 's3-upload',
+        name: 'S3 File Upload',
+        description:
+          'Triggered when a file with a key matching "users/{userId}/event-test-*" is uploaded to the user storage S3 bucket. This rule monitors Object Created events and can be used to automatically process uploaded files, such as triggering data pipelines, file validation, or notification workflows.',
+        eventPattern: {
+          source: ['aws.s3'],
+          detailType: ['Object Created'],
+          detail: {
+            bucket: {
+              name: [{ prefix: 'agentcore-app-dev-user-storage-' }],
+            },
+            object: {
+              key: [{ wildcard: 'users/*/event-test-*' }],
+            },
+          },
+        },
+        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        enabled: true,
+      },
+    ],
   },
 
   dev: {
@@ -199,6 +284,47 @@ export const environments: Record<Environment, EnvironmentConfig> = {
       email: 'testuser@amazon.com',
       password: 'TestPassword123!',
     },
+    customDomain: {
+      hostName: "agentcore-dev",
+      domainName: "geeawa.net"
+    },
+    eventRules: [
+      {
+        id: 's3-upload',
+        name: 'S3 File Upload',
+        description:
+          'Triggered when a file with a key matching "users/{userId}/event-test-*" is uploaded to the user storage S3 bucket. This rule monitors Object Created events and can be used to automatically process uploaded files, such as triggering data pipelines, file validation, or notification workflows.',
+        eventPattern: {
+          source: ['aws.s3'],
+          detailType: ['Object Created'],
+          detail: {
+            bucket: {
+              name: [{ prefix: 'agentcore-app-dev-user-storage-' }],
+            },
+            object: {
+              key: [{ wildcard: 'users/*/event-test-*' }],
+            },
+          },
+        },
+        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        enabled: true,
+      },
+      // https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-saas-furls.html
+      // {
+      //   id: 'github-issue-created',
+      //   name: 'GitHub Issue created',
+      //   description: 'Triggered when a new issue is opened in the GitHub repository',
+      //   eventPattern: {
+      //     source: ['github.com'],
+      //     detailType: ['issues'],
+      //     detail: {
+      //       action: ["opened"]
+      //     }
+      //   },
+      //   icon: 'github', // https://lucide.dev/icons/github
+      //   enabled: true,
+      // }
+    ],
   },
 
   stg: {

@@ -1,262 +1,343 @@
-# @fullstack-agentcore/client
+# AgentCore Client
 
-AgentCore Runtime 用の CLI クライアントツールです。
+CLI client for AgentCore Runtime with support for both user and machine-to-machine authentication.
 
-## 概要
-
-このパッケージは、AgentCore Runtime に対してコマンドラインから接続・操作するためのクライアントツールを提供します。
-
-### 対応環境
-
-- **ローカル環境**: docker compose で起動した AgentCore Runtime
-- **AWS 環境**: Amazon Bedrock AgentCore Runtime
-
-### 主な機能
-
-- 🏥 **ヘルスチェック**: Agent の動作確認
-- 🤖 **Agent 呼び出し**: プロンプトの送信と応答の受信
-- 🔄 **インタラクティブモード**: 対話的な Agent 操作
-- ⚙️ **設定管理**: エンドポイントと認証の管理
-- 🎫 **JWT 認証**: Amazon Cognito との連携
-
-## インストール
+## Installation
 
 ```bash
-# パッケージのビルド
+npm install
 npm run build
-
-# グローバルインストール（オプション）
-npm link
 ```
 
-## 設定
+## Configuration
 
-### 環境変数
-
-`.env.example` を `.env` にコピーして設定を変更してください:
+Copy the example environment file and configure it:
 
 ```bash
 cp .env.example .env
 ```
 
-主な設定項目:
+Edit `.env` with your configuration.
 
-```env
-# ====================================
-# 🏠 ローカル環境（デフォルト）
-# ====================================
-# ローカルの Agent サーバーに接続する場合
-AGENTCORE_ENDPOINT=http://localhost:8080
+## Authentication Modes
 
-# ====================================
-# ☁️ AWS AgentCore Runtime
-# ====================================
-# Runtime ARN を指定すると自動的に AWS AgentCore Runtime に接続
-AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:ACCOUNT_ID:runtime/YOUR_RUNTIME_ID
-AGENTCORE_REGION=us-east-1
+The client supports two authentication modes:
 
-# ====================================
-# 🔐 Cognito 認証設定（AWS 接続時に必要）
-# ====================================
-COGNITO_USER_POOL_ID=us-east-1_OZ6KUvSn3
-COGNITO_CLIENT_ID=19duob1sqr877jesho69aildbn
-COGNITO_USERNAME=testuser
-COGNITO_PASSWORD=TestPassword123!
+### 1. User Authentication (Default)
+
+Used for interactive user sessions with username/password.
+
+```bash
+# .env
+AUTH_MODE=user
+COGNITO_USER_POOL_ID=us-east-1_YourPoolId
+COGNITO_CLIENT_ID=your-client-id
+COGNITO_USERNAME=your-username
+COGNITO_PASSWORD=your-password
 COGNITO_REGION=us-east-1
 ```
 
-### 接続先の自動判定
+### 2. Machine User Authentication
 
-設定の優先順位：
-
-1. **`AGENTCORE_RUNTIME_ARN`** が設定されている → AWS AgentCore Runtime に接続
-2. **`AGENTCORE_ENDPOINT`** が設定されている → カスタムエンドポイント（ローカル開発など）
-3. **両方とも未設定** → デフォルト（`http://localhost:8080`）に接続
-
-### ランタイム
-
-- **ローカル環境**: docker compose や開発サーバー
-  - 認証: 不要
-  - 設定: `AGENTCORE_ENDPOINT` のみ
-- **AWS AgentCore Runtime**: Amazon Bedrock AgentCore
-  - 認証: Cognito JWT 必須
-  - 設定: `AGENTCORE_RUNTIME_ARN` + Cognito 設定
-
-## 使用方法
-
-### 基本コマンド
+Used for machine-to-machine (M2M) communication using Client Credentials Flow.
 
 ```bash
-# ヘルスチェック
-agentcore-client ping
-
-# Agent 呼び出し
-agentcore-client invoke "Hello, what is 1+1?"
-
-# インタラクティブモード
-agentcore-client interactive
-
-# 設定確認
-agentcore-client config
-
-# JWT トークン情報
-agentcore-client token
-
-# プロファイル一覧
-agentcore-client profiles
+# .env
+AUTH_MODE=machine
+COGNITO_DOMAIN=your-domain.auth.ap-northeast-1.amazoncognito.com
+MACHINE_CLIENT_ID=your-machine-client-id
+MACHINE_CLIENT_SECRET=your-machine-client-secret
+TARGET_USER_ID=user-uuid-to-act-as
+COGNITO_SCOPE=agentcore/batch.execute  # optional
 ```
 
-### オプション
+## Usage
+
+### Basic Commands
 
 ```bash
-# プロファイルを指定
-agentcore-client ping --profile agentcore
-
-# エンドポイントを直接指定
-agentcore-client invoke "Hello" --endpoint http://localhost:8080
-
-# JSON 出力
-agentcore-client ping --json
-
-# 認証なしで実行
-agentcore-client invoke "Hello" --no-auth
-
-# 実行時間の測定
-agentcore-client invoke "Hello" --time
-```
-
-### 設定の検証
-
-```bash
-# 設定の妥当性をチェック
-agentcore-client config --validate
-
-# JSON 形式で設定を出力
-agentcore-client config --json
-```
-
-## 使用例
-
-### ローカル環境での使用
-
-1. **Docker Compose でサーバー起動**:
-
-   ```bash
-   cd packages/agent
-   docker compose up -d
-   ```
-
-2. **ヘルスチェック**:
-
-   ```bash
-   agentcore-client ping --profile local
-   ```
-
-3. **Agent 呼び出し**:
-   ```bash
-   agentcore-client invoke "今日の天気はどうですか？" --profile local
-   ```
-
-### AWS 環境での使用
-
-1. **設定確認**:
-
-   ```bash
-   agentcore-client config --validate --profile agentcore
-   ```
-
-2. **JWT トークン取得確認**:
-
-   ```bash
-   agentcore-client token --profile agentcore
-   ```
-
-3. **Agent 呼び出し**:
-   ```bash
-   agentcore-client invoke "AWS のサービスについて教えて" --profile agentcore
-   ```
-
-### インタラクティブモード
-
-連続して Agent と対話できます:
-
-```bash
-agentcore-client interactive
-
-# セッション例
-AgentCore> こんにちは
-(Agent の応答)
-
-AgentCore> 1+1は？
-(Agent の応答)
-
-AgentCore> exit
-👋 セッションを終了します
-```
-
-## 開発
-
-### ビルド
-
-```bash
-npm run build
-```
-
-### 開発モード
-
-```bash
-npm run dev
-```
-
-### テスト
-
-```bash
-# ローカル環境でのテスト
+# Check Agent health
 npm run dev ping
 
-# 設定確認
-npm run dev config --validate
+# Invoke Agent with a prompt
+npm run dev invoke "What is 2+2?"
+
+# Interactive mode
+npm run dev interactive
+
+# Show configuration
+npm run dev config
+
+# Show token information
+npm run dev token
 ```
 
-## トラブルシューティング
+### With Machine User Authentication
 
-### 接続エラー
+Using environment variables:
 
-1. **サーバーが起動しているか確認**:
+```bash
+# Set environment
+export AUTH_MODE=machine
+export COGNITO_DOMAIN=your-domain.auth.ap-northeast-1.amazoncognito.com
+export MACHINE_CLIENT_ID=your-machine-client-id
+export MACHINE_CLIENT_SECRET=your-machine-client-secret
+export TARGET_USER_ID=user-uuid
+export AGENTCORE_ENDPOINT=http://localhost:8080
 
+# Invoke
+npm run dev invoke "Hello, test message"
+```
+
+Using CLI options:
+
+```bash
+npm run dev invoke "Hello" --machine-user --target-user user-uuid
+```
+
+### Show Machine User Token
+
+```bash
+# Using environment variable
+export AUTH_MODE=machine
+npm run dev token
+
+# Or using CLI option
+npm run dev token --machine
+```
+
+## Command Reference
+
+### Global Options
+
+- `--endpoint <url>` - Override endpoint URL
+- `--json` - Output in JSON format
+- `--machine-user` - Use machine user authentication
+- `--target-user <userId>` - Target user ID (for machine user mode)
+
+### Commands
+
+#### `ping`
+
+Check Agent health status.
+
+```bash
+npm run dev ping [options]
+
+Options:
+  --json    JSON output
+```
+
+#### `invoke <prompt>`
+
+Send a prompt to the Agent.
+
+```bash
+npm run dev invoke "Your prompt here" [options]
+
+Options:
+  --json    JSON output
+```
+
+#### `interactive`
+
+Interactive mode for continuous conversation.
+
+```bash
+npm run dev interactive
+```
+
+#### `config`
+
+Display and validate configuration.
+
+```bash
+npm run dev config [options]
+
+Options:
+  --validate    Validate configuration
+  --json        JSON output
+```
+
+#### `token`
+
+Display JWT token information.
+
+```bash
+npm run dev token [options]
+
+Options:
+  --machine    Show machine user token
+```
+
+#### `runtimes`
+
+List available runtimes.
+
+```bash
+npm run dev runtimes
+```
+
+## Examples
+
+### Example 1: Local Development with User Auth
+
+```bash
+# .env
+AGENTCORE_ENDPOINT=http://localhost:8080
+AUTH_MODE=user
+COGNITO_USERNAME=testuser
+COGNITO_PASSWORD=TestPassword123!
+
+# Run
+npm run dev invoke "Hello, Agent!"
+```
+
+### Example 2: Local Development with Machine User
+
+```bash
+# .env
+AGENTCORE_ENDPOINT=http://localhost:8080
+AUTH_MODE=machine
+COGNITO_DOMAIN=dev.auth.ap-northeast-1.amazoncognito.com
+MACHINE_CLIENT_ID=abc123machine
+MACHINE_CLIENT_SECRET=secret123
+TARGET_USER_ID=user-uuid-here
+
+# Run
+npm run dev invoke "Batch processing request"
+```
+
+### Example 3: AWS Runtime with Machine User
+
+```bash
+# .env
+AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/abc123
+AUTH_MODE=machine
+COGNITO_DOMAIN=prod.auth.ap-northeast-1.amazoncognito.com
+MACHINE_CLIENT_ID=prod-machine-client
+MACHINE_CLIENT_SECRET=prod-secret
+TARGET_USER_ID=production-user-uuid
+COGNITO_SCOPE=agentcore/batch.execute
+
+# Run
+npm run dev invoke "Production batch request"
+```
+
+### Example 4: CLI Options Override
+
+```bash
+# Override endpoint and use machine user
+npm run dev invoke "Test" \
+  --endpoint http://localhost:3000 \
+  --machine-user \
+  --target-user test-user-uuid
+```
+
+## Machine User Setup
+
+To set up machine user authentication:
+
+1. **Create App Client in Cognito**:
+   - Go to AWS Cognito Console
+   - Select your User Pool
+   - Create a new App Client
+   - Enable "Client credentials" OAuth flow
+   - Note the Client ID and Client Secret
+
+2. **Configure Resource Server** (if using custom scopes):
+   - Add a Resource Server in Cognito
+   - Define custom scopes (e.g., `agentcore/batch.execute`)
+   - Associate scopes with the App Client
+
+3. **Set Environment Variables**:
    ```bash
-   curl http://localhost:8080/ping
+   export AUTH_MODE=machine
+   export COGNITO_DOMAIN=your-domain.auth.region.amazoncognito.com
+   export MACHINE_CLIENT_ID=your-client-id
+   export MACHINE_CLIENT_SECRET=your-client-secret
+   export TARGET_USER_ID=user-to-act-as
    ```
 
-2. **エンドポイントの設定確認**:
+4. **Test Authentication**:
    ```bash
-   agentcore-client config
+   npm run dev token --machine
+   npm run dev config --validate
    ```
 
-### 認証エラー
+## Token Caching
 
-1. **Cognito 設定の確認**:
+Both authentication modes use token caching with a 5-minute expiration buffer:
 
-   ```bash
-   agentcore-client config --validate --profile agentcore
-   ```
+- **User tokens**: Cached per `userPoolId:username`
+- **Machine tokens**: Cached per `cognitoDomain:clientId`
 
-2. **JWT トークンの状態確認**:
+Tokens are automatically refreshed when they approach expiration.
 
-   ```bash
-   agentcore-client token --profile agentcore
-   ```
+## Error Handling
 
-3. **認証なしでのテスト**:
-   ```bash
-   agentcore-client invoke "test" --no-auth
-   ```
+Common errors and solutions:
 
-## ライセンス
+### "COGNITO_DOMAIN is not set"
+- Set `COGNITO_DOMAIN` environment variable when using `AUTH_MODE=machine`
+
+### "MACHINE_CLIENT_ID is not set"
+- Set `MACHINE_CLIENT_ID` environment variable
+
+### "TARGET_USER_ID is not set"
+- Set `TARGET_USER_ID` to specify which user the machine user acts as
+
+### "Token request failed: 401"
+- Check that `MACHINE_CLIENT_ID` and `MACHINE_CLIENT_SECRET` are correct
+- Verify the App Client has "Client credentials" flow enabled
+
+### "Token request failed: 400"
+- Check that `COGNITO_DOMAIN` is correct (without `https://`)
+- Verify `COGNITO_SCOPE` matches configured scopes in Cognito
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run in development mode
+npm run dev <command>
+
+# Lint
+npm run lint
+
+# Format
+npm run lint:fix
+```
+
+## Architecture
+
+```
+src/
+├── index.ts              # CLI entry point
+├── config/
+│   └── index.ts          # Configuration management
+├── auth/
+│   ├── cognito.ts        # User authentication (USER_PASSWORD_AUTH)
+│   └── machine-user.ts   # Machine authentication (Client Credentials)
+├── api/
+│   └── client.ts         # API client with streaming support
+└── commands/
+    ├── ping.ts           # Health check command
+    ├── invoke.ts         # Invoke command
+    └── config.ts         # Configuration commands
+```
+
+## Related Documentation
+
+- [Machine User Testing Guide](../../docs/machine-user-testing.md)
+- [Test Script](../../scripts/test-machine-user.ts)
+- [Cognito Configuration](../cdk/lib/constructs/cognito-auth.ts)
+
+## License
 
 MIT
-
-## 関連パッケージ
-
-- `@fullstack-agentcore/agent`: Agent Runtime サーバー
-- `@fullstack-agentcore/cdk`: AWS インフラストラクチャ

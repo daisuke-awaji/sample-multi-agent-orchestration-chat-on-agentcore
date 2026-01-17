@@ -23,6 +23,12 @@ export interface RequestContext {
   requestId: string;
   /** リクエスト開始時刻 */
   startTime: Date;
+  /** マシンユーザー（Client Credentials Flow）かどうか */
+  isMachineUser: boolean;
+  /** クライアントID（マシンユーザーの場合） */
+  clientId?: string;
+  /** OAuthスコープ */
+  scopes?: string[];
 }
 
 /**
@@ -76,6 +82,7 @@ export function createRequestContext(authorizationHeader?: string): RequestConte
     authorizationHeader,
     requestId: randomUUID(),
     startTime: new Date(),
+    isMachineUser: false,
   };
 }
 

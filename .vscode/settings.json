@@ -20,7 +20,13 @@
   "eslint.workingDirectories": [{ "mode": "auto" }],
 
   // 問題パネルでの表示を有効化
-  "eslint.problems.shortenToSingleLine": true
+  "eslint.problems.shortenToSingleLine": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "prettier.prettier-vscode"
+  }
 
   // デバッグが必要な場合は以下のコメントアウトを外してください
   // "eslint.debug": true,

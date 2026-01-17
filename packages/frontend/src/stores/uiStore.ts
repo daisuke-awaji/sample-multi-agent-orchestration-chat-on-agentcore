@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type React from 'react';
 
 interface UIState {
   /**
@@ -21,6 +22,11 @@ interface UIState {
    * ナローデスクトップ表示かどうか（768px以上1024px未満）
    */
   isNarrowDesktop: boolean;
+
+  /**
+   * モバイルヘッダーに表示するアクション（ボタンなど）
+   */
+  mobileHeaderAction: React.ReactNode | null;
 
   /**
    * サイドバーの開閉を切り替える
@@ -44,6 +50,12 @@ interface UIState {
    * @param isNarrow ナローデスクトップ表示状態
    */
   setNarrowDesktop: (isNarrow: boolean) => void;
+
+  /**
+   * モバイルヘッダーアクションを設定する
+   * @param action レンダリングするReactノード
+   */
+  setMobileHeaderAction: (action: React.ReactNode | null) => void;
 }
 
 /**
@@ -60,6 +72,9 @@ export const useUIStore = create<UIState>()(
 
       // デフォルトはワイドデスクトップ
       isNarrowDesktop: false,
+
+      // デフォルトはモバイルヘッダーアクションなし
+      mobileHeaderAction: null,
 
       toggleSidebar: () =>
         set((state) => {
@@ -80,6 +95,11 @@ export const useUIStore = create<UIState>()(
       setNarrowDesktop: (isNarrow) =>
         set(() => {
           return { isNarrowDesktop: isNarrow };
+        }),
+
+      setMobileHeaderAction: (action) =>
+        set(() => {
+          return { mobileHeaderAction: action };
         }),
     }),
     {

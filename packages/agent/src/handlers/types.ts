@@ -17,4 +17,5 @@ export interface InvocationRequest {
   memoryTopK?: number; // Optional: Number of long-term memories to retrieve (default: 10)
   mcpConfig?: Record<string, unknown>; // Optional: User-defined MCP server configuration
   images?: ImageData[]; // Optional: Array of images for multimodal input
+  targetUserId?: string; // Optional: Target user ID for batch processing (machine user only)
 }

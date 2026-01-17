@@ -146,13 +146,14 @@ export class AgentCoreRuntime extends Construct {
       }
 
       // L2 Construct の静的メソッドを使用してCognito認証を設定
+      // Frontend Client と Machine User Client の両方を許可
       authorizerConfiguration = RuntimeAuthorizerConfiguration.usingCognito(
         props.cognitoAuth.userPool,
-        [props.cognitoAuth.userPoolClient]
+        [props.cognitoAuth.userPoolClient, props.cognitoAuth.machineUserClient]
       );
 
       console.log(
-        `Cognito認証設定完了: UserPool=${props.cognitoAuth.userPoolId}, Client=${props.cognitoAuth.clientId}`
+        `Cognito認証設定完了: UserPool=${props.cognitoAuth.userPoolId}, Frontend Client=${props.cognitoAuth.clientId}, Machine User Client=${props.cognitoAuth.machineUserClientId}`
       );
     }
 

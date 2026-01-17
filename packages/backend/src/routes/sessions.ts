@@ -22,6 +22,10 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     const auth = getCurrentAuth(req);
     const actorId = auth.userId;
 
+    // Parse pagination query parameters
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const nextToken = req.query.nextToken as string | undefined;
+
     if (!actorId) {
       return res.status(400).json({
         error: 'Invalid authentication',
@@ -33,6 +37,8 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     console.log(`📋 Session list retrieval started (${auth.requestId}):`, {
       userId: actorId,
       username: auth.username,
+      limit,
+      hasNextToken: !!nextToken,
     });
 
     const sessionsDynamoDBService = getSessionsDynamoDBService();
@@ -46,8 +52,8 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
       });
     }
 
-    // Use DynamoDB for session list
-    const result = await sessionsDynamoDBService.listSessions(actorId);
+    // Use DynamoDB for session list with pagination
+    const result = await sessionsDynamoDBService.listSessions(actorId, limit, nextToken);
 
     console.log(
       `✅ Session list retrieval completed (${auth.requestId}): ${result.sessions.length} items, hasMore: ${result.hasMore}`

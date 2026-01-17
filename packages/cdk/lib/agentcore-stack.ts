@@ -6,6 +6,9 @@ import { AgentCoreMemory } from './constructs/agentcore-memory';
 import { AgentCoreRuntime } from './constructs/agentcore-runtime';
 import { AgentsTable } from './constructs/agents-table';
 import { SessionsTable } from './constructs/sessions-table';
+import { TriggersTable } from './constructs/triggers-table';
+import { TriggerLambda } from './constructs/trigger-lambda';
+import { TriggerEventSources } from './constructs/trigger-event-sources';
 import { BackendApi } from './constructs/backend-api';
 import { CognitoAuth } from './constructs/cognito-auth';
 import { Frontend } from './constructs/frontend';
@@ -277,7 +280,39 @@ export class AgentCoreStack extends cdk.Stack {
       pointInTimeRecovery: true,
     });
 
+    // 5.6. Create Triggers Table
+    const triggersTable = new TriggersTable(this, 'TriggersTable', {
+      tableNamePrefix: resourcePrefix,
+      removalPolicy: envConfig.s3RemovalPolicy,
+      pointInTimeRecovery: true,
+    });
+
     // 6. Create Backend API (Lambda Web Adapter) - Create before Runtime to pass URL
+    // 6. Create Trigger Lambda (before Backend API to get ARN)
+    const triggerLambda = new TriggerLambda(this, 'TriggerLambda', {
+      resourcePrefix,
+      triggersTable: triggersTable.table,
+      agentsTable: this.agentsTable.table,
+      agentApiUrl: '', // Will be set after Runtime is created
+      cognitoUserPoolId: this.cognitoAuth.userPoolId,
+      cognitoClientId: this.cognitoAuth.machineUserClientId,
+      cognitoDomain: `${this.cognitoAuth.userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`,
+    });
+
+    // Create EventBridge Scheduler role
+    const schedulerRole = triggerLambda.createSchedulerRole(this, resourcePrefix);
+
+    // 6.5. Create Trigger Event Sources (EventBridge Rules) if configured
+    let triggerEventSources: TriggerEventSources | undefined;
+    if (envConfig.eventRules && envConfig.eventRules.length > 0) {
+      triggerEventSources = new TriggerEventSources(this, 'TriggerEventSources', {
+        resourcePrefix,
+        eventRules: envConfig.eventRules,
+        triggerLambda: triggerLambda.lambdaFunction,
+      });
+    }
+
+    // 7. Create Backend API (Lambda Web Adapter) - Create before Runtime to pass URL
     this.backendApi = new BackendApi(this, 'BackendApi', {
       apiName: envConfig.backendApiName || `${resourcePrefix}-backend-api`,
       cognitoAuth: this.cognitoAuth,
@@ -301,7 +336,46 @@ export class AgentCoreStack extends cdk.Stack {
     // Grant Sessions Table read/write access to Backend API
     this.sessionsTable.grantReadWrite(this.backendApi.lambdaFunction);
 
-    // 7. Create AgentCore Runtime
+    // Grant Triggers Table read/write access to Backend API
+    triggersTable.grantReadWrite(this.backendApi.lambdaFunction);
+
+    // Grant EventBridge Scheduler permissions to Backend API
+    this.backendApi.lambdaFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: [
+          'scheduler:CreateSchedule',
+          'scheduler:UpdateSchedule',
+          'scheduler:DeleteSchedule',
+          'scheduler:GetSchedule',
+        ],
+        resources: [
+          `arn:aws:scheduler:${this.region}:${this.account}:schedule/default/*`,
+        ],
+      })
+    );
+
+    // Add environment variables for trigger management to Backend API
+    this.backendApi.lambdaFunction.addEnvironment('TRIGGERS_TABLE_NAME', triggersTable.tableName);
+    this.backendApi.lambdaFunction.addEnvironment('TRIGGER_LAMBDA_ARN', triggerLambda.functionArn);
+    this.backendApi.lambdaFunction.addEnvironment('SCHEDULER_ROLE_ARN', schedulerRole.roleArn);
+    this.backendApi.lambdaFunction.addEnvironment('SCHEDULE_GROUP_NAME', 'default');
+
+    // Add event sources config if event rules are configured
+    if (triggerEventSources) {
+      this.backendApi.lambdaFunction.addEnvironment(
+        'EVENT_SOURCES_CONFIG',
+        triggerEventSources.eventSourcesConfig
+      );
+
+      // Add CloudFormation Output for local development
+      new cdk.CfnOutput(this, 'EventSourcesConfig', {
+        value: triggerEventSources.eventSourcesConfig,
+        description: 'Event sources configuration (JSON)',
+        exportName: `${id}-EventSourcesConfig`,
+      });
+    }
+
+    // 8. Create AgentCore Runtime
     this.agentRuntime = new AgentCoreRuntime(this, 'AgentCoreRuntime', {
       runtimeName: envConfig.runtimeName,
       description: `TypeScript-based Strands Agent Runtime - ${resourcePrefix}`,
@@ -330,7 +404,13 @@ export class AgentCoreStack extends cdk.Stack {
     // Grant Sessions Table read/write access to Runtime
     this.sessionsTable.grantReadWrite(this.agentRuntime.runtime);
 
-    // 8. Create Frontend
+    // Update Trigger Lambda with Agent API URL (now available from Runtime)
+    triggerLambda.lambdaFunction.addEnvironment(
+      'AGENT_API_URL',
+      `https://bedrock-agentcore.${this.region}.amazonaws.com/runtimes/${this.agentRuntime.runtimeArn}/invocations?qualifier=DEFAULT`
+    );
+
+    // 9. Create Frontend
     this.frontend = new Frontend(this, 'Frontend', {
       resourcePrefix: envConfig.frontendBucketPrefix || resourcePrefix,
       userPoolId: this.cognitoAuth.userPoolId,
@@ -341,7 +421,7 @@ export class AgentCoreStack extends cdk.Stack {
       customDomain: envConfig.customDomain, // Add custom domain configuration
     });
 
-    // 9. Additional CloudFormation outputs (authentication related)
+    // 10. Additional CloudFormation outputs (authentication related)
     new cdk.CfnOutput(this, 'GatewayMcpEndpoint', {
       value: `https://${this.gateway.gatewayId}.gateway.bedrock-agentcore.${this.region}.amazonaws.com/mcp`,
       description: 'AgentCore Gateway MCP Endpoint',
@@ -495,6 +575,35 @@ export class AgentCoreStack extends cdk.Stack {
       description: 'Sessions Table configuration summary',
     });
 
+    // Note: Trigger-related outputs are already defined in construct files:
+    // - TriggersTableName: triggers-table.ts
+    // - TriggerLambdaArn: trigger-lambda.ts
+    // - SchedulerRoleArn: trigger-lambda.ts (createSchedulerRole method)
+
+    new cdk.CfnOutput(this, 'TriggerConfiguration', {
+      value: `Triggers: ${triggersTable.tableName} - Scheduled agent execution enabled`,
+      description: 'Event-driven Triggers configuration summary',
+    });
+
+    // Trigger-related outputs (for setup-env.ts)
+    new cdk.CfnOutput(this, 'TriggersTableName', {
+      value: triggersTable.tableName,
+      description: 'Triggers DynamoDB Table Name',
+      exportName: `${id}-TriggersTableName`,
+    });
+
+    new cdk.CfnOutput(this, 'TriggerLambdaArn', {
+      value: triggerLambda.functionArn,
+      description: 'Trigger Lambda Function ARN',
+      exportName: `${id}-TriggerLambdaArn`,
+    });
+
+    new cdk.CfnOutput(this, 'SchedulerRoleArn', {
+      value: schedulerRole.roleArn,
+      description: 'EventBridge Scheduler IAM Role ARN',
+      exportName: `${id}-SchedulerRoleArn`,
+    });
+
     // Add tags
     cdk.Tags.of(this).add('Project', 'AgentCore');
     cdk.Tags.of(this).add('Component', 'Gateway');
@@ -503,5 +612,7 @@ export class AgentCoreStack extends cdk.Stack {
     cdk.Tags.of(this).add('UserStorage', 'Enabled');
     cdk.Tags.of(this).add('AgentsTable', 'Enabled');
     cdk.Tags.of(this).add('SessionsTable', 'Enabled');
+    cdk.Tags.of(this).add('TriggersTable', 'Enabled');
+    cdk.Tags.of(this).add('TriggerLambda', 'Enabled');
   }
 }

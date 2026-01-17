@@ -9,6 +9,8 @@ common:
   saving: 保存中...
   cancel: キャンセル
   delete: 削除
+  deleting: 削除中...
+  moreOptions: その他のオプション
   close: 閉じる
   confirm: 確認
   edit: 編集
@@ -159,6 +161,16 @@ chat:
   searchNoResults: '該当するセッションがありません'
   updatedAt: '更新日時'
   searchNote: '※ セマンティック検索は未実装です。タイトルのみ検索可能です。'
+  deleteSession: セッションを削除
+  deleteSessionConfirm: '「{{title}}」を削除してもよろしいですか？この操作は取り消せません。'
+  sessionDeleted: セッションを削除しました
+  selectedCount: '{{count}}件選択中'
+  selectAll: すべて選択
+  deselectAll: すべて解除
+  clearSelection: 選択解除
+  bulkDelete: 一括削除
+  bulkDeleteConfirm: '選択した{{count}}件のセッションを削除してもよろしいですか？この操作は取り消せません。'
+  sessionsDeleted: '{{count}}件のセッションを削除しました'
 
 # エージェント
 agent:
@@ -476,6 +488,250 @@ events:
   comingSoon: Coming Soon
   eventsDescription: イベント連携機能は今後開発する予定です。
   eventsFeature: 外部カレンダーやイベント管理ツールと連携できるようになります。
+
+# トリガー
+triggers:
+  # ページ
+  pageTitle: トリガー管理
+  pageDescription: スケジュールや Amazon EventBridge のイベントに基づいてエージェントを自動実行するトリガーを作成・管理できます。定期的なタスクの自動化や、S3へのファイルアップロードなどの外部イベントをきっかけにエージェントを起動して、データ収集やレポート生成などを行うことができます。
+
+  # タブ
+  tabs:
+    basic: 基本設定
+    trigger: トリガー設定
+
+  # アクション
+  create: 新規作成
+  edit: 編集
+  delete: 削除
+  enable: 有効化
+  disable: 無効化
+  viewHistory: 実行履歴を表示
+
+  # フォーム
+  form:
+    title: トリガー設定
+    createTitle: 新規トリガー作成
+    editTitle: トリガーを編集
+    basicInfo: 基本情報
+    basicInfoDescription: トリガーの名前、説明、実行するエージェントを設定します
+    name: トリガー名
+    namePlaceholder: 例 - 日次レポート生成
+    nameRequired: トリガー名は必須です
+    description: 説明
+    descriptionPlaceholder: このトリガーの目的を記載
+    agent: 実行するエージェント
+    agentPlaceholder: エージェントを選択...
+    agentRequired: エージェントを選択してください
+    type: トリガータイプ
+    typeSchedule: スケジュール
+    typeEvent: イベント（準備中）
+    scheduleConfig: スケジュール設定
+    scheduleConfigDescription: トリガーを実行する日時を設定します
+    inputMessage: 入力メッセージ
+    inputMessageDescription: エージェントに送信するメッセージを入力してください
+    inputMessagePlaceholder: エージェントに送信するメッセージ
+    inputMessageRequired: 入力メッセージは必須です
+    modelId: モデルID
+    optional: オプション
+    selectModel: モデルを選択...
+    useDefault: デフォルトを使用
+    modelIdHint: 特定のモデルを指定しない場合、エージェントのデフォルトモデルが使用されます
+    workingDirectory: 作業ディレクトリ
+    selectDirectory: ディレクトリを選択...
+    workingDirectoryHint: エージェントが作業するディレクトリを指定します。指定しない場合、ルートディレクトリ（/）が使用されます
+    save: 保存
+    saving: 保存中...
+    cancel: キャンセル
+
+  # Cron Builder
+  cron:
+    title: スケジュール設定
+    preset: プリセット
+    presetEveryMinute: 毎分
+    presetEveryHour: 毎時
+    presetEveryDay: 毎日（0時）
+    presetEveryWeekday: 平日毎日
+    presetEveryMonday: 毎週月曜
+    presetEveryMonth: 毎月1日
+    presetCustom: カスタム
+    minute: 分
+    hour: 時
+    dayOfMonth: 日
+    month: 月
+    dayOfWeek: 曜日
+    year: 年
+    timezone: タイムゾーン
+    preview: 設定プレビュー
+    nextExecutions: 次回実行予定
+    customExpression: 'カスタムCron式'
+    customExpressionHint: 'cron形式: 分 時 日 月 曜日 年 (例: 0 0 * * ? *)'
+    invalidExpression: 無効なCron式です
+    # 範囲ラベル
+    minuteRange: '(0-59)'
+    hourRange: '(0-23)'
+    dayOfMonthRange: '(1-31)'
+    # ヘルプヒント
+    dayOfMonthHint: '? または * を使用'
+    dayOfWeekHint: '? または * を使用'
+    yearHint: '通常は * を使用'
+    # ドロップダウンオプション
+    optionAll: 'すべて (*)'
+    optionNotSpecified: '指定なし (?)'
+    optionWeekdays: '平日 (MON-FRI)'
+    # ヒントセクション
+    hintsTitle: '💡 ヒント'
+    hintAll: '* = すべての値'
+    hintNotSpecified: '? = 指定なし（日または曜日で必須）'
+    hintRange: '0-5 = 範囲指定'
+    hintMultiple: '0,15,30 = 複数指定'
+    hintDayWeekExclusive: 日と曜日は同時に指定できません（片方は ? にする必要があります）
+
+  # ステータス
+  status:
+    enabled: 有効
+    disabled: 無効
+
+  # 実行履歴
+  history:
+    title: 実行履歴
+    noHistory: 実行履歴がありません
+    executedAt: 実行日時
+    duration: 実行時間
+    status: ステータス
+    success: 成功
+    failure: 失敗
+    inProgress: 実行中
+    input: 入力
+    output: 出力
+    error: エラー
+    showDetails: 詳細を表示
+    hideDetails: 詳細を閉じる
+    loadMore: さらに読み込む
+    executionId: 実行ID
+    startedAt: 開始日時
+    completedAt: 完了日時
+
+  # メッセージ
+  messages:
+    createSuccess: トリガーを作成しました
+    createError: トリガーの作成に失敗しました
+    updateSuccess: トリガーを更新しました
+    updateError: トリガーの更新に失敗しました
+    deleteConfirm: このトリガーを削除してもよろしいですか？
+    deleteSuccess: トリガーを削除しました
+    deleteError: トリガーの削除に失敗しました
+    enableSuccess: トリガーを有効化しました
+    disableSuccess: トリガーを無効化しました
+    toggleError: トリガーの状態変更に失敗しました
+    fetchError: トリガーの取得に失敗しました
+
+  # 空状態
+  empty:
+    title: トリガーがありません
+    description: 新規作成ボタンからスケジュールトリガーを作成してください
+
+  # イベントタイプ選択
+  eventTypes:
+    title: トリガータイプ
+    selectTitle: トリガータイプを選択
+    selectDescription: 実行するトリガーのタイプを選択してください
+    change: 変更
+    comingSoon: この機能は実装予定です
+    comingSoonBadge: Coming Soon
+    schedule:
+      label: スケジュール
+      description: 定期的に自動実行
+    event:
+      label: イベント駆動
+      description: 外部イベント（S3など）をトリガーに実行
+    slack:
+      label: Slack イベント連携
+      description: Slack イベントをトリガーに実行
+    github:
+      label: GitHub 連携
+      description: GitHub イベントをトリガーに実行
+
+  # イベントソース選択
+  eventSource:
+    label: イベントソース
+    loadError: イベントソースの読み込みに失敗しました
+    noSourcesAvailable: イベントソースが設定されていません
+    selectPlaceholder: イベントソースを選択...
+    helpText: トリガーを発火させるイベントソースを選択してください。新しいイベントソースの追加が必要な場合は、システム管理者にお問い合わせください。
+    ruleDetails: EventBridge ルール詳細
+
+  # カード表示
+  card:
+    schedule: スケジュール
+    timezone: タイムゾーン
+    eventSource: イベントソース
+    triggerCondition: トリガー条件
+    onEventReceived: イベント受信時
+    agent: エージェント
+    lastExecution: 最終実行
+    notExecuted: 未実行
+    enabled: 有効
+    disabled: 無効
+
+  # イベントパターン表示
+  eventPattern:
+    source: ソース
+    eventType: イベントタイプ
+    # Detail type mappings
+    detailTypes:
+      objectCreated: オブジェクト作成
+      objectDeleted: オブジェクト削除
+      objectRestoreCompleted: オブジェクト復元完了
+      push: プッシュ
+      pullRequest: プルリクエスト
+      issues: Issue
+      issueComment: Issueコメント
+      ec2StateChange: EC2インスタンス状態変更
+      pipelineStateChange: パイプライン実行状態変更
+      ecsTaskStateChange: ECSタスク状態変更
+    # Detail label mappings
+    labels:
+      bucketName: バケット名
+      objectKey: オブジェクトキー
+      objectSize: サイズ
+      objectEtag: ETag
+      action: アクション
+      repository: リポジトリ
+      branch: ブランチ
+      state: 状態
+      instanceId: インスタンスID
+      detailType: イベントタイプ
+      region: リージョン
+
+  # Cron description
+  cronDescription:
+    minute: '{{value}}分'
+    day: '{{value}}日'
+    month: '{{value}}月'
+    dayRange: '{{start}}〜{{end}}'
+    dayList: '、'
+    days:
+      MON: 月曜
+      TUE: 火曜
+      WED: 水曜
+      THU: 木曜
+      FRI: 金曜
+      SAT: 土曜
+      SUN: 日曜
+    months:
+      '1': 1月
+      '2': 2月
+      '3': 3月
+      '4': 4月
+      '5': 5月
+      '6': 6月
+      '7': 7月
+      '8': 8月
+      '9': 9月
+      '10': 10月
+      '11': 11月
+      '12': 12月
 
 # ホームページ
 home:

@@ -7,7 +7,11 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { customAlphabet } from 'nanoid';
 import toast from 'react-hot-toast';
-import { fetchSessions, fetchSessionEvents } from '../api/sessions';
+import {
+  fetchSessions,
+  fetchSessionEvents,
+  deleteSession as deleteSessionApi,
+} from '../api/sessions';
 import type { SessionSummary, ConversationMessage } from '../api/sessions';
 import { ApiError } from '../api/client/base-client';
 import i18n from '../i18n';
@@ -20,6 +24,11 @@ const generateSessionId = customAlphabet(
 );
 
 /**
+ * Default page size for session list
+ */
+const DEFAULT_PAGE_SIZE = 50;
+
+/**
  * Session store state type definition
  */
 interface SessionState {
@@ -27,6 +36,11 @@ interface SessionState {
   isLoadingSessions: boolean;
   sessionsError: string | null;
   hasLoadedOnce: boolean; // Initial load completion flag
+
+  // Pagination state
+  nextToken: string | null;
+  hasMoreSessions: boolean;
+  isLoadingMoreSessions: boolean;
 
   activeSessionId: string | null;
   sessionEvents: ConversationMessage[];
@@ -41,7 +55,11 @@ interface SessionState {
  */
 interface SessionActions {
   loadSessions: () => Promise<void>;
+  loadMoreSessions: () => Promise<void>; // Load more sessions for infinite scroll
+  loadAllSessions: () => Promise<void>; // Load all sessions (for search page)
   selectSession: (sessionId: string) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>; // Delete a session
+  deleteMultipleSessions: (sessionIds: string[]) => Promise<void>; // Delete multiple sessions
   setActiveSessionId: (sessionId: string) => void;
   clearActiveSession: () => void;
   setSessionsError: (error: string | null) => void;
@@ -68,6 +86,11 @@ export const useSessionStore = create<SessionStore>()(
       sessionsError: null,
       hasLoadedOnce: false, // Initial load completion flag
 
+      // Pagination state
+      nextToken: null,
+      hasMoreSessions: false,
+      isLoadingMoreSessions: false,
+
       activeSessionId: null,
       sessionEvents: [],
       isLoadingEvents: false,
@@ -80,16 +103,20 @@ export const useSessionStore = create<SessionStore>()(
           set({ isLoadingSessions: true, sessionsError: null });
 
           console.log('🔄 Loading all sessions...');
-          const sessions = await fetchSessions();
+          const result = await fetchSessions({ limit: DEFAULT_PAGE_SIZE });
 
           set({
-            sessions,
+            sessions: result.sessions,
+            nextToken: result.nextToken || null,
+            hasMoreSessions: result.hasMore,
             isLoadingSessions: false,
             sessionsError: null,
             hasLoadedOnce: true, // Set initial load completion flag
           });
 
-          console.log(`✅ Session list loaded: ${sessions.length} items`);
+          console.log(
+            `✅ Session list loaded: ${result.sessions.length} items, hasMore: ${result.hasMore}`
+          );
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Failed to load session list';
@@ -97,11 +124,80 @@ export const useSessionStore = create<SessionStore>()(
 
           set({
             sessions: [],
+            nextToken: null,
+            hasMoreSessions: false,
             isLoadingSessions: false,
             sessionsError: errorMessage,
             hasLoadedOnce: true, // Mark as initial load completed even on error
           });
         }
+      },
+
+      loadMoreSessions: async () => {
+        const { nextToken, hasMoreSessions, isLoadingMoreSessions, sessions } = get();
+
+        // Skip if no more sessions or already loading
+        if (!hasMoreSessions || isLoadingMoreSessions || !nextToken) {
+          console.log('⏭️ Skipping loadMoreSessions:', {
+            hasMoreSessions,
+            isLoadingMoreSessions,
+            hasNextToken: !!nextToken,
+          });
+          return;
+        }
+
+        try {
+          set({ isLoadingMoreSessions: true });
+
+          console.log('🔄 Loading more sessions...');
+          const result = await fetchSessions({
+            limit: DEFAULT_PAGE_SIZE,
+            nextToken,
+          });
+
+          set({
+            sessions: [...sessions, ...result.sessions],
+            nextToken: result.nextToken || null,
+            hasMoreSessions: result.hasMore,
+            isLoadingMoreSessions: false,
+          });
+
+          console.log(
+            `✅ More sessions loaded: ${result.sessions.length} items, total: ${sessions.length + result.sessions.length}, hasMore: ${result.hasMore}`
+          );
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to load more sessions';
+          console.error('💥 Load more sessions error:', error);
+
+          set({
+            isLoadingMoreSessions: false,
+            sessionsError: errorMessage,
+          });
+        }
+      },
+
+      loadAllSessions: async () => {
+        const { loadSessions, loadMoreSessions } = get();
+
+        console.log('🔄 Loading all sessions...');
+
+        // First, load initial sessions
+        await loadSessions();
+
+        // Then, keep loading more until no more sessions
+        let iterationCount = 0;
+        const maxIterations = 100; // Safety limit to prevent infinite loops
+
+        while (get().hasMoreSessions && get().nextToken && iterationCount < maxIterations) {
+          await loadMoreSessions();
+          iterationCount++;
+        }
+
+        const totalSessions = get().sessions.length;
+        console.log(
+          `✅ All sessions loaded: ${totalSessions} items in ${iterationCount + 1} requests`
+        );
       },
 
       selectSession: async (sessionId: string) => {
@@ -146,6 +242,110 @@ export const useSessionStore = create<SessionStore>()(
             isLoadingEvents: false,
             eventsError: errorMessage,
           });
+        }
+      },
+
+      deleteSession: async (sessionId: string) => {
+        // 1. Save session for potential rollback
+        const { sessions, activeSessionId } = get();
+        const sessionToDelete = sessions.find((s) => s.sessionId === sessionId);
+        const originalIndex = sessions.findIndex((s) => s.sessionId === sessionId);
+
+        // 2. Optimistically remove from local state immediately
+        const updatedSessions = sessions.filter((s) => s.sessionId !== sessionId);
+        set({ sessions: updatedSessions });
+
+        // Clear active session if it's the deleted one
+        if (activeSessionId === sessionId) {
+          set({
+            activeSessionId: null,
+            sessionEvents: [],
+            eventsError: null,
+          });
+        }
+
+        console.log(`🗑️ Optimistically removed session: ${sessionId}`);
+
+        try {
+          // 3. Call API to delete session (in background)
+          await deleteSessionApi(sessionId);
+          console.log(`✅ Session deleted from server: ${sessionId}`);
+          toast.success(i18n.t('chat.sessionDeleted'));
+        } catch (error) {
+          // 4. Rollback on error - restore the session
+          console.error('💥 Session deletion error, rolling back:', error);
+
+          if (sessionToDelete) {
+            const currentSessions = get().sessions;
+            // Restore at original position if possible
+            const restoredSessions = [...currentSessions];
+            const insertIndex = Math.min(originalIndex, restoredSessions.length);
+            restoredSessions.splice(insertIndex, 0, sessionToDelete);
+            set({ sessions: restoredSessions });
+          }
+
+          const errorMessage = error instanceof Error ? error.message : 'Failed to delete session';
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      deleteMultipleSessions: async (sessionIds: string[]) => {
+        if (sessionIds.length === 0) return;
+
+        // 1. Save sessions for potential rollback
+        const { sessions, activeSessionId } = get();
+        const sessionsToDelete = sessions.filter((s) => sessionIds.includes(s.sessionId));
+        const sessionIdsSet = new Set(sessionIds);
+
+        // 2. Optimistically remove from local state immediately
+        const updatedSessions = sessions.filter((s) => !sessionIdsSet.has(s.sessionId));
+        set({ sessions: updatedSessions });
+
+        // Clear active session if it's one of the deleted ones
+        if (activeSessionId && sessionIdsSet.has(activeSessionId)) {
+          set({
+            activeSessionId: null,
+            sessionEvents: [],
+            eventsError: null,
+          });
+        }
+
+        console.log(`🗑️ Optimistically removed ${sessionIds.length} sessions`);
+
+        // 3. Call API to delete sessions (in parallel, in background)
+        const results = await Promise.allSettled(
+          sessionIds.map((sessionId) => deleteSessionApi(sessionId))
+        );
+
+        // 4. Check results
+        const failedCount = results.filter((r) => r.status === 'rejected').length;
+        const successCount = results.filter((r) => r.status === 'fulfilled').length;
+
+        if (failedCount > 0) {
+          console.error(`💥 ${failedCount} session deletions failed`);
+
+          // Rollback failed deletions
+          const failedIndices = results
+            .map((r, i) => (r.status === 'rejected' ? i : -1))
+            .filter((i) => i >= 0);
+          const failedSessionIds = failedIndices.map((i) => sessionIds[i]);
+          const sessionsToRestore = sessionsToDelete.filter((s) =>
+            failedSessionIds.includes(s.sessionId)
+          );
+
+          if (sessionsToRestore.length > 0) {
+            const currentSessions = get().sessions;
+            set({ sessions: [...sessionsToRestore, ...currentSessions] });
+          }
+
+          if (successCount > 0) {
+            toast.success(i18n.t('chat.sessionsDeleted', { count: successCount }));
+          }
+          toast.error(`${failedCount} sessions failed to delete`);
+        } else {
+          console.log(`✅ ${successCount} sessions deleted from server`);
+          toast.success(i18n.t('chat.sessionsDeleted', { count: successCount }));
         }
       },
 
@@ -270,8 +470,9 @@ export const sessionSelectors = {
    * Check if any session loading is in progress
    */
   isAnyLoading: () => {
-    const { isLoadingSessions, isLoadingEvents } = useSessionStore.getState();
-    return isLoadingSessions || isLoadingEvents;
+    const { isLoadingSessions, isLoadingEvents, isLoadingMoreSessions } =
+      useSessionStore.getState();
+    return isLoadingSessions || isLoadingEvents || isLoadingMoreSessions;
   },
 
   /**

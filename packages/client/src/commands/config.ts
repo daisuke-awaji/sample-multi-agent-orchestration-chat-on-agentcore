@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { loadConfig, formatConfigForDisplay, validateConfig } from '../config/index.js';
 import type { ClientConfig } from '../config/index.js';
 import { getTokenInfo } from '../auth/cognito.js';
+import { getMachineUserToken, getMachineTokenInfo } from '../auth/machine-user.js';
 
 export async function configCommand(options: {
   json?: boolean;
@@ -51,15 +52,37 @@ export async function configCommand(options: {
       config.isAwsRuntime ? 'AWS AgentCore Runtime' : 'ローカル環境'
     )}`
   );
+  const displayConfig = formatConfigForDisplay(config);
+  console.log(`${chalk.blue('🔐')} 認証モード: ${chalk.white(displayConfig.authMode)}`);
 
   console.log('');
-  console.log(chalk.bold('🔐 Cognito 認証設定:'));
-  const displayConfig = formatConfigForDisplay(config);
-  console.log(`${chalk.blue('🏊')} User Pool ID: ${chalk.white(displayConfig.cognito.userPoolId)}`);
-  console.log(`${chalk.blue('🆔')} Client ID: ${chalk.white(displayConfig.cognito.clientId)}`);
-  console.log(`${chalk.blue('👤')} Username: ${chalk.white(displayConfig.cognito.username)}`);
-  console.log(`${chalk.blue('🔑')} Password: ${chalk.gray(displayConfig.cognito.password)}`);
-  console.log(`${chalk.blue('🌍')} Region: ${chalk.white(displayConfig.cognito.region)}`);
+  if (config.authMode === 'machine' && displayConfig.machineUser) {
+    console.log(chalk.bold('🤖 マシンユーザー認証設定:'));
+    console.log(
+      `${chalk.blue('🌐')} Cognito ドメイン: ${chalk.white(displayConfig.machineUser.cognitoDomain)}`
+    );
+    console.log(
+      `${chalk.blue('🆔')} Client ID: ${chalk.white(displayConfig.machineUser.clientId)}`
+    );
+    console.log(
+      `${chalk.blue('🔑')} Client Secret: ${chalk.gray(displayConfig.machineUser.clientSecret)}`
+    );
+    console.log(
+      `${chalk.blue('🎯')} Target User ID: ${chalk.white(displayConfig.machineUser.targetUserId)}`
+    );
+    if (displayConfig.machineUser.scope) {
+      console.log(`${chalk.blue('📋')} Scope: ${chalk.white(displayConfig.machineUser.scope)}`);
+    }
+  } else {
+    console.log(chalk.bold('🔐 Cognito 認証設定:'));
+    console.log(
+      `${chalk.blue('🏊')} User Pool ID: ${chalk.white(displayConfig.cognito.userPoolId)}`
+    );
+    console.log(`${chalk.blue('🆔')} Client ID: ${chalk.white(displayConfig.cognito.clientId)}`);
+    console.log(`${chalk.blue('👤')} Username: ${chalk.white(displayConfig.cognito.username)}`);
+    console.log(`${chalk.blue('🔑')} Password: ${chalk.gray(displayConfig.cognito.password)}`);
+    console.log(`${chalk.blue('🌍')} Region: ${chalk.white(displayConfig.cognito.region)}`);
+  }
 
   // 設定の検証
   if (options.validate) {
@@ -90,11 +113,21 @@ export async function configCommand(options: {
   console.log(chalk.gray('• AGENTCORE_ENDPOINT (ローカル環境)'));
   console.log(chalk.gray('• AGENTCORE_RUNTIME_ARN (AWS 環境)'));
   console.log(chalk.gray('• AGENTCORE_REGION (AWS 環境)'));
-  console.log(chalk.gray('• COGNITO_USER_POOL_ID'));
-  console.log(chalk.gray('• COGNITO_CLIENT_ID'));
-  console.log(chalk.gray('• COGNITO_USERNAME'));
-  console.log(chalk.gray('• COGNITO_PASSWORD'));
-  console.log(chalk.gray('• COGNITO_REGION'));
+  console.log(chalk.gray('• AUTH_MODE (user | machine)'));
+
+  if (config.authMode === 'machine') {
+    console.log(chalk.gray('• COGNITO_DOMAIN (マシンユーザー)'));
+    console.log(chalk.gray('• MACHINE_CLIENT_ID (マシンユーザー)'));
+    console.log(chalk.gray('• MACHINE_CLIENT_SECRET (マシンユーザー)'));
+    console.log(chalk.gray('• TARGET_USER_ID (マシンユーザー)'));
+    console.log(chalk.gray('• COGNITO_SCOPE (マシンユーザー、オプション)'));
+  } else {
+    console.log(chalk.gray('• COGNITO_USER_POOL_ID'));
+    console.log(chalk.gray('• COGNITO_CLIENT_ID'));
+    console.log(chalk.gray('• COGNITO_USERNAME'));
+    console.log(chalk.gray('• COGNITO_PASSWORD'));
+    console.log(chalk.gray('• COGNITO_REGION'));
+  }
 
   console.log('');
   console.log(chalk.gray('または .env ファイルを作成してください'));
@@ -107,53 +140,105 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
   console.log(chalk.cyan('🎫 JWT トークン情報'));
   console.log('');
 
-  if (!config.isAwsRuntime) {
+  if (!config.isAwsRuntime && config.authMode !== 'machine') {
     console.log(chalk.yellow('⚠️ ローカル環境では JWT 認証は不要です'));
     return;
   }
 
   try {
-    const { getCachedJwtToken } = await import('../auth/cognito.js');
-    const authResult = await getCachedJwtToken(config.cognito);
+    if (config.authMode === 'machine' && config.machineUser) {
+      // マシンユーザートークン
+      const authResult = await getMachineUserToken(config.machineUser);
+      const tokenInfo = getMachineTokenInfo(authResult.accessToken);
 
-    const tokenInfo = getTokenInfo(authResult.accessToken);
-    if (!tokenInfo) {
-      console.log(chalk.red('❌ トークンの解析に失敗しました'));
-      return;
-    }
+      if (!tokenInfo) {
+        console.log(chalk.red('❌ トークンの解析に失敗しました'));
+        return;
+      }
 
-    console.log(chalk.bold('📋 トークン詳細:'));
-    console.log(`${chalk.blue('🆔')} Subject: ${chalk.white(tokenInfo.sub)}`);
-    console.log(`${chalk.blue('👤')} Username: ${chalk.white(tokenInfo.username || 'N/A')}`);
-    console.log(`${chalk.blue('🏛️')} Issuer: ${chalk.white(tokenInfo.iss)}`);
-    console.log(`${chalk.blue('🎯')} Audience: ${chalk.white(tokenInfo.aud)}`);
-    console.log(
-      `${chalk.blue('🕐')} 発行日時: ${chalk.white(new Date(tokenInfo.iat).toLocaleString())}`
-    );
-    console.log(
-      `${chalk.blue('⏰')} 有効期限: ${chalk.white(new Date(tokenInfo.exp).toLocaleString())}`
-    );
+      console.log(chalk.bold('📋 マシンユーザートークン詳細:'));
+      console.log(`${chalk.blue('🆔')} Client ID: ${chalk.white(tokenInfo.client_id || 'N/A')}`);
+      console.log(`${chalk.blue('🎯')} Subject: ${chalk.white(tokenInfo.sub || 'N/A')}`);
+      console.log(`${chalk.blue('🏛️')} Issuer: ${chalk.white(tokenInfo.iss || 'N/A')}`);
+      if (tokenInfo.scope) {
+        console.log(`${chalk.blue('📋')} Scope: ${chalk.white(tokenInfo.scope)}`);
+      }
 
-    // 有効期限チェック
-    const expiresAt = new Date(tokenInfo.exp);
-    const now = new Date();
-    const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
-    const remainingMinutes = Math.floor(remainingTime / (1000 * 60));
+      // 発行日時と有効期限の表示
+      console.log(
+        `${chalk.blue('🕐')} 発行日時: ${chalk.white(new Date(Number(tokenInfo.iat) * 1000).toLocaleString())}`
+      );
+      console.log(
+        `${chalk.blue('⏰')} 有効期限: ${chalk.white(new Date(Number(tokenInfo.exp) * 1000).toLocaleString())}`
+      );
 
-    console.log('');
-    console.log(chalk.bold('⏳ 有効期限ステータス:'));
-    if (remainingTime > 0) {
-      if (remainingMinutes > 60) {
-        console.log(
-          chalk.green(
-            `✅ 有効 (残り ${Math.floor(remainingMinutes / 60)} 時間 ${remainingMinutes % 60} 分)`
-          )
-        );
+      // 有効期限チェック
+      const expiresAt = new Date(Number(tokenInfo.exp) * 1000);
+      const now = new Date();
+      const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
+      const remainingMinutes = Math.floor(remainingTime / (1000 * 60));
+
+      console.log('');
+      console.log(chalk.bold('⏳ 有効期限ステータス:'));
+      if (remainingTime > 0) {
+        if (remainingMinutes > 60) {
+          console.log(
+            chalk.green(
+              `✅ 有効 (残り ${Math.floor(remainingMinutes / 60)} 時間 ${remainingMinutes % 60} 分)`
+            )
+          );
+        } else {
+          console.log(chalk.yellow(`⚠️ 間もなく期限切れ (残り ${remainingMinutes} 分)`));
+        }
       } else {
-        console.log(chalk.yellow(`⚠️ 間もなく期限切れ (残り ${remainingMinutes} 分)`));
+        console.log(chalk.red('❌ 期限切れ'));
       }
     } else {
-      console.log(chalk.red('❌ 期限切れ'));
+      // 通常のユーザートークン
+      const { getCachedJwtToken } = await import('../auth/cognito.js');
+      const authResult = await getCachedJwtToken(config.cognito);
+      const tokenInfo = getTokenInfo(authResult.accessToken);
+
+      if (!tokenInfo) {
+        console.log(chalk.red('❌ トークンの解析に失敗しました'));
+        return;
+      }
+
+      console.log(chalk.bold('📋 トークン詳細:'));
+      console.log(`${chalk.blue('🆔')} Subject: ${chalk.white(tokenInfo.sub)}`);
+      console.log(`${chalk.blue('👤')} Username: ${chalk.white(tokenInfo.username || 'N/A')}`);
+      console.log(`${chalk.blue('🏛️')} Issuer: ${chalk.white(tokenInfo.iss)}`);
+      console.log(`${chalk.blue('🎯')} Audience: ${chalk.white(tokenInfo.aud)}`);
+
+      // 発行日時と有効期限の表示
+      console.log(
+        `${chalk.blue('🕐')} 発行日時: ${chalk.white(new Date(tokenInfo.iat).toLocaleString())}`
+      );
+      console.log(
+        `${chalk.blue('⏰')} 有効期限: ${chalk.white(new Date(tokenInfo.exp).toLocaleString())}`
+      );
+
+      // 有効期限チェック
+      const expiresAt = new Date(tokenInfo.exp);
+      const now = new Date();
+      const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
+      const remainingMinutes = Math.floor(remainingTime / (1000 * 60));
+
+      console.log('');
+      console.log(chalk.bold('⏳ 有効期限ステータス:'));
+      if (remainingTime > 0) {
+        if (remainingMinutes > 60) {
+          console.log(
+            chalk.green(
+              `✅ 有効 (残り ${Math.floor(remainingMinutes / 60)} 時間 ${remainingMinutes % 60} 分)`
+            )
+          );
+        } else {
+          console.log(chalk.yellow(`⚠️ 間もなく期限切れ (残り ${remainingMinutes} 分)`));
+        }
+      } else {
+        console.log(chalk.red('❌ 期限切れ'));
+      }
     }
   } catch (error) {
     console.log(chalk.red('❌ トークンの取得に失敗しました'));

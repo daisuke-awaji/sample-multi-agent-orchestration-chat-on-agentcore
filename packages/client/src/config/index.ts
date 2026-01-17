@@ -21,10 +21,22 @@ export interface CognitoConfig {
   region: string;
 }
 
+export interface MachineUserConfig {
+  cognitoDomain: string;
+  clientId: string;
+  clientSecret: string;
+  scope?: string;
+  targetUserId: string;
+}
+
+export type AuthMode = 'user' | 'machine';
+
 export interface ClientConfig {
   endpoint: string;
   isAwsRuntime: boolean;
+  authMode: AuthMode;
   cognito: CognitoConfig;
+  machineUser?: MachineUserConfig;
 }
 
 /**
@@ -33,12 +45,20 @@ export interface ClientConfig {
 export interface ConfigDisplayFormat {
   endpoint: string;
   runtime: string;
+  authMode: string;
   cognito: {
     userPoolId: string;
     clientId: string;
     username: string;
     password: string;
     region: string;
+  };
+  machineUser?: {
+    cognitoDomain: string;
+    clientId: string;
+    clientSecret: string;
+    scope?: string;
+    targetUserId: string;
   };
 }
 
@@ -52,6 +72,17 @@ const DEFAULT_COGNITO_CONFIG: CognitoConfig = {
   password: 'TestPassword123!',
   region: 'us-east-1',
 };
+
+/**
+ * 認証モードを決定
+ */
+function determineAuthMode(): AuthMode {
+  const mode = process.env.AUTH_MODE?.toLowerCase();
+  if (mode === 'machine') {
+    return 'machine';
+  }
+  return 'user';
+}
 
 /**
  * エンドポイントを決定する優先順位:
@@ -89,10 +120,12 @@ function isAwsRuntime(endpoint: string): boolean {
  */
 export function loadConfig(): ClientConfig {
   const endpoint = determineEndpoint();
+  const authMode = determineAuthMode();
 
-  return {
+  const config: ClientConfig = {
     endpoint,
     isAwsRuntime: isAwsRuntime(endpoint),
+    authMode,
     cognito: {
       userPoolId: process.env.COGNITO_USER_POOL_ID || DEFAULT_COGNITO_CONFIG.userPoolId,
       clientId: process.env.COGNITO_CLIENT_ID || DEFAULT_COGNITO_CONFIG.clientId,
@@ -101,6 +134,19 @@ export function loadConfig(): ClientConfig {
       region: process.env.COGNITO_REGION || DEFAULT_COGNITO_CONFIG.region,
     },
   };
+
+  // マシンユーザーモードの場合は追加設定を読み込み
+  if (authMode === 'machine') {
+    config.machineUser = {
+      cognitoDomain: process.env.COGNITO_DOMAIN || '',
+      clientId: process.env.MACHINE_CLIENT_ID || '',
+      clientSecret: process.env.MACHINE_CLIENT_SECRET || '',
+      scope: process.env.COGNITO_SCOPE,
+      targetUserId: process.env.TARGET_USER_ID || '',
+    };
+  }
+
+  return config;
 }
 
 /**
@@ -122,7 +168,22 @@ export function validateConfig(config: ClientConfig): string[] {
     errors.push('エンドポイントが設定されていません');
   }
 
-  if (config.isAwsRuntime) {
+  if (config.authMode === 'machine') {
+    // マシンユーザーモードの検証
+    if (!config.machineUser?.cognitoDomain) {
+      errors.push('COGNITO_DOMAIN が設定されていません');
+    }
+    if (!config.machineUser?.clientId) {
+      errors.push('MACHINE_CLIENT_ID が設定されていません');
+    }
+    if (!config.machineUser?.clientSecret) {
+      errors.push('MACHINE_CLIENT_SECRET が設定されていません');
+    }
+    if (!config.machineUser?.targetUserId) {
+      errors.push('TARGET_USER_ID が設定されていません');
+    }
+  } else if (config.isAwsRuntime) {
+    // ユーザー認証モードの検証
     if (!config.cognito.userPoolId) {
       errors.push('Cognito User Pool ID が設定されていません');
     }
@@ -144,9 +205,11 @@ export function validateConfig(config: ClientConfig): string[] {
  * 設定の表示用フォーマット
  */
 export function formatConfigForDisplay(config: ClientConfig): ConfigDisplayFormat {
-  return {
+  const display: ConfigDisplayFormat = {
     endpoint: config.endpoint,
     runtime: config.isAwsRuntime ? 'AWS AgentCore Runtime' : 'ローカル環境',
+    authMode:
+      config.authMode === 'machine' ? 'Machine User (Client Credentials)' : 'User (Password)',
     cognito: {
       userPoolId: config.cognito.userPoolId,
       clientId: config.cognito.clientId,
@@ -155,4 +218,16 @@ export function formatConfigForDisplay(config: ClientConfig): ConfigDisplayForma
       region: config.cognito.region,
     },
   };
+
+  if (config.authMode === 'machine' && config.machineUser) {
+    display.machineUser = {
+      cognitoDomain: config.machineUser.cognitoDomain,
+      clientId: config.machineUser.clientId,
+      clientSecret: config.machineUser.clientSecret ? '*'.repeat(8) : '<未設定>',
+      scope: config.machineUser.scope,
+      targetUserId: config.machineUser.targetUserId,
+    };
+  }
+
+  return display;
 }

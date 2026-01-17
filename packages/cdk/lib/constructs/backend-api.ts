@@ -166,6 +166,38 @@ export class BackendApi extends Construct {
         })
       );
     }
+    
+    // EventBridge Scheduler へのアクセス権限を追加
+    // Scheduler の作成・更新・削除権限
+    lambdaExecutionRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'scheduler:CreateSchedule',
+          'scheduler:UpdateSchedule',
+          'scheduler:DeleteSchedule',
+          'scheduler:GetSchedule',
+          'scheduler:ListSchedules',
+        ],
+        resources: ['*'],
+      })
+    );
+
+    // EventBridge Scheduler が Lambda を呼び出すために使用する IAM ロールを渡す権限
+    lambdaExecutionRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['iam:PassRole'],
+        resources: [
+          `arn:aws:iam::${cdk.Stack.of(this).account}:role/*`,
+        ],
+        conditions: {
+          StringEquals: {
+            'iam:PassedToService': 'scheduler.amazonaws.com',
+          },
+        },
+      })
+    );
 
     // CloudWatch Log Group の作成
     const logGroup = new logs.LogGroup(this, 'BackendApiLogGroup', {
@@ -275,6 +307,7 @@ export class BackendApi extends Construct {
       principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),
       sourceArn: `arn:aws:execute-api:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:${this.httpApi.httpApiId}/*`,
     });
+    
 
     // CloudWatch Alarms（オプション）
     this.lambdaFunction.metricErrors({

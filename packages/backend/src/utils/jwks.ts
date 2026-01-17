@@ -20,6 +20,8 @@ export interface CognitoJWTPayload extends JWTPayload {
   token_use?: 'access' | 'id';
   /** Client ID */
   client_id?: string;
+  /** OAuth Scopes (space-separated, for machine users) */
+  scope?: string;
   /** Cognito Groups */
   'cognito:groups'?: string[];
   /** Auth Time */

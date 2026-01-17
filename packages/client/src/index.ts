@@ -18,7 +18,11 @@ const program = new Command();
 program.name('agentcore-client').description('CLI client for AgentCore Runtime').version('0.1.0');
 
 // グローバルオプション
-program.option('--endpoint <url>', 'エンドポイントURL').option('--json', 'JSON形式で出力');
+program
+  .option('--endpoint <url>', 'エンドポイントURL')
+  .option('--json', 'JSON形式で出力')
+  .option('--machine-user', 'マシンユーザー認証を使用')
+  .option('--target-user <userId>', '対象ユーザーID（マシンユーザーモード時）');
 
 // Ping コマンド
 program
@@ -55,6 +59,7 @@ program
   .description('Agent にプロンプトを送信')
   .argument('<prompt>', '送信するプロンプト')
   .option('--json', 'JSON形式で出力')
+  .option('--session-id <id>', 'セッションID（会話の継続に使用）')
   .option('--no-auth', '認証なしで実行')
   .action(async (prompt, options) => {
     try {
@@ -69,8 +74,20 @@ program
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
       }
 
+      // マシンユーザーモードのオプション上書き
+      if (globalOptions.machineUser) {
+        config.authMode = 'machine';
+      }
+      if (globalOptions.targetUser && config.machineUser) {
+        config.machineUser.targetUserId = globalOptions.targetUser;
+      }
+
+      // セッションIDの決定: CLI > 環境変数
+      const sessionId = options.sessionId || process.env.SESSION_ID;
+
       await invokeCommand(prompt, config, {
         json: options.json || globalOptions.json,
+        sessionId,
       });
     } catch (error) {
       console.error(
@@ -96,6 +113,14 @@ program
         // エンドポイントが変更されたら Runtime 判定を再実行
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
+      }
+
+      // マシンユーザーモードのオプション上書き
+      if (globalOptions.machineUser) {
+        config.authMode = 'machine';
+      }
+      if (globalOptions.targetUser && config.machineUser) {
+        config.machineUser.targetUserId = globalOptions.targetUser;
       }
 
       await interactiveMode(config);
@@ -134,7 +159,8 @@ program
 program
   .command('token')
   .description('JWT トークン情報の表示')
-  .action(async () => {
+  .option('--machine', 'マシンユーザートークンを表示')
+  .action(async (options) => {
     try {
       const globalOptions = program.opts();
       const config = loadConfig();
@@ -145,6 +171,11 @@ program
         // エンドポイントが変更されたら Runtime 判定を再実行
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
+      }
+
+      // マシンユーザーモードのオプション上書き
+      if (options.machine || globalOptions.machineUser) {
+        config.authMode = 'machine';
       }
 
       await tokenInfoCommand(config);
@@ -196,6 +227,14 @@ program.action(() => {
   console.log('  AGENTCORE_ENDPOINT       ローカルエンドポイント');
   console.log('  AGENTCORE_RUNTIME_ARN    AWS Runtime ARN');
   console.log('  AGENTCORE_REGION         AWS リージョン');
+  console.log('  AUTH_MODE                認証モード (user | machine)');
+  console.log('');
+  console.log('マシンユーザー認証:');
+  console.log('  COGNITO_DOMAIN           Cognito ドメイン');
+  console.log('  MACHINE_CLIENT_ID        マシンクライアント ID');
+  console.log('  MACHINE_CLIENT_SECRET    マシンクライアントシークレット');
+  console.log('  TARGET_USER_ID           対象ユーザー ID');
+  console.log('  COGNITO_SCOPE            OAuth スコープ（オプション）');
   console.log('');
   console.log('詳細なヘルプ:');
   console.log('  agentcore-client --help');

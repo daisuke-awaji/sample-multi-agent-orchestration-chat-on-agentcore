@@ -108,7 +108,8 @@ describe('validateStoragePath', () => {
     });
 
     it('should reject path with non-ASCII characters', () => {
-      expect(() => validateStoragePath('documents/\u65E5\u672C\u8A9E')).toThrow(
+      // eslint-disable-next-line no-restricted-syntax
+      expect(() => validateStoragePath('documents/\u4E2D\u6587')).toThrow(
         'only alphanumeric characters, hyphens, underscores, dots, and forward slashes are allowed'
       );
     });

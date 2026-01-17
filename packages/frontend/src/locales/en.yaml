@@ -38,6 +38,8 @@ common:
   clickToSelectIcon: Click to select an icon
   success: Success
   errorStatus: Error
+  moreOptions: More options
+  deleting: Deleting...
 
 # Authentication
 auth:
@@ -157,6 +159,16 @@ chat:
   searchNoResults: 'No matching sessions found'
   updatedAt: 'Updated'
   searchNote: '※ Semantic search is not yet implemented. Only title search is available.'
+  deleteSession: Delete session
+  deleteSessionConfirm: 'Are you sure you want to delete "{{title}}"? This action cannot be undone.'
+  sessionDeleted: Session deleted
+  selectedCount: '{{count}} selected'
+  selectAll: Select all
+  deselectAll: Deselect all
+  clearSelection: Clear selection
+  bulkDelete: Bulk delete
+  bulkDeleteConfirm: 'Are you sure you want to delete {{count}} selected sessions? This action cannot be undone.'
+  sessionsDeleted: '{{count}} sessions deleted'
 
 # Agent
 agent:
@@ -474,6 +486,244 @@ events:
   comingSoon: Coming Soon
   eventsDescription: Event integration functionality is under development.
   eventsFeature: You will be able to integrate with external calendars and event management tools.
+
+# Triggers
+triggers:
+  # Page
+  pageTitle: Trigger Management
+  pageDescription: Create and manage triggers to automatically execute agents based on schedules or Amazon EventBridge events. Automate recurring tasks or trigger agents on external events such as S3 file uploads to perform data collection, report generation, and more.
+
+  # Tabs
+  tabs:
+    basic: Basic Settings
+    trigger: Trigger Configuration
+
+  # Actions
+  create: Create New
+  edit: Edit
+  delete: Delete
+  enable: Enable
+  disable: Disable
+  viewHistory: Execution History
+
+  # Form
+  form:
+    title: Trigger Settings
+    createTitle: Create New Trigger
+    editTitle: Edit Trigger
+    basicInfo: Basic Information
+    basicInfoDescription: Configure trigger name, description, and the agent to execute
+    scheduleConfig: Schedule Configuration
+    scheduleConfigDescription: Configure the date and time to execute the trigger
+    name: Trigger Name
+    namePlaceholder: 'e.g. - Daily Report Generation'
+    nameRequired: Trigger name is required
+    description: Description
+    descriptionPlaceholder: Describe the purpose of this trigger
+    agent: Agent to Execute
+    agentPlaceholder: Select an agent...
+    agentRequired: Please select an agent
+    type: Trigger Type
+    typeSchedule: Schedule
+    typeEvent: Event (Coming Soon)
+    inputMessage: Input Message
+    inputMessagePlaceholder: Message to send to the agent
+    inputMessageRequired: Input message is required
+    modelId: Model ID
+    optional: Optional
+    selectModel: Select a model...
+    useDefault: Use Default
+    modelIdHint: If no specific model is specified, the agent's default model will be used
+    workingDirectory: Working Directory
+    selectDirectory: Select a directory...
+    workingDirectoryHint: Specify the directory for the agent to work in. If not specified, the root directory (/) will be used
+    save: Save
+    saving: Saving...
+    cancel: Cancel
+
+  # Cron Builder
+  cron:
+    title: Schedule Settings
+    preset: Preset
+    presetEveryMinute: Every Minute
+    presetEveryHour: Every Hour
+    presetEveryDay: Every Day (00:00)
+    presetEveryWeekday: Every Weekday
+    presetEveryMonday: Every Monday
+    presetEveryMonth: 1st of Every Month
+    presetCustom: Custom
+    minute: Minute
+    hour: Hour
+    dayOfMonth: Day of Month
+    month: Month
+    dayOfWeek: Day of Week
+    year: Year
+    timezone: Timezone
+    preview: Preview
+    nextExecutions: Next Executions
+    customExpression: 'Custom Cron Expression'
+    customExpressionHint: 'AWS EventBridge format: minute hour day month weekday year (e.g., 0 0 * * ? *)'
+    invalidExpression: Invalid cron expression
+    # Range labels
+    minuteRange: (0-59)
+    hourRange: (0-23)
+    dayOfMonthRange: (1-31)
+    # Help hints
+    dayOfMonthHint: Use ? or *
+    dayOfWeekHint: Use ? or *
+    yearHint: Usually use *
+    # Dropdown options
+    optionAll: All (*)
+    optionNotSpecified: Not specified (?)
+    optionWeekdays: Weekdays (MON-FRI)
+    # Hints section
+    hintsTitle: 💡 Tips
+    hintAll: '* = All values'
+    hintNotSpecified: '? = Not specified (required for day or weekday)'
+    hintRange: '0-5 = Range specification'
+    hintMultiple: '0,15,30 = Multiple values'
+    hintDayWeekExclusive: Day and weekday cannot be specified at the same time (one must be ?)
+
+  # Status
+  status:
+    enabled: Enabled
+    disabled: Disabled
+
+  # Execution History
+  history:
+    title: Execution History
+    noHistory: No execution history
+    executedAt: Executed At
+    duration: Duration
+    status: Status
+    startedAt: Started At
+    completedAt: Completed At
+    success: Success
+    failure: Failure
+    inProgress: In Progress
+    input: Input
+    output: Output
+    error: Error
+    showDetails: Show Details
+    hideDetails: Hide Details
+    loadMore: Load More
+    executionId: Execution ID
+
+  # Messages
+  messages:
+    createSuccess: Trigger created successfully
+    createError: Failed to create trigger
+    updateSuccess: Trigger updated successfully
+    updateError: Failed to update trigger
+    deleteConfirm: Are you sure you want to delete this trigger?
+    deleteSuccess: Trigger deleted successfully
+    deleteError: Failed to delete trigger
+    enableSuccess: Trigger enabled successfully
+    disableSuccess: Trigger disabled successfully
+    toggleError: Failed to change trigger status
+    fetchError: Failed to fetch triggers
+
+  # Empty State
+  empty:
+    title: No Triggers
+    description: Click the Create New button to create your first trigger
+
+  # Event Type Selection
+  eventTypes:
+    title: Trigger Type
+    selectTitle: Select Trigger Type
+    selectDescription: Choose the type of trigger to execute
+    change: Change
+    comingSoon: This feature is under development
+    comingSoonBadge: Coming Soon
+    schedule:
+      label: Schedule
+      description: Execute automatically on schedule
+    event:
+      label: Event-Driven
+      description: Trigger on external events (S3, etc.)
+
+  # Event Source Selection
+  eventSource:
+    label: Event Source
+    selectPlaceholder: Select event source...
+    noSourcesAvailable: No event sources configured
+    loadError: Failed to load event sources
+    helpText: Select which event should trigger this agent. To add new event sources, please contact your system administrator.
+    eventSourceRequired: Please select an event source
+    ruleDetails: EventBridge Rule Details
+
+  # Card Display
+  card:
+    schedule: Schedule
+    timezone: Timezone
+    eventSource: Event Source
+    triggerCondition: Trigger Condition
+    onEventReceived: On Event Received
+    agent: Agent
+    lastExecution: Last Execution
+    notExecuted: Not Executed
+    enabled: Enabled
+    disabled: Disabled
+
+  # Event Pattern Display
+  eventPattern:
+    source: Source
+    eventType: Event Type
+    # Detail type mappings
+    detailTypes:
+      objectCreated: Object Created
+      objectDeleted: Object Deleted
+      objectRestoreCompleted: Object Restore Completed
+      push: Push
+      pullRequest: Pull Request
+      issues: Issue
+      issueComment: Issue Comment
+      ec2StateChange: EC2 Instance State Change
+      pipelineStateChange: Pipeline Execution State Change
+      ecsTaskStateChange: ECS Task State Change
+    # Detail label mappings
+    labels:
+      bucketName: Bucket Name
+      objectKey: Object Key
+      objectSize: Size
+      objectEtag: ETag
+      action: Action
+      repository: Repository
+      branch: Branch
+      state: State
+      instanceId: Instance ID
+      detailType: Event Type
+      region: Region
+
+  # Cron description
+  cronDescription:
+    minute: '{{value}} min'
+    day: '{{value}}th'
+    month: '{{value}}'
+    dayRange: '{{start}} to {{end}}'
+    dayList: ', '
+    days:
+      MON: Monday
+      TUE: Tuesday
+      WED: Wednesday
+      THU: Thursday
+      FRI: Friday
+      SAT: Saturday
+      SUN: Sunday
+    months:
+      '1': January
+      '2': February
+      '3': March
+      '4': April
+      '5': May
+      '6': June
+      '7': July
+      '8': August
+      '9': September
+      '10': October
+      '11': November
+      '12': December
 
 # Home Page
 home:

@@ -15,6 +15,7 @@ import {
   buildInputContent,
 } from '../utils/index.js';
 import { validateImageData } from '../validation/index.js';
+import { resolveEffectiveUserId } from './auth-resolver.js';
 import type { InvocationRequest } from './types.js';
 
 /**
@@ -34,6 +35,7 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       memoryTopK,
       mcpConfig,
       images,
+      targetUserId,
     } = req.body as InvocationRequest;
 
     if (!prompt?.trim()) {
@@ -54,11 +56,25 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
 
     // Get context information (retrieve once)
     const context = getCurrentContext();
-    const actorId = context?.userId || 'anonymous';
     const requestId = context?.requestId || 'unknown';
 
-    // Set storagePath in context
+    // Resolve effective user ID based on authentication type
+    const userIdResult = resolveEffectiveUserId(context, targetUserId);
+    if (userIdResult.error) {
+      logger.warn('User ID resolution failed:', {
+        requestId,
+        error: userIdResult.error.message,
+        isMachineUser: context?.isMachineUser,
+        targetUserId,
+      });
+      res.status(userIdResult.error.status).json({ error: userIdResult.error.message });
+      return;
+    }
+    const actorId = userIdResult.userId;
+
+    // Set userId and storagePath in context
     if (context) {
+      context.userId = actorId;
       context.storagePath = storagePath || '/';
     }
 
@@ -72,6 +88,8 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       prompt,
       actorId,
       sessionId: sessionId || 'none (sessionless mode)',
+      isMachineUser: context?.isMachineUser,
+      clientId: context?.clientId,
     });
 
     // Initialize workspace sync (if storagePath is specified)

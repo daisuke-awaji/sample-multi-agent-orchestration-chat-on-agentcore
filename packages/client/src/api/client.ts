@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import { randomUUID } from 'crypto';
 import type { ClientConfig } from '../config/index.js';
 import { getCachedJwtToken } from '../auth/cognito.js';
+import { getCachedMachineUserToken } from '../auth/machine-user.js';
 
 // Strands Agents SDK ストリーミングイベント型定義
 export interface AgentStreamEvent {
@@ -176,18 +177,33 @@ export class AgentCoreClient {
         'Content-Type': 'application/json',
       };
 
-      // AgentCore Runtime の場合は追加のヘッダーが必要
+      // セッションIDを常にヘッダーに追加
+      const actualSessionId = sessionId || `session-${randomUUID()}`;
+      headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = actualSessionId;
+
+      // AgentCore Runtime の場合は追加のトレースIDヘッダーも必要
       if (isAgentCoreRuntime) {
-        const actualSessionId = sessionId || `session-${randomUUID()}`;
         headers['X-Amzn-Trace-Id'] = `client-trace-${Date.now()}`;
-        headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = actualSessionId;
       }
 
-      // JWT認証（常に必要）
-      const authResult = await getCachedJwtToken(this.config.cognito);
-      headers['Authorization'] = `Bearer ${authResult.accessToken}`;
+      // 認証処理
+      let body: string;
+      if (this.config.authMode === 'machine' && this.config.machineUser) {
+        // マシンユーザー認証
+        const authResult = await getCachedMachineUserToken(this.config.machineUser);
+        headers['Authorization'] = `Bearer ${authResult.accessToken}`;
 
-      const body = JSON.stringify({ prompt });
+        // マシンユーザーモードではtargetUserIdをリクエストボディに含める
+        body = JSON.stringify({
+          prompt,
+          targetUserId: this.config.machineUser.targetUserId,
+        });
+      } else {
+        // 通常のユーザー認証
+        const authResult = await getCachedJwtToken(this.config.cognito);
+        headers['Authorization'] = `Bearer ${authResult.accessToken}`;
+        body = JSON.stringify({ prompt });
+      }
 
       const response = await fetch(url, {
         method: 'POST',

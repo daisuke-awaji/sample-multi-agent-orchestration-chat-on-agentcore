@@ -3,7 +3,7 @@
  * Display and manage session list
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,12 +18,15 @@ import {
   Settings,
   CalendarRange,
   Search,
+  MoreHorizontal,
+  Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useSessionStore } from '../stores/sessionStore';
 import { useUIStore } from '../stores/uiStore';
 import { LoadingIndicator } from './ui/LoadingIndicator';
 import { Tooltip } from './ui/Tooltip';
+import { ConfirmModal } from './ui/Modal';
 import type { SessionSummary } from '../api/sessions';
 
 /**
@@ -33,39 +36,108 @@ interface SessionItemProps {
   session: SessionSummary;
   isActive: boolean;
   isNew?: boolean;
+  onDeleteRequest: (sessionId: string) => void;
 }
 
-function SessionItem({ session, isActive, isNew = false }: SessionItemProps) {
-  // Check if this is a sub-agent session
+function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: SessionItemProps) {
+  const { t } = useTranslation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Check if this is a sub-agent session or event-triggered session
   const isSubAgent = session.sessionId.endsWith('_subagent');
+  const isEventTriggered = session.sessionId.endsWith('_event');
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMenuOpen(false);
+    onDeleteRequest(session.sessionId);
+  };
 
   return (
-    <Link
-      to={`/chat/${session.sessionId}`}
-      className={`
-        block w-full text-left p-2 rounded-lg transition-all duration-200 group no-underline
-        ${isActive ? 'bg-gray-100' : 'hover:bg-gray-100'}
-        ${isNew ? 'animate-subtle-fade-in' : ''}
-      `}
-    >
-      <div className="flex items-center gap-2">
-        <span
-          className={`
-          text-sm leading-tight truncate
-          ${
-            isSubAgent
-              ? 'text-gray-500'
-              : isActive
-                ? 'text-gray-700'
-                : 'text-gray-700 group-hover:text-gray-800'
-          }
+    <div className="relative group">
+      <Link
+        to={`/chat/${session.sessionId}`}
+        className={`
+          block w-full text-left p-2 pr-8 rounded-lg transition-all duration-200 no-underline
+          ${isActive ? 'bg-gray-100' : 'hover:bg-gray-100'}
+          ${isNew ? 'animate-subtle-fade-in' : ''}
         `}
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className={`
+            text-sm leading-tight truncate
+            ${
+              isSubAgent || isEventTriggered
+                ? 'text-gray-500'
+                : isActive
+                  ? 'text-gray-700'
+                  : 'text-gray-700 group-hover:text-gray-800'
+            }
+          `}
+          >
+            {isEventTriggered && <span className="text-xs">{'[Event] '}</span>}
+            {isSubAgent && <span className="text-xs">{'[Sub] '}</span>}
+            {session.title}
+          </span>
+        </div>
+      </Link>
+
+      {/* More options button - visible on hover */}
+      <button
+        onClick={handleMenuClick}
+        className={`
+          absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded
+          text-gray-400 hover:text-gray-600 hover:bg-gray-200
+          transition-opacity duration-200
+          ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+        `}
+        title={t('common.moreOptions')}
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+
+      {/* Dropdown menu */}
+      {isMenuOpen && (
+        <div
+          ref={menuRef}
+          className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[120px]"
         >
-          {isSubAgent && <span className="text-xs">{'[Sub] '}</span>}
-          {session.title}
-        </span>
-      </div>
-    </Link>
+          <button
+            onClick={handleDeleteClick}
+            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            {t('common.delete')}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -83,7 +155,11 @@ export function SessionSidebar() {
     hasLoadedOnce,
     activeSessionId,
     loadSessions,
+    loadMoreSessions,
+    deleteSession,
     clearActiveSession,
+    hasMoreSessions,
+    isLoadingMoreSessions,
   } = useSessionStore();
   const { isSidebarOpen, isMobileView, toggleSidebar } = useUIStore();
 
@@ -91,9 +167,16 @@ export function SessionSidebar() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Delete confirmation dialog state
+  const [deleteTargetSessionId, setDeleteTargetSessionId] = useState<string | null>(null);
+
   // Detect new sessions
   const prevSessionIdsRef = useRef<Set<string>>(new Set());
   const [newSessionIds, setNewSessionIds] = useState<Set<string>>(new Set());
+
+  // Infinite scroll refs
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Initial load
   useEffect(() => {
@@ -128,6 +211,36 @@ export function SessionSidebar() {
 
     prevSessionIdsRef.current = currentIds;
   }, [sessions]);
+
+  // Infinite scroll: Intersection Observer for loading more sessions
+  const handleIntersect = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [entry] = entries;
+      if (entry.isIntersecting && hasMoreSessions && !isLoadingMoreSessions) {
+        console.log('📜 Infinite scroll triggered - loading more sessions');
+        loadMoreSessions();
+      }
+    },
+    [hasMoreSessions, isLoadingMoreSessions, loadMoreSessions]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    const container = scrollContainerRef.current;
+    if (!element || !container) return;
+
+    const observer = new IntersectionObserver(handleIntersect, {
+      root: container, // Use the scroll container as the root
+      rootMargin: '100px', // Start loading slightly before reaching the end
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [handleIntersect]);
 
   // Start new chat
   const handleNewChat = (e: React.MouseEvent) => {
@@ -171,6 +284,33 @@ export function SessionSidebar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle delete request - opens confirmation dialog
+  const handleDeleteRequest = (sessionId: string) => {
+    setDeleteTargetSessionId(sessionId);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (!deleteTargetSessionId) return;
+
+    // Close dialog immediately (optimistic UI)
+    const sessionIdToDelete = deleteTargetSessionId;
+    setDeleteTargetSessionId(null);
+
+    // Execute deletion in background (no await needed with optimistic UI)
+    deleteSession(sessionIdToDelete);
+  };
+
+  // Handle delete cancel
+  const handleDeleteCancel = () => {
+    setDeleteTargetSessionId(null);
+  };
+
+  // Get session title for delete confirmation
+  const deleteTargetSession = deleteTargetSessionId
+    ? sessions.find((s) => s.sessionId === deleteTargetSessionId)
+    : null;
 
   if (!user) {
     return null;
@@ -304,7 +444,7 @@ export function SessionSidebar() {
 
       {/* Session list - Display only when expanded */}
       {shouldShowExpanded && (
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
           {sessionsError && (
             <div className="p-4">
               <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
@@ -356,8 +496,16 @@ export function SessionSidebar() {
                   session={session}
                   isActive={session.sessionId === activeSessionId}
                   isNew={newSessionIds.has(session.sessionId)}
+                  onDeleteRequest={handleDeleteRequest}
                 />
               ))}
+
+              {/* Infinite scroll sentinel element */}
+              {hasMoreSessions && (
+                <div ref={loadMoreRef} className="py-4 flex items-center justify-center">
+                  {isLoadingMoreSessions && <LoadingIndicator message="" spacing="none" />}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -435,6 +583,17 @@ export function SessionSidebar() {
           )}
         </div>
       </div>
+      {/* Delete confirmation modal */}
+      <ConfirmModal
+        isOpen={!!deleteTargetSessionId}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title={t('chat.deleteSession')}
+        message={t('chat.deleteSessionConfirm', { title: deleteTargetSession?.title || '' })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="danger"
+      />
     </div>
   );
 }

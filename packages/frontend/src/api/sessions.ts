@@ -3,7 +3,7 @@
  * Client for calling Backend session API
  */
 
-import { backendGet } from './client/backend-client';
+import { backendGet, backendDelete } from './client/backend-client';
 
 /**
  * Session information type definition
@@ -82,12 +82,48 @@ interface SessionEventsResponse {
 }
 
 /**
- * Fetch session list
- * @returns All sessions sorted by creation date (newest first)
+ * Options for fetching sessions
  */
-export async function fetchSessions(): Promise<SessionSummary[]> {
-  const data = await backendGet<SessionsResponse>('/sessions');
-  return data.sessions;
+export interface FetchSessionsOptions {
+  limit?: number;
+  nextToken?: string;
+}
+
+/**
+ * Result of fetching sessions with pagination info
+ */
+export interface FetchSessionsResult {
+  sessions: SessionSummary[];
+  nextToken?: string;
+  hasMore: boolean;
+}
+
+/**
+ * Fetch session list with pagination support
+ * @param options Pagination options
+ * @returns Sessions and pagination info
+ */
+export async function fetchSessions(options?: FetchSessionsOptions): Promise<FetchSessionsResult> {
+  const params = new URLSearchParams();
+
+  if (options?.limit) {
+    params.set('limit', options.limit.toString());
+  }
+
+  if (options?.nextToken) {
+    params.set('nextToken', options.nextToken);
+  }
+
+  const queryString = params.toString();
+  const url = queryString ? `/sessions?${queryString}` : '/sessions';
+
+  const data = await backendGet<SessionsResponse>(url);
+
+  return {
+    sessions: data.sessions,
+    nextToken: data.metadata.nextToken,
+    hasMore: data.metadata.hasMore,
+  };
 }
 
 /**
@@ -98,4 +134,12 @@ export async function fetchSessions(): Promise<SessionSummary[]> {
 export async function fetchSessionEvents(sessionId: string): Promise<ConversationMessage[]> {
   const data = await backendGet<SessionEventsResponse>(`/sessions/${sessionId}/events`);
   return data.events;
+}
+
+/**
+ * Delete a session
+ * @param sessionId Session ID to delete
+ */
+export async function deleteSession(sessionId: string): Promise<void> {
+  await backendDelete(`/sessions/${sessionId}`);
 }

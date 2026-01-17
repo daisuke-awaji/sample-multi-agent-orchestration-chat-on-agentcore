@@ -19,6 +19,7 @@ export async function invokeCommand(
   config: ClientConfig,
   options: {
     json?: boolean;
+    sessionId?: string;
   }
 ): Promise<void> {
   const client = createClient(config);
@@ -57,6 +58,9 @@ export async function invokeCommand(
   console.log(
     chalk.gray(`ランタイム: ${config.isAwsRuntime ? 'AWS AgentCore Runtime' : 'ローカル環境'}`)
   );
+  if (options.sessionId) {
+    console.log(chalk.gray(`セッションID: ${options.sessionId}`));
+  }
   console.log('');
 
   console.log(chalk.bold('📝 プロンプト:'));
@@ -73,7 +77,7 @@ export async function invokeCommand(
     console.log(chalk.white('─'.repeat(60)));
 
     // ストリーミングレスポンスをリアルタイム処理
-    for await (const event of client.invokeStream(prompt)) {
+    for await (const event of client.invokeStream(prompt, options.sessionId)) {
       // Agent ループ開始
       if (event.type === 'beforeInvocationEvent') {
         spinner.text = 'Agent が考えています...';

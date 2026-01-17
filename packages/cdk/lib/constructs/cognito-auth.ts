@@ -89,6 +89,28 @@ export class CognitoAuth extends Construct {
   public readonly clientId: string;
 
   /**
+   * Machine User用のApp Client
+   * Client Credentials Flowで使用
+   */
+  public readonly machineUserClient: cognito.UserPoolClient;
+
+  /**
+   * Machine User用のApp Client ID
+   */
+  public readonly machineUserClientId: string;
+
+  /**
+   * Resource Server (OAuth2スコープ定義)
+   */
+  public readonly resourceServer: cognito.UserPoolResourceServer;
+
+  /**
+   * User Pool Domain
+   * Token endpointへのアクセスに必要
+   */
+  public readonly userPoolDomain: cognito.UserPoolDomain;
+
+  /**
    * User Pool ID
    */
   public readonly userPoolId: string;
@@ -223,8 +245,78 @@ exports.handler = async (event) => {
       preventUserExistenceErrors: true,
     });
 
+    // Resource Server 作成 (OAuth2スコープ定義)
+    this.resourceServer = new cognito.UserPoolResourceServer(this, 'ResourceServer', {
+      userPool: this.userPool,
+      identifier: 'agent',
+      userPoolResourceServerName: `${props.userPoolName}-resource-server`,
+      scopes: [
+        {
+          scopeName: 'invoke',
+          scopeDescription: 'Invoke Agent API',
+        },
+        {
+          scopeName: 'tools',
+          scopeDescription: 'Access Gateway tools',
+        },
+        {
+          scopeName: 'admin',
+          scopeDescription: 'Administrative access',
+        },
+      ],
+    });
+
+    // User Pool Domain 作成 (Token endpoint access用)
+    // 安全なドメインプレフィックス生成: 英数字のみ、ハイフンで区切り
+    const sanitizedName = props.userPoolName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')  // 英数字以外を削除
+      .substring(0, 20);           // 最大20文字
+    const accountSuffix = cdk.Stack.of(this).account.substring(0, 8);
+    const domainPrefix = `${sanitizedName}-${accountSuffix}`;
+    
+    this.userPoolDomain = this.userPool.addDomain('Domain', {
+      cognitoDomain: {
+        domainPrefix: domainPrefix,
+      },
+    });
+
+    // Machine User用のApp Client作成 (Client Credentials Flow)
+    this.machineUserClient = this.userPool.addClient('MachineUserClient', {
+      userPoolClientName: `${props.userPoolName}-machine`,
+      generateSecret: true, // Client Credentials Flowに必須
+      authFlows: {
+        userPassword: false,
+        userSrp: false,
+        adminUserPassword: false,
+        custom: false,
+      },
+      oAuth: {
+        flows: {
+          clientCredentials: true, // Client Credentials Flowを有効化
+        },
+        scopes: [
+          cognito.OAuthScope.resourceServer(this.resourceServer, {
+            scopeName: 'invoke',
+            scopeDescription: 'Invoke Agent API',
+          }),
+          cognito.OAuthScope.resourceServer(this.resourceServer, {
+            scopeName: 'tools',
+            scopeDescription: 'Access Gateway tools',
+          }),
+        ],
+      },
+      accessTokenValidity: cdk.Duration.hours(1),
+      preventUserExistenceErrors: true,
+    });
+
+    // Machine Clientの依存関係を設定
+    this.machineUserClient.node.addDependency(this.resourceServer);
+    this.machineUserClient.node.addDependency(this.userPoolDomain);
+
     // プロパティ設定
     this.clientId = this.userPoolClient.userPoolClientId;
+    this.machineUserClientId = this.machineUserClient.userPoolClientId;
     this.userPoolId = this.userPool.userPoolId;
     this.userPoolArn = this.userPool.userPoolArn;
 
@@ -249,6 +341,24 @@ exports.handler = async (event) => {
       value: this.discoveryUrl,
       description: 'OIDC Discovery URL for JWT authentication',
       exportName: `${cdk.Stack.of(this).stackName}-DiscoveryUrl`,
+    });
+
+    new cdk.CfnOutput(this, 'MachineUserClientId', {
+      value: this.machineUserClientId,
+      description: 'Cognito Machine User App Client ID (for Client Credentials Flow)',
+      exportName: `${cdk.Stack.of(this).stackName}-MachineUserClientId`,
+    });
+
+    new cdk.CfnOutput(this, 'TokenEndpoint', {
+      value: `https://${domainPrefix}.auth.${region}.amazoncognito.com/oauth2/token`,
+      description: 'OAuth2 Token Endpoint for Client Credentials Flow',
+      exportName: `${cdk.Stack.of(this).stackName}-TokenEndpoint`,
+    });
+
+    new cdk.CfnOutput(this, 'DomainPrefix', {
+      value: domainPrefix,
+      description: 'Cognito User Pool Domain Prefix',
+      exportName: `${cdk.Stack.of(this).stackName}-DomainPrefix`,
     });
 
     // テストユーザーの作成（設定されている場合のみ）
@@ -370,7 +480,7 @@ exports.handler = async (event) => {
   } {
     return {
       discoveryUrl: this.discoveryUrl,
-      allowedClients: [this.clientId],
+      allowedClients: [this.clientId, this.machineUserClientId], // Regular + Machine User
     };
   }
 }

@@ -10,7 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --passWithNoTests",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --passWithNoTests --forceExit",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --watch",
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --coverage",
     "test:integration": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --testMatch='**/*.integration.test.ts' --testPathIgnorePatterns='/node_modules/'",
