@@ -19,6 +19,7 @@ import { ScheduleConfig } from './ScheduleConfig';
 import { InputMessageConfig } from './InputMessageConfig';
 import { AgentExecutionConfig } from './AgentExecutionConfig';
 import { EventTypeSelector, type EventType } from './EventTypeSelector';
+import { EventSourceSelector } from './EventSourceSelector';
 import { useTriggerStore } from '../../../stores/triggerStore';
 import type { Trigger, CreateTriggerRequest, UpdateTriggerRequest } from '../../../types/trigger';
 import toast from 'react-hot-toast';
@@ -51,6 +52,7 @@ interface FormData {
   agentId: string;
   cronExpression: string;
   timezone: string;
+  eventSourceId?: string;
   inputMessage: string;
   modelId?: string;
   workingDirectory?: string;
@@ -61,7 +63,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
   const { createTrigger, updateTrigger } = useTriggerStore();
   const [isSaving, setIsSaving] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(
-    trigger ? 'schedule' : null
+    trigger ? (trigger.type === 'event' ? 'event' : 'schedule') : null
   );
 
   const isEditMode = !!trigger;
@@ -79,6 +81,18 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
         modelId: trigger.modelId,
         workingDirectory: trigger.workingDirectory,
       };
+    } else if (trigger?.type === 'event' && trigger.eventConfig) {
+      return {
+        name: trigger.name,
+        description: trigger.description || '',
+        agentId: trigger.agentId,
+        cronExpression: '0 0 * * ? *',
+        timezone: 'Asia/Tokyo',
+        eventSourceId: trigger.eventConfig.eventSourceId,
+        inputMessage: trigger.prompt,
+        modelId: trigger.modelId,
+        workingDirectory: trigger.workingDirectory,
+      };
     }
     return {
       name: '',
@@ -86,6 +100,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
       agentId: '',
       cronExpression: '0 0 * * ? *',
       timezone: 'Asia/Tokyo',
+      eventSourceId: undefined,
       inputMessage: '',
       modelId: undefined,
       workingDirectory: undefined,
@@ -95,6 +110,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
   // Reset form when trigger changes
   useEffect(() => {
     if (trigger) {
+      setSelectedEventType(trigger.type);
       if (trigger.type === 'schedule' && trigger.scheduleConfig) {
         setFormData({
           name: trigger.name,
@@ -102,6 +118,18 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           agentId: trigger.agentId,
           cronExpression: trigger.scheduleConfig.expression,
           timezone: trigger.scheduleConfig.timezone || 'Asia/Tokyo',
+          inputMessage: trigger.prompt,
+          modelId: trigger.modelId,
+          workingDirectory: trigger.workingDirectory,
+        });
+      } else if (trigger.type === 'event' && trigger.eventConfig) {
+        setFormData({
+          name: trigger.name,
+          description: trigger.description || '',
+          agentId: trigger.agentId,
+          cronExpression: '0 0 * * ? *',
+          timezone: 'Asia/Tokyo',
+          eventSourceId: trigger.eventConfig.eventSourceId,
           inputMessage: trigger.prompt,
           modelId: trigger.modelId,
           workingDirectory: trigger.workingDirectory,
@@ -114,6 +142,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
         agentId: '',
         cronExpression: '0 0 * * ? *',
         timezone: 'Asia/Tokyo',
+        eventSourceId: undefined,
         inputMessage: '',
         modelId: undefined,
         workingDirectory: undefined,
@@ -138,6 +167,11 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
       return false;
     }
 
+    if (selectedEventType === 'event' && !formData.eventSourceId) {
+      toast.error(t('triggers.form.eventSourceRequired'));
+      return false;
+    }
+
     return true;
   };
 
@@ -156,14 +190,22 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           name: formData.name,
           description: formData.description || undefined,
           agentId: formData.agentId,
+          type: selectedEventType as 'schedule' | 'event',
           prompt: formData.inputMessage,
           modelId: formData.modelId,
           workingDirectory: formData.workingDirectory,
-          scheduleConfig: {
+        };
+
+        if (selectedEventType === 'schedule') {
+          updateData.scheduleConfig = {
             expression: formData.cronExpression,
             timezone: formData.timezone,
-          },
-        };
+          };
+        } else if (selectedEventType === 'event') {
+          updateData.eventConfig = {
+            eventSourceId: formData.eventSourceId!,
+          };
+        }
 
         await updateTrigger(trigger.id, updateData);
         toast.success(t('triggers.messages.updateSuccess'));
@@ -173,15 +215,22 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
           name: formData.name,
           description: formData.description || undefined,
           agentId: formData.agentId,
-          type: 'schedule',
+          type: selectedEventType as 'schedule' | 'event',
           prompt: formData.inputMessage,
           modelId: formData.modelId,
           workingDirectory: formData.workingDirectory,
-          scheduleConfig: {
+        };
+
+        if (selectedEventType === 'schedule') {
+          createData.scheduleConfig = {
             expression: formData.cronExpression,
             timezone: formData.timezone,
-          },
-        };
+          };
+        } else if (selectedEventType === 'event') {
+          createData.eventConfig = {
+            eventSourceId: formData.eventSourceId!,
+          };
+        }
 
         await createTrigger(createData);
         toast.success(t('triggers.messages.createSuccess'));
@@ -262,6 +311,14 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
                     setFormData({ ...formData, cronExpression })
                   }
                   onTimezoneChange={(timezone: string) => setFormData({ ...formData, timezone })}
+                  disabled={isSaving}
+                />
+              )}
+
+              {selectedEventType === 'event' && (
+                <EventSourceSelector
+                  value={formData.eventSourceId}
+                  onChange={(eventSourceId: string) => setFormData({ ...formData, eventSourceId })}
                   disabled={isSaving}
                 />
               )}

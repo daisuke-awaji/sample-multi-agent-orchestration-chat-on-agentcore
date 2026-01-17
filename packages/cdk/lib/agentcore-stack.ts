@@ -8,6 +8,7 @@ import { AgentsTable } from './constructs/agents-table';
 import { SessionsTable } from './constructs/sessions-table';
 import { TriggersTable } from './constructs/triggers-table';
 import { TriggerLambda } from './constructs/trigger-lambda';
+import { TriggerEventSources } from './constructs/trigger-event-sources';
 import { BackendApi } from './constructs/backend-api';
 import { CognitoAuth } from './constructs/cognito-auth';
 import { Frontend } from './constructs/frontend';
@@ -301,6 +302,16 @@ export class AgentCoreStack extends cdk.Stack {
     // Create EventBridge Scheduler role
     const schedulerRole = triggerLambda.createSchedulerRole(this, resourcePrefix);
 
+    // 6.5. Create Trigger Event Sources (EventBridge Rules) if configured
+    let triggerEventSources: TriggerEventSources | undefined;
+    if (envConfig.eventRules && envConfig.eventRules.length > 0) {
+      triggerEventSources = new TriggerEventSources(this, 'TriggerEventSources', {
+        resourcePrefix,
+        eventRules: envConfig.eventRules,
+        triggerLambda: triggerLambda.lambdaFunction,
+      });
+    }
+
     // 7. Create Backend API (Lambda Web Adapter) - Create before Runtime to pass URL
     this.backendApi = new BackendApi(this, 'BackendApi', {
       apiName: envConfig.backendApiName || `${resourcePrefix}-backend-api`,
@@ -348,6 +359,14 @@ export class AgentCoreStack extends cdk.Stack {
     this.backendApi.lambdaFunction.addEnvironment('TRIGGER_LAMBDA_ARN', triggerLambda.functionArn);
     this.backendApi.lambdaFunction.addEnvironment('SCHEDULER_ROLE_ARN', schedulerRole.roleArn);
     this.backendApi.lambdaFunction.addEnvironment('SCHEDULE_GROUP_NAME', 'default');
+
+    // Add event sources config if event rules are configured
+    if (triggerEventSources) {
+      this.backendApi.lambdaFunction.addEnvironment(
+        'EVENT_SOURCES_CONFIG',
+        triggerEventSources.eventSourcesConfig
+      );
+    }
 
     // 8. Create AgentCore Runtime
     this.agentRuntime = new AgentCoreRuntime(this, 'AgentCoreRuntime', {

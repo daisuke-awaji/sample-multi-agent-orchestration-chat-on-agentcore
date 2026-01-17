@@ -70,7 +70,7 @@ export class TriggersTable extends Construct {
       timeToLiveAttribute: 'ttl',
     });
 
-    // Add GSI for querying triggers by type
+    // Add GSI1 for querying triggers by type
     this.table.addGlobalSecondaryIndex({
       indexName: 'GSI1',
       partitionKey: {
@@ -79,6 +79,20 @@ export class TriggersTable extends Construct {
       },
       sortKey: {
         name: 'GSI1SK',
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
+    // Add GSI2 for querying triggers by eventSourceId (event subscription model)
+    this.table.addGlobalSecondaryIndex({
+      indexName: 'GSI2',
+      partitionKey: {
+        name: 'GSI2PK',
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'GSI2SK',
         type: dynamodb.AttributeType.STRING,
       },
       projectionType: dynamodb.ProjectionType.ALL,

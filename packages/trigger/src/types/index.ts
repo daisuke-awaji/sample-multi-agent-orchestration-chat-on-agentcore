@@ -40,9 +40,14 @@ export interface ScheduleTriggerConfig {
 }
 
 /**
- * Event configuration for event-type triggers (future extension)
+ * Event configuration for event-type triggers
  */
 export interface EventTriggerConfig {
+  /**
+   * Event source ID (e.g., "s3-upload", "github-pr")
+   */
+  eventSourceId?: string;
+
   /**
    * EventBridge Bus name (e.g., "default", custom bus name)
    */
@@ -215,12 +220,19 @@ export interface SchedulerEvent {
 }
 
 /**
- * EventBridge custom event payload (future)
+ * EventBridge custom event (S3, GitHub, Slack, etc.)
+ * This is the standard EventBridge event structure for custom rules
  */
-export interface CustomEventPayload {
-  triggerId: string;
-  userId: string;
-  eventData: Record<string, unknown>;
+export interface CustomEventBridgeEvent {
+  version: string;
+  id: string;
+  'detail-type': string;
+  source: string;
+  account: string;
+  time: string;
+  region: string;
+  resources: string[];
+  detail: Record<string, unknown>;
 }
 
 /**

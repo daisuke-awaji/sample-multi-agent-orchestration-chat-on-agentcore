@@ -3,12 +3,14 @@
  * Displays individual trigger information with action buttons
  */
 
-import { Clock, Bot, Calendar, Edit, Trash2, History, Loader2 } from 'lucide-react';
+import { Clock, Bot, Calendar, Edit, Trash2, History, Loader2, Zap, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { Trigger, ScheduleConfig } from '../../types/trigger';
+import { useState, useEffect } from 'react';
+import type { Trigger, ScheduleConfig, EventConfig } from '../../types/trigger';
 import { useAgentStore } from '../../stores/agentStore';
 import { useTriggerStore } from '../../stores/triggerStore';
 import { translateIfKey } from '../../utils/agent-translation';
+import { getEventSources } from '../../api/events';
 
 interface TriggerCardProps {
   trigger: Trigger;
@@ -31,7 +33,26 @@ export function TriggerCard({
   const agent = getAgent(trigger.agentId);
   const isEnabled = trigger.enabled;
   const isToggling = togglingIds.has(trigger.id);
-  const config = trigger.scheduleConfig as ScheduleConfig;
+  const scheduleConfig = trigger.scheduleConfig as ScheduleConfig;
+  const eventConfig = trigger.eventConfig as EventConfig;
+
+  // Fetch event source information for event-type triggers
+  const [eventSourceName, setEventSourceName] = useState<string>('');
+
+  useEffect(() => {
+    if (trigger.type === 'event' && eventConfig?.eventSourceId) {
+      getEventSources()
+        .then((sources) => {
+          const source = sources.find((s) => s.id === eventConfig.eventSourceId);
+          if (source) {
+            setEventSourceName(source.name);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch event sources:', err);
+        });
+    }
+  }, [trigger.type, eventConfig?.eventSourceId]);
 
   // Format last execution time
   const formatLastExecution = (timestamp?: string) => {
@@ -84,20 +105,43 @@ export function TriggerCard({
         </div>
       </div>
 
-      {/* Schedule Info */}
+      {/* Trigger Info - Type-specific display */}
       <div className="space-y-2 mb-4 flex-1">
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="font-medium">スケジュール:</span>
-          <span className="truncate">{config?.expression || 'N/A'}</span>
-        </div>
+        {trigger.type === 'schedule' ? (
+          <>
+            {/* Schedule Type */}
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium">スケジュール:</span>
+              <span className="truncate">{scheduleConfig?.expression || 'N/A'}</span>
+            </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="font-medium">タイムゾーン:</span>
-          <span className="truncate">{config?.timezone || 'N/A'}</span>
-        </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium">タイムゾーン:</span>
+              <span className="truncate">{scheduleConfig?.timezone || 'N/A'}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Event Type */}
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Zap className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium">イベントソース:</span>
+              <span className="truncate">
+                {eventSourceName || eventConfig?.eventSourceId || 'N/A'}
+              </span>
+            </div>
 
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <Bell className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium">トリガー条件:</span>
+              <span className="truncate">イベント受信時</span>
+            </div>
+          </>
+        )}
+
+        {/* Common: Agent */}
         <div className="flex items-center gap-2 text-sm text-gray-700">
           <Bot className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <span className="font-medium">エージェント:</span>

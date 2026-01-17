@@ -383,6 +383,7 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
     const {
       name,
       description,
+      type,
       agentId,
       prompt,
       sessionId,
@@ -390,12 +391,80 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       workingDirectory,
       enabledTools,
       scheduleConfig,
+      eventConfig,
     } = req.body;
+
+    const typeChanged = type && type !== existingTrigger.type;
+
+    // Handle type change: schedule -> event
+    if (typeChanged && existingTrigger.type === 'schedule' && type === 'event') {
+      console.log(`🔄 Type change detected: schedule -> event (${auth.requestId})`);
+
+      // Delete existing EventBridge Schedule
+      try {
+        const schedulerService = getSchedulerService();
+        await schedulerService.deleteSchedule(triggerId);
+        console.log(`✅ EventBridge Schedule deleted for type change`);
+      } catch (scheduleError) {
+        console.warn('Failed to delete EventBridge Schedule during type change:', scheduleError);
+      }
+    }
+
+    // Handle type change: event -> schedule
+    if (typeChanged && existingTrigger.type === 'event' && type === 'schedule') {
+      console.log(`🔄 Type change detected: event -> schedule (${auth.requestId})`);
+
+      if (!scheduleConfig?.expression) {
+        return res.status(400).json({
+          error: 'Validation Error',
+          message: 'scheduleConfig.expression is required when changing to schedule type',
+          requestId: auth.requestId,
+        });
+      }
+
+      // Create new EventBridge Schedule
+      try {
+        const schedulerService = getSchedulerService();
+        const targetArn = process.env.TRIGGER_LAMBDA_ARN;
+        const roleArn = process.env.SCHEDULER_ROLE_ARN;
+
+        if (!targetArn || !roleArn) {
+          throw new Error('TRIGGER_LAMBDA_ARN or SCHEDULER_ROLE_ARN not configured');
+        }
+
+        const schedulerArn = await schedulerService.createSchedule({
+          name: `trigger-${triggerId}`,
+          expression: scheduleConfig.expression,
+          timezone: scheduleConfig.timezone,
+          payload: {
+            triggerId,
+            userId,
+            agentId: agentId || existingTrigger.agentId,
+            prompt: prompt || existingTrigger.prompt,
+            sessionId: sessionId !== undefined ? sessionId : existingTrigger.sessionId,
+            modelId: modelId !== undefined ? modelId : existingTrigger.modelId,
+            workingDirectory:
+              workingDirectory !== undefined ? workingDirectory : existingTrigger.workingDirectory,
+            enabledTools: enabledTools || existingTrigger.enabledTools,
+          },
+          targetArn,
+          roleArn,
+        });
+
+        console.log(`✅ EventBridge Schedule created for type change: ${schedulerArn}`);
+      } catch (scheduleError) {
+        console.error('Failed to create EventBridge Schedule during type change:', scheduleError);
+        throw new Error(
+          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+        );
+      }
+    }
 
     // Update trigger in DynamoDB
     const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
       name,
       description,
+      type,
       agentId,
       prompt,
       sessionId,
@@ -403,10 +472,11 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       workingDirectory,
       enabledTools,
       scheduleConfig,
+      eventConfig,
     });
 
-    // If schedule type and schedule config changed, update EventBridge Schedule
-    if (existingTrigger.type === 'schedule' && scheduleConfig) {
+    // If schedule type (and not changed from event) and schedule config changed, update EventBridge Schedule
+    if (updatedTrigger.type === 'schedule' && !typeChanged && scheduleConfig) {
       try {
         const schedulerService = getSchedulerService();
         const targetArn = process.env.TRIGGER_LAMBDA_ARN;

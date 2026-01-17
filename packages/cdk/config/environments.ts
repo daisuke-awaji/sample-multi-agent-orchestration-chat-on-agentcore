@@ -150,6 +150,65 @@ export interface EnvironmentConfig {
      */
     password: string;
   };
+
+  /**
+   * Event rules configuration (optional)
+   * Predefined EventBridge rules that users can subscribe to for triggers
+   */
+  eventRules?: EventRuleConfig[];
+}
+
+/**
+ * Event rule configuration
+ * Defines EventBridge rules that trigger Lambda when events match the pattern
+ */
+export interface EventRuleConfig {
+  /**
+   * Unique identifier (e.g., "s3-upload", "github-push")
+   */
+  id: string;
+
+  /**
+   * Display name (e.g., "S3 File Upload")
+   */
+  name: string;
+
+  /**
+   * Description
+   */
+  description: string;
+
+  /**
+   * EventBridge event pattern
+   * Matches events to trigger the Lambda function
+   */
+  eventPattern: {
+    /**
+     * Event source (e.g., ["aws.s3"], ["com.github"])
+     */
+    source: string[];
+
+    /**
+     * Event detail type (e.g., ["Object Created"], ["Push"])
+     */
+    detailType: string[];
+
+    /**
+     * Optional detail filters
+     * Example: { bucket: { name: ["my-bucket"] } }
+     */
+    detail?: Record<string, unknown>;
+  };
+
+  /**
+   * Icon name for frontend display (optional)
+   */
+  icon?: string;
+
+  /**
+   * Whether this rule is enabled
+   */
+  enabled: boolean;
 }
 
 /**
@@ -177,7 +236,25 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     customDomain: {
       hostName: "agentchat",
       domainName: "geeawa.net"
-    }
+    },
+    eventRules: [
+      {
+        id: 's3-upload',
+        name: 'S3 File Upload',
+        description: 'Triggered when a file is uploaded to my-trigger-bucket',
+        eventPattern: {
+          source: ['aws.s3'],
+          detailType: ['Object Created'],
+          detail: {
+            bucket: {
+              name: ['agentcore-app-dev-user-storage-988417841316-ap-northeast-1'], // Specify your existing S3 bucket name
+            },
+          },
+        },        
+        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        enabled: true,
+      },
+    ],
   },
 
   dev: {
@@ -206,7 +283,25 @@ export const environments: Record<Environment, EnvironmentConfig> = {
     customDomain: {
       hostName: "agentcore-dev",
       domainName: "geeawa.net"
-    }
+    },
+    eventRules: [
+      {
+        id: 's3-upload',
+        name: 'S3 File Upload',
+        description: 'Triggered when a file is uploaded to my-trigger-bucket',
+        eventPattern: {
+          source: ['aws.s3'],
+          detailType: ['Object Created'],
+          detail: {
+            bucket: {
+              name: ['agentcore-app-dev-user-storage-988417841316-ap-northeast-1'], // Specify your existing S3 bucket name
+            },
+          },
+        },        
+        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        enabled: true,
+      },
+    ],
   },
 
   stg: {

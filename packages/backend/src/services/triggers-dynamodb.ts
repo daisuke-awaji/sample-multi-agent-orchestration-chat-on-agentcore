@@ -27,6 +27,7 @@ export interface ScheduleTriggerConfig {
 }
 
 export interface EventTriggerConfig {
+  eventSourceId?: string;
   eventBusName?: string;
   eventPattern?: Record<string, unknown>;
   ruleArn?: string;
@@ -54,6 +55,8 @@ export interface Trigger {
   lastExecutedAt?: string;
   GSI1PK?: string;
   GSI1SK?: string;
+  GSI2PK?: string;
+  GSI2SK?: string;
 }
 
 export interface TriggerExecution {
@@ -94,6 +97,7 @@ export interface CreateTriggerInput {
 export interface UpdateTriggerInput {
   name?: string;
   description?: string;
+  type?: TriggerType;
   agentId?: string;
   prompt?: string;
   sessionId?: string;
@@ -155,6 +159,12 @@ export class TriggersDynamoDBService {
       GSI1PK: `TYPE#${input.type}`,
       GSI1SK: `USER#${input.userId}#${triggerId}`,
     };
+
+    // Set GSI2 keys for event-type triggers with eventSourceId
+    if (input.type === 'event' && input.eventConfig?.eventSourceId) {
+      trigger.GSI2PK = `EVENTSOURCE#${input.eventConfig.eventSourceId}`;
+      trigger.GSI2SK = `USER#${input.userId}#TRIGGER#${triggerId}`;
+    }
 
     await this.client.send(
       new PutItemCommand({
@@ -220,8 +230,15 @@ export class TriggersDynamoDBService {
   ): Promise<Trigger> {
     const now = new Date().toISOString();
 
+    // Get existing trigger to check for type changes
+    const existingTrigger = await this.getTrigger(userId, triggerId);
+    if (!existingTrigger) {
+      throw new Error('Trigger not found');
+    }
+
     // Build update expression
     const updateParts: string[] = ['updatedAt = :updatedAt'];
+    const removeParts: string[] = [];
     const attributeValues: Record<string, any> = {
       ':updatedAt': now,
     };
@@ -235,6 +252,15 @@ export class TriggersDynamoDBService {
     if (updates.description !== undefined) {
       updateParts.push('description = :description');
       attributeValues[':description'] = updates.description;
+    }
+    if (updates.type !== undefined) {
+      updateParts.push('#type = :type');
+      attributeNames['#type'] = 'type';
+      attributeValues[':type'] = updates.type;
+
+      // Update GSI1 keys when type changes
+      updateParts.push('GSI1PK = :gsi1pk');
+      attributeValues[':gsi1pk'] = `TYPE#${updates.type}`;
     }
     if (updates.agentId !== undefined) {
       updateParts.push('agentId = :agentId');
@@ -274,7 +300,25 @@ export class TriggersDynamoDBService {
       attributeValues[':eventConfig'] = updates.eventConfig;
     }
 
-    const updateExpression = `SET ${updateParts.join(', ')}`;
+    // Handle GSI2 keys for type changes
+    const newType = updates.type || existingTrigger.type;
+    const newEventConfig = updates.eventConfig || existingTrigger.eventConfig;
+
+    if (newType === 'event' && newEventConfig?.eventSourceId) {
+      // Set GSI2 keys for event type
+      updateParts.push('GSI2PK = :gsi2pk', 'GSI2SK = :gsi2sk');
+      attributeValues[':gsi2pk'] = `EVENTSOURCE#${newEventConfig.eventSourceId}`;
+      attributeValues[':gsi2sk'] = `USER#${userId}#TRIGGER#${triggerId}`;
+    } else if (newType === 'schedule') {
+      // Remove GSI2 keys for schedule type
+      removeParts.push('GSI2PK', 'GSI2SK');
+    }
+
+    // Build complete update expression
+    let updateExpression = `SET ${updateParts.join(', ')}`;
+    if (removeParts.length > 0) {
+      updateExpression += ` REMOVE ${removeParts.join(', ')}`;
+    }
 
     await this.client.send(
       new UpdateItemCommand({
@@ -291,7 +335,7 @@ export class TriggersDynamoDBService {
       })
     );
 
-    console.log('Trigger updated:', { triggerId, userId });
+    console.log('Trigger updated:', { triggerId, userId, typeChanged: updates.type !== undefined });
 
     // Return updated trigger
     const trigger = await this.getTrigger(userId, triggerId);
@@ -316,6 +360,28 @@ export class TriggersDynamoDBService {
     );
 
     console.log('Trigger deleted:', { triggerId, userId });
+  }
+
+  /**
+   * List triggers subscribed to a specific event source (GSI2)
+   */
+  async listTriggersByEventSource(eventSourceId: string): Promise<Trigger[]> {
+    const result = await this.client.send(
+      new QueryCommand({
+        TableName: this.tableName,
+        IndexName: 'GSI2',
+        KeyConditionExpression: 'GSI2PK = :pk',
+        ExpressionAttributeValues: marshall({
+          ':pk': `EVENTSOURCE#${eventSourceId}`,
+        }),
+      })
+    );
+
+    if (!result.Items || result.Items.length === 0) {
+      return [];
+    }
+
+    return result.Items.map((item) => unmarshall(item) as Trigger);
   }
 
   /**

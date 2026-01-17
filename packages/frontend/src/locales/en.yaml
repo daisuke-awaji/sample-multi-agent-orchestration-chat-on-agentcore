@@ -596,12 +596,18 @@ triggers:
     schedule:
       label: Schedule
       description: Execute automatically on schedule
-    slack:
-      label: Slack Event Integration
-      description: Trigger on Slack events
-    github:
-      label: GitHub Integration
-      description: Trigger on GitHub events
+    event:
+      label: Event-Driven
+      description: Trigger on external events (S3, etc.)
+  
+  # Event Source Selection
+  eventSource:
+    label: Event Source
+    selectPlaceholder: Select event source...
+    noSourcesAvailable: No event sources configured
+    loadError: Failed to load event sources
+    helpText: Select which event should trigger this agent
+    eventSourceRequired: Please select an event source
 
 # Home Page
 home:

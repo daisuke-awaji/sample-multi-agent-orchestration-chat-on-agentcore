@@ -33,8 +33,9 @@ export interface ScheduleConfig {
 }
 
 export interface EventConfig {
-  eventSource: string;
-  eventPattern: Record<string, unknown>;
+  eventSourceId: string;
+  eventSource?: string;
+  eventPattern?: Record<string, unknown>;
 }
 
 export interface ExecutionRecord {
@@ -67,12 +68,14 @@ export interface UpdateTriggerRequest {
   name?: string;
   description?: string;
   agentId?: string;
+  type?: TriggerType;
   prompt?: string;
   sessionId?: string;
   modelId?: string;
   workingDirectory?: string;
   enabledTools?: string[];
   scheduleConfig?: ScheduleConfig;
+  eventConfig?: EventConfig;
 }
 
 export interface ListTriggersResponse {

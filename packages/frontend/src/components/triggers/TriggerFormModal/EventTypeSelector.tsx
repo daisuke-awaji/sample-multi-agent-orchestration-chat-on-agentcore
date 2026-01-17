@@ -5,10 +5,10 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { Clock, MessageSquare, Github } from 'lucide-react';
+import { Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export type EventType = 'schedule' | 'slack' | 'github';
+export type EventType = 'schedule' | 'event';
 
 interface EventTypeOption {
   id: EventType;
@@ -40,18 +40,11 @@ export function EventTypeSelector({
       isAvailable: true,
     },
     {
-      id: 'slack',
-      icon: MessageSquare,
-      label: t('triggers.eventTypes.slack.label'),
-      description: t('triggers.eventTypes.slack.description'),
-      isAvailable: false,
-    },
-    {
-      id: 'github',
-      icon: Github,
-      label: t('triggers.eventTypes.github.label'),
-      description: t('triggers.eventTypes.github.description'),
-      isAvailable: false,
+      id: 'event',
+      icon: Zap,
+      label: t('triggers.eventTypes.event.label'),
+      description: t('triggers.eventTypes.event.description'),
+      isAvailable: true,
     },
   ];
 
