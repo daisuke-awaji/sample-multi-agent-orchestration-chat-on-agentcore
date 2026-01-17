@@ -154,7 +154,7 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
           <div className="pt-2 border-t">
             <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
               <div>
-                <span className="font-medium">Execution ID:</span>
+                <span className="font-medium">{t('triggers.history.executionId')}:</span>
                 <br />
                 <span className="font-mono text-[10px]">{execution.executionId}</span>
               </div>

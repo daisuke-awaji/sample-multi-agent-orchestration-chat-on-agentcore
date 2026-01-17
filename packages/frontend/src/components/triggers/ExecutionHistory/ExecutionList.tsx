@@ -92,19 +92,19 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                {t('triggers.history.status')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Started At
+                {t('triggers.history.startedAt')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Completed At
+                {t('triggers.history.completedAt')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Duration
+                {t('triggers.history.duration')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Execution ID
+                {t('triggers.history.executionId')}
               </th>
             </tr>
           </thead>

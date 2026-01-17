@@ -480,12 +480,12 @@ triggers:
   # Page
   pageTitle: Trigger Management
   pageDescription: Automatically execute agents based on schedules
-  
+
   # Tabs
   tabs:
     basic: Basic Settings
     trigger: Trigger Configuration
-  
+
   # Actions
   create: Create New
   edit: Edit
@@ -493,7 +493,7 @@ triggers:
   enable: Enable
   disable: Disable
   viewHistory: View Execution History
-  
+
   # Form
   form:
     title: Trigger Settings
@@ -524,7 +524,7 @@ triggers:
     save: Save
     saving: Saving...
     cancel: Cancel
-  
+
   # Cron Builder
   cron:
     title: Schedule Settings
@@ -548,12 +548,31 @@ triggers:
     customExpression: 'Custom Cron Expression'
     customExpressionHint: 'AWS EventBridge format: minute hour day month weekday year (e.g., 0 0 * * ? *)'
     invalidExpression: Invalid cron expression
-  
+    # Range labels
+    minuteRange: (0-59)
+    hourRange: (0-23)
+    dayOfMonthRange: (1-31)
+    # Help hints
+    dayOfMonthHint: Use ? or *
+    dayOfWeekHint: Use ? or *
+    yearHint: Usually use *
+    # Dropdown options
+    optionAll: All (*)
+    optionNotSpecified: Not specified (?)
+    optionWeekdays: Weekdays (MON-FRI)
+    # Hints section
+    hintsTitle: 💡 Tips
+    hintAll: '* = All values'
+    hintNotSpecified: '? = Not specified (required for day or weekday)'
+    hintRange: '0-5 = Range specification'
+    hintMultiple: '0,15,30 = Multiple values'
+    hintDayWeekExclusive: Day and weekday cannot be specified at the same time (one must be ?)
+
   # Status
   status:
     enabled: Enabled
     disabled: Disabled
-  
+
   # Execution History
   history:
     title: Execution History
@@ -561,6 +580,8 @@ triggers:
     executedAt: Executed At
     duration: Duration
     status: Status
+    startedAt: Started At
+    completedAt: Completed At
     success: Success
     failure: Failure
     inProgress: In Progress
@@ -570,7 +591,8 @@ triggers:
     showDetails: Show Details
     hideDetails: Hide Details
     loadMore: Load More
-  
+    executionId: Execution ID
+
   # Messages
   messages:
     createSuccess: Trigger created successfully
@@ -584,12 +606,12 @@ triggers:
     disableSuccess: Trigger disabled successfully
     toggleError: Failed to change trigger status
     fetchError: Failed to fetch triggers
-  
+
   # Empty State
   empty:
     title: No Triggers
-    description: Click the Create New button to create a schedule trigger
-  
+    description: Click the Create New button to create your first trigger
+
   # Event Type Selection
   eventTypes:
     title: Trigger Type
@@ -604,7 +626,7 @@ triggers:
     event:
       label: Event-Driven
       description: Trigger on external events (S3, etc.)
-  
+
   # Event Source Selection
   eventSource:
     label: Event Source
@@ -613,7 +635,7 @@ triggers:
     loadError: Failed to load event sources
     helpText: Select which event should trigger this agent
     eventSourceRequired: Please select an event source
-  
+
   # Card Display
   card:
     schedule: Schedule

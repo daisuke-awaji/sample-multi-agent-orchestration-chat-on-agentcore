@@ -4,7 +4,7 @@
  * Modal for displaying trigger execution history
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, ModalHeader, ModalContent, ModalCloseButton } from '../../ui/Modal';
 import { ExecutionList } from './ExecutionList';
@@ -45,35 +45,38 @@ export function ExecutionHistoryModal({
   const [isLoading, setIsLoading] = useState(false);
   const [nextToken, setNextToken] = useState<string | undefined>();
 
+  const loadExecutions = useCallback(
+    async (token?: string) => {
+      setIsLoading(true);
+
+      try {
+        const response = await getExecutionHistory(triggerId, undefined, token);
+
+        if (token) {
+          // Append to existing executions
+          setExecutions((prev) => [...prev, ...response.executions]);
+        } else {
+          // Replace executions
+          setExecutions(response.executions);
+        }
+
+        setNextToken(response.nextToken);
+      } catch (error) {
+        console.error('Failed to load executions:', error);
+        toast.error(t('triggers.messages.fetchError'));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [triggerId, t]
+  );
+
   // Fetch execution history
   useEffect(() => {
     if (isOpen && triggerId) {
       loadExecutions();
     }
-  }, [isOpen, triggerId]);
-
-  const loadExecutions = async (token?: string) => {
-    setIsLoading(true);
-
-    try {
-      const response = await getExecutionHistory(triggerId, undefined, token);
-
-      if (token) {
-        // Append to existing executions
-        setExecutions((prev) => [...prev, ...response.executions]);
-      } else {
-        // Replace executions
-        setExecutions(response.executions);
-      }
-
-      setNextToken(response.nextToken);
-    } catch (error) {
-      console.error('Failed to load executions:', error);
-      toast.error(t('triggers.messages.fetchError'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isOpen, triggerId, loadExecutions]);
 
   const handleLoadMore = () => {
     if (nextToken && !isLoading) {

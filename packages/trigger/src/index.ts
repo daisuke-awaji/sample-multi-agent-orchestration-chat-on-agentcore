@@ -10,23 +10,30 @@ import { handleCustomEvent } from './handlers/custom-event-handler.js';
 /**
  * Type guard to check if event is a SchedulerEvent
  */
-function isSchedulerEvent(event: any): event is SchedulerEvent {
+function isSchedulerEvent(event: unknown): event is SchedulerEvent {
+  if (typeof event !== 'object' || event === null) return false;
+  const e = event as Record<string, unknown>;
   return (
-    event.source === 'aws.scheduler' ||
-    event['detail-type'] === 'Scheduled Event' ||
-    (event.detail && 'triggerId' in event.detail && 'userId' in event.detail)
+    e.source === 'aws.scheduler' ||
+    e['detail-type'] === 'Scheduled Event' ||
+    (typeof e.detail === 'object' &&
+      e.detail !== null &&
+      'triggerId' in (e.detail as Record<string, unknown>) &&
+      'userId' in (e.detail as Record<string, unknown>))
   );
 }
 
 /**
  * Type guard to check if event is a CustomEventBridgeEvent
  */
-function isCustomEvent(event: any): event is CustomEventBridgeEvent {
+function isCustomEvent(event: unknown): event is CustomEventBridgeEvent {
+  if (typeof event !== 'object' || event === null) return false;
+  const e = event as Record<string, unknown>;
   return (
-    event.source !== undefined &&
-    event['detail-type'] !== undefined &&
-    event.source !== 'aws.scheduler' &&
-    event['detail-type'] !== 'Scheduled Event'
+    e.source !== undefined &&
+    e['detail-type'] !== undefined &&
+    e.source !== 'aws.scheduler' &&
+    e['detail-type'] !== 'Scheduled Event'
   );
 }
 

@@ -482,12 +482,12 @@ triggers:
   # ページ
   pageTitle: トリガー管理
   pageDescription: スケジュールに基づいてエージェントを自動実行するトリガーを作成・管理できます。定期的なタスクの自動化や、特定の時刻にエージェントを起動してデータ収集やレポート生成などを行うことができます。
-  
+
   # タブ
   tabs:
     basic: 基本設定
     trigger: トリガー設定
-  
+
   # アクション
   create: 新規作成
   edit: 編集
@@ -495,7 +495,7 @@ triggers:
   enable: 有効化
   disable: 無効化
   viewHistory: 実行履歴を表示
-  
+
   # フォーム
   form:
     title: トリガー設定
@@ -531,7 +531,7 @@ triggers:
     save: 保存
     saving: 保存中...
     cancel: キャンセル
-  
+
   # Cron Builder
   cron:
     title: スケジュール設定
@@ -555,12 +555,31 @@ triggers:
     customExpression: 'カスタムCron式'
     customExpressionHint: 'cron形式: 分 時 日 月 曜日 年 (例: 0 0 * * ? *)'
     invalidExpression: 無効なCron式です
-  
+    # 範囲ラベル
+    minuteRange: '(0-59)'
+    hourRange: '(0-23)'
+    dayOfMonthRange: '(1-31)'
+    # ヘルプヒント
+    dayOfMonthHint: '? または * を使用'
+    dayOfWeekHint: '? または * を使用'
+    yearHint: '通常は * を使用'
+    # ドロップダウンオプション
+    optionAll: 'すべて (*)'
+    optionNotSpecified: '指定なし (?)'
+    optionWeekdays: '平日 (MON-FRI)'
+    # ヒントセクション
+    hintsTitle: '💡 ヒント'
+    hintAll: '* = すべての値'
+    hintNotSpecified: '? = 指定なし（日または曜日で必須）'
+    hintRange: '0-5 = 範囲指定'
+    hintMultiple: '0,15,30 = 複数指定'
+    hintDayWeekExclusive: 日と曜日は同時に指定できません（片方は ? にする必要があります）
+
   # ステータス
   status:
     enabled: 有効
     disabled: 無効
-  
+
   # 実行履歴
   history:
     title: 実行履歴
@@ -577,7 +596,10 @@ triggers:
     showDetails: 詳細を表示
     hideDetails: 詳細を閉じる
     loadMore: さらに読み込む
-  
+    executionId: 実行ID
+    startedAt: 開始日時
+    completedAt: 完了日時
+
   # メッセージ
   messages:
     createSuccess: トリガーを作成しました
@@ -591,12 +613,12 @@ triggers:
     disableSuccess: トリガーを無効化しました
     toggleError: トリガーの状態変更に失敗しました
     fetchError: トリガーの取得に失敗しました
-  
+
   # 空状態
   empty:
     title: トリガーがありません
     description: 新規作成ボタンからスケジュールトリガーを作成してください
-  
+
   # イベントタイプ選択
   eventTypes:
     title: トリガータイプ
@@ -617,7 +639,7 @@ triggers:
     github:
       label: GitHub 連携
       description: GitHub イベントをトリガーに実行
-  
+
   # イベントソース選択
   eventSource:
     label: イベントソース
@@ -625,7 +647,7 @@ triggers:
     noSourcesAvailable: イベントソースが設定されていません
     selectPlaceholder: イベントソースを選択...
     helpText: トリガーを発火させるイベントソースを選択してください
-  
+
   # カード表示
   card:
     schedule: スケジュール

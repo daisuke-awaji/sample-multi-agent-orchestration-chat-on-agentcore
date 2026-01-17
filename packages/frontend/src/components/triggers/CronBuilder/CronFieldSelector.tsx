@@ -32,7 +32,7 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
       {/* Minute */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          {t('triggers.cron.minute')} (0-59)
+          {t('triggers.cron.minute')} {t('triggers.cron.minuteRange')}
         </label>
         <input
           type="text"
@@ -47,7 +47,7 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
       {/* Hour */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          {t('triggers.cron.hour')} (0-23)
+          {t('triggers.cron.hour')} {t('triggers.cron.hourRange')}
         </label>
         <input
           type="text"
@@ -62,7 +62,7 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
       {/* Day of Month */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          {t('triggers.cron.dayOfMonth')} (1-31)
+          {t('triggers.cron.dayOfMonth')} {t('triggers.cron.dayOfMonthRange')}
         </label>
         <input
           type="text"
@@ -72,7 +72,7 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           placeholder="1, *, ?, 1-15"
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
-        <p className="mt-1 text-xs text-gray-500">? または * を使用</p>
+        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.dayOfMonthHint')}</p>
       </div>
 
       {/* Month */}
@@ -86,7 +86,7 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           disabled={disabled}
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
-          <option value="*">すべて (*)</option>
+          <option value="*">{t('triggers.cron.optionAll')}</option>
           {MONTH_OPTIONS.map((month) => (
             <option key={month.value} value={month.value}>
               {month.label}
@@ -106,16 +106,16 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           disabled={disabled}
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
-          <option value="?">指定なし (?)</option>
-          <option value="*">すべて (*)</option>
-          <option value="MON-FRI">平日 (MON-FRI)</option>
+          <option value="?">{t('triggers.cron.optionNotSpecified')}</option>
+          <option value="*">{t('triggers.cron.optionAll')}</option>
+          <option value="MON-FRI">{t('triggers.cron.optionWeekdays')}</option>
           {DAY_OF_WEEK_OPTIONS.map((day) => (
             <option key={day.value} value={day.value}>
               {day.label}
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-500">? または * を使用</p>
+        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.dayOfWeekHint')}</p>
       </div>
 
       {/* Year */}
@@ -131,19 +131,19 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           placeholder="*, 2024"
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
-        <p className="mt-1 text-xs text-gray-500">通常は * を使用</p>
+        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.yearHint')}</p>
       </div>
 
       {/* Help Text */}
       <div className="col-span-2 md:col-span-3 mt-2">
         <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-md">
-          <p className="font-medium mb-1">💡 ヒント:</p>
+          <p className="font-medium mb-1">{t('triggers.cron.hintsTitle')}</p>
           <ul className="space-y-1 ml-4 list-disc">
-            <li>* = すべての値</li>
-            <li>? = 指定なし（日または曜日で必須）</li>
-            <li>0-5 = 範囲指定</li>
-            <li>0,15,30 = 複数指定</li>
-            <li>日と曜日は同時に指定できません（片方は ? にする必要があります）</li>
+            <li>{t('triggers.cron.hintAll')}</li>
+            <li>{t('triggers.cron.hintNotSpecified')}</li>
+            <li>{t('triggers.cron.hintRange')}</li>
+            <li>{t('triggers.cron.hintMultiple')}</li>
+            <li>{t('triggers.cron.hintDayWeekExclusive')}</li>
           </ul>
         </div>
       </div>

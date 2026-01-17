@@ -251,7 +251,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
               name: ['agentcore-app-dev-user-storage-988417841316-ap-northeast-1'], // Specify your existing S3 bucket name
             },
           },
-        },        
+        },
         enabled: true,
       },
     ],
@@ -288,7 +288,7 @@ export const environments: Record<Environment, EnvironmentConfig> = {
       {
         id: 's3-upload',
         name: 'S3 File Upload',
-        description: 'Triggered when a file is uploaded to my-trigger-bucket',
+        description: 'Triggered when a file with a key starting with "event-test" is uploaded to the S3 bucket (agentcore-app-dev-user-storage-988417841316-ap-northeast-1). This rule monitors Object Created events and can be used to automatically process uploaded files, such as triggering data pipelines, file validation, or notification workflows.',
         eventPattern: {
           source: ['aws.s3'],
           detailType: ['Object Created'],
@@ -296,11 +296,29 @@ export const environments: Record<Environment, EnvironmentConfig> = {
             bucket: {
               name: ['agentcore-app-dev-user-storage-988417841316-ap-northeast-1'], // Specify your existing S3 bucket name
             },
+            object: {
+              key: [{ prefix: 'event-test' }],
+            },
           },
-        },        
+        },
         icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
         enabled: true,
       },
+      // https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-saas-furls.html
+      // {
+      //   id: 'github-issue-created',
+      //   name: 'GitHub Issue created',
+      //   description: 'Triggered when a new issue is opened in the GitHub repository',
+      //   eventPattern: {
+      //     source: ['github.com'],
+      //     detailType: ['issues'],
+      //     detail: {
+      //       action: ["opened"]
+      //     }
+      //   },
+      //   icon: 'github', // https://lucide.dev/icons/github
+      //   enabled: true,
+      // }
     ],
   },
 

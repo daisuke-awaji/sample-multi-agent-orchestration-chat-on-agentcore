@@ -19,7 +19,7 @@ const dynamoClient = new DynamoDBClient({});
  */
 function resolveEventSourceId(event: CustomEventBridgeEvent): string {
   // InputTransformer injects _eventSourceId from environments.ts eventRules config
-  const injectedId = (event as any)._eventSourceId;
+  const injectedId = (event as unknown as { _eventSourceId?: string })._eventSourceId;
 
   if (injectedId) {
     console.log(`✅ eventSourceId resolved from InputTransformer: ${injectedId}`);
