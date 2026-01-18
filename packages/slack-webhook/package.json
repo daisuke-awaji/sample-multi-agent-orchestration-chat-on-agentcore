@@ -1,0 +1,23 @@
+{
+  "name": "@fullstack-agentcore/slack-webhook",
+  "version": "0.1.0",
+  "description": "Slack Webhook to EventBridge Lambda handler",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.800.0",
+    "@aws-sdk/client-secrets-manager": "^3.800.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

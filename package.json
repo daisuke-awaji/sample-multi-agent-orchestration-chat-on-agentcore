@@ -30,6 +30,8 @@
     "destroy": "npm run destroy --workspace=@fullstack-agentcore/cdk",
     "destroy:dev": "npm run destroy:dev --workspace=@fullstack-agentcore/cdk",
     "destroy:stg": "npm run destroy:stg --workspace=@fullstack-agentcore/cdk",
+    "deploy:slack-webhook": "cd packages/cdk && cdk deploy SlackWebhookStack --app 'npx ts-node bin/slack-webhook.ts' --require-approval never",
+    "destroy:slack-webhook": "cd packages/cdk && cdk destroy SlackWebhookStack --app 'npx ts-node bin/slack-webhook.ts'",
     "build:lambda": "npm run build --workspace=@fullstack-agentcore/lambda-tools",
     "client:build": "npm run build --workspace=@fullstack-agentcore/client",
     "client:start": "npm run start --workspace=@fullstack-agentcore/client",
