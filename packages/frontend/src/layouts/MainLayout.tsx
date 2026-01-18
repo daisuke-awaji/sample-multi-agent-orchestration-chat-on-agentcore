@@ -190,8 +190,8 @@ export function MainLayout() {
               to="/chat"
               onClick={handleNewChat}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-              aria-label={t('sidebar.newChat')}
-              title={t('sidebar.newChat')}
+              aria-label={t('navigation.newChat')}
+              title={t('navigation.newChat')}
             >
               <SquarePen className="w-5 h-5" />
             </Link>
