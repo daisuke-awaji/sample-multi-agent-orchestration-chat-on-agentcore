@@ -63,6 +63,7 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
       sessions: result.sessions.map((session) => ({
         sessionId: session.sessionId,
         title: session.title,
+        sessionType: session.sessionType,
         agentId: session.agentId,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
