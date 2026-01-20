@@ -84,15 +84,19 @@ export function SettingsPage() {
               className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-gray-100 font-medium cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex items-center justify-between"
             >
               <span className="flex items-center gap-2">
-                {themeOptions.find((opt) => opt.value === theme)?.icon && (
-                  <span className="w-5 h-5 text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                    {(() => {
-                      const Icon = themeOptions.find((opt) => opt.value === theme)?.icon!;
-                      return <Icon className="w-5 h-5" />;
-                    })()}
-                  </span>
-                )}
-                {themeOptions.find((opt) => opt.value === theme)?.label}
+                {(() => {
+                  const selectedOption = themeOptions.find((opt) => opt.value === theme);
+                  if (selectedOption) {
+                    const Icon = selectedOption.icon;
+                    return (
+                      <>
+                        <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        {selectedOption.label}
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
               </span>
               <ChevronDown
                 className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
