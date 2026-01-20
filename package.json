@@ -26,7 +26,6 @@
     "deploy:dev": "npm run deploy:dev --workspace=@fullstack-agentcore/cdk",
     "deploy:stg": "npm run deploy:stg --workspace=@fullstack-agentcore/cdk",
     "deploy:prd": "npm run deploy:prd --workspace=@fullstack-agentcore/cdk",
-    "deploy:tokyo": "AWS_REGION=ap-northeast-1 AWS_DEFAULT_REGION=ap-northeast-1 CDK_DEFAULT_REGION=ap-northeast-1 npm run deploy --workspace=@fullstack-agentcore/cdk",
     "destroy": "npm run destroy --workspace=@fullstack-agentcore/cdk",
     "destroy:dev": "npm run destroy:dev --workspace=@fullstack-agentcore/cdk",
     "destroy:stg": "npm run destroy:stg --workspace=@fullstack-agentcore/cdk",
