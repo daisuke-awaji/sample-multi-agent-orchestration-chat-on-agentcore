@@ -124,9 +124,10 @@ npx -w packages/cdk cdk bootstrap
 # Deploy to default region (based on AWS CLI configuration)
 npm run deploy
 
-# Deploy to a specific region
-AWS_REGION=eu-west-1 AWS_DEFAULT_REGION=eu-west-1 CDK_DEFAULT_REGION=eu-west-1 npm run deploy
+# or Deploy to dev environment
+npm run deploy:dev
 ```
+
 After deployment, the CloudFormation stack outputs will include the Frontend URL. Open the URL in your browser to start using the application
 
 
