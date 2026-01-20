@@ -16,6 +16,7 @@ import { getCurrentUserSession } from './lib/cognito';
 import { useAgentStore } from './stores/agentStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeErrorHandler } from './utils/errorHandler';
+import { useAppSyncConnection } from './hooks/useAppSyncConnection';
 
 function App() {
   const { user, isAuthenticated, setUser, setLoading, setError, logout } = useAuthStore();
@@ -53,6 +54,9 @@ function App() {
       clearStore();
     }
   }, [user, initializeStore, clearStore]);
+
+  // Initialize shared AppSync WebSocket connection
+  useAppSyncConnection();
 
   return (
     <ErrorBoundary>

@@ -37,7 +37,6 @@ import type { HookProvider } from '@strands-agents/sdk';
  * 4. Sub-agent Identification:
  *    - sessionType: 'subagent' attribute distinguishes from regular sessions
  *    - Enables filtering and special handling in UI via DynamoDB Sessions table
- *    - No longer uses '_subagent' suffix to avoid AppSync Events channel format issues
  *
  * Why 33 characters?
  * - Matches frontend session ID length for consistency
