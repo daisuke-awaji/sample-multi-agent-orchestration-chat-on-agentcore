@@ -179,7 +179,7 @@ export function EventSourceSelector({
         {t('triggers.eventSource.label')}
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {eventSources.map((source) => {
           const Icon = getIconComponent(source.icon);
           const isSelected = value === source.id;
