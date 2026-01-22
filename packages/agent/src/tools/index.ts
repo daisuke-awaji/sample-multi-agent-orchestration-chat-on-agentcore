@@ -11,6 +11,7 @@ export { imageToTextTool } from './image-to-text/index.js';
 export { novaReelTool } from './nova-reel/index.js';
 export { callAgentTool } from './call-agent.js';
 export { createAgentTool } from './create-agent.js';
+export { markdownToHtmlTool } from './markdown-to-html/index.js';
 
 // ローカルツール配列のインポート
 import { executeCommandTool } from './execute-command.js';
@@ -25,6 +26,7 @@ import { imageToTextTool } from './image-to-text/index.js';
 import { novaReelTool } from './nova-reel/index.js';
 import { callAgentTool } from './call-agent.js';
 import { createAgentTool } from './create-agent.js';
+import { markdownToHtmlTool } from './markdown-to-html/index.js';
 
 /**
  * Agent に内蔵されるローカルツール一覧
@@ -43,4 +45,5 @@ export const localTools = [
   novaReelTool,
   callAgentTool,
   createAgentTool,
+  markdownToHtmlTool,
 ];
