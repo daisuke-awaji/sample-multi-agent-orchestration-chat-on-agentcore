@@ -42,6 +42,22 @@ describe('Markdown to HTML Converter', () => {
       expect(result).toContain('<a href="https://example.com">Link Text</a>');
     });
 
+    it('should convert links inside list items', () => {
+      const markdown = '- [GitHub](https://github.com)\n- [Google](https://google.com)';
+      const result = convertMarkdownToHtmlBody(markdown);
+
+      expect(result).toContain('<a href="https://github.com">GitHub</a>');
+      expect(result).toContain('<a href="https://google.com">Google</a>');
+    });
+
+    it('should convert bold and links inside list items', () => {
+      const markdown = '- **Bold** and [Link](https://example.com)';
+      const result = convertMarkdownToHtmlBody(markdown);
+
+      expect(result).toContain('<strong>Bold</strong>');
+      expect(result).toContain('<a href="https://example.com">Link</a>');
+    });
+
     it('should convert unordered lists', () => {
       const markdown = '- Item 1\n- Item 2\n- Item 3';
       const result = convertMarkdownToHtmlBody(markdown);
@@ -89,6 +105,16 @@ describe('Markdown to HTML Converter', () => {
       expect(result).toContain('<pre>');
       expect(result).toContain('<code');
       expect(result).toContain('const x = 1;');
+    });
+
+    it('should convert mermaid code blocks to mermaid class', () => {
+      const markdown = '```mermaid\ngraph TD\n    A --> B\n```';
+      const result = convertMarkdownToHtmlBody(markdown);
+
+      expect(result).toContain('<pre class="mermaid">');
+      expect(result).toContain('graph TD');
+      expect(result).toContain('A --> B');
+      expect(result).not.toContain('<code');
     });
 
     it('should convert blockquotes', () => {
@@ -201,6 +227,24 @@ describe('Markdown to HTML Converter', () => {
 
       expect(result).toContain('@media (max-width: 640px)');
       expect(result).toContain('@media print');
+    });
+
+    it('should include KaTeX CDN for LaTeX math rendering', () => {
+      const markdown = '# Math Test';
+      const result = convertMarkdownToHtml(markdown, 'Math Test');
+
+      expect(result).toContain('katex.min.css');
+      expect(result).toContain('katex.min.js');
+      expect(result).toContain('auto-render.min.js');
+      expect(result).toContain('renderMathInElement');
+    });
+
+    it('should include Mermaid CDN for diagram rendering', () => {
+      const markdown = '# Diagram Test';
+      const result = convertMarkdownToHtml(markdown, 'Diagram Test');
+
+      expect(result).toContain('mermaid');
+      expect(result).toContain('mermaid.initialize');
     });
   });
 

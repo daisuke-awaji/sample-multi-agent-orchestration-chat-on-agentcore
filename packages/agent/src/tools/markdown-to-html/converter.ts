@@ -17,6 +17,16 @@ function isVideoUrl(url: string): boolean {
 }
 
 /**
+ * Parse list item tokens to HTML
+ */
+function parseListItemContent(item: Tokens.ListItem): string {
+  if (item.tokens && item.tokens.length > 0) {
+    return marked.parser(item.tokens);
+  }
+  return item.text;
+}
+
+/**
  * Custom renderer for marked
  */
 function createCustomRenderer(): Renderer {
@@ -46,7 +56,7 @@ function createCustomRenderer(): Renderer {
 </figure>`;
   };
 
-  // Override list rendering to support task lists
+  // Override list rendering to support task lists and parse inline content
   renderer.list = ({ items, ordered, start }: Tokens.List): string => {
     const hasTaskItems = items.some((item) => item.task);
     const tag = ordered ? 'ol' : 'ul';
@@ -55,16 +65,27 @@ function createCustomRenderer(): Renderer {
 
     const body = items
       .map((item) => {
+        const content = parseListItemContent(item).trim();
         if (item.task) {
           const checked = item.checked ? ' checked' : '';
           const checkbox = `<input type="checkbox" disabled${checked}>`;
-          return `<li>${checkbox}${item.text}</li>`;
+          return `<li>${checkbox}${content}</li>`;
         }
-        return `<li>${item.text}</li>`;
+        return `<li>${content}</li>`;
       })
       .join('\n');
 
     return `<${tag}${startAttr}${classAttr}>\n${body}\n</${tag}>`;
+  };
+
+  // Override code block rendering to support Mermaid diagrams
+  renderer.code = ({ text, lang }: Tokens.Code): string => {
+    if (lang === 'mermaid') {
+      return `<pre class="mermaid">\n${text}\n</pre>`;
+    }
+    const langClass = lang ? ` class="language-${lang}"` : '';
+    const escapedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<pre><code${langClass}>${escapedText}</code></pre>`;
   };
 
   return renderer;
