@@ -17,10 +17,27 @@ function isVideoUrl(url: string): boolean {
 }
 
 /**
- * Parse list item tokens to HTML
+ * Parse list item tokens to HTML, filtering out checkbox for task items
  */
 function parseListItemContent(item: Tokens.ListItem): string {
   if (item.tokens && item.tokens.length > 0) {
+    // For task items, filter out the paragraph that contains only the checkbox
+    // to avoid duplicate checkboxes (we add our own checkbox manually)
+    if (item.task) {
+      const filteredTokens = item.tokens.map((token) => {
+        if (token.type === 'paragraph' && 'tokens' in token && token.tokens) {
+          // Remove leading checkbox pattern from paragraph tokens
+          const paragraphTokens = token.tokens.filter(
+            (t) => !(t.type === 'text' && /^\s*$/.test(t.raw))
+          );
+          return { ...token, tokens: paragraphTokens };
+        }
+        return token;
+      });
+      const html = marked.parser(filteredTokens);
+      // Remove any checkbox that marked might have added
+      return html.replace(/<input[^>]*type="checkbox"[^>]*>/gi, '');
+    }
     return marked.parser(item.tokens);
   }
   return item.text;

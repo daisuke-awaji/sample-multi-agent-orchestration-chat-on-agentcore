@@ -262,52 +262,61 @@ pre.mermaid {
 `;
 
 /**
- * Generate KaTeX initialization script
+ * Generate KaTeX auto-render onload script
  * Using string concatenation to avoid template literal issues with $ characters
  */
-function getKatexScript(): string {
-  const dollar = '$';
-  const doubleDollar = '$$';
-  return `
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      renderMathInElement(document.body, {
-        delimiters: [
-          {left: "${doubleDollar}", right: "${doubleDollar}", display: true},
-          {left: "${dollar}", right: "${dollar}", display: false}
-        ],
-        throwOnError: false
-      });
-    });
-  </script>`;
+function getKatexOnloadScript(): string {
+  // Use character codes to avoid any template literal issues
+  const singleDollar = String.fromCharCode(36);
+  const doubleDollar = String.fromCharCode(36) + String.fromCharCode(36);
+  return (
+    "renderMathInElement(document.body, {delimiters: [{left: '" +
+    doubleDollar +
+    "', right: '" +
+    doubleDollar +
+    "', display: true}, {left: '" +
+    singleDollar +
+    "', right: '" +
+    singleDollar +
+    "', display: false}], throwOnError: false});"
+  );
 }
 
 /**
  * Generate complete HTML document
  */
 export function generateHtmlDocument(title: string, bodyContent: string): string {
-  const katexScript = getKatexScript();
-  return `<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)}</title>
-  <style>${CSS_STYLES}</style>
-  <!-- KaTeX for LaTeX math rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Ber8A78D7Y6q4L9lAMh8Bqgq0f1LQOAkA0Z0xQp7" crossorigin="anonymous"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>${katexScript}
-  <!-- Mermaid for diagram rendering -->
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
-  </script>
-</head>
-<body>
-${bodyContent}
-</body>
-</html>`;
+  const katexOnload = getKatexOnloadScript();
+  return (
+    '<!DOCTYPE html>\n' +
+    '<html lang="ja">\n' +
+    '<head>\n' +
+    '  <meta charset="UTF-8">\n' +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+    '  <title>' +
+    escapeHtml(title) +
+    '</title>\n' +
+    '  <style>' +
+    CSS_STYLES +
+    '</style>\n' +
+    '  <!-- KaTeX for LaTeX math rendering -->\n' +
+    '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">\n' +
+    '  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Ber8A78D7Y6q4L9lAMh8Bqgq0f1LQOAkA0Z0xQp7" crossorigin="anonymous"></script>\n' +
+    '  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous" onload="' +
+    katexOnload +
+    '"></script>\n' +
+    '  <!-- Mermaid for diagram rendering -->\n' +
+    '  <script type="module">\n' +
+    "    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n" +
+    "    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });\n" +
+    '  </script>\n' +
+    '</head>\n' +
+    '<body>\n' +
+    bodyContent +
+    '\n' +
+    '</body>\n' +
+    '</html>'
+  );
 }
 
 /**
