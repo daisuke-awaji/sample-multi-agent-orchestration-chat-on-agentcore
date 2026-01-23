@@ -88,10 +88,7 @@ export function jwtAuthMiddleware(
   const token = extractJWTFromHeader(authHeader);
 
   if (!token) {
-    console.warn(
-      `❌ Invalid Authorization header format (${requestId}):`,
-      authHeader.substring(0, 50)
-    );
+    console.warn(`❌ Invalid Authorization header format (${requestId})`);
     res
       .status(401)
       .json(
@@ -162,8 +159,7 @@ export function jwtAuthMiddleware(
       req.userId = payload.sub || payload['cognito:username'];
 
       console.log(`🔧 JWT decode successful (no verification) (${requestId}):`, {
-        userId: req.userId,
-        username: payload['cognito:username'],
+        hasUserId: !!req.userId,
         tokenUse: payload.token_use,
       });
 

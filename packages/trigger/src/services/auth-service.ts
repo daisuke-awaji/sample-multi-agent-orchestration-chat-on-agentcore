@@ -65,10 +65,7 @@ export class AuthService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Token request failed: ${response.status} ${response.statusText}\n${errorText}`
-        );
+        throw new Error(`Token request failed: ${response.status} ${response.statusText}`);
       }
 
       const data = (await response.json()) as OAuth2TokenResponse;

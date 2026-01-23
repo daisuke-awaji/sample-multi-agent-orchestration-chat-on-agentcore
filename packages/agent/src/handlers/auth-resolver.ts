@@ -160,7 +160,9 @@ export function verifyMachineUserClaim(authHeader?: string): MachineUserVerifica
       scopes: isMachineUser ? scopes : undefined,
     };
   } catch (error) {
-    logger.warn('JWT verification failed:', { error });
+    logger.warn('JWT verification failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return {
       verified: false,
       isMachineUser: false,

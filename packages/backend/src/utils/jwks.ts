@@ -103,8 +103,6 @@ export async function verifyJWT(token: string): Promise<JWTVerificationResult> {
   } catch (error) {
     console.warn('❌ JWT verification failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      tokenLength: token.length,
-      tokenPrefix: token.substring(0, 50) + '...',
     });
 
     return {
@@ -128,7 +126,7 @@ export function extractJWTFromHeader(authHeader: string): string | null {
   // Check for "Bearer " prefix
   const bearerPrefix = 'Bearer ';
   if (!authHeader.startsWith(bearerPrefix)) {
-    console.warn('⚠️  Authorization header is not in Bearer format:', authHeader.substring(0, 20));
+    console.warn('⚠️  Authorization header is not in Bearer format');
     return null;
   }
 
