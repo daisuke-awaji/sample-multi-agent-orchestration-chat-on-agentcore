@@ -1,0 +1,29 @@
+version: "1.0"
+
+exclude_paths:
+  - "*.test.*"
+  - "package-lock.json"
+  - "ash_output/"
+
+global_settings:
+  ignore_paths:
+    - path: 'packages/frontend/src/locales/*.yaml'
+      reason: 'Translation/localization files - UI labels containing "password", "token" etc. are not actual secrets'
+    - path: 'packages/cdk/config/environments.ts'
+      reason: 'CDK config - Secrets Manager reference names (tavilyApiKeySecretName, githubTokenSecretName), not actual secret values'
+    - path: 'packages/agent/src/validation/__tests__/*'
+      reason: 'Test files with valid test image data - Base64 encoded images for validation testing, not secrets'
+    - path: 'packages/agent/src/services/sync-ignore-filter.ts'
+      reason: 'workspaceDir is server configuration constant, not user input - false positive'
+    - path: 'packages/agent/src/services/workspace-sync.ts'
+      reason: 'entry.name from fs.readdirSync - false positive'
+    - path: 'packages/agent/src/session/file-session-storage.ts'
+      reason: 'IDs sanitized by sanitizeId() - false positive'
+    - path: 'packages/agent/src/tools/code-interpreter/client.ts'
+      reason: 'destinationDir validated, filename from path.basename - false positive'
+    - path: 'packages/cdk/lib/constructs/agentcore-lambda-target.ts'
+      reason: 'CDK build-time configuration - false positive'
+    - path: 'packages/agent/src/tools/code-interpreter/__tests__'
+      reason: 'Test files'
+    - path: 'docker/backend.Dockerfile'
+      reason: 'AWS Lambda container - HEALTHCHECK not applicable, Lambda Web Adapter handles health via AWS_LWA_READINESS_CHECK_PATH'

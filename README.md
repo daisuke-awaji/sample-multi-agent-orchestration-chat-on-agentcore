@@ -109,7 +109,7 @@ aws secretsmanager create-secret \
   --region ap-northeast-1
 ```
 
-> Generate a token from [GitHub Settings](https://github.com/settings/tokens). See [GitHub CLI Integration Guide](docs/github-cli-integration.md) for details.
+> Generate a token from [GitHub Settings](https://github.com/settings/tokens).
 
 **Note**: For local development, you can also set these as environment variables in `packages/agent/.env`.
 

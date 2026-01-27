@@ -122,6 +122,8 @@ paths:
       operationId: invokeAgent
       tags:
         - Agent
+      security:
+        - bearerAuth: []
       parameters:
         - name: Authorization
           in: header
@@ -275,6 +277,15 @@ paths:
           $ref: '#/components/responses/NotFoundError'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer Token authentication.
+        Include the token in the Authorization header: `Bearer <token>`
+
   schemas:
     # === Request ===
     InvokeRequest:
@@ -301,6 +312,7 @@ components:
             - ['tool1', 'tool2']: Only specified tools enabled
           items:
             type: string
+          maxItems: 100
           example:
             - 'file_editor'
             - 's3_list_files'
@@ -591,6 +603,9 @@ tags:
     description: AI agent invocation
   - name: Service
     description: Service information
+
+security:
+  - bearerAuth: []
 
 x-readme:
   explorer-enabled: true

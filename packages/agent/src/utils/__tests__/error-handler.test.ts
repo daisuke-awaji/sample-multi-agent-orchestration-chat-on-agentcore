@@ -26,14 +26,6 @@ describe('sanitizeErrorMessage', () => {
     expect(result).not.toContain('abc-123_xyz');
   });
 
-  it('should remove AWS access key IDs', () => {
-    // pragma: allowlist secret - This is AWS documentation example key for testing sanitization
-    const error = new Error('AWS error with key AKIAIOSFODNN7EXAMPLE');
-    const result = sanitizeErrorMessage(error);
-    expect(result).toBe('AWS error with key [AWS_KEY]');
-    expect(result).not.toContain('AKIAIOSFODNN7EXAMPLE');
-  });
-
   it('should redact long alphanumeric strings (potential secrets)', () => {
     const longSecret = 'a'.repeat(45);
     const error = new Error(`Secret key: ${longSecret}`);

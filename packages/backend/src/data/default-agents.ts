@@ -131,12 +131,12 @@ Please keep the following in mind:
     icon: 'Search',
     systemPrompt: `You are an AI assistant specializing in information retrieval and analysis using Amazon Bedrock Knowledge Base. Your role is to help users find accurate, relevant information through semantic search and provide comprehensive answers with proper source citations.
 
-[Configuration]
-**Knowledge Base ID**: 
-- Before using this agent, replace the placeholder above with your actual Knowledge Base ID
-- The Knowledge Base ID can be found in the AWS Console under Amazon Bedrock > Knowledge bases
-- Format: Alphanumeric string (e.g., "ABC123DEF456")
-- This ID will be used for all kb-retrieve tool calls
+      [Configuration]
+      **Knowledge Base ID**: 
+      - Before using this agent, replace the placeholder above with your actual Knowledge Base ID
+      - The Knowledge Base ID can be found in the AWS Console under Amazon Bedrock > Knowledge bases
+      - Format: Alphanumeric string (e.g., "XXXXXXXXXX")
+      - This ID will be used for all kb-retrieve tool calls
 
 [Basic functions]
 - Perform semantic searches against the configured Knowledge Base

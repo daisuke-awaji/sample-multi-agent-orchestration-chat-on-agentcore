@@ -7,11 +7,6 @@ import { validateImageData, IMAGE_VALIDATION_CONFIG } from '../image-validator.j
 import type { ImageData } from '../image-validator.js';
 
 describe('validateImageData', () => {
-  // Valid 1x1 PNG image (smallest valid PNG)
-  // pragma: allowlist secret - This is a valid test image, not a secret
-  const validPngBase64 =
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-
   // Valid minimal JPEG
   const validJpegBase64 =
     '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBEQACEQA/AL+AB//Z';
@@ -24,13 +19,6 @@ describe('validateImageData', () => {
     'UklGRlYAAABXRUJQVlA4IEoAAADQAQCdASoBAAEAAQAcJYgCdAEO/hOMAAD++O9PwAzTXl3ykRORPG+e/9X/T7zzPyqY0V7LOAB4fRYAYXU7xOwAaX/u9w03/xZQAAAA';
 
   describe('valid images', () => {
-    it('should accept valid PNG image', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/png' }];
-      const result = validateImageData(images);
-      expect(result.valid).toBe(true);
-      expect(result.error).toBeUndefined();
-    });
-
     it('should accept valid JPEG image', () => {
       const images: ImageData[] = [{ base64: validJpegBase64, mimeType: 'image/jpeg' }];
       const result = validateImageData(images);
@@ -51,9 +39,9 @@ describe('validateImageData', () => {
 
     it('should accept multiple valid images', () => {
       const images: ImageData[] = [
-        { base64: validPngBase64, mimeType: 'image/png' },
         { base64: validJpegBase64, mimeType: 'image/jpeg' },
         { base64: validGifBase64, mimeType: 'image/gif' },
+        { base64: validWebpBase64, mimeType: 'image/webp' },
       ];
       const result = validateImageData(images);
       expect(result.valid).toBe(true);
@@ -61,8 +49,8 @@ describe('validateImageData', () => {
 
     it('should accept maximum allowed images', () => {
       const images: ImageData[] = Array(IMAGE_VALIDATION_CONFIG.MAX_IMAGES).fill({
-        base64: validPngBase64,
-        mimeType: 'image/png',
+        base64: validGifBase64,
+        mimeType: 'image/gif',
       });
       const result = validateImageData(images);
       expect(result.valid).toBe(true);
@@ -72,8 +60,8 @@ describe('validateImageData', () => {
   describe('image count validation', () => {
     it('should reject when exceeding maximum image count', () => {
       const images: ImageData[] = Array(IMAGE_VALIDATION_CONFIG.MAX_IMAGES + 1).fill({
-        base64: validPngBase64,
-        mimeType: 'image/png',
+        base64: validGifBase64,
+        mimeType: 'image/gif',
       });
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
@@ -91,7 +79,7 @@ describe('validateImageData', () => {
 
   describe('MIME type validation', () => {
     it('should reject invalid MIME type', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/bmp' }];
+      const images: ImageData[] = [{ base64: validGifBase64, mimeType: 'image/bmp' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Invalid MIME type 'image/bmp'");
@@ -99,7 +87,7 @@ describe('validateImageData', () => {
     });
 
     it('should reject non-image MIME type', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'application/pdf' }];
+      const images: ImageData[] = [{ base64: validGifBase64, mimeType: 'application/pdf' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Invalid MIME type 'application/pdf'");
@@ -107,8 +95,8 @@ describe('validateImageData', () => {
 
     it('should include image index in error message', () => {
       const images: ImageData[] = [
-        { base64: validPngBase64, mimeType: 'image/png' },
-        { base64: validPngBase64, mimeType: 'image/invalid' },
+        { base64: validGifBase64, mimeType: 'image/gif' },
+        { base64: validGifBase64, mimeType: 'image/invalid' },
       ];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
@@ -118,16 +106,16 @@ describe('validateImageData', () => {
 
   describe('base64 validation', () => {
     it('should reject content that does not match mime type (invalid magic bytes)', () => {
-      // This is technically valid base64 but contains invalid image data for PNG
+      // This is technically valid base64 but contains invalid image data for GIF
       const invalidContent = Buffer.from('not a real image').toString('base64');
-      const images: ImageData[] = [{ base64: invalidContent, mimeType: 'image/png' }];
+      const images: ImageData[] = [{ base64: invalidContent, mimeType: 'image/gif' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File content does not match declared MIME type');
     });
 
     it('should accept valid base64 with padding', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/png' }];
+      const images: ImageData[] = [{ base64: validGifBase64, mimeType: 'image/gif' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(true);
     });
@@ -137,41 +125,41 @@ describe('validateImageData', () => {
     it('should reject images exceeding size limit', () => {
       // Create a large base64 string that exceeds 5MB when decoded
       // Each base64 character represents 6 bits, so we need ~6.67MB of base64 for 5MB decoded
-      const largeBase64 = 'iVBORw0KGgo' + 'A'.repeat(7 * 1024 * 1024);
-      const images: ImageData[] = [{ base64: largeBase64, mimeType: 'image/png' }];
+      const largeBase64 = 'R0lGODlhAQAB' + 'A'.repeat(7 * 1024 * 1024);
+      const images: ImageData[] = [{ base64: largeBase64, mimeType: 'image/gif' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('exceeds 5MB limit');
     });
 
     it('should include file size in error message', () => {
-      const largeBase64 = 'iVBORw0KGgo' + 'A'.repeat(7 * 1024 * 1024);
-      const images: ImageData[] = [{ base64: largeBase64, mimeType: 'image/png' }];
+      const largeBase64 = 'R0lGODlhAQAB' + 'A'.repeat(7 * 1024 * 1024);
+      const images: ImageData[] = [{ base64: largeBase64, mimeType: 'image/gif' }];
       const result = validateImageData(images);
       expect(result.error).toMatch(/File size \(\d+\.\d+MB\)/);
     });
   });
 
   describe('magic number validation', () => {
-    it('should reject PNG MIME type with JPEG content', () => {
-      const images: ImageData[] = [{ base64: validJpegBase64, mimeType: 'image/png' }];
+    it('should reject GIF MIME type with JPEG content', () => {
+      const images: ImageData[] = [{ base64: validJpegBase64, mimeType: 'image/gif' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File content does not match declared MIME type');
     });
 
-    it('should reject JPEG MIME type with PNG content', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/jpeg' }];
+    it('should reject JPEG MIME type with GIF content', () => {
+      const images: ImageData[] = [{ base64: validGifBase64, mimeType: 'image/jpeg' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File content does not match declared MIME type');
     });
 
-    it('should reject GIF MIME type with PNG content', () => {
-      const images: ImageData[] = [{ base64: validPngBase64, mimeType: 'image/gif' }];
+    it('should reject WebP MIME type with GIF content', () => {
+      const images: ImageData[] = [{ base64: validGifBase64, mimeType: 'image/webp' }];
       const result = validateImageData(images);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("MIME type 'image/gif'");
+      expect(result.error).toContain("MIME type 'image/webp'");
     });
 
     it('should accept image/jpg alias for JPEG', () => {

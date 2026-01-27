@@ -106,7 +106,7 @@ aws secretsmanager create-secret \
   --region ap-northeast-1
 ```
 
-> トークンは[GitHub Settings](https://github.com/settings/tokens)から生成してください。詳細は[GitHub CLI統合ガイド](docs/github-cli-integration.md)を参照。
+> トークンは[GitHub Settings](https://github.com/settings/tokens)から生成してください。
 
 **注意**: ローカル開発の場合は、`packages/agent/.env`で環境変数として設定することもできます。
 
