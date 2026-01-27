@@ -40,15 +40,6 @@ FullStack AgentCoreは、チームがAIエージェントを作成、カスタ�
   <img src="./docs/donuts-architecture.drawio.png" alt="アーキテクチャ図" width="80%" style="border: 1px solid #333; border-radius: 4px;">
 </div>
 
-| コンポーネント | 技術スタック | ポート | 役割 | AWSサービス |
-|-----------|-----------------|------|------|--------------|
-| **Frontend** | React + Vite + Tailwind CSS | 5173 | Web UI | CloudFront, S3 |
-| **Backend** | Express + JWT + AWS SDK | 3000 | APIサーバー、認証 | Lambda, API Gateway |
-| **Agent** | Express + Strands Agents SDK | 8080 | AIエージェントランタイム | AgentCore Runtime, AgentCore Memory, Amazon Bedrock |
-| **CLI** | Commander.js | - | コマンドラインインターフェース | Cognito (JWT Auth) |
-| **CDK** | AWS CDK + TypeScript | - | Infrastructure as Code | CloudFormation |
-| **Lambda Tools** | AWS Lambda + MCP | - | AgentCore Gateway Tools | Lambda, Bedrock Knowledge Base |
-
 ## ✨ 主要機能
 
 - **プロダクションレディ**: セキュリティベストプラクティスに基づく堅牢なフルスタック実装
@@ -135,7 +126,6 @@ AWS_REGION=eu-west-1 AWS_DEFAULT_REGION=eu-west-1 CDK_DEFAULT_REGION=eu-west-1 n
 ### 技術ドキュメント
 - [💻 ローカル開発環境のセットアップ](docs/local-development-setup.md) - 環境セットアップの自動化
 - [🔐 JWT認証システム](docs/jwt-authentication.md) - 認証の詳細
-- [🚀 PR自動デプロイ](docs/pr-auto-deploy-setup.md) - GitHub Actions による PR 環境の自動デプロイ
 - [📊 アーキテクチャ図](docs/donuts-architecture.drawio.png)
 
 ## 🛠️ 開発

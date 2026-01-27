@@ -41,17 +41,6 @@ This project provides a complete stack for deploying AI agents powered by Amazon
 </div>
 
 
-| Component | Technology Stack | Port | Role | AWS Services |
-|-----------|-----------------|------|------|--------------|
-| **Frontend** | React + Vite + Tailwind CSS | 5173 | Web UI | CloudFront, S3 |
-| **Backend** | Express + JWT + AWS SDK | 3000 | API Server, Authentication | Lambda, API Gateway |
-| **Agent** | Express + Strands Agents SDK | 8080 | AI Agent Runtime | AgentCore Runtime, AgentCore Memory, Amazon Bedrock |
-| **CLI** | Commander.js | - | Command-line Interface | Cognito (JWT Auth) |
-| **CDK** | AWS CDK + TypeScript | - | Infrastructure as Code | CloudFormation |
-| **Lambda Tools** | AWS Lambda + MCP | - | AgentCore Gateway Tools | Lambda, Bedrock Knowledge Base |
-
-
-
 ## ✨ Key Features
 
 - **Production-Ready**: Well-architected full-stack implementation with security best practices
@@ -139,7 +128,6 @@ After deployment, the CloudFormation stack outputs will include the Frontend URL
 ### Technical Documentation
 - [💻 Local Development Setup](docs/local-development-setup.md) - Environment setup automation
 - [🔐 JWT Authentication System](docs/jwt-authentication.md) - Authentication details
-- [🚀 PR Auto Deploy](docs/pr-auto-deploy-setup.md) - Automatic PR environment deployment with GitHub Actions
 - [📊 Architecture Diagram](docs/donuts-architecture.drawio.png)
 
 ## 🛠️ Development
