@@ -173,11 +173,17 @@ export class AgentCoreLambdaTarget extends Construct {
    * Gateway にこの Lambda Target を追加
    */
   public addToGateway(gateway: agentcore.Gateway, targetId: string): agentcore.GatewayTarget {
-    return gateway.addLambdaTarget(targetId, {
+    const target = gateway.addLambdaTarget(targetId, {
       gatewayTargetName: this.targetName,
       lambdaFunction: this.lambdaFunction,
       toolSchema: this.toolSchema,
       description: `Lambda target for ${this.targetName}`,
     });
+
+    // CDK L2 が grantInvoke を呼ぶが、依存関係が設定されていないため
+    // GatewayTarget が Gateway ロールに依存するよう明示的に設定
+    target.node.addDependency(gateway.role);
+
+    return target;
   }
 }
