@@ -22,6 +22,16 @@ Preset agents are also available for immediate use, covering various domains inc
         <p align="center"><b>Organization-Wide Agent Sharing</b><br/>You can discover and share custom agents across your team</p>
       </td>
     </tr>
+    <tr>
+      <td width="50%">
+        <img src="./docs/assets/agentchat.geeawa.net_event_integration.png" alt="Event Integration" width="100%">
+        <p align="center"><b>Event-Driven Automation</b><br/>Trigger agents automatically via schedules and external events</p>
+      </td>
+      <td width="50%">
+        <img src="./docs/assets/agentchat.geeawa.net_tools.png" alt="Tools" width="100%">
+        <p align="center"><b>Extensible Tools</b><br/>Add and configure tools to extend agent capabilities</p>
+      </td>
+    </tr>
   </table>
 </div>
 

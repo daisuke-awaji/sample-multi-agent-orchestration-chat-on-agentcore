@@ -15,11 +15,21 @@ Donutsは、チームが AI エージェントを**自由に作成・カスタ�
     <tr>
       <td width="50%">
         <img src="./docs/assets/agentchat.geeawa.net_chat.png" alt="チャットインターフェース" width="100%">
-        <p align="center"><b>直感的なチャットインターフェース</b><br/>専門的なAIエージェントとシンプルなUIで対話できます</p>
+        <p align="center"><b>チャットインターフェース</b><br/>専門的なAIエージェントとシンプルなUIで対話できます</p>
       </td>
       <td width="50%">
         <img src="./docs/assets/agentchat.geeawa.net_chat_share_agent.png" alt="エージェント共有" width="100%">
-        <p align="center"><b>組織全体でのエージェント共有</b><br/>カスタムエージェントをチーム内で発見・共有できます</p>
+        <p align="center"><b>組織でのエージェント共有</b><br/>カスタムエージェントをチーム内で発見・共有できます</p>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="./docs/assets/agentchat.geeawa.net_event_integration.png" alt="イベント連携" width="100%">
+        <p align="center"><b>イベント駆動で実行</b><br/>スケジュールや外部イベントでエージェントを自動実行できます</p>
+      </td>
+      <td width="50%">
+        <img src="./docs/assets/agentchat.geeawa.net_tools.png" alt="ツール" width="100%">
+        <p align="center"><b>拡張可能なツール</b><br/>ツールを追加・設定してエージェントの機能を拡張できます</p>
       </td>
     </tr>
   </table>
