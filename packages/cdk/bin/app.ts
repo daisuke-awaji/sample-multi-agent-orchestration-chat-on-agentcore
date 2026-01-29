@@ -6,31 +6,31 @@ import { getEnvironmentConfig, Environment } from '../config';
 
 const app = new cdk.App();
 
-// 環境を Context から取得（デフォルト: default）
+// Get environment from Context (default: default)
 const envContext = app.node.tryGetContext('env') as Environment | undefined;
 const envName: Environment = envContext || 'default';
 
-// 環境設定を取得
+// Get environment configuration
 const envConfig = getEnvironmentConfig(envName);
 
-// スタック名: AgentCoreApp (デフォルト), AgentCoreAppDev, AgentCoreAppStg, AgentCoreAppPrd, AgentCoreAppPr123
+// Stack name: DonutsAgentCoreApp (default), DonutsAgentCoreAppDev, DonutsAgentCoreAppStg, DonutsAgentCoreAppPrd, DonutsAgentCoreAppPr123
 let stackName: string;
 if (!envContext) {
-  stackName = 'AgentCoreApp';
+  stackName = 'DonutsAgentCoreApp';
 } else if (envName.startsWith('pr-')) {
-  // PR environment: AgentCoreAppPr123
+  // PR environment: DonutsAgentCoreAppPr123
   const prNumber = envName.replace('pr-', '');
-  stackName = `AgentCoreAppPr${prNumber}`;
+  stackName = `DonutsAgentCoreAppPr${prNumber}`;
 } else {
   // Standard environment: capitalize first letter
-  stackName = `AgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`;
+  stackName = `DonutsAgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`;
 }
 
-// スタックを作成
+// Create stack
 new AgentCoreStack(app, stackName, {
   env: {
     account: envConfig.awsAccount || process.env.CDK_DEFAULT_ACCOUNT,
-    region: envConfig.awsRegion,
+    region: process.env.CDK_DEFAULT_REGION,
   },
   envConfig: envConfig,
   tavilyApiKeySecretName: envConfig.tavilyApiKeySecretName,
@@ -38,8 +38,8 @@ new AgentCoreStack(app, stackName, {
   terminationProtection: envConfig.deletionProtection,
 });
 
-// 環境情報を出力
+// Output environment information
 console.log(`🚀 Deploying AgentCore Stack for environment: ${envName}`);
 console.log(`📦 Stack Name: ${stackName}`);
-console.log(`🌍 Region: ${envConfig.awsRegion}`);
+console.log(`🌍 Region: ${process.env.CDK_DEFAULT_REGION || 'not set (will use AWS_REGION)'}`);
 console.log(`🔒 Deletion Protection: ${envConfig.deletionProtection ? 'ENABLED' : 'DISABLED'}`);

@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import { EventRuleConfig } from '../../config/environments';
+import { EventRuleConfig } from '../../../config';
 
 export interface TriggerEventSourcesProps {
   /**
@@ -24,10 +24,10 @@ export interface TriggerEventSourcesProps {
 
 /**
  * Trigger Event Sources Construct
- * 
+ *
  * Creates EventBridge Rules that trigger Lambda when events match patterns.
  * Does NOT create event sources (S3, GitHub, etc.) - those should exist externally.
- * 
+ *
  * This construct only creates:
  * - EventBridge Rules with specified event patterns
  * - Lambda targets for those rules
@@ -103,8 +103,8 @@ export class TriggerEventSources extends Construct {
 
     // Export event source metadata for frontend (include eventPattern for detailed display)
     const frontendConfig = props.eventRules
-      .filter(r => r.enabled)
-      .map(r => ({
+      .filter((r) => r.enabled)
+      .map((r) => ({
         id: r.id,
         name: r.name,
         description: r.description,

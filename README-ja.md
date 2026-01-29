@@ -60,11 +60,6 @@ Donutsは、チームが AI エージェントを**自由に作成・カスタ�
 
 - **Node.js 22.12.0+** - [n](https://github.com/tj/n)によるバージョン管理を推奨します。`.node-version`を参照してください。
 - **AWS CLI** - 適切な認証情報で設定しておく必要があります。
-- **Amazon Bedrockモデルアクセス** - AWSアカウントで必要なモデルを有効化しておく必要があります。
-  - テキスト生成モデル（Claude Sonnet など）
-  - 画像生成モデル（画像機能を使用する場合）
-  - 動画生成モデル（動画機能を使用する場合）
-  - モデルIDとリージョンは[`/packages/cdk/cdk.json`](/packages/cdk/cdk.json)で確認できます。
 
 </details>
 

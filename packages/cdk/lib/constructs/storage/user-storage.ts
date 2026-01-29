@@ -1,6 +1,6 @@
 /**
  * User Storage Construct
- * ユーザーごとのファイルストレージ（S3）を提供
+ * Provides per-user file storage (S3)
  */
 
 import * as cdk from 'aws-cdk-lib';
@@ -10,53 +10,53 @@ import { Construct } from 'constructs';
 
 export interface UserStorageProps {
   /**
-   * バケット名プレフィックス（オプション）
-   * 実際のバケット名: {prefix}-user-storage-{account}-{region}
+   * Bucket name prefix (optional)
+   * Actual bucket name: {prefix}-user-storage-{account}-{region}
    */
   readonly bucketNamePrefix?: string;
 
   /**
-   * データ保持期間（日数）
-   * デフォルト: 365日（1年）
+   * Data retention period (days)
+   * @default 365 days (1 year)
    */
   readonly retentionDays?: number;
 
   /**
-   * CORSで許可するオリジン
-   * デフォルト: ['*']（開発用）
+   * CORS allowed origins
+   * @default ['*'] (for development)
    */
   readonly corsAllowedOrigins?: string[];
 
   /**
-   * S3バケット削除ポリシー
-   * デフォルト: RETAIN
+   * S3 bucket removal policy
+   * @default RETAIN
    */
   readonly removalPolicy?: cdk.RemovalPolicy;
 
   /**
-   * S3バケット自動削除（RemovalPolicy.DESTROYの場合のみ有効）
-   * デフォルト: false
+   * S3 bucket auto delete (only effective when RemovalPolicy.DESTROY)
+   * @default false
    */
   readonly autoDeleteObjects?: boolean;
 }
 
 /**
  * User Storage Construct
- * ユーザーファイル用のS3バケットとアクセス制御を提供
+ * Provides S3 bucket and access control for user files
  */
 export class UserStorage extends Construct {
   /**
-   * 作成されたS3バケット
+   * Created S3 bucket
    */
   public readonly bucket: s3.Bucket;
 
   /**
-   * バケット名
+   * Bucket name
    */
   public readonly bucketName: string;
 
   /**
-   * バケットARN
+   * Bucket ARN
    */
   public readonly bucketArn: string;
 
@@ -70,32 +70,32 @@ export class UserStorage extends Construct {
     const removalPolicy = props?.removalPolicy || cdk.RemovalPolicy.RETAIN;
     const autoDeleteObjects = props?.autoDeleteObjects ?? false;
 
-    // S3バケット作成
+    // Create S3 bucket
     this.bucket = new s3.Bucket(this, 'UserStorageBucket', {
       bucketName: `${prefix}-user-storage-${stack.account}-${stack.region}`,
-      // セキュリティ設定
+      // Security settings
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      versioned: true, // バージョニング有効化
-      enforceSSL: true, // SSL/TLS接続を強制
+      versioned: true, // Enable versioning
+      enforceSSL: true, // Enforce SSL/TLS connections
 
-      // ライフサイクル設定
+      // Lifecycle settings
       lifecycleRules: [
         {
           id: 'DeleteOldVersions',
-          noncurrentVersionExpiration: cdk.Duration.days(30), // 古いバージョンは30日後に削除
+          noncurrentVersionExpiration: cdk.Duration.days(30), // Delete old versions after 30 days
         },
         {
           id: 'ExpireDeleteMarkers',
-          expiredObjectDeleteMarker: true, // 削除マーカーの自動削除
+          expiredObjectDeleteMarker: true, // Auto-delete delete markers
         },
       ],
 
-      // 削除ポリシー設定
+      // Removal policy settings
       removalPolicy: removalPolicy,
       autoDeleteObjects: autoDeleteObjects,
 
-      // CORS設定（フロントエンドからの直接アップロード用）
+      // CORS settings (for direct upload from frontend)
       cors: [
         {
           allowedMethods: [
@@ -116,28 +116,28 @@ export class UserStorage extends Construct {
     this.bucketName = this.bucket.bucketName;
     this.bucketArn = this.bucket.bucketArn;
 
-    // タグ追加
+    // Add tags
     cdk.Tags.of(this.bucket).add('Component', 'UserStorage');
     cdk.Tags.of(this.bucket).add('RetentionDays', retentionDays.toString());
   }
 
   /**
-   * Lambda関数にS3へのフルアクセス権限を付与
-   * ユーザーごとのプレフィックス制限は実装レベルで行う
+   * Grant full S3 access to Lambda function
+   * Per-user prefix restrictions are implemented at application level
    */
   public grantFullAccess(grantee: iam.IGrantable): iam.Grant {
     return this.bucket.grantReadWrite(grantee);
   }
 
   /**
-   * Lambda関数に署名付きURL生成権限を付与
+   * Grant presigned URL generation permission to Lambda function
    */
   public grantPresignedUrlGeneration(grantee: iam.IGrantable): iam.Grant {
     return this.bucket.grantReadWrite(grantee);
   }
 
   /**
-   * Lambda関数に読み取り専用権限を付与
+   * Grant read-only permission to Lambda function
    */
   public grantReadOnly(grantee: iam.IGrantable): iam.Grant {
     return this.bucket.grantRead(grantee);

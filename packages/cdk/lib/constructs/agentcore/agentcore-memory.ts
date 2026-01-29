@@ -6,58 +6,58 @@ import { Construct } from 'constructs';
 
 export interface AgentCoreMemoryProps {
   /**
-   * Memory の名前
-   * 文字、数字、アンダースコアのみ使用可能
+   * Memory name
+   * Only letters, numbers, and underscores are allowed
    */
   readonly memoryName: string;
 
   /**
-   * Memory の説明 (オプション)
+   * Memory description (optional)
    */
   readonly description?: string;
 
   /**
-   * 短期メモリの有効期限（日数）
-   * 7日から365日の間で指定
-   * デフォルト: 90日
+   * Short-term memory expiration period (days)
+   * Specify between 7 and 365 days
+   * @default 90 days
    */
   readonly expirationDuration?: cdk.Duration;
 
   /**
-   * 長期メモリ抽出戦略
-   * デフォルト: なし（短期メモリのみ）
+   * Long-term memory extraction strategies
+   * @default none (short-term memory only)
    */
   readonly memoryStrategies?: agentcore.IMemoryStrategy[];
 
   /**
-   * 暗号化用のKMSキー (オプション)
-   * 指定しない場合はAWS管理キーを使用
+   * KMS key for encryption (optional)
+   * If not specified, AWS managed key is used
    */
   readonly kmsKey?: kms.IKey;
 
   /**
-   * Memory 実行用のIAMロール (オプション)
-   * 指定しない場合は CloudWatch Logs 権限を含むロールを自動生成
+   * IAM role for Memory execution (optional)
+   * If not specified, a role with CloudWatch Logs permissions is auto-generated
    */
   readonly executionRole?: iam.IRole;
 
   /**
-   * タグ (オプション)
+   * Tags (optional)
    */
   readonly tags?: { [key: string]: string };
 
   /**
-   * Memory作成時に組み込み戦略を使用するかどうか
-   * true の場合、Semantic 戦略（セマンティック記憶戦略）を自動で追加
-   * 会話から一般的な事実、概念、意味を抽出してベクター埋め込みで類似度検索を行う
-   * デフォルト: false
+   * Whether to use built-in strategies when creating Memory
+   * If true, automatically adds Semantic strategy
+   * Extracts general facts, concepts, and meanings from conversations using vector embeddings for similarity search
+   * @default false
    */
   readonly useBuiltInStrategies?: boolean;
 
   /**
-   * executionRole を自動作成するかどうか
-   * true の場合、CloudWatch Logs 権限を含む IAM ロールを自動生成
-   * デフォルト: true
+   * Whether to auto-create executionRole
+   * If true, auto-generates an IAM role with CloudWatch Logs permissions
+   * @default true
    */
   readonly createExecutionRole?: boolean;
 }
@@ -65,13 +65,13 @@ export interface AgentCoreMemoryProps {
 /**
  * Amazon Bedrock AgentCore Memory Construct
  *
- * 会話履歴の永続化とコンテキストの管理を提供します。
- * 短期メモリと長期メモリの両方をサポートし、AI エージェントが
- * 過去の会話を記憶して一貫性のある応答を提供できます。
+ * Provides persistence of conversation history and context management.
+ * Supports both short-term and long-term memory, allowing AI agents to
+ * remember past conversations and provide consistent responses.
  */
 export class AgentCoreMemory extends Construct {
   /**
-   * 作成された Memory
+   * Created Memory instance
    */
   public readonly memory: agentcore.Memory;
 
@@ -86,36 +86,37 @@ export class AgentCoreMemory extends Construct {
   public readonly memoryArn: string;
 
   /**
-   * Memory 名
+   * Memory name
    */
   public readonly memoryName: string;
 
   constructor(scope: Construct, id: string, props: AgentCoreMemoryProps) {
     super(scope, id);
 
-    // デフォルト値の設定
+    // Set default values
     const expirationDuration = props.expirationDuration || cdk.Duration.days(90);
     const createExecutionRole = props.createExecutionRole ?? true;
     let memoryStrategies = props.memoryStrategies;
 
-    // 組み込み戦略を使用する場合
+    // Use built-in strategies if specified
     if (props.useBuiltInStrategies && !memoryStrategies) {
       memoryStrategies = [
         agentcore.MemoryStrategy.usingSemantic({
           name: 'semantic_memory_strategy',
           namespaces: ['/strategies/{memoryStrategyId}/actors/{actorId}'],
-          description: 'セマンティック記憶戦略 - 会話から一般的な事実、概念、意味を抽出',
+          description:
+            'Semantic memory strategy - extracts general facts, concepts, and meanings from conversations',
         }),
       ];
     }
 
-    // executionRole の決定
+    // Determine executionRole
     let executionRole = props.executionRole;
     if (!executionRole && createExecutionRole) {
       executionRole = this.createExecutionRole(props.memoryName);
     }
 
-    // Memory の作成
+    // Create Memory
     this.memory = new agentcore.Memory(this, 'Memory', {
       memoryName: props.memoryName,
       description: props.description,
@@ -126,29 +127,29 @@ export class AgentCoreMemory extends Construct {
       tags: props.tags,
     });
 
-    // プロパティの設定
+    // Set properties
     this.memoryId = this.memory.memoryId;
     this.memoryArn = this.memory.memoryArn;
     this.memoryName = props.memoryName;
   }
 
   /**
-   * 指定されたIAMプリンシパルにMemoryの読み取り権限を付与
+   * Grant read permissions to the specified IAM principal for Memory
    */
   public grantRead(grantee: iam.IGrantable): iam.Grant {
     return this.memory.grantRead(grantee);
   }
 
   /**
-   * 指定されたIAMプリンシパルに特定のAction権限を付与
+   * Grant specific Action permissions to the specified IAM principal
    */
   public grant(grantee: iam.IGrantable, ...actions: string[]): iam.Grant {
     return this.memory.grant(grantee, ...actions);
   }
 
   /**
-   * AgentCore Memory操作に必要な権限を付与
-   * TypeScript Agent Runtime で使用するためのポリシー
+   * Grant permissions required for AgentCore Memory operations
+   * Policy for use with TypeScript Agent Runtime
    */
   public grantAgentCoreAccess(grantee: iam.IGrantable): iam.Grant {
     return iam.Grant.addToPrincipal({
@@ -158,16 +159,16 @@ export class AgentCoreMemory extends Construct {
         'bedrock-agentcore:ListEvents',
         'bedrock-agentcore:DeleteEvent',
         'bedrock-agentcore:GetMemory',
-        'bedrock-agentcore:ListMemoryStrategies', // 長期記憶: 戦略一覧取得
-        'bedrock-agentcore:RetrieveMemory', // 長期記憶: セマンティック検索
-        'bedrock-agentcore:RetrieveMemoryRecords', // 長期記憶: レコード取得（必須）
+        'bedrock-agentcore:ListMemoryStrategies', // Long-term memory: list strategies
+        'bedrock-agentcore:RetrieveMemory', // Long-term memory: semantic search
+        'bedrock-agentcore:RetrieveMemoryRecords', // Long-term memory: retrieve records (required)
       ],
       resourceArns: [this.memoryArn],
     });
   }
 
   /**
-   * Memory設定を環境変数として取得
+   * Get Memory configuration as environment variables
    */
   public getEnvironmentVariables(): { [key: string]: string } {
     return {
@@ -176,9 +177,9 @@ export class AgentCoreMemory extends Construct {
   }
 
   /**
-   * CloudWatch Logs 権限を含む executionRole を作成
-   * @param memoryName Memory名（ロール名の一部として使用）
-   * @returns 作成された IAM Role
+   * Create executionRole with CloudWatch Logs permissions
+   * @param memoryName Memory name (used as part of role name)
+   * @returns Created IAM Role
    */
   private createExecutionRole(memoryName: string): iam.Role {
     const executionRole = new iam.Role(this, 'ExecutionRole', {
@@ -186,7 +187,7 @@ export class AgentCoreMemory extends Construct {
       description: `Execution role for AgentCore Memory: ${memoryName} in ${cdk.Stack.of(this).region}`,
     });
 
-    // CloudWatch Logs 権限を追加
+    // Add CloudWatch Logs permissions
     executionRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],

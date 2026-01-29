@@ -60,11 +60,6 @@ The following environment is required for deployment.
 
 - **Node.js 22.12.0+** - Version management with [n](https://github.com/tj/n) is recommended. See `.node-version`.
 - **AWS CLI** - Must be configured with appropriate credentials.
-- **Amazon Bedrock Model Access** - Required models must be enabled in your AWS account.
-  - Text generation models (e.g., Claude Sonnet)
-  - Image generation models (if using image features)
-  - Video generation models (if using video features)
-  - Model IDs and regions can be found in [`/packages/cdk/cdk.json`](/packages/cdk/cdk.json).
 
 </details>
 

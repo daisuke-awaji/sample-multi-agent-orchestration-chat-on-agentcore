@@ -16,7 +16,7 @@ Please keep the following in mind:
 - Explain technical content in a way that beginners can understand
 - Honestly say "I don't know" when unsure
 - Ask clarifying questions when needed`,
-    enabledTools: ['file_editor', 's3_list_files', 's3_get_presigned_urls', 'tavily_search'],
+    enabledTools: ['execute_command', 'file_editor', 's3_list_files', 'tavily_search'],
     scenarios: [
       {
         title: 'defaultAgents.generalAssistant.scenarios.question.title',
@@ -97,7 +97,7 @@ Please keep the following in mind:
 [Available tools]
 - Analyze code files from storage when necessary
 - Provide improved versions of code files when requested`,
-    enabledTools: ['file_editor', 'execute_command', 's3_list_files', 's3_get_presigned_urls'],
+    enabledTools: ['file_editor', 'execute_command', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.codeReview.scenarios.codeReview.title',
@@ -193,12 +193,7 @@ Please keep the following in mind:
 [Available tools]
 - utility-tools___kb-retrieve: Primary tool for semantic search in Knowledge Base
 `,
-    enabledTools: [
-      'utility-tools___kb-retrieve',
-      'file_editor',
-      's3_list_files',
-      's3_get_presigned_urls',
-    ],
+    enabledTools: ['utility-tools___kb-retrieve', 'file_editor', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.knowledgeBaseSearch.scenarios.search.title',
@@ -261,7 +256,6 @@ Please keep the following in mind:
 [How to use tools]
 - Use execute_command to run Python code with pandas, numpy, matplotlib, seaborn, scipy
 - Use s3_list_files to explore available datasets
-- Use s3_get_presigned_urls to share reports or visualizations
 
 [Python libraries and best practices]
 - **pandas**: Data manipulation and analysis (DataFrames, Series operations)
@@ -305,9 +299,8 @@ Please keep the following in mind:
 [Available tools]
 - execute_command: Run Python scripts for data analysis and visualization
 - s3_download_file, s3_upload_file: Access and store data files
-- s3_list_files: Browse available datasets
-- s3_get_presigned_urls: Share results with stakeholders`,
-    enabledTools: ['execute_command', 'file_editor', 's3_list_files', 's3_get_presigned_urls'],
+- s3_list_files: Browse available datasets`,
+    enabledTools: ['execute_command', 'file_editor', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.dataAnalyst.scenarios.analysis.title',
@@ -399,7 +392,6 @@ Please keep the following in mind:
       'tavily_extract',
       'tavily_crawl',
       's3_list_files',
-      's3_get_presigned_urls',
     ],
     scenarios: [
       {
@@ -629,7 +621,7 @@ Use the tools provided by the Office PowerPoint MCP server to manipulate PowerPo
 [Available Tools]
 - Office PowerPoint MCP server tool suite (presentation creation and editing)
 `,
-    enabledTools: ['s3_list_files', 's3_get_presigned_urls'],
+    enabledTools: ['s3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.powerpointCreator.scenarios.newPresentation.title',
@@ -735,13 +727,7 @@ When working with code, I'll ensure:
 - Appropriate comments explaining the physics
 - Efficient numerical implementations
 - Thorough error handling and validation`,
-    enabledTools: [
-      'file_editor',
-      's3_list_files',
-      's3_get_presigned_urls',
-      'tavily_search',
-      'code_interpreter',
-    ],
+    enabledTools: ['file_editor', 's3_list_files', 'tavily_search', 'code_interpreter'],
     scenarios: [
       {
         title: 'defaultAgents.physicist.scenarios.dampedOscillator.title',
@@ -847,7 +833,6 @@ When generating images, provide:
 [Important Notes]
 - Nova Canvas region must be properly configured (NOVA_CANVAS_REGION)
 - Generated images are automatically saved to user's S3 storage
-- S3 paths can be accessed using s3_get_presigned_urls tool
 - Use seed values to reproduce specific images
 - Each generation uses standard quality mode
 
@@ -861,9 +846,8 @@ When users need inspiration, offer:
 
 [Available Tools]
 - nova_canvas: Primary tool for image generation
-- s3_list_files: Browse generated images in storage
-- s3_get_presigned_urls: Get shareable URLs for generated images`,
-    enabledTools: ['nova_canvas', 's3_list_files', 's3_get_presigned_urls'],
+- s3_list_files: Browse generated images in storage`,
+    enabledTools: ['nova_canvas', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.imageCreator.scenarios.basicImage.title',
@@ -1773,15 +1757,8 @@ Proceed with this plan? (Yes/No)
 - call_agent: Primary tool for agent orchestration (list, start, monitor)
 - file_editor: Create plans, reports, and summary documents
 - s3_list_files: Browse shared workspace and artifacts
-- s3_get_presigned_urls: Generate shareable links for deliverables
 - tavily_search: Supplementary research when needed`,
-    enabledTools: [
-      'call_agent',
-      'file_editor',
-      's3_list_files',
-      's3_get_presigned_urls',
-      'tavily_search',
-    ],
+    enabledTools: ['call_agent', 'file_editor', 's3_list_files', 'tavily_search'],
     scenarios: [
       {
         title: 'defaultAgents.multiAgentOrchestrator.scenarios.comprehensiveResearch.title',
@@ -1902,15 +1879,8 @@ Proceed with this plan? (Yes/No)
 - nova_canvas: Generate illustrations (1024x1024 square format)
 - file_editor: Create HTML, scripts, and story files
 - s3_list_files: Manage project folders and files
-- s3_get_presigned_urls: Share completed kamishibai works
 - tavily_search: Research reference materials and educational content when needed`,
-    enabledTools: [
-      'nova_canvas',
-      'file_editor',
-      's3_list_files',
-      's3_get_presigned_urls',
-      'tavily_search',
-    ],
+    enabledTools: ['nova_canvas', 'file_editor', 's3_list_files', 'tavily_search'],
     scenarios: [
       {
         title: 'defaultAgents.kamishibaiMaster.scenarios.original.title',

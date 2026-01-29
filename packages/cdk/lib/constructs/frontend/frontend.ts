@@ -11,8 +11,8 @@ import { Construct } from 'constructs';
 
 export interface FrontendProps {
   /**
-   * リソース名のプレフィックス（オプション）
-   * S3バケット名: {resourcePrefix}-frontend-{ACCOUNT}-{REGION}
+   * Resource name prefix (optional)
+   * S3 bucket name: {resourcePrefix}-frontend-{ACCOUNT}-{REGION}
    * @default 'agentcore'
    */
   readonly resourcePrefix?: string;
@@ -71,10 +71,10 @@ export class Frontend extends Construct {
   constructor(scope: Construct, id: string, props: FrontendProps) {
     super(scope, id);
 
-    // リソースプレフィックスの取得
+    // Get resource prefix
     const resourcePrefix = props.resourcePrefix || 'agentcore';
 
-    // カスタムドメインの処理
+    // Custom domain processing
     let certificate: acm.ICertificate | undefined;
     let domainNames: string[] | undefined;
     let hostedZone: route53.IHostedZone | undefined;
@@ -84,13 +84,13 @@ export class Frontend extends Construct {
       const { hostName, domainName } = props.customDomain;
       fullDomainName = `${hostName}.${domainName}`;
 
-      // Route53 ホストゾーンの参照（ドメイン名から自動検索）
+      // Lookup Route53 hosted zone (auto-search from domain name)
       hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
         domainName: domainName,
       });
 
-      // ACM 証明書の作成（CloudFront用にus-east-1で作成）
-      // DnsValidatedCertificate を使用することで、us-east-1 に証明書を作成し、DNS 検証も自動で行う
+      // Create ACM certificate (in us-east-1 for CloudFront)
+      // Using DnsValidatedCertificate creates certificate in us-east-1 and performs DNS validation automatically
       certificate = new acm.DnsValidatedCertificate(this, 'Certificate', {
         domainName: fullDomainName,
         hostedZone: hostedZone,
@@ -155,7 +155,7 @@ export class Frontend extends Construct {
       cookieBehavior: cloudfront.CacheCookieBehavior.none(),
     });
 
-    // Origin Access Control (OAC) を明示的に作成
+    // Create Origin Access Control (OAC) explicitly
     const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'FrontendOAC', {
       originAccessControlName: `${resourcePrefix}-frontend-oac-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}`,
       signing: cloudfront.Signing.SIGV4_NO_OVERRIDE,
@@ -204,13 +204,13 @@ export class Frontend extends Construct {
           },
         ],
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
-        // カスタムドメイン設定
+        // Custom domain settings
         domainNames: domainNames,
         certificate: certificate,
       }
     );
 
-    // Route53 Aレコードの作成（カスタムドメインが設定されている場合）
+    // Create Route53 A record (when custom domain is configured)
     if (hostedZone && fullDomainName) {
       new route53.ARecord(this, 'AliasRecord', {
         zone: hostedZone,
@@ -244,7 +244,7 @@ export class Frontend extends Construct {
       nodejsVersion: 22,
     });
 
-    // NodejsBuild に CloudWatch Logs への権限を追加
+    // Add CloudWatch Logs permissions to NodejsBuild
     iam.Grant.addToPrincipal({
       grantee: frontendBuild,
       actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],

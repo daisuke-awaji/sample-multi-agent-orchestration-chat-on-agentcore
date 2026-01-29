@@ -1,281 +1,42 @@
-/**
- * Environment-specific configuration
- * Supports 3 environments: dev / stg / prd
- */
-
 import * as cdk from 'aws-cdk-lib';
+import type { Environment, EnvironmentConfigInput } from './environment-types';
 
 /**
- * Environment name
+ * Base prefix for resource naming
+ * All resources are named in the format: {BASE_PREFIX}{env}
+ * Examples: donuts, donutsdev, donutsstg, donutsprd
  */
-export type Environment = 'default' | 'dev' | 'stg' | 'prd' | string; // Allow dynamic PR environments
-
-/**
- * Environment-specific configuration interface
- */
-export interface EnvironmentConfig {
-  /**
-   * Environment name
-   */
-  env: Environment;
-
-  /**
-   * AWS Account ID (optional)
-   * Uses CDK_DEFAULT_ACCOUNT if not specified
-   */
-  awsAccount?: string;
-
-  /**
-   * AWS Region
-   */
-  awsRegion: string;
-
-  /**
-   * Resource name prefix
-   * Used as common prefix for Gateway, Cognito, Backend API, etc.
-   */
-  resourcePrefix: string;
-
-  /**
-   * Runtime name (underscore format)
-   * AgentCore Runtime must start with a letter and contain only letters, numbers, and underscores
-   */
-  runtimeName: string;
-
-  /**
-   * Stack deletion protection
-   */
-  deletionProtection: boolean;
-
-  /**
-   * CORS allowed origins
-   */
-  corsAllowedOrigins: string[];
-
-  /**
-   * Memory expiration (days)
-   */
-  memoryExpirationDays: number;
-
-  /**
-   * S3 removal policy
-   */
-  s3RemovalPolicy: cdk.RemovalPolicy;
-
-  /**
-   * S3 auto delete objects (only effective when RemovalPolicy is DESTROY)
-   */
-  s3AutoDeleteObjects: boolean;
-
-  /**
-   * Cognito deletion protection
-   */
-  cognitoDeletionProtection: boolean;
-
-  /**
-   * Lambda function log retention period (days)
-   */
-  logRetentionDays: number;
-
-  /**
-   * Frontend S3 bucket name prefix
-   */
-  frontendBucketPrefix?: string;
-
-  /**
-   * User Storage S3 bucket name prefix
-   */
-  userStorageBucketPrefix?: string;
-
-  /**
-   * Backend API name
-   */
-  backendApiName?: string;
-
-  /**
-   * Tavily API Key Secret Name (Secrets Manager)
-   * Set for production/staging environments to retrieve API key from Secrets Manager
-   * NOTE: This is a secret NAME/ID reference, not the actual secret value
-   * pragma: allowlist secret
-   */
-  tavilyApiKeySecretName?: string;
-
-  /**
-   * GitHub Token Secret Name (Secrets Manager)
-   * Set for environments to retrieve GitHub token from Secrets Manager
-   * Used for gh CLI authentication
-   * NOTE: This is a secret NAME/ID reference, not the actual secret value
-   * pragma: allowlist secret
-   */
-  githubTokenSecretName?: string;
-
-  /**
-   * Allowed email domains for sign-up (optional)
-   * If set, only emails from these domains can sign up
-   * Example: ['amazon.com', 'amazon.jp']
-   */
-  allowedSignUpEmailDomains?: string[];
-
-  /**
-   * Custom domain configuration for frontend (optional)
-   * If set, CloudFront distribution will use custom domain with ACM certificate
-   */
-  customDomain?: {
-    /**
-     * Hostname for the website (e.g., 'genai')
-     * A record will be created by CDK
-     */
-    hostName: string;
-
-    /**
-     * Domain name of the public hosted zone (e.g., 'example.com')
-     * The hosted zone must exist in the same AWS account
-     */
-    domainName: string;
-  };
-
-  /**
-   * Test user configuration (optional, for development only)
-   * If set, a test user will be created automatically during deployment
-   */
-  testUser?: {
-    /**
-     * Username for the test user
-     */
-    username: string;
-
-    /**
-     * Email address for the test user
-     */
-    email: string;
-
-    /**
-     * Password for the test user (must meet password policy requirements)
-     */
-    password: string;
-  };
-
-  /**
-   * Event rules configuration (optional)
-   * Predefined EventBridge rules that users can subscribe to for triggers
-   */
-  eventRules?: EventRuleConfig[];
-}
-
-/**
- * Event rule configuration
- * Defines EventBridge rules that trigger Lambda when events match the pattern
- */
-export interface EventRuleConfig {
-  /**
-   * Unique identifier (e.g., "s3-upload", "github-push")
-   */
-  id: string;
-
-  /**
-   * Display name (e.g., "S3 File Upload")
-   */
-  name: string;
-
-  /**
-   * Description
-   */
-  description: string;
-
-  /**
-   * EventBridge event pattern
-   * Matches events to trigger the Lambda function
-   */
-  eventPattern: {
-    /**
-     * Event source (e.g., ["aws.s3"], ["com.github"])
-     */
-    source: string[];
-
-    /**
-     * Event detail type (e.g., ["Object Created"], ["Push"])
-     */
-    detailType: string[];
-
-    /**
-     * Optional detail filters
-     * Example: { bucket: { name: ["my-bucket"] } }
-     */
-    detail?: Record<string, unknown>;
-  };
-
-  /**
-   * Icon name for frontend display (optional)
-   */
-  icon?: string;
-
-  /**
-   * Whether this rule is enabled
-   */
-  enabled: boolean;
-}
+export const BASE_PREFIX = 'donuts';
 
 /**
  * Environment-specific configurations
+ *
+ * - env: Automatically derived from object key
+ * - resourcePrefix: Auto-generated as 'donuts' + env if not specified
+ * - Others: Default values applied if not specified
+ *
+ * Default values:
+ *   - deletionProtection: false
+ *   - corsAllowedOrigins: ['*']
+ *   - memoryExpirationDays: 30
+ *   - s3RemovalPolicy: DESTROY
+ *   - s3AutoDeleteObjects: true
+ *   - cognitoDeletionProtection: false
+ *   - logRetentionDays: 7
  */
-export const environments: Record<Environment, EnvironmentConfig> = {
+export const environments: Record<Environment, EnvironmentConfigInput> = {
+  /**
+   * Default environment
+   */
   default: {
-    env: 'default',
-    awsRegion: 'ap-northeast-1',
-    resourcePrefix: 'agentcore-app',
-    runtimeName: 'agentcore_app',
-    deletionProtection: false,
-    corsAllowedOrigins: ['*'], // Development: Allow all origins
-    memoryExpirationDays: 30,
-    s3RemovalPolicy: cdk.RemovalPolicy.DESTROY,
-    s3AutoDeleteObjects: true,
-    cognitoDeletionProtection: false,
-    logRetentionDays: 7,
-    frontendBucketPrefix: 'agentcore-app',
-    userStorageBucketPrefix: 'agentcore-app',
-    backendApiName: 'agentcore-app-backend-api',
-    tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
-    githubTokenSecretName: 'agentcore/default/github-token',
-    allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
-    eventRules: [
-      {
-        id: 's3-upload',
-        name: 'S3 File Upload',
-        description:
-          'Triggered when a file with a key matching "users/{userId}/event-test-*" is uploaded to the user storage S3 bucket. This rule monitors Object Created events and can be used to automatically process uploaded files, such as triggering data pipelines, file validation, or notification workflows.',
-        eventPattern: {
-          source: ['aws.s3'],
-          detailType: ['Object Created'],
-          detail: {
-            bucket: {
-              name: [{ prefix: 'agentcore-app-dev-user-storage-' }],
-            },
-            object: {
-              key: [{ wildcard: 'users/*/event-test-*' }],
-            },
-          },
-        },
-        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
-        enabled: true,
-      },
-    ],
+    tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
+    githubTokenSecretName: 'agentcore/dev/github-token',
   },
 
+  /**
+   * Development environment
+   */
   dev: {
-    env: 'dev',
-    awsRegion: 'ap-northeast-1',
-    resourcePrefix: 'agentcore-app-dev',
-    runtimeName: 'agentcore_app_dev',
-    deletionProtection: false,
-    corsAllowedOrigins: ['*'], // Development: Allow all origins
-    memoryExpirationDays: 30,
-    s3RemovalPolicy: cdk.RemovalPolicy.DESTROY,
-    s3AutoDeleteObjects: true,
-    cognitoDeletionProtection: false,
-    logRetentionDays: 7,
-    frontendBucketPrefix: 'agentcore-app-dev',
-    userStorageBucketPrefix: 'agentcore-app-dev',
-    backendApiName: 'agentcore-app-dev-backend-api',
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
     allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
@@ -284,26 +45,25 @@ export const environments: Record<Environment, EnvironmentConfig> = {
         id: 's3-upload',
         name: 'S3 File Upload',
         description:
-          'Triggered when a file with a key matching "users/{userId}/event-test-*" is uploaded to the user storage S3 bucket. This rule monitors Object Created events and can be used to automatically process uploaded files, such as triggering data pipelines, file validation, or notification workflows.',
+          'Triggered when a file with a key matching "users/{userId}/event-test-*" is uploaded to the user storage S3 bucket.',
         eventPattern: {
           source: ['aws.s3'],
           detailType: ['Object Created'],
           detail: {
             bucket: {
-              name: [{ prefix: 'agentcore-app-dev-user-storage-' }],
+              name: [{ prefix: 'donuts-user-storage-' }],
             },
             object: {
               key: [{ wildcard: 'users/*/event-test-*' }],
             },
           },
         },
-        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        icon: 'cloud-upload',
         enabled: true,
       },
-      // https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-saas-furls.html
       {
         id: 'github-issue-created',
-        name: 'GitHub Issue created ',
+        name: 'GitHub Issue created',
         description: 'Triggered when a new issue is opened in the GitHub repository',
         eventPattern: {
           source: ['github.com'],
@@ -312,104 +72,37 @@ export const environments: Record<Environment, EnvironmentConfig> = {
             action: ['opened'],
           },
         },
-        icon: 'github', // https://lucide.dev/icons/github
+        icon: 'github',
         enabled: true,
       },
     ],
   },
 
+  /**
+   * Staging environment
+   */
   stg: {
-    env: 'stg',
-    awsRegion: 'ap-northeast-1',
-    resourcePrefix: 'agentcore-app-stg',
-    runtimeName: 'agentcore_app_stg',
-    deletionProtection: false,
-    corsAllowedOrigins: ['https://stg.example.com'], // Staging environment URL
+    corsAllowedOrigins: ['https://stg.example.com'],
     memoryExpirationDays: 60,
     s3RemovalPolicy: cdk.RemovalPolicy.RETAIN,
     s3AutoDeleteObjects: false,
-    cognitoDeletionProtection: false,
     logRetentionDays: 14,
-    frontendBucketPrefix: 'agentcore-app-stg',
-    userStorageBucketPrefix: 'agentcore-app-stg',
-    backendApiName: 'agentcore-app-stg-backend-api',
     tavilyApiKeySecretName: 'agentcore/stg/tavily-api-key',
     githubTokenSecretName: 'agentcore/stg/github-token',
   },
 
+  /**
+   * Production environment
+   */
   prd: {
-    env: 'prd',
-    awsRegion: 'ap-northeast-1',
-    resourcePrefix: 'agentcore-app-prd',
-    runtimeName: 'agentcore_app_prd',
     deletionProtection: true,
-    corsAllowedOrigins: ['https://app.example.com'], // Production environment URL
+    corsAllowedOrigins: ['https://app.example.com'],
     memoryExpirationDays: 365,
     s3RemovalPolicy: cdk.RemovalPolicy.RETAIN,
     s3AutoDeleteObjects: false,
     cognitoDeletionProtection: true,
     logRetentionDays: 30,
-    frontendBucketPrefix: 'agentcore-app-prd',
-    userStorageBucketPrefix: 'agentcore-app-prd',
-    backendApiName: 'agentcore-app-prd-backend-api',
     tavilyApiKeySecretName: 'agentcore/prd/tavily-api-key',
     githubTokenSecretName: 'agentcore/prd/github-token',
   },
 };
-
-/**
- * Get environment configuration
- * @param env Environment name (dev, stg, prd, or pr-{number})
- * @returns Environment configuration
- */
-export function getEnvironmentConfig(env: Environment): EnvironmentConfig {
-  // Check if it's a PR environment (e.g., pr-123)
-  if (env.startsWith('pr-')) {
-    return getPrEnvironmentConfig(env);
-  }
-
-  const config = environments[env];
-  if (!config) {
-    throw new Error(`Unknown environment: ${env}. Valid values are: dev, stg, prd, or pr-{number}`);
-  }
-  return config;
-}
-
-/**
- * Generate PR environment configuration dynamically
- * @param env PR environment name (e.g., pr-123)
- * @returns PR environment configuration
- */
-function getPrEnvironmentConfig(env: string): EnvironmentConfig {
-  const prNumber = env.replace('pr-', '');
-
-  // Validate PR number
-  if (!/^\d+$/.test(prNumber)) {
-    throw new Error(`Invalid PR environment name: ${env}. Expected format: pr-{number}`);
-  }
-
-  // Generate PR-specific configuration based on dev environment
-  const baseConfig = environments.dev;
-
-  return {
-    env: env as Environment,
-    awsRegion: baseConfig.awsRegion,
-    resourcePrefix: `agentcore-pr-${prNumber}`,
-    runtimeName: `agentcore_pr_${prNumber}`,
-    deletionProtection: false,
-    corsAllowedOrigins: ['*'], // Allow all origins for PR environments
-    memoryExpirationDays: 7, // Short retention for PR environments
-    s3RemovalPolicy: cdk.RemovalPolicy.DESTROY,
-    s3AutoDeleteObjects: true,
-    cognitoDeletionProtection: false,
-    logRetentionDays: 3, // Short retention for PR environments
-    frontendBucketPrefix: `agentcore-pr-${prNumber}`,
-    userStorageBucketPrefix: `agentcore-pr-${prNumber}`,
-    backendApiName: `agentcore-pr-${prNumber}-backend-api`,
-    tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key', // Use dev secrets
-    githubTokenSecretName: 'agentcore/dev/github-token', // Use dev secrets
-    allowedSignUpEmailDomains: ['amazon.com', 'amazon.co.jp'],
-    // No custom domain for PR environments
-    // No test user for PR environments
-  };
-}

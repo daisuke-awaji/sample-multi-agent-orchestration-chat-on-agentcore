@@ -5,7 +5,8 @@
 # ========================================
 # Stage 1: Build
 # ========================================
-FROM node:22-slim AS builder
+# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
+FROM public.ecr.aws/docker/library/node:22-slim AS builder
 
 WORKDIR /build
 
@@ -47,7 +48,8 @@ RUN cd packages/backend && npm run build
 # ========================================
 # Stage 2: Production Runtime
 # ========================================
-FROM node:22-slim
+# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
+FROM public.ecr.aws/docker/library/node:22-slim
 
 # 必要なツールをインストール（Python、MCP サーバー実行用）
 RUN apt-get update && apt-get install -y \

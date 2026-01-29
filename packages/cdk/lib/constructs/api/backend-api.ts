@@ -5,22 +5,23 @@ import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrat
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
+import { ContainerImageBuild } from 'deploy-time-build';
 import { Construct } from 'constructs';
-import { CognitoAuth } from './cognito-auth';
+import { CognitoAuth } from '../auth';
 
 export interface BackendApiProps {
   /**
-   * API名
+   * API name
    */
   readonly apiName?: string;
 
   /**
-   * Cognito認証システム
+   * Cognito authentication system
    */
   readonly cognitoAuth: CognitoAuth;
 
   /**
-   * AgentCore Gateway エンドポイント
+   * AgentCore Gateway endpoint
    */
   readonly agentcoreGatewayEndpoint: string;
 
@@ -30,51 +31,51 @@ export interface BackendApiProps {
   readonly agentcoreMemoryId?: string;
 
   /**
-   * User Storage バケット名
+   * User Storage bucket name
    */
   readonly userStorageBucketName?: string;
 
   /**
-   * Agents Table テーブル名
+   * Agents Table name
    */
   readonly agentsTableName?: string;
 
   /**
-   * Sessions Table テーブル名
+   * Sessions Table name
    */
   readonly sessionsTableName?: string;
 
   /**
-   * CORS許可オリジン
+   * CORS allowed origins
    */
   readonly corsAllowedOrigins?: string[];
 
   /**
-   * Lambda関数のタイムアウト（秒）
+   * Lambda function timeout (seconds)
    * @default 30
    */
   readonly timeout?: number;
 
   /**
-   * Lambda関数のメモリサイズ（MB）
+   * Lambda function memory size (MB)
    * @default 1024
    */
   readonly memorySize?: number;
 
   /**
-   * Lambda関数のログ保持期間
-   * @default 14日
+   * Lambda function log retention period
+   * @default 14 days
    */
   readonly logRetention?: logs.RetentionDays;
 
   /**
-   * Docker イメージのコンテキストパス
+   * Docker image context path
    * @default 'packages/backend'
    */
   readonly dockerContextPath?: string;
 
   /**
-   * Docker イメージのファイル名
+   * Docker image file name
    * @default 'Dockerfile.lambda'
    */
   readonly dockerFileName?: string;
@@ -83,12 +84,12 @@ export interface BackendApiProps {
 /**
  * AgentCore Backend API Construct
  *
- * Lambda Web Adapter を使用して Express アプリケーションを
- * API Gateway + Lambda で実行するためのCDK Construct
+ * CDK Construct for running Express applications on
+ * API Gateway + Lambda using Lambda Web Adapter
  */
 export class BackendApi extends Construct {
   /**
-   * Lambda関数
+   * Lambda function
    */
   public readonly lambdaFunction: lambda.Function;
 
@@ -98,7 +99,7 @@ export class BackendApi extends Construct {
   public readonly httpApi: apigatewayv2.HttpApi;
 
   /**
-   * API エンドポイント URL
+   * API endpoint URL
    */
   public readonly apiUrl: string;
 
@@ -108,7 +109,7 @@ export class BackendApi extends Construct {
     const apiName = props.apiName || 'agentcore-backend-api';
     const corsAllowedOrigins = props.corsAllowedOrigins || ['*'];
 
-    // Lambda 実行ロールの作成
+    // Create Lambda execution role
     const lambdaExecutionRole = new iam.Role(this, 'BackendApiExecutionRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
@@ -116,9 +117,9 @@ export class BackendApi extends Construct {
       ],
     });
 
-    // AgentCore Memory へのアクセス権限を追加
+    // Add access permissions to AgentCore Memory
     if (props.agentcoreMemoryId) {
-      // Bedrock モデル呼び出し権限
+      // Bedrock model invocation permissions
       lambdaExecutionRole.addToPolicy(
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -132,7 +133,7 @@ export class BackendApi extends Construct {
         })
       );
 
-      // AgentCore Memory セッション操作権限
+      // AgentCore Memory session operation permissions
       lambdaExecutionRole.addToPolicy(
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -143,7 +144,6 @@ export class BackendApi extends Construct {
             'bedrock-agentcore:CreateSession',
             'bedrock-agentcore:UpdateSession',
             'bedrock-agentcore:DeleteSession',
-            // メモリレコード操作権限を追加
             'bedrock-agentcore:ListMemoryRecords',
             'bedrock-agentcore:DeleteMemoryRecord',
             'bedrock-agentcore:RetrieveMemoryRecords',
@@ -155,7 +155,7 @@ export class BackendApi extends Construct {
         })
       );
 
-      // AgentCore Memory Control Plane 権限
+      // AgentCore Memory Control Plane permissions
       lambdaExecutionRole.addToPolicy(
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
@@ -166,9 +166,9 @@ export class BackendApi extends Construct {
         })
       );
     }
-    
-    // EventBridge Scheduler へのアクセス権限を追加
-    // Scheduler の作成・更新・削除権限
+
+    // Add access permissions to EventBridge Scheduler
+    // Scheduler create/update/delete permissions
     lambdaExecutionRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -183,14 +183,12 @@ export class BackendApi extends Construct {
       })
     );
 
-    // EventBridge Scheduler が Lambda を呼び出すために使用する IAM ロールを渡す権限
+    // Permission to pass IAM role used by EventBridge Scheduler to invoke Lambda
     lambdaExecutionRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['iam:PassRole'],
-        resources: [
-          `arn:aws:iam::${cdk.Stack.of(this).account}:role/*`,
-        ],
+        resources: [`arn:aws:iam::${cdk.Stack.of(this).account}:role/*`],
         conditions: {
           StringEquals: {
             'iam:PassedToService': 'scheduler.amazonaws.com',
@@ -199,46 +197,68 @@ export class BackendApi extends Construct {
       })
     );
 
-    // CloudWatch Log Group の作成
+    // Create CloudWatch Log Group
     const logGroup = new logs.LogGroup(this, 'BackendApiLogGroup', {
       logGroupName: `/aws/lambda/${apiName}-function`,
       retention: props.logRetention || logs.RetentionDays.TWO_WEEKS,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Lambda関数の作成（Docker Image Function）
+    // Build container image using deploy-time-build (CodeBuild)
+    const containerImage = new ContainerImageBuild(this, 'BackendImageBuild', {
+      directory: props.dockerContextPath || '.',
+      file: props.dockerFileName || 'docker/backend.Dockerfile',
+      platform: Platform.LINUX_AMD64,
+      // Exclude large directories to speed up CDK synth hash calculation
+      exclude: [
+        'node_modules',
+        '.git',
+        'cdk.out',
+        'dist',
+        '.vscode',
+        '.idea',
+        'packages/frontend',
+        'packages/client',
+        'packages/lambda-tools',
+        'docs',
+        '*.log',
+        '.env*',
+        'coverage',
+        '.nyc_output',
+        '__tests__',
+      ],
+    });
+
+    // Create Lambda function (Docker Image Function)
     this.lambdaFunction = new lambda.DockerImageFunction(this, 'BackendApiFunction', {
       functionName: `${apiName}-function`,
-      code: lambda.DockerImageCode.fromImageAsset(props.dockerContextPath || '.', {
-        file: props.dockerFileName || 'docker/backend.Dockerfile',
-        platform: Platform.LINUX_AMD64,
-      }),
+      code: containerImage.toLambdaDockerImageCode(),
       architecture: lambda.Architecture.X86_64,
       timeout: cdk.Duration.seconds(props.timeout || 30),
       memorySize: props.memorySize || 1024,
       role: lambdaExecutionRole,
-      logGroup: logGroup, // deprecated な logRetention の代わりに logGroup を使用
+      logGroup: logGroup, // Use logGroup instead of deprecated logRetention
       environment: {
-        // Node.js / Express 設定
+        // Node.js / Express configuration
         NODE_ENV: 'production',
         PORT: '8080',
 
-        // Cognito / JWT 認証設定
+        // Cognito / JWT authentication configuration
         COGNITO_USER_POOL_ID: props.cognitoAuth.userPoolId,
         COGNITO_REGION: cdk.Stack.of(this).region,
 
-        // CORS 設定
+        // CORS configuration
         CORS_ALLOWED_ORIGINS: corsAllowedOrigins.join(','),
 
-        // AWS / AgentCore 設定
-        // AWS_REGION は Lambda ランタイムが自動提供するため削除
+        // AWS / AgentCore configuration
+        // AWS_REGION removed as Lambda runtime provides it automatically
         AGENTCORE_GATEWAY_ENDPOINT: props.agentcoreGatewayEndpoint,
         AGENTCORE_MEMORY_ID: props.agentcoreMemoryId || '',
         USER_STORAGE_BUCKET_NAME: props.userStorageBucketName || '',
         AGENTS_TABLE_NAME: props.agentsTableName || '',
         SESSIONS_TABLE_NAME: props.sessionsTableName || '',
 
-        // Lambda Web Adapter 設定（既にDockerfileで設定されているが念のため）
+        // Lambda Web Adapter configuration (already set in Dockerfile, but added for safety)
         AWS_LWA_PORT: '8080',
         AWS_LWA_READINESS_CHECK_PATH: '/ping',
         AWS_LWA_INVOKE_MODE: 'BUFFERED',
@@ -248,7 +268,7 @@ export class BackendApi extends Construct {
       description: `AgentCore Backend API - Express.js app running with Lambda Web Adapter`,
     });
 
-    // Lambda Integration の作成
+    // Create Lambda Integration
     const lambdaIntegration = new apigatewayv2Integrations.HttpLambdaIntegration(
       'BackendApiIntegration',
       this.lambdaFunction,
@@ -257,7 +277,7 @@ export class BackendApi extends Construct {
       }
     );
 
-    // HTTP API Gateway の作成
+    // Create HTTP API Gateway
     this.httpApi = new apigatewayv2.HttpApi(this, 'BackendHttpApi', {
       apiName: apiName,
       description: 'AgentCore Backend HTTP API with Lambda Web Adapter',
@@ -271,14 +291,14 @@ export class BackendApi extends Construct {
           apigatewayv2.CorsHttpMethod.OPTIONS,
         ],
         allowHeaders: ['Content-Type', 'Authorization'],
-        maxAge: cdk.Duration.seconds(86400), // 24時間
+        maxAge: cdk.Duration.seconds(86400), // 24 hours
       },
-      // defaultIntegration を削除 - $default ルートが OPTIONS リクエストを Lambda に転送するのを防ぐ
+      // Removed defaultIntegration - prevents $default route from forwarding OPTIONS requests to Lambda
     });
 
-    // すべてのルートをLambda関数に転送
-    // Lambda Web Adapter が内部的に Express ルーティングを処理
-    // OPTIONS は API Gateway の corsPreflight で処理されるため除外
+    // Forward all routes to Lambda function
+    // Lambda Web Adapter handles Express routing internally
+    // OPTIONS excluded as it is handled by API Gateway corsPreflight
     this.httpApi.addRoutes({
       path: '/{proxy+}',
       methods: [
@@ -292,24 +312,23 @@ export class BackendApi extends Construct {
       integration: lambdaIntegration,
     });
 
-    // ルートパス用の追加ルート
+    // Additional route for root path
     this.httpApi.addRoutes({
       path: '/',
       methods: [apigatewayv2.HttpMethod.GET],
       integration: lambdaIntegration,
     });
 
-    // API URL の取得
+    // Get API URL
     this.apiUrl = this.httpApi.url!;
 
-    // Lambda 関数に API Gateway からの呼び出し権限を追加
+    // Add permission for API Gateway to invoke Lambda function
     this.lambdaFunction.addPermission('ApiGatewayInvokePermission', {
       principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),
       sourceArn: `arn:aws:execute-api:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:${this.httpApi.httpApiId}/*`,
     });
-    
 
-    // CloudWatch Alarms（オプション）
+    // CloudWatch Alarms (optional)
     this.lambdaFunction.metricErrors({
       period: cdk.Duration.minutes(5),
     });
@@ -318,28 +337,28 @@ export class BackendApi extends Construct {
       period: cdk.Duration.minutes(5),
     });
 
-    // タグの追加
+    // Add tags
     cdk.Tags.of(this.lambdaFunction).add('Component', 'BackendApi');
     cdk.Tags.of(this.httpApi).add('Component', 'BackendApi');
     cdk.Tags.of(lambdaExecutionRole).add('Component', 'BackendApi');
   }
 
   /**
-   * Lambda 関数に追加の環境変数を設定
+   * Set additional environment variables for Lambda function
    */
   public addEnvironmentVariable(key: string, value: string): void {
     this.lambdaFunction.addEnvironment(key, value);
   }
 
   /**
-   * Lambda 関数に追加の IAM 権限を付与
+   * Grant additional IAM permissions to Lambda function
    */
   public grantPermissions(statement: iam.PolicyStatement): void {
     this.lambdaFunction.addToRolePolicy(statement);
   }
 
   /**
-   * API Gateway に追加のルートを設定
+   * Add additional routes to API Gateway
    */
   public addRoute(
     path: string,

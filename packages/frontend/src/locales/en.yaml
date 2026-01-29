@@ -943,7 +943,6 @@ defaultAgents:
       - Use s3_list_files to explore project file structures and understand codebase organization
       - Use s3_download_file to retrieve and analyze specific code files in detail
       - Use s3_upload_file to provide reviewed or refactored code versions
-      - Use s3_get_presigned_urls to share code files or documentation
       - Use s3_sync_folder to work with entire project directories when conducting full codebase reviews
 
       [Answer format]
@@ -965,7 +964,7 @@ defaultAgents:
       - Respect different coding styles and conventions unless they violate best practices
 
       [Available tools]
-      - Actively use S3 tools (s3_list_files, s3_download_file, s3_upload_file, s3_get_presigned_urls, s3_sync_folder) for file operations
+      - Actively use S3 tools (s3_list_files, s3_download_file, s3_upload_file, s3_sync_folder) for file operations
       - Analyze code files from storage when necessary
       - Provide improved versions of code files when requested
     scenarios:
@@ -1056,7 +1055,7 @@ defaultAgents:
       [Available tools]
       - utility-tools___kb-retrieve: Primary tool for semantic search in Knowledge Base
       - s3_list_files, s3_download_file: For accessing additional documents if needed
-      - s3_upload_file, s3_get_presigned_urls: For sharing results or documents
+      - s3_upload_file: For sharing results or documents
     scenarios:
       search:
         title: Knowledge Base Search
@@ -1114,7 +1113,6 @@ defaultAgents:
       - Use s3_download_file to retrieve data files from storage
       - Use s3_list_files to explore available datasets
       - Use s3_upload_file to save analysis results, visualizations, or processed data
-      - Use s3_get_presigned_urls to share reports or visualizations
 
       [Python libraries and best practices]
       - **pandas**: Data manipulation and analysis (DataFrames, Series operations)
@@ -1159,7 +1157,6 @@ defaultAgents:
       - execute_command: Run Python scripts for data analysis and visualization
       - s3_download_file, s3_upload_file: Access and store data files
       - s3_list_files: Browse available datasets
-      - s3_get_presigned_urls: Share results with stakeholders
     scenarios:
       analysis:
         title: Data Analysis
@@ -1443,7 +1440,6 @@ defaultAgents:
       - s3_upload_file: Upload created PowerPoint files to S3
       - s3_download_file: Download existing templates and materials
       - s3_list_files: Check available templates and materials
-      - s3_get_presigned_urls: Share created presentations
 
       [Answer format]
       - Confirm presentation purpose and audience

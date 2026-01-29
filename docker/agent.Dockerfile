@@ -4,7 +4,8 @@
 # ========================================
 # Stage 1: Build
 # ========================================
-FROM node:22-slim AS builder
+# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
+FROM public.ecr.aws/docker/library/node:22-slim AS builder
 
 WORKDIR /build
 
@@ -35,7 +36,8 @@ RUN cd packages/agent && npm run build
 # ========================================
 # Stage 2: Production
 # ========================================
-FROM node:22-slim
+# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
+FROM public.ecr.aws/docker/library/node:22-slim
 
 # Install required tools (Python, AWS CLI, GitHub CLI, uv)
 RUN apt-get update && apt-get install -y \

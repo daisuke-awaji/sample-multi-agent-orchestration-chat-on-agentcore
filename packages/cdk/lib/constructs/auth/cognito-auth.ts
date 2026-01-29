@@ -8,30 +8,30 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 
 export interface CognitoAuthProps {
   /**
-   * Cognito User Pool の名前
+   * Cognito User Pool name
    */
   readonly userPoolName: string;
 
   /**
-   * App Client の名前
-   * デフォルト: "{userPoolName}-client"
+   * App Client name
+   * @default "{userPoolName}-client"
    */
   readonly appClientName?: string;
 
   /**
-   * パスワードポリシーの最小文字数
-   * デフォルト: 8
+   * Password policy minimum length
+   * @default 8
    */
   readonly passwordMinLength?: number;
 
   /**
-   * ユーザー削除保護の有効化
-   * デフォルト: false (開発環境用)
+   * Enable user deletion protection
+   * @default false (for development)
    */
   readonly deletionProtection?: boolean;
 
   /**
-   * User Pool の追加設定
+   * Additional User Pool configuration
    */
   readonly userPoolConfig?: {
     readonly mfa?: cognito.Mfa;
@@ -43,15 +43,15 @@ export interface CognitoAuthProps {
   };
 
   /**
-   * 許可するメールドメインのリスト (オプション)
-   * 設定した場合、これらのドメインのメールアドレスのみサインアップ可能
-   * 例: ['amazon.com', 'amazon.jp']
+   * List of allowed email domains for sign up (optional)
+   * When set, only email addresses from these domains can sign up
+   * Example: ['amazon.com', 'amazon.jp']
    */
   readonly allowedSignUpEmailDomains?: string[];
 
   /**
-   * テストユーザー設定 (オプション、開発環境用)
-   * 設定した場合、デプロイ時にテストユーザーを自動作成
+   * Test user configuration (optional, for development)
+   * When set, automatically creates test user during deployment
    */
   readonly testUser?: {
     readonly username: string;
@@ -61,52 +61,52 @@ export interface CognitoAuthProps {
 }
 
 /**
- * AgentCore用 Cognito User Pool + App Client Construct
+ * Cognito User Pool + App Client Construct for AgentCore
  *
- * Gateway と Runtime で共有するCognito認証基盤を提供します。
+ * Provides Cognito authentication foundation shared by Gateway and Runtime.
  */
 export class CognitoAuth extends Construct {
   /**
-   * 作成されたUser Pool
+   * Created User Pool
    */
   public readonly userPool: cognito.UserPool;
 
   /**
-   * 作成されたApp Client
+   * Created App Client
    */
   public readonly userPoolClient: cognito.UserPoolClient;
 
   /**
    * OIDC Discovery URL
-   * AgentCore のJWT authorizerで使用
+   * Used for AgentCore JWT authorizer
    */
   public readonly discoveryUrl: string;
 
   /**
    * App Client ID
-   * JWT token の client_id claim 検証で使用
+   * Used for JWT token client_id claim verification
    */
   public readonly clientId: string;
 
   /**
-   * Machine User用のApp Client
-   * Client Credentials Flowで使用
+   * App Client for Machine User
+   * Used for Client Credentials Flow
    */
   public readonly machineUserClient: cognito.UserPoolClient;
 
   /**
-   * Machine User用のApp Client ID
+   * App Client ID for Machine User
    */
   public readonly machineUserClientId: string;
 
   /**
-   * Resource Server (OAuth2スコープ定義)
+   * Resource Server (OAuth2 scope definition)
    */
   public readonly resourceServer: cognito.UserPoolResourceServer;
 
   /**
    * User Pool Domain
-   * Token endpointへのアクセスに必要
+   * Required for Token endpoint access
    */
   public readonly userPoolDomain: cognito.UserPoolDomain;
 
@@ -123,7 +123,7 @@ export class CognitoAuth extends Construct {
   constructor(scope: Construct, id: string, props: CognitoAuthProps) {
     super(scope, id);
 
-    // Pre Sign Up Lambda トリガー (メールドメイン検証用)
+    // Pre Sign Up Lambda trigger (for email domain validation)
     let preSignUpTrigger: lambda.Function | undefined;
     if (props.allowedSignUpEmailDomains && props.allowedSignUpEmailDomains.length > 0) {
       preSignUpTrigger = new lambda.Function(this, 'PreSignUpTrigger', {
@@ -172,11 +172,11 @@ exports.handler = async (event) => {
       });
     }
 
-    // User Pool 作成
+    // Create User Pool
     this.userPool = new cognito.UserPool(this, 'UserPool', {
       userPoolName: props.userPoolName,
 
-      // パスワードポリシー
+      // Password policy
       passwordPolicy: {
         minLength: props.passwordMinLength || 8,
         requireLowercase: true,
@@ -185,35 +185,35 @@ exports.handler = async (event) => {
         requireSymbols: false,
       },
 
-      // MFA設定
+      // MFA settings
       mfa: props.userPoolConfig?.mfa || cognito.Mfa.OFF,
 
-      // セルフサインアップ
+      // Self sign-up
       selfSignUpEnabled: props.userPoolConfig?.selfSignUpEnabled ?? false,
 
-      // 自動検証
+      // Auto verification
       autoVerify: {
         email: props.userPoolConfig?.autoVerify?.email ?? false,
         phone: props.userPoolConfig?.autoVerify?.phone ?? false,
       },
 
-      // サインイン設定
+      // Sign-in settings
       signInAliases: {
         username: true,
         email: true,
         phone: false,
       },
 
-      // 削除保護
+      // Deletion protection
       deletionProtection: props.deletionProtection ?? false,
 
-      // カスタム属性なし（シンプルな構成）
+      // No custom attributes (simple configuration)
       customAttributes: {},
 
-      // アカウント復旧
+      // Account recovery
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
 
-      // Lambda トリガー設定
+      // Lambda trigger settings
       lambdaTriggers: preSignUpTrigger
         ? {
             preSignUp: preSignUpTrigger,
@@ -221,31 +221,31 @@ exports.handler = async (event) => {
         : undefined,
     });
 
-    // App Client 作成
+    // Create App Client
     this.userPoolClient = this.userPool.addClient('AppClient', {
       userPoolClientName: props.appClientName || `${props.userPoolName}-client`,
 
-      // 認証フロー設定
+      // Authentication flow settings
       authFlows: {
-        userPassword: true, // USER_PASSWORD_AUTH (必須)
-        userSrp: true, // SRP認証を有効化
+        userPassword: true, // USER_PASSWORD_AUTH (required)
+        userSrp: true, // Enable SRP authentication
         adminUserPassword: true, // ADMIN_USER_PASSWORD_AUTH
-        custom: false, // CUSTOM_AUTH無効
+        custom: false, // CUSTOM_AUTH disabled
       },
 
-      // OAuth設定を完全に削除（JWT認証には不要）
+      // OAuth settings completely removed (not needed for JWT authentication)
 
-      // トークン有効期限
+      // Token validity
       accessTokenValidity: cdk.Duration.hours(1),
       idTokenValidity: cdk.Duration.hours(1),
       refreshTokenValidity: cdk.Duration.days(30),
 
-      // セキュリティ設定
-      generateSecret: false, // Public client (secret不要)
+      // Security settings
+      generateSecret: false, // Public client (no secret required)
       preventUserExistenceErrors: true,
     });
 
-    // Resource Server 作成 (OAuth2スコープ定義)
+    // Create Resource Server (OAuth2 scope definition)
     this.resourceServer = new cognito.UserPoolResourceServer(this, 'ResourceServer', {
       userPool: this.userPool,
       identifier: 'agent',
@@ -266,25 +266,25 @@ exports.handler = async (event) => {
       ],
     });
 
-    // User Pool Domain 作成 (Token endpoint access用)
-    // 安全なドメインプレフィックス生成: 英数字のみ、ハイフンで区切り
+    // Create User Pool Domain (for Token endpoint access)
+    // Safe domain prefix generation: alphanumeric only, separated by hyphen
     const sanitizedName = props.userPoolName
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')  // 英数字以外を削除
-      .substring(0, 20);           // 最大20文字
+      .replace(/[^a-z0-9]/g, '') // Remove non-alphanumeric characters
+      .substring(0, 20); // Maximum 20 characters
     const accountSuffix = cdk.Stack.of(this).account.substring(0, 8);
     const domainPrefix = `${sanitizedName}-${accountSuffix}`;
-    
+
     this.userPoolDomain = this.userPool.addDomain('Domain', {
       cognitoDomain: {
         domainPrefix: domainPrefix,
       },
     });
 
-    // Machine User用のApp Client作成 (Client Credentials Flow)
+    // Create App Client for Machine User (Client Credentials Flow)
     this.machineUserClient = this.userPool.addClient('MachineUserClient', {
       userPoolClientName: `${props.userPoolName}-machine`,
-      generateSecret: true, // Client Credentials Flowに必須
+      generateSecret: true, // Required for Client Credentials Flow
       authFlows: {
         userPassword: false,
         userSrp: false,
@@ -293,7 +293,7 @@ exports.handler = async (event) => {
       },
       oAuth: {
         flows: {
-          clientCredentials: true, // Client Credentials Flowを有効化
+          clientCredentials: true, // Enable Client Credentials Flow
         },
         scopes: [
           cognito.OAuthScope.resourceServer(this.resourceServer, {
@@ -310,17 +310,17 @@ exports.handler = async (event) => {
       preventUserExistenceErrors: true,
     });
 
-    // Machine Clientの依存関係を設定
+    // Set Machine Client dependencies
     this.machineUserClient.node.addDependency(this.resourceServer);
     this.machineUserClient.node.addDependency(this.userPoolDomain);
 
-    // プロパティ設定
+    // Set properties
     this.clientId = this.userPoolClient.userPoolClientId;
     this.machineUserClientId = this.machineUserClient.userPoolClientId;
     this.userPoolId = this.userPool.userPoolId;
     this.userPoolArn = this.userPool.userPoolArn;
 
-    // OIDC Discovery URL 構築
+    // Build OIDC Discovery URL
     const region = cdk.Stack.of(this).region;
     this.discoveryUrl = `https://cognito-idp.${region}.amazonaws.com/${this.userPoolId}/.well-known/openid-configuration`;
 
@@ -361,17 +361,17 @@ exports.handler = async (event) => {
       exportName: `${cdk.Stack.of(this).stackName}-DomainPrefix`,
     });
 
-    // テストユーザーの作成（設定されている場合のみ）
+    // Create test user (only when configured)
     if (props.testUser) {
       this.createTestUser(props.testUser);
     }
   }
 
   /**
-   * テストユーザーを作成する
+   * Create test user
    */
   private createTestUser(testUser: { username: string; email: string; password: string }): void {
-    // ユーザー作成用の AwsCustomResource
+    // AwsCustomResource for user creation
     const createUser = new cr.AwsCustomResource(this, 'CreateTestUser', {
       onCreate: {
         service: 'CognitoIdentityServiceProvider',
@@ -389,7 +389,7 @@ exports.handler = async (event) => {
               Value: 'true',
             },
           ],
-          MessageAction: 'SUPPRESS', // Welcome email を送信しない
+          MessageAction: 'SUPPRESS', // Do not send welcome email
         },
         physicalResourceId: cr.PhysicalResourceId.of(`test-user-${testUser.username}`),
       },
@@ -422,7 +422,7 @@ exports.handler = async (event) => {
       logRetention: logs.RetentionDays.ONE_WEEK,
     });
 
-    // パスワード設定用の AwsCustomResource
+    // AwsCustomResource for password setting
     const setPassword = new cr.AwsCustomResource(this, 'SetTestUserPassword', {
       onCreate: {
         service: 'CognitoIdentityServiceProvider',
@@ -431,7 +431,7 @@ exports.handler = async (event) => {
           UserPoolId: this.userPoolId,
           Username: testUser.username,
           Password: testUser.password,
-          Permanent: true, // パスワード変更不要
+          Permanent: true, // No password change required
         },
         physicalResourceId: cr.PhysicalResourceId.of(`test-user-password-${testUser.username}`),
       },
@@ -455,10 +455,10 @@ exports.handler = async (event) => {
       logRetention: logs.RetentionDays.ONE_WEEK,
     });
 
-    // パスワード設定はユーザー作成後に実行
+    // Password setting is executed after user creation
     setPassword.node.addDependency(createUser);
 
-    // CloudFormation Output でテストユーザー情報を出力
+    // Output test user information via CloudFormation Output
     new cdk.CfnOutput(this, 'TestUserUsername', {
       value: testUser.username,
       description: 'Test user username',
@@ -471,8 +471,8 @@ exports.handler = async (event) => {
   }
 
   /**
-   * JWT token 検証用のパラメータを取得
-   * AgentCore Runtime の authorizerConfiguration で使用
+   * Get parameters for JWT token verification
+   * Used for AgentCore Runtime authorizerConfiguration
    */
   public getJwtAuthorizerConfig(): {
     discoveryUrl: string;

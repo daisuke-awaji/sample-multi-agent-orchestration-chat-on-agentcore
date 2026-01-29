@@ -8,8 +8,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 /**
- * Tool Schema ファイルの型定義
- * AgentCore の型と互換性を保つため unknown を使用
+ * Tool Schema file type definition
+ * Using unknown to maintain compatibility with AgentCore types
  */
 interface ToolSchemaFile {
   tools: unknown[];
@@ -17,59 +17,59 @@ interface ToolSchemaFile {
 
 export interface AgentCoreLambdaTargetProps {
   /**
-   * リソース名のプレフィックス（オプション）
-   * Lambda関数名: {resourcePrefix}-{targetName}-function
+   * Resource name prefix (optional)
+   * Lambda function name: {resourcePrefix}-{targetName}-function
    * @default 'agentcore'
    */
   readonly resourcePrefix?: string;
 
   /**
-   * Target の名前
+   * Target name
    */
   readonly targetName: string;
 
   /**
-   * Target の説明 (オプション)
+   * Target description (optional)
    */
   readonly description?: string;
 
   /**
-   * Lambda 関数のソースコードディレクトリ
-   * 相対パス（プロジェクトルートからの）
+   * Lambda function source code directory
+   * Relative path (from project root)
    */
   readonly lambdaCodePath: string;
 
   /**
-   * Tool Schema ファイルのパス
-   * 相対パス（プロジェクトルートからの）
+   * Tool Schema file path
+   * Relative path (from project root)
    */
   readonly toolSchemaPath: string;
 
   /**
-   * Lambda ランタイム (オプション)
-   * @default - Runtime.NODEJS_20_X
+   * Lambda runtime (optional)
+   * @default Runtime.NODEJS_20_X
    */
   readonly runtime?: lambda.Runtime;
 
   /**
-   * Lambda のタイムアウト時間 (オプション)
-   * @default - 30秒
+   * Lambda timeout duration (optional)
+   * @default 30 seconds
    */
   readonly timeout?: number;
 
   /**
-   * Lambda のメモリサイズ (オプション)
-   * @default - 256MB
+   * Lambda memory size (optional)
+   * @default 256MB
    */
   readonly memorySize?: number;
 
   /**
-   * 環境変数 (オプション)
+   * Environment variables (optional)
    */
   readonly environment?: { [key: string]: string };
 
   /**
-   * Knowledge Base への Retrieve 権限を付与するかどうか (オプション)
+   * Whether to grant Retrieve permission to Knowledge Base (optional)
    * @default false
    */
   readonly enableKnowledgeBaseAccess?: boolean;
@@ -78,11 +78,11 @@ export interface AgentCoreLambdaTargetProps {
 /**
  * AgentCore Gateway Lambda Target Construct
  *
- * Lambda 関数を AgentCore Gateway のターゲットとして追加するための Construct
+ * Construct for adding Lambda functions as targets to AgentCore Gateway
  */
 export class AgentCoreLambdaTarget extends Construct {
   /**
-   * 作成された Lambda 関数
+   * Created Lambda function
    */
   public readonly lambdaFunction: nodejs.NodejsFunction;
 
@@ -92,7 +92,7 @@ export class AgentCoreLambdaTarget extends Construct {
   public readonly toolSchema: agentcore.ToolSchema;
 
   /**
-   * Target 名
+   * Target name
    */
   public readonly targetName: string;
 
@@ -101,16 +101,16 @@ export class AgentCoreLambdaTarget extends Construct {
 
     this.targetName = props.targetName;
 
-    // Tool Schema を読み込み
+    // Load Tool Schema
     const toolSchemaContent = this.loadToolSchema(props.toolSchemaPath);
-    // AgentCore の型と互換性を保つため any にキャスト
+    // Cast to any to maintain compatibility with AgentCore types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.toolSchema = agentcore.ToolSchema.fromInline(toolSchemaContent.tools as any);
 
-    // リソースプレフィックスの取得
+    // Get resource prefix
     const resourcePrefix = props.resourcePrefix || 'agentcore';
 
-    // Lambda 関数を作成
+    // Create Lambda function
     this.lambdaFunction = new nodejs.NodejsFunction(this, 'Function', {
       functionName: `${resourcePrefix}-${props.targetName}-function`,
       runtime: props.runtime || lambda.Runtime.NODEJS_22_X,
@@ -132,10 +132,10 @@ export class AgentCoreLambdaTarget extends Construct {
       },
     });
 
-    // Lambda のログ出力設定
+    // Lambda log output settings
     this.lambdaFunction.addEnvironment('AWS_LAMBDA_LOG_LEVEL', 'INFO');
 
-    // Knowledge Base への Retrieve 権限を付与
+    // Grant Retrieve permission to Knowledge Base
     if (props.enableKnowledgeBaseAccess) {
       this.lambdaFunction.addToRolePolicy(
         new iam.PolicyStatement({
@@ -149,7 +149,7 @@ export class AgentCoreLambdaTarget extends Construct {
   }
 
   /**
-   * Tool Schema ファイルを読み込む
+   * Load Tool Schema file
    */
   private loadToolSchema(schemaPath: string): ToolSchemaFile {
     try {
@@ -158,7 +158,7 @@ export class AgentCoreLambdaTarget extends Construct {
       const schemaContent = fs.readFileSync(fullPath, 'utf8');
       const schema = JSON.parse(schemaContent) as ToolSchemaFile;
 
-      // Tool Schema の構造を検証
+      // Validate Tool Schema structure
       if (!schema.tools || !Array.isArray(schema.tools)) {
         throw new Error("Tool schema must have a 'tools' array");
       }
@@ -170,7 +170,7 @@ export class AgentCoreLambdaTarget extends Construct {
   }
 
   /**
-   * Gateway にこの Lambda Target を追加
+   * Add this Lambda Target to Gateway
    */
   public addToGateway(gateway: agentcore.Gateway, targetId: string): agentcore.GatewayTarget {
     const target = gateway.addLambdaTarget(targetId, {
@@ -180,8 +180,8 @@ export class AgentCoreLambdaTarget extends Construct {
       description: `Lambda target for ${this.targetName}`,
     });
 
-    // CDK L2 が grantInvoke を呼ぶが、依存関係が設定されていないため
-    // GatewayTarget が Gateway ロールに依存するよう明示的に設定
+    // CDK L2 calls grantInvoke but dependency is not set,
+    // so explicitly set GatewayTarget to depend on Gateway role
     target.node.addDependency(gateway.role);
 
     return target;

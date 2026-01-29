@@ -2,36 +2,36 @@ import { Construct } from 'constructs';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Aws } from 'aws-cdk-lib';
-import { CognitoAuth } from './cognito-auth.js';
+import { CognitoAuth } from '../auth';
 
 export interface AgentCoreGatewayProps {
   /**
-   * Gateway の名前
-   * 有効な文字: a-z, A-Z, 0-9, _ (アンダースコア), - (ハイフン)
-   * 最大100文字
+   * Gateway name
+   * Valid characters: a-z, A-Z, 0-9, _ (underscore), - (hyphen)
+   * Maximum 100 characters
    */
   readonly gatewayName: string;
 
   /**
-   * Gateway の説明 (オプション)
-   * 最大200文字
+   * Gateway description (optional)
+   * Maximum 200 characters
    */
   readonly description?: string;
 
   /**
-   * 認証タイプ (オプション)
-   * デフォルト: cognito
+   * Authentication type (optional)
+   * @default cognito
    */
   readonly authType?: 'cognito' | 'iam' | 'jwt';
 
   /**
-   * Cognito認証設定 (authType が 'cognito' の場合に必要)
-   * 外部で作成されたCognitoAuthを使用
+   * Cognito authentication settings (required when authType is 'cognito')
+   * Uses externally created CognitoAuth
    */
   readonly cognitoAuth?: CognitoAuth;
 
   /**
-   * JWTの設定 (authType が 'jwt' の場合に必要)
+   * JWT settings (required when authType is 'jwt')
    */
   readonly jwtConfig?: {
     readonly discoveryUrl: string;
@@ -40,7 +40,7 @@ export interface AgentCoreGatewayProps {
   };
 
   /**
-   * MCP プロトコルの設定 (オプション)
+   * MCP protocol settings (optional)
    */
   readonly mcpConfig?: {
     readonly instructions?: string;
@@ -52,47 +52,47 @@ export interface AgentCoreGatewayProps {
 /**
  * Amazon Bedrock AgentCore Gateway Construct
  *
- * エージェントと外部サービス間の統合ポイントとなるGatewayを作成します。
+ * Creates a Gateway that serves as an integration point between agents and external services.
  */
 export class AgentCoreGateway extends Construct {
   /**
-   * 作成された Gateway インスタンス
+   * Created Gateway instance
    */
   public readonly gateway: agentcore.Gateway;
 
   /**
-   * Gateway の ARN
+   * Gateway ARN
    */
   public readonly gatewayArn: string;
 
   /**
-   * Gateway の ID
+   * Gateway ID
    */
   public readonly gatewayId: string;
 
   /**
-   * Gateway のエンドポイント URL
+   * Gateway endpoint URL
    */
   public readonly gatewayEndpoint: string;
 
   /**
-   * Gateway 用の IAM ロール
+   * IAM role for Gateway
    */
   public readonly gatewayRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: AgentCoreGatewayProps) {
     super(scope, id);
 
-    // プロトコル設定（MCP）
+    // Protocol configuration (MCP)
     const protocolConfiguration = new agentcore.McpProtocolConfiguration({
-      instructions: props.mcpConfig?.instructions || 'このGatewayを使用してMCPツールに接続します',
+      instructions: props.mcpConfig?.instructions || 'Use this Gateway to connect to MCP tools',
       searchType: props.mcpConfig?.searchType || agentcore.McpGatewaySearchType.SEMANTIC,
       supportedVersions: props.mcpConfig?.supportedVersions || [
         agentcore.MCPProtocolVersion.MCP_2025_03_26,
       ],
     });
 
-    // 認証設定
+    // Authentication configuration
     let authorizerConfiguration: agentcore.IGatewayAuthorizerConfig | undefined;
 
     switch (props.authType) {
@@ -102,7 +102,7 @@ export class AgentCoreGateway extends Construct {
 
       case 'jwt':
         if (!props.jwtConfig?.discoveryUrl) {
-          throw new Error('JWT認証を使用する場合、discoveryUrlが必要です');
+          throw new Error('discoveryUrl is required when using JWT authentication');
         }
         authorizerConfiguration = agentcore.GatewayAuthorizer.usingCustomJwt({
           discoveryUrl: props.jwtConfig.discoveryUrl,
@@ -113,9 +113,9 @@ export class AgentCoreGateway extends Construct {
 
       case 'cognito':
       default: {
-        // 外部で作成されたCognito認証を使用
+        // Use externally created Cognito authentication
         if (!props.cognitoAuth) {
-          throw new Error('Cognito認証を使用する場合、cognitoAuthが必要です');
+          throw new Error('cognitoAuth is required when using Cognito authentication');
         }
 
         const jwtConfig = props.cognitoAuth.getJwtAuthorizerConfig();
@@ -127,7 +127,7 @@ export class AgentCoreGateway extends Construct {
       }
     }
 
-    // Gateway作成（L2 Constructがセキュアなロールを内部で作成）
+    // Create Gateway (L2 Construct creates a secure role internally)
     this.gateway = new agentcore.Gateway(this, 'Gateway', {
       gatewayName: props.gatewayName,
       description: props.description,
@@ -135,11 +135,11 @@ export class AgentCoreGateway extends Construct {
       authorizerConfiguration: authorizerConfiguration,
     });
 
-    // L2 Constructが作成したロールに必要な権限を追加
-    // IRole を Role にキャストしてaddToPolicyメソッドを使用できるようにする
+    // Add required permissions to the role created by L2 Construct
+    // Cast IRole to Role to enable using addToPolicy method
     const gatewayRole = this.gateway.role as iam.Role;
 
-    // GetGateway 権限
+    // GetGateway permission
     gatewayRole.addToPolicy(
       new iam.PolicyStatement({
         sid: 'GetGateway',
@@ -149,7 +149,7 @@ export class AgentCoreGateway extends Construct {
       })
     );
 
-    // GetWorkloadAccessToken 権限
+    // GetWorkloadAccessToken permission
     gatewayRole.addToPolicy(
       new iam.PolicyStatement({
         sid: 'GetWorkloadAccessToken',
@@ -164,7 +164,7 @@ export class AgentCoreGateway extends Construct {
       })
     );
 
-    // GetResourceOauth2Token 権限
+    // GetResourceOauth2Token permission
     gatewayRole.addToPolicy(
       new iam.PolicyStatement({
         sid: 'GetResourceOauth2Token',
@@ -177,7 +177,7 @@ export class AgentCoreGateway extends Construct {
       })
     );
 
-    // GetSecretValue 権限
+    // GetSecretValue permission
     gatewayRole.addToPolicy(
       new iam.PolicyStatement({
         sid: 'GetSecretValue',
@@ -187,7 +187,7 @@ export class AgentCoreGateway extends Construct {
       })
     );
 
-    // L2 Constructが作成したロールを公開
+    // Expose the role created by L2 Construct
     this.gatewayRole = gatewayRole;
 
     this.gatewayArn = this.gateway.gatewayArn;
@@ -196,10 +196,10 @@ export class AgentCoreGateway extends Construct {
   }
 
   /**
-   * 基本的なGatewayを作成します。
-   * ターゲットの追加は、直接 gateway プロパティを使用してください。
+   * Creates a basic Gateway.
+   * To add targets, use the gateway property directly.
    *
-   * 例:
+   * Example:
    * gateway.gateway.addLambdaTarget("MyTarget", {
    *   gatewayTargetName: "MyTarget",
    *   lambdaFunction: myFunction,

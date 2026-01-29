@@ -31,3 +31,15 @@ pnpm-lock.yaml
 # Coverage
 coverage/
 **/coverage/
+
+# IDE & Config
+.vscode/
+.idea/
+.husky/
+
+# Scripts (non-source code)
+scripts/
+
+# CI/CD
+.github/
+.gitlab-ci.yml

@@ -65,9 +65,9 @@ export interface TriggerLambdaProps {
 
 /**
  * Trigger Lambda Construct
- * 
+ *
  * Lambda function that is invoked by EventBridge Scheduler to execute agent invocations.
- * 
+ *
  * Responsibilities:
  * - Receive EventBridge Scheduler events
  * - Obtain Machine User authentication token from Cognito
@@ -128,7 +128,7 @@ export class TriggerLambda extends Construct {
     this.lambdaFunction = new nodejs.NodejsFunction(this, 'Function', {
       functionName: `${props.resourcePrefix}-trigger-executor`,
       runtime: props.runtime || lambda.Runtime.NODEJS_22_X,
-      entry: path.join(__dirname, '../../../trigger/src/index.ts'),
+      entry: path.join(__dirname, '../../../../trigger/src/index.ts'),
       handler: 'handler',
       timeout: props.timeout || cdk.Duration.minutes(5),
       memorySize: props.memorySize || 512,
@@ -159,7 +159,7 @@ export class TriggerLambda extends Construct {
 
     // Grant DynamoDB read/write permissions
     props.triggersTable.grantReadWriteData(this.lambdaFunction);
-    
+
     // Grant DynamoDB read permissions for Agents table
     props.agentsTable.grantReadData(this.lambdaFunction);
 
@@ -180,11 +180,7 @@ export class TriggerLambda extends Construct {
     // Add CloudWatch Logs permissions (automatically granted by CDK, but explicit for clarity)
     this.lambdaFunction.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: [
-          'logs:CreateLogGroup',
-          'logs:CreateLogStream',
-          'logs:PutLogEvents',
-        ],
+        actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
         resources: [
           `arn:aws:logs:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:log-group:/aws/lambda/${props.resourcePrefix}-trigger-executor:*`,
         ],
@@ -202,17 +198,14 @@ export class TriggerLambda extends Construct {
    * Grant EventBridge Scheduler permission to invoke this Lambda
    */
   public grantInvokeToScheduler(): iam.Grant {
-    return this.lambdaFunction.grantInvoke(
-      new iam.ServicePrincipal('scheduler.amazonaws.com')
-    );
+    return this.lambdaFunction.grantInvoke(new iam.ServicePrincipal('scheduler.amazonaws.com'));
   }
 
   /**
    * Create IAM role for EventBridge Scheduler to invoke this Lambda
    */
-  public createSchedulerRole(scope: Construct, resourcePrefix: string): iam.Role {
+  public createSchedulerRole(scope: Construct, _resourcePrefix: string): iam.Role {
     const schedulerRole = new iam.Role(scope, 'SchedulerRole', {
-      roleName: `${resourcePrefix}-scheduler-role`,
       assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
       description: 'Role for EventBridge Scheduler to invoke Trigger Lambda',
     });
