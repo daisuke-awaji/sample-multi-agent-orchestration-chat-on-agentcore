@@ -702,6 +702,7 @@ router.post(
         sourceAgentId,
       });
 
+      const agentsService = createAgentsService();
       let sourceAgent: CreateAgentInput | null = null;
 
       // Handle system agents (default agents)
@@ -712,6 +713,20 @@ router.post(
         if (defaultAgent) {
           sourceAgent = defaultAgent;
         }
+      } else {
+        // Handle user-shared agents
+        const sharedAgent = await agentsService.getSharedAgent(sourceUserId, sourceAgentId);
+        if (sharedAgent) {
+          sourceAgent = {
+            name: sharedAgent.name,
+            description: sharedAgent.description,
+            icon: sharedAgent.icon,
+            systemPrompt: sharedAgent.systemPrompt,
+            enabledTools: sharedAgent.enabledTools,
+            scenarios: sharedAgent.scenarios,
+            mcpConfig: sharedAgent.mcpConfig,
+          };
+        }
       }
 
       if (!sourceAgent) {
@@ -721,8 +736,6 @@ router.post(
           requestId: auth.requestId,
         });
       }
-
-      const agentsService = createAgentsService();
       const clonedAgent = await agentsService.createAgent(targetUserId, sourceAgent, auth.username);
 
       console.log('✅ Shared Agent clone completed (%s): %s', auth.requestId, clonedAgent.agentId);
