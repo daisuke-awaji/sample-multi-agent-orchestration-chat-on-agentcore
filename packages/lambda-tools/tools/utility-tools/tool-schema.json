@@ -17,13 +17,13 @@
   "tools": [
     {
       "name": "echo",
-      "description": "入力されたメッセージをそのまま返すツール。メッセージの長さや大文字小文字変換も提供します。",
+      "description": "Echo back the input message. Provides message length and uppercase/lowercase transformations.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "message": {
             "type": "string",
-            "description": "エコーするメッセージ文字列"
+            "description": "The message string to echo"
           }
         },
         "required": ["message"],
@@ -32,7 +32,7 @@
     },
     {
       "name": "ping",
-      "description": "Lambda関数の接続確認とシステム情報を取得するツール。レスポンス時間やメモリ使用量などの情報を返します。",
+      "description": "Health check and system information tool for the Lambda function. Returns response time, memory usage, and other metrics.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -41,27 +41,52 @@
     },
     {
       "name": "kb-retrieve",
-      "description": "Amazon Bedrock Knowledge Base から関連するチャンクをセマンティック検索で取得するツール。指定されたクエリに最も関連性の高いドキュメントチャンクを返します。",
+      "description": "Retrieve relevant chunks from Amazon Bedrock Knowledge Base using semantic search. Returns document chunks most relevant to the specified query.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "knowledgeBaseId": {
             "type": "string",
-            "description": "検索対象のKnowledge BaseのID"
+            "description": "The ID of the Knowledge Base to search"
           },
           "query": {
             "type": "string",
-            "description": "検索クエリ文字列"
+            "description": "The search query string"
           },
           "numberOfResults": {
             "type": "integer",
-            "description": "取得する結果の最大件数（デフォルト: 5）",
+            "description": "Maximum number of results to return (default: 5)",
             "default": 5,
             "minimum": 1,
             "maximum": 100
           }
         },
         "required": ["knowledgeBaseId", "query"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marp-slide",
+      "description": "Generate presentation HTML slides from a Marp-formatted Markdown file in S3 and save the output to S3. Slides are separated by '---' delimiter.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "inputS3Key": {
+            "type": "string",
+            "description": "Path to the input Markdown file (key within USER_STORAGE_BUCKET). Example: 'users/user-123/presentations/slide.md'"
+          },
+          "outputS3Key": {
+            "type": "string",
+            "description": "Path for the output HTML file (if omitted, saves to the same directory with .html extension)"
+          },
+          "theme": {
+            "type": "string",
+            "enum": ["default", "gaia", "uncover"],
+            "default": "default",
+            "description": "Slide theme. default: simple, gaia: modern, uncover: minimal"
+          }
+        },
+        "required": ["inputS3Key"],
         "additionalProperties": false
       }
     }

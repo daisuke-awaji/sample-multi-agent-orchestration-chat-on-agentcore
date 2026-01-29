@@ -265,6 +265,13 @@ export class AgentCoreStack extends cdk.Stack {
       autoDeleteObjects: envConfig.s3AutoDeleteObjects,
     });
 
+    // Grant User Storage access to Utility Tools Lambda (for marp-slide tool)
+    this.userStorage.grantFullAccess(this.echoToolTarget.lambdaFunction);
+    this.echoToolTarget.lambdaFunction.addEnvironment(
+      'USER_STORAGE_BUCKET_NAME',
+      this.userStorage.bucketName
+    );
+
     // 5. Create Agents Table
     this.agentsTable = new AgentsTable(this, 'AgentsTable', {
       tableNamePrefix: resourcePrefix,

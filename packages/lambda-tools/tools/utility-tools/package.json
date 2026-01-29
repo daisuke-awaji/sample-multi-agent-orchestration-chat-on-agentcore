@@ -12,6 +12,7 @@
     "@types/aws-lambda": "^8.10.159",
     "@types/jest": "^29.5.5",
     "@types/node": "^20.6.2",
+    "aws-sdk-client-mock": "^4.0.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",
     "typescript": "~5.2.2"
@@ -20,6 +21,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-agent-runtime": "^3.685.0"
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.685.0",
+    "@aws-sdk/client-s3": "^3.685.0",
+    "@marp-team/marp-core": "^3.9.0"
   }
 }

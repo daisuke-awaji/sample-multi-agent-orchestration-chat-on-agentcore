@@ -8,6 +8,7 @@ import { Tool, ToolHandler } from './types.js';
 import { echoTool } from './echo.js';
 import { pingTool } from './ping.js';
 import { kbRetrieveTool } from './kb-retrieve.js';
+import { marpSlideTool } from './marp-slide.js';
 import { logger } from '../logger.js';
 
 /**
@@ -17,6 +18,7 @@ export const toolRegistry = new Map<string, Tool>([
   ['echo', echoTool],
   ['ping', pingTool],
   ['kb-retrieve', kbRetrieveTool],
+  ['marp-slide', marpSlideTool],
 ]);
 
 /**

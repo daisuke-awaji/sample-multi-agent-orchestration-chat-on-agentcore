@@ -8,7 +8,8 @@
   },
   "workspaces": [
     "packages/*",
-    "packages/shared/*"
+    "packages/shared/*",
+    "packages/lambda-tools/tools/*"
   ],
   "scripts": {
     "build": "npm run build --workspace=@fullstack-agentcore/tool-definitions && npm run build --workspaces --if-present",
