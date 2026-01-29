@@ -12,6 +12,13 @@ import { ContainerImageBuild } from 'deploy-time-build';
 import { Construct } from 'constructs';
 import { CognitoAuth } from '../auth';
 import { AgentCoreGateway } from './agentcore-gateway';
+import * as path from 'path';
+
+/**
+ * Get project root directory from CDK package
+ * packages/cdk/lib/constructs/agentcore -> project root (5 levels up)
+ */
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 
 export interface AgentCoreRuntimeProps {
   /**
@@ -140,7 +147,7 @@ export class AgentCoreRuntime extends Construct {
     // Note: Using CodeBuild eliminates the need for QEMU emulation on x86_64 systems.
     // CodeBuild natively supports ARM64 builds.
     const containerImage = new ContainerImageBuild(this, 'AgentImageBuild', {
-      directory: '.',
+      directory: PROJECT_ROOT,
       file: 'docker/agent.Dockerfile',
       platform: Platform.LINUX_ARM64,
       // Exclude large directories to speed up CDK synth hash calculation

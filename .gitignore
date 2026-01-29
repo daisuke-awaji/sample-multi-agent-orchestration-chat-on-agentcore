@@ -7,7 +7,7 @@ api.html
 node_modules/
 
 # CDK output
-cdk.out/
+packages/cdk/cdk.out/
 
 # Compiled TypeScript
 *.js
@@ -74,7 +74,7 @@ ehthumbs.db
 Thumbs.db
 
 # CDK Context
-cdk.context.json
+packages/cdk/cdk.context.json
 
 # Build output
 dist/

@@ -8,6 +8,13 @@ import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { NodejsBuild } from 'deploy-time-build';
 import { Construct } from 'constructs';
+import * as path from 'path';
+
+/**
+ * Get project root directory from CDK package
+ * packages/cdk/lib/constructs/frontend -> project root (5 levels up)
+ */
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 
 export interface FrontendProps {
   /**
@@ -225,7 +232,7 @@ export class Frontend extends Construct {
     const frontendBuild = new NodejsBuild(this, 'FrontendBuild', {
       assets: [
         {
-          path: 'packages/frontend',
+          path: path.join(PROJECT_ROOT, 'packages/frontend'),
           exclude: ['node_modules/**', '.git/**', 'dist/**', '.env'],
         },
       ],

@@ -8,6 +8,13 @@ import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { ContainerImageBuild } from 'deploy-time-build';
 import { Construct } from 'constructs';
 import { CognitoAuth } from '../auth';
+import * as path from 'path';
+
+/**
+ * Get project root directory from CDK package
+ * packages/cdk/lib/constructs/api -> project root (5 levels up)
+ */
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
 
 export interface BackendApiProps {
   /**
@@ -206,7 +213,7 @@ export class BackendApi extends Construct {
 
     // Build container image using deploy-time-build (CodeBuild)
     const containerImage = new ContainerImageBuild(this, 'BackendImageBuild', {
-      directory: props.dockerContextPath || '.',
+      directory: props.dockerContextPath || PROJECT_ROOT,
       file: props.dockerFileName || 'docker/backend.Dockerfile',
       platform: Platform.LINUX_AMD64,
       // Exclude large directories to speed up CDK synth hash calculation

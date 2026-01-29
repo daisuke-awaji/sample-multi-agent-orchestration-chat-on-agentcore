@@ -39,6 +39,42 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   dev: {
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
+    customDomain: {
+      hostName: 'donuts-dev',
+      domainName: 'geeawa.net',
+    },
+    eventRules: [
+      {
+        id: 's3-upload',
+        name: 'S3 File Upload',
+        description: 'Triggered when a file is uploaded to S3',
+        eventPattern: {
+          source: ['aws.s3'],
+          detailType: ['Object Created'],
+          detail: {
+            bucket: {
+              name: [{ prefix: 'donuts-user-storage-' }],
+            },
+          },
+        },
+        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
+        enabled: true,
+      },
+      {
+        id: 'github-issue-created',
+        name: 'GitHub Issue created',
+        description: 'Triggered when a new issue is opened in the GitHub repository',
+        eventPattern: {
+          source: ['github.com'],
+          detailType: ['issues'],
+          detail: {
+            action: ['opened'],
+          },
+        },
+        icon: 'github', // https://lucide.dev/icons/github
+        enabled: true,
+      },
+    ],
   },
 
   /**

@@ -15,6 +15,12 @@ interface ToolSchemaFile {
   tools: unknown[];
 }
 
+/**
+ * Get project root directory from CDK package
+ * packages/cdk/lib/constructs/agentcore -> project root (5 levels up)
+ */
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..', '..');
+
 export interface AgentCoreLambdaTargetProps {
   /**
    * Resource name prefix (optional)
@@ -115,7 +121,7 @@ export class AgentCoreLambdaTarget extends Construct {
       functionName: `${resourcePrefix}-${props.targetName}-function`,
       runtime: props.runtime || lambda.Runtime.NODEJS_22_X,
       // nosemgrep: path-join-resolve-traversal - lambdaCodePath is a CDK build-time configuration, not user input
-      entry: path.join(props.lambdaCodePath, 'src', 'handler.ts'),
+      entry: path.join(PROJECT_ROOT, props.lambdaCodePath, 'src', 'handler.ts'),
       handler: 'handler',
       timeout: props.timeout ? cdk.Duration.seconds(props.timeout) : cdk.Duration.seconds(30),
       memorySize: props.memorySize || 256,
@@ -154,7 +160,7 @@ export class AgentCoreLambdaTarget extends Construct {
   private loadToolSchema(schemaPath: string): ToolSchemaFile {
     try {
       // nosemgrep: path-join-resolve-traversal - schemaPath is a CDK build-time configuration, not user input
-      const fullPath = path.resolve(schemaPath);
+      const fullPath = path.join(PROJECT_ROOT, schemaPath);
       const schemaContent = fs.readFileSync(fullPath, 'utf8');
       const schema = JSON.parse(schemaContent) as ToolSchemaFile;
 
