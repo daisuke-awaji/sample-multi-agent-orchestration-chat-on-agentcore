@@ -17,6 +17,7 @@ import { useAgentStore } from './stores/agentStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeErrorHandler } from './utils/errorHandler';
 import { useAppSyncConnection } from './hooks/useAppSyncConnection';
+import { CommandPalette, useCommandPalette } from './components/ui/CommandPalette';
 
 function App() {
   const { user, isAuthenticated, setUser, setLoading, setError, logout } = useAuthStore();
@@ -58,6 +59,9 @@ function App() {
   // Initialize shared AppSync WebSocket connection
   useAppSyncConnection();
 
+  // Command Palette state
+  const { isOpen: isCommandPaletteOpen, close: closeCommandPalette } = useCommandPalette();
+
   return (
     <ErrorBoundary>
       <Toaster
@@ -84,6 +88,10 @@ function App() {
         }}
       />
       <BrowserRouter>
+        {/* Command Palette - Global */}
+        {isAuthenticated && (
+          <CommandPalette isOpen={isCommandPaletteOpen} onClose={closeCommandPalette} />
+        )}
         {isAuthenticated ? (
           <div className="h-screen flex">
             <Routes>

@@ -55,6 +55,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     prevLoadingRef.current = isLoading;
   }, [isLoading]);
 
+  // Listen for focus event from command palette
+  useEffect(() => {
+    const handleFocusEvent = () => {
+      textareaRef.current?.focus();
+    };
+    window.addEventListener('focusMessageInput', handleFocusEvent);
+    return () => {
+      window.removeEventListener('focusMessageInput', handleFocusEvent);
+    };
+  }, []);
+
   // Validate image file
   const validateImageFile = useCallback(
     (file: File): string | null => {

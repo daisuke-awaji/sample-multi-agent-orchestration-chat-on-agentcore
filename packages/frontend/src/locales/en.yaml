@@ -129,17 +129,31 @@ auth:
 # Navigation
 navigation:
   home: Home
+  chat: Chat
   newChat: New Chat
   searchChat: Search Chats
   searchTools: Search Tools
   searchAgents: Search Agents
   manageAgents: Manage Agents
+  myAgents: My Agents
   events: Event Integration
   settings: Settings
   userMenu: User Menu
   toggleSidebar: Toggle Sidebar
   openSidebar: Open Sidebar
   closeSidebar: Close Sidebar
+
+# Command Palette
+commandPalette:
+  placeholder: Type a command or search...
+  noResults: No results found
+  switchAgent: Switch Agent
+  quickActions: Quick Actions
+  navigation: Navigation
+  recentChats: Recent Chats
+  toNavigate: to navigate
+  toSelect: to select
+  toToggle: to toggle
 
 # Chat
 chat:

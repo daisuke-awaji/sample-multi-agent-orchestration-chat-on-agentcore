@@ -128,6 +128,7 @@ auth:
 # ナビゲーション
 navigation:
   home: ホーム
+  chat: チャット
   newChat: 新しいチャット
   searchChat: チャットを検索
   searchTools: ツールを検索
@@ -140,6 +141,18 @@ navigation:
   toggleSidebar: サイドバーを切り替え
   openSidebar: サイドバーを開く
   closeSidebar: サイドバーを閉じる
+
+# コマンドパレット
+commandPalette:
+  placeholder: コマンドを入力または検索...
+  noResults: 該当する結果がありません
+  switchAgent: エージェントを切り替え
+  quickActions: クイックアクション
+  navigation: ナビゲーション
+  recentChats: 最近のチャット
+  toNavigate: 移動
+  toSelect: 選択
+  toToggle: 開閉
 
 # チャット
 chat:
