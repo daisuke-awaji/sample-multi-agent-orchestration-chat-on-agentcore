@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/daisuke-awaji/donuts) 
+
 Language: [English](./README.md) / [Japanese](./README-ja.md)
 
 # 🍩 Donuts
