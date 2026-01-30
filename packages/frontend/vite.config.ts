@@ -102,8 +102,8 @@ export default defineConfig({
             'katex',
           ],
 
-          // Mermaid ダイアグラム（非常に大きい）
-          'vendor-mermaid': ['mermaid'],
+          // Mermaid ダイアグラム
+          'vendor-mermaid': ['beautiful-mermaid'],
 
           // シンタックスハイライト（大きい）
           'vendor-syntax': ['react-syntax-highlighter'],
