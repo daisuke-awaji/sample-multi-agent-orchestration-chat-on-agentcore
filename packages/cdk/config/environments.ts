@@ -23,15 +23,14 @@ export const BASE_PREFIX = 'donuts';
  *   - s3AutoDeleteObjects: true
  *   - cognitoDeletionProtection: false
  *   - logRetentionDays: 7
+ *   - tavilyApiKeySecretName: 'agentcore/default/tavily-api-key'
+ *   - githubTokenSecretName: 'agentcore/default/github-token'
  */
 export const environments: Record<Environment, EnvironmentConfigInput> = {
   /**
    * Default environment
    */
-  default: {
-    tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
-    githubTokenSecretName: 'agentcore/default/github-token',
-  },
+  default: {},
 
   /**
    * Development environment
@@ -39,10 +38,6 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   dev: {
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
-    customDomain: {
-      hostName: 'donuts-dev',
-      domainName: 'geeawa.net',
-    },
     eventRules: [
       {
         id: 's3-upload',

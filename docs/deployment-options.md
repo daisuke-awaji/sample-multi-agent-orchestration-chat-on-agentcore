@@ -39,8 +39,8 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
 | `s3AutoDeleteObjects` | boolean | `true` | Auto-delete S3 objects on stack deletion |
 | `cognitoDeletionProtection` | boolean | `false` | Cognito User Pool deletion protection |
 | `logRetentionDays` | number | `7` | Lambda log retention period (days) |
-| `tavilyApiKeySecretName` | string | - | Secrets Manager secret name for Tavily API key |
-| `githubTokenSecretName` | string | - | Secrets Manager secret name for GitHub token |
+| `tavilyApiKeySecretName` | string | `'agentcore/default/tavily-api-key'` | Secrets Manager secret name for Tavily API key |
+| `githubTokenSecretName` | string | `'agentcore/default/github-token'` | Secrets Manager secret name for GitHub token |
 | `allowedSignUpEmailDomains` | string[] | - | Allowed email domains for sign-up |
 | `customDomain` | object | - | Custom domain configuration |
 | `testUser` | object | - | Test user auto-creation (dev only) |

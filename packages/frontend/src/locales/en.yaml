@@ -82,6 +82,7 @@ auth:
   backToSignUp: Back to Sign Up
   forgotPassword:
     title: Forgot Password
+    link: Forgot your password?
     description: We'll send a verification code to your email address to reset your password
     sendCode: Send Verification Code
     sendingCode: Sending...
