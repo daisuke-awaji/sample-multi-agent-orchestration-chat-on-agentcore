@@ -3,6 +3,7 @@
  */
 
 import { Request, Response } from 'express';
+import { nanoid } from 'nanoid';
 import { createAgent } from '../agent.js';
 import { getContextMetadata, getCurrentContext } from '../context/request-context.js';
 import { setupSession, getSessionStorage } from '../session/session-helper.js';
@@ -159,21 +160,39 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       // Build input content (text + images for multimodal)
       const agentInput = buildInputContent(prompt, images);
 
+      // Track message IDs for deduplication
+      // Each role (user/assistant) gets a unique messageId per turn
+      let userMessageId: string | null = null;
+      let assistantMessageId: string | null = null;
+
       // Send streaming events as NDJSON
       for await (const event of agent.stream(agentInput)) {
         // For messageAddedEvent, save in real-time (only if session exists)
         if (event.type === 'messageAddedEvent' && event.message && sessionResult) {
+          // Generate or reuse messageId based on role
+          const role = event.message.role as 'user' | 'assistant';
+          let messageId: string;
+          if (role === 'user') {
+            userMessageId ??= nanoid();
+            messageId = userMessageId;
+          } else {
+            assistantMessageId ??= nanoid();
+            messageId = assistantMessageId;
+          }
+
           try {
             await sessionStorage.appendMessage(sessionResult.config, event.message);
             logger.info('Message saved in real-time:', {
               role: event.message.role,
               contentBlocks: event.message.content.length,
+              messageId,
             });
 
             // Publish to AppSync Events for cross-tab/cross-device sync
             publishMessageEvent(actorId, sessionResult.config.sessionId, {
               type: 'MESSAGE_ADDED',
               sessionId: sessionResult.config.sessionId,
+              messageId,
               message: {
                 role: event.message.role as 'user' | 'assistant',
                 content: event.message.content,
@@ -186,11 +205,15 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
             logger.error('Message save failed (streaming continues):', saveError);
             // Continue streaming even if save error occurs
           }
-        }
 
-        // Serialize event avoiding circular references
-        const safeEvent = serializeStreamEvent(event);
-        res.write(`${JSON.stringify(safeEvent)}\n`);
+          // Add messageId to stream event for frontend deduplication
+          const safeEvent = { ...serializeStreamEvent(event), messageId };
+          res.write(`${JSON.stringify(safeEvent)}\n`);
+        } else {
+          // Serialize event avoiding circular references
+          const safeEvent = serializeStreamEvent(event);
+          res.write(`${JSON.stringify(safeEvent)}\n`);
+        }
       }
 
       logger.info('Agent streaming completed:', { requestId });

@@ -8,6 +8,7 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useChatStore } from '../stores/chatStore';
 import { useSessionStore } from '../stores/sessionStore';
+import { useProcessedMessageStore } from '../stores/processedMessageStore';
 import { useAppSyncSubscription } from './useAppSyncSubscription';
 import {
   useAppSyncConnectionState,
@@ -57,6 +58,7 @@ function buildSubscriptionId(sessionId: string): string {
 interface MessageEvent {
   type: 'MESSAGE_ADDED' | 'AGENT_COMPLETE' | 'AGENT_ERROR';
   sessionId: string;
+  messageId?: string; // Unique message ID for deduplication
   message?: {
     role: 'user' | 'assistant';
     content: unknown[];
@@ -190,7 +192,20 @@ export function useMessageEventsSubscription(sessionId: string | null) {
           const sessionState = chatStore.getSessionState(event.sessionId);
           if (!sessionState) break;
 
+          // Check for duplicate by messageId (primary deduplication method)
+          // This prevents duplicates when the same message arrives via both stream and AppSync
+          if (event.messageId) {
+            const processedMessageStore = useProcessedMessageStore.getState();
+            if (processedMessageStore.isProcessed(event.messageId)) {
+              console.log(
+                `⚠️ Skipping message event - already processed via stream (messageId: ${event.messageId})`
+              );
+              break;
+            }
+          }
+
           // Skip if this tab is currently sending (to avoid duplicates)
+          // This is a fallback for messages without messageId
           if (sessionState.isLoading) {
             console.log('⚠️ Skipping message event while loading (sender tab)');
             break;
@@ -199,7 +214,7 @@ export function useMessageEventsSubscription(sessionId: string | null) {
           // Convert content first for comparison
           const contents: MessageContent[] = event.message.content.map(convertContent);
 
-          // Check for duplicate by message content
+          // Check for duplicate by message content (fallback for messages without messageId)
           const eventText = getTextContent(contents);
           const isDuplicate = sessionState.messages.some((msg) => {
             if (msg.type !== event.message!.role) return false;

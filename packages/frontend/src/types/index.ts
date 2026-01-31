@@ -126,6 +126,7 @@ export interface ModelContentBlockStartEvent extends AgentStreamEvent {
 
 export interface MessageAddedEvent extends AgentStreamEvent {
   type: 'messageAddedEvent';
+  messageId?: string; // Unique message ID for deduplication
   message?: {
     role?: string;
     content?: Array<{

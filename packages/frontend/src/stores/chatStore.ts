@@ -17,6 +17,7 @@ import { useStorageStore } from './storageStore';
 import { useSessionStore } from './sessionStore';
 import { useMemoryStore } from './memoryStore';
 import { useSettingsStore } from './settingsStore';
+import { useProcessedMessageStore } from './processedMessageStore';
 
 // Helper function: Convert image to Base64
 const convertImageToBase64 = (file: File): Promise<string> => {
@@ -453,6 +454,10 @@ export const useChatStore = create<ChatStore>()(
                   // Set flag for next text to start as a new block
                   isAfterToolExecution = true;
                 }
+              },
+              onMessageId: (messageId: string) => {
+                // Track message ID as processed to prevent duplicate from AppSync Events
+                useProcessedMessageStore.getState().markProcessed(messageId);
               },
               onComplete: () => {
                 updateMessage(sessionId, assistantMessageId, {

@@ -23,6 +23,7 @@ interface StreamingCallbacks {
   onToolResult?: (toolResult: ToolResult) => void;
   onComplete?: (metadata: Record<string, unknown>) => void;
   onError?: (error: Error) => void;
+  onMessageId?: (messageId: string) => void; // Callback to track processed message IDs for deduplication
 }
 
 /**
@@ -275,6 +276,11 @@ const handleStreamEvent = (event: AgentStreamEvent, callbacks: StreamingCallback
       // メッセージ追加イベント（ツール結果が含まれる可能性がある）
       const messageEvent = event as MessageAddedEvent;
       console.debug('🔍 messageAddedEvent received:', messageEvent);
+
+      // Track messageId for deduplication with AppSync Events
+      if (messageEvent.messageId && callbacks.onMessageId) {
+        callbacks.onMessageId(messageEvent.messageId);
+      }
 
       if (messageEvent.message?.content) {
         const content = messageEvent.message.content;

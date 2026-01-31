@@ -22,6 +22,7 @@ export type MessageEventType = 'MESSAGE_ADDED' | 'AGENT_COMPLETE' | 'AGENT_ERROR
 export interface MessageEvent {
   type: MessageEventType;
   sessionId: string;
+  messageId?: string; // Unique message ID for deduplication across stream and AppSync Events
   message?: {
     role: 'user' | 'assistant';
     content: unknown[]; // ContentBlock array from agent SDK
