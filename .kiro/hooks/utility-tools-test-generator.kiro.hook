@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Utility Tools Test Generator",
+  "description": "When a new tool is created in packages/lambda-tools/tools/utility-tools/src/tools, automatically generate corresponding unit tests, run them, and iterate on the implementation until all tests pass",
+  "version": "1",
+  "when": {
+    "type": "fileCreated",
+    "patterns": [
+      "packages/lambda-tools/tools/utility-tools/src/tools/*.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new tool file has been created in packages/lambda-tools/tools/utility-tools/src/tools. Please:\n\n1. Analyze the new tool implementation to understand its functionality\n2. Create a comprehensive unit test file in packages/lambda-tools/tools/utility-tools/src/tools/__tests__/ following Jest best practices\n3. Run the tests using `npm test` in the utility-tools directory\n4. If tests fail, analyze the failures and fix the implementation or tests as needed\n5. Repeat step 3-4 until all tests pass\n6. Provide a summary of the test coverage and any implementation improvements made\n\nUse the existing test patterns in the codebase as reference for test structure and mocking strategies."
+  }
+}

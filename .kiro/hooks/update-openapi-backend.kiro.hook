@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Update OpenAPI Backend Spec",
+  "description": "Monitors backend API route changes and prompts to update openapi-backend.yaml specification when routes are added or modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "packages/backend/src/routes/*.ts",
+      "packages/backend/src/index.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Backend API routes have been modified. Please review the changes and check if openapi-backend.yaml needs to be updated. If new endpoints were added or existing endpoints were modified (path, method, parameters, request/response schemas), update the OpenAPI specification accordingly to keep the API documentation in sync."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "name": "Lint TypeScript on Save",
+  "description": "Automatically runs npm run lint after saving TypeScript files to catch linting issues immediately",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.ts",
+      "*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `npm run lint` to check for linting issues in the modified TypeScript files. If there are any errors, fix them automatically using `npm run lint:fix`."
+  }
+}
