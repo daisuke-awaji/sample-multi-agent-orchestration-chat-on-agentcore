@@ -28,6 +28,7 @@ import { useSessionEventsSubscription } from '../hooks/useSessionEventsSubscript
 import { LoadingIndicator } from './ui/LoadingIndicator';
 import { Tooltip } from './ui/Tooltip';
 import { ConfirmModal } from './ui/Modal';
+import { NavItem } from './ui/NavItem';
 import type { SessionSummary } from '../api/sessions';
 
 /**
@@ -96,10 +97,10 @@ function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: Sess
             text-sm leading-tight truncate
             ${
               isSubAgent || isEventTriggered
-                ? 'text-gray-500'
+                ? 'text-fg-muted'
                 : isActive
-                  ? 'text-gray-700'
-                  : 'text-gray-700 group-hover:text-gray-800'
+                  ? 'text-fg-secondary'
+                  : 'text-fg-secondary group-hover:text-fg-default'
             }
           `}
           >
@@ -115,7 +116,7 @@ function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: Sess
         onClick={handleMenuClick}
         className={`
           absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded
-          text-gray-400 hover:text-gray-600 hover:bg-gray-200
+          text-fg-disabled hover:text-fg-secondary hover:bg-gray-200
           transition-opacity duration-200
           ${isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
         `}
@@ -128,11 +129,11 @@ function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: Sess
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[120px]"
+          className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-border py-1 z-50 min-w-[120px]"
         >
           <button
             onClick={handleDeleteClick}
-            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            className="w-full px-3 py-2 text-left text-sm text-feedback-error hover:bg-feedback-error-bg flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             {t('common.delete')}
@@ -328,10 +329,10 @@ export function SessionSidebar() {
 
   return (
     <div
-      className={`h-full bg-white border-r border-gray-200 flex flex-col ${shouldShowExpanded ? 'w-80' : 'w-16'}`}
+      className={`h-full bg-white border-r border-border flex flex-col ${shouldShowExpanded ? 'w-80' : 'w-16'}`}
     >
       {/* Header */}
-      <div className={`p-4 ${shouldShowExpanded ? 'border-b border-gray-200' : ''} bg-white`}>
+      <div className={`p-4 ${shouldShowExpanded ? 'border-b border-border' : ''} bg-white`}>
         <div
           className={`flex items-center mb-3 ${shouldShowExpanded ? 'justify-between' : 'justify-center'}`}
         >
@@ -342,8 +343,8 @@ export function SessionSidebar() {
                 className="flex items-center gap-2 rounded-lg p-2 pb-1 pt-1 transition-colors group no-underline"
                 title="Return to home page"
               >
-                <Donut className="w-5 h-5 text-gray-700 group-hover:text-amber-600 transition-colors" />
-                <span className="text-lg font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">
+                <Donut className="w-5 h-5 text-fg-secondary group-hover:text-amber-600 transition-colors" />
+                <span className="text-lg font-semibold text-fg-default group-hover:text-amber-700 transition-colors">
                   {t('auth.welcomeTitle')}
                 </span>
               </Link>
@@ -351,7 +352,7 @@ export function SessionSidebar() {
               {/* × button on mobile, PanelRight button on desktop */}
               <button
                 onClick={handleToggleSidebar}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-fg-secondary hover:text-fg-default hover:bg-gray-100 rounded-lg transition-colors"
                 title={isMobileView ? 'Close sidebar' : 'Close sidebar'}
               >
                 {isMobileView ? <X className="w-5 h-5" /> : <PanelRight className="w-5 h-5" />}
@@ -360,7 +361,7 @@ export function SessionSidebar() {
           ) : (
             <button
               onClick={handleToggleSidebar}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors group"
+              className="p-2 text-fg-secondary hover:text-fg-default hover:bg-gray-100 rounded-lg transition-colors group"
               title="Open sidebar"
             >
               <Donut className="w-5 h-5 text-amber-600 group-hover:hidden" />
@@ -370,80 +371,37 @@ export function SessionSidebar() {
         </div>
 
         <div className={`space-y-2 ${!shouldShowExpanded ? 'flex flex-col items-center' : ''}`}>
-          <Tooltip content={t('navigation.newChat')} position="right" disabled={shouldShowExpanded}>
-            <Link
-              to="/chat"
-              onClick={handleNewChat}
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <SquarePen className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && <span className="text-sm">{t('navigation.newChat')}</span>}
-            </Link>
-          </Tooltip>
-
-          <Tooltip
-            content={t('navigation.searchChat')}
-            position="right"
-            disabled={shouldShowExpanded}
-          >
-            <Link
-              to="/search-chat"
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <Search className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && <span className="text-sm">{t('navigation.searchChat')}</span>}
-            </Link>
-          </Tooltip>
-
-          <Tooltip
-            content={t('navigation.searchAgents')}
-            position="right"
-            disabled={shouldShowExpanded}
-          >
-            <Link
-              to="/search"
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <Bot className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && (
-                <span className="text-sm">{t('navigation.searchAgents')}</span>
-              )}
-            </Link>
-          </Tooltip>
-
-          <Tooltip
-            content={t('navigation.searchTools')}
-            position="right"
-            disabled={shouldShowExpanded}
-          >
-            <Link
-              to="/tools"
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <Wrench className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && <span className="text-sm">{t('navigation.searchTools')}</span>}
-            </Link>
-          </Tooltip>
-
-          <Tooltip content={t('navigation.events')} position="right" disabled={shouldShowExpanded}>
-            <Link
-              to="/events"
-              className={`p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 no-underline ${
-                shouldShowExpanded ? 'w-full text-left' : 'w-auto'
-              }`}
-            >
-              <CalendarRange className="w-5 h-5 flex-shrink-0" />
-              {shouldShowExpanded && <span className="text-sm">{t('navigation.events')}</span>}
-            </Link>
-          </Tooltip>
+          <NavItem
+            to="/chat"
+            icon={SquarePen}
+            label={t('navigation.newChat')}
+            collapsed={!shouldShowExpanded}
+            onClick={handleNewChat}
+          />
+          <NavItem
+            to="/search-chat"
+            icon={Search}
+            label={t('navigation.searchChat')}
+            collapsed={!shouldShowExpanded}
+          />
+          <NavItem
+            to="/search"
+            icon={Bot}
+            label={t('navigation.searchAgents')}
+            collapsed={!shouldShowExpanded}
+          />
+          <NavItem
+            to="/tools"
+            icon={Wrench}
+            label={t('navigation.searchTools')}
+            collapsed={!shouldShowExpanded}
+          />
+          <NavItem
+            to="/events"
+            icon={CalendarRange}
+            label={t('navigation.events')}
+            collapsed={!shouldShowExpanded}
+          />
         </div>
       </div>
 
@@ -452,7 +410,7 @@ export function SessionSidebar() {
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
           {sessionsError && (
             <div className="p-4">
-              <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+              <div className="bg-feedback-error-bg border border-feedback-error-border text-feedback-error px-3 py-2 rounded-lg text-sm">
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -474,9 +432,9 @@ export function SessionSidebar() {
           )}
 
           {!isLoadingSessions && sessions.length === 0 && !sessionsError && (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-fg-muted">
               <svg
-                className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                className="w-12 h-12 mx-auto mb-3 text-fg-disabled"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -489,7 +447,7 @@ export function SessionSidebar() {
                 />
               </svg>
               <p className="text-sm">{t('chat.noConversations')}</p>
-              <p className="text-xs text-gray-400 mt-1">{t('chat.startNewChat')}</p>
+              <p className="text-xs text-fg-disabled mt-1">{t('chat.startNewChat')}</p>
             </div>
           )}
 
@@ -518,7 +476,7 @@ export function SessionSidebar() {
 
       {/* User info - Bottom of sidebar */}
       <div
-        className={`mt-auto p-4 border-t border-gray-200 ${!shouldShowExpanded ? 'flex justify-center' : ''}`}
+        className={`mt-auto p-4 border-t border-border ${!shouldShowExpanded ? 'flex justify-center' : ''}`}
       >
         <div className="relative" ref={userDropdownRef}>
           <Tooltip
@@ -533,10 +491,12 @@ export function SessionSidebar() {
               }`}
             >
               <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-600" />
+                <User className="w-4 h-4 text-fg-secondary" />
               </div>
               {shouldShowExpanded && (
-                <span className="text-sm font-medium text-gray-900 truncate">{user.username}</span>
+                <span className="text-sm font-medium text-fg-default truncate">
+                  {user.username}
+                </span>
               )}
             </button>
           </Tooltip>
@@ -544,7 +504,7 @@ export function SessionSidebar() {
           {/* Dropdown menu */}
           {isUserDropdownOpen && (
             <div
-              className={`absolute bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50 ${
+              className={`absolute bg-white rounded-2xl shadow-lg border border-border py-2 z-50 ${
                 shouldShowExpanded
                   ? 'bottom-full left-0 right-0 mb-2'
                   : 'bottom-full left-0 mb-2 w-48'
@@ -552,17 +512,17 @@ export function SessionSidebar() {
             >
               {/* User info - Display only when expanded */}
               {shouldShowExpanded && (
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                  <p className="text-xs text-gray-500">{t('auth.authenticated')}</p>
+                <div className="px-4 py-2 border-b border-border">
+                  <p className="text-sm font-medium text-fg-default">{user.username}</p>
+                  <p className="text-xs text-fg-muted">{t('auth.authenticated')}</p>
                 </div>
               )}
 
               {/* Also show username when collapsed */}
               {!shouldShowExpanded && (
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                  <p className="text-xs text-gray-500">{t('auth.authenticated')}</p>
+                <div className="px-4 py-2 border-b border-border">
+                  <p className="text-sm font-medium text-fg-default">{user.username}</p>
+                  <p className="text-xs text-fg-muted">{t('auth.authenticated')}</p>
                 </div>
               )}
 
@@ -570,7 +530,7 @@ export function SessionSidebar() {
               <Link
                 to="/settings"
                 onClick={() => setIsUserDropdownOpen(false)}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 no-underline"
+                className="w-full px-4 py-2 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center gap-2 no-underline"
               >
                 <Settings className="w-4 h-4" />
                 {t('navigation.settings')}
@@ -579,7 +539,7 @@ export function SessionSidebar() {
               {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                className="w-full px-4 py-2 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
                 {t('auth.signOut')}

@@ -7,6 +7,8 @@ import React from 'react';
 import { X, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Modal } from './Modal/Modal';
 import { useTranslation } from 'react-i18next';
+import { Button } from './Button';
+import { Alert } from './Alert';
 
 interface DownloadProgressModalProps {
   isOpen: boolean;
@@ -38,13 +40,15 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
     <Modal isOpen={isOpen} onClose={canClose ? onClose : () => {}}>
       <div className="w-full max-w-md min-w-[400px]">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            {status === 'downloading' && <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />}
-            {status === 'success' && <CheckCircle className="w-5 h-5 text-green-600" />}
-            {status === 'error' && <XCircle className="w-5 h-5 text-red-600" />}
-            {status === 'cancelled' && <XCircle className="w-5 h-5 text-gray-600" />}
-            <h2 className="text-xl font-semibold text-gray-900">
+            {status === 'downloading' && (
+              <Loader2 className="w-5 h-5 text-action-primary animate-spin" />
+            )}
+            {status === 'success' && <CheckCircle className="w-5 h-5 text-action-success" />}
+            {status === 'error' && <XCircle className="w-5 h-5 text-feedback-error" />}
+            {status === 'cancelled' && <XCircle className="w-5 h-5 text-fg-secondary" />}
+            <h2 className="text-xl font-semibold text-fg-default">
               {status === 'downloading' && t('storage.downloadProgress.downloading')}
               {status === 'success' && t('storage.downloadProgress.success')}
               {status === 'error' && t('storage.downloadProgress.error')}
@@ -54,7 +58,7 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
           {canClose && (
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-fg-disabled hover:text-fg-secondary hover:bg-gray-100 rounded-btn transition-colors"
               aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
@@ -67,7 +71,7 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
           {/* Progress Bar */}
           {(status === 'downloading' || status === 'success') && (
             <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-fg-secondary">
                 <span>
                   {progress.current} / {progress.total} {t('storage.downloadProgress.files')}
                 </span>
@@ -76,7 +80,7 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
               <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
-                    status === 'success' ? 'bg-green-600' : 'bg-blue-600'
+                    status === 'success' ? 'bg-action-success' : 'bg-action-primary'
                   }`}
                   style={{ width: `${progress.percentage}%` }}
                 />
@@ -87,9 +91,9 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
           {/* Current File */}
           {status === 'downloading' && (
             <div className="space-y-1 min-h-[52px]">
-              <p className="text-sm text-gray-500">{t('storage.downloadProgress.currentFile')}</p>
+              <p className="text-sm text-fg-muted">{t('storage.downloadProgress.currentFile')}</p>
               <p
-                className="text-sm text-gray-900 font-mono truncate max-w-full overflow-hidden"
+                className="text-sm text-fg-default font-mono truncate max-w-full overflow-hidden"
                 title={progress.currentFile}
               >
                 {progress.currentFile}
@@ -99,43 +103,33 @@ export const DownloadProgressModal: React.FC<DownloadProgressModalProps> = ({
 
           {/* Success Message */}
           {status === 'success' && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-fg-secondary">
               <p>{t('storage.downloadProgress.successMessage')}</p>
             </div>
           )}
 
           {/* Error Message */}
-          {status === 'error' && errorMessage && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{errorMessage}</p>
-            </div>
-          )}
+          {status === 'error' && errorMessage && <Alert variant="error">{errorMessage}</Alert>}
 
           {/* Cancelled Message */}
           {status === 'cancelled' && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-fg-secondary">
               <p>{t('storage.downloadProgress.cancelledMessage')}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end gap-3 p-6 border-t border-border">
           {status === 'downloading' && onCancel && (
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
+            <Button variant="outline" size="md" onClick={onCancel}>
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
           {canClose && (
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <Button variant="primary" size="md" onClick={onClose}>
               {t('common.close')}
-            </button>
+            </Button>
           )}
         </div>
       </div>

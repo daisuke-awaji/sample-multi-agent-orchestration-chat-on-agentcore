@@ -204,13 +204,13 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
   return (
     <div className="space-y-4">
       {/* Description */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-fg-secondary">
         <p>{t('tool.mcp.description')}</p>
       </div>
 
       {/* JSON エディター */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-fg-secondary mb-2">
           {t('tool.mcp.configLabel')}
         </label>
         <textarea
@@ -219,7 +219,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
           disabled={disabled}
           placeholder={`{\n  "mcpServers": {\n    "github": {\n      "command": "uvx",\n      "args": ["mcp-server-github"],\n      "env": {\n        "GITHUB_TOKEN": "your_token"\n      }\n    }\n  }\n}`}
           rows={12}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none font-mono text-sm"
+          className="w-full px-3 py-2 border border-border-strong rounded-lg focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none font-mono text-sm"
         />
       </div>
 
@@ -231,7 +231,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
             type="button"
             onClick={() => setShowSampleDropdown(!showSampleDropdown)}
             disabled={disabled}
-            className="inline-flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center space-x-2 px-3 py-2 text-sm text-fg-secondary bg-white border border-border-strong rounded-lg hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span>{t('tool.mcp.insertSample')}</span>
             <ChevronDown className="w-4 h-4" />
@@ -240,7 +240,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
           {showSampleDropdown && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowSampleDropdown(false)} />
-              <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+              <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-border py-1 z-20">
                 {Object.entries(SAMPLE_CONFIGS(t)).map(([key, sample]) => (
                   <button
                     key={key}
@@ -248,7 +248,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
                     onClick={() =>
                       handleInsertSample(key as keyof ReturnType<typeof SAMPLE_CONFIGS>)
                     }
-                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full px-3 py-2 text-left text-sm text-fg-secondary hover:bg-surface-secondary transition-colors"
                   >
                     {sample.label}
                   </button>
@@ -262,7 +262,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
           type="button"
           onClick={handleFetchTools}
           disabled={disabled || isFetchingTools || !jsonText.trim()}
-          className="inline-flex items-center space-x-2 px-3 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center space-x-2 px-3 py-2 text-sm text-white bg-action-primary rounded-lg hover:bg-action-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isFetchingTools ? (
             <>
@@ -283,10 +283,10 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
 
       {/* Validationエラー */}
       {validationError && (
-        <div className="flex items-start space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start space-x-2 p-3 bg-feedback-error-bg border border-feedback-error-border rounded-lg">
+          <AlertCircle className="w-5 h-5 text-feedback-error flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-red-600">{validationError}</p>
+            <p className="text-sm text-feedback-error">{validationError}</p>
           </div>
         </div>
       )}
@@ -294,11 +294,13 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
       {/* ツールプレビューとエラー */}
       {(toolsPreview.length > 0 || serverErrors.length > 0) && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-700">{t('tool.mcp.connectionResults')}</h3>
+          <h3 className="text-sm font-medium text-fg-secondary">
+            {t('tool.mcp.connectionResults')}
+          </h3>
 
           {/* 接続成功したサーバー */}
           {toolsPreview.length > 0 && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-4">
+            <div className="p-4 bg-feedback-success-bg border border-feedback-success-border rounded-lg space-y-4">
               {Object.entries(groupedTools).map(([serverName, tools]) => (
                 <div key={serverName}>
                   <h4 className="text-sm font-medium text-green-900 mb-2 flex items-center space-x-2">
@@ -314,9 +316,9 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
                         className="flex items-start space-x-2 text-sm"
                       >
                         <div>
-                          <span className="font-mono text-gray-900">{tool.name}</span>
+                          <span className="font-mono text-fg-default">{tool.name}</span>
                           {tool.description && (
-                            <span className="text-gray-600"> - {tool.description}</span>
+                            <span className="text-fg-secondary"> - {tool.description}</span>
                           )}
                         </div>
                       </div>
@@ -329,9 +331,9 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
 
           {/* 接続失敗したサーバー */}
           {serverErrors.length > 0 && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-3">
-              <h4 className="text-sm font-medium text-red-900 flex items-center space-x-2">
-                <XCircle className="w-4 h-4 text-red-600" />
+            <div className="p-4 bg-feedback-error-bg border border-feedback-error-border rounded-lg space-y-3">
+              <h4 className="text-sm font-medium text-feedback-error flex items-center space-x-2">
+                <XCircle className="w-4 h-4 text-feedback-error" />
                 <span>{t('tool.mcp.connectionErrors')}</span>
               </h4>
               <div className="space-y-3 ml-6">
@@ -339,8 +341,8 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
                   const isExpanded = expandedErrors.has(error.serverName);
                   return (
                     <div key={`${error.serverName}-${index}`} className="text-sm">
-                      <div className="font-medium text-red-900">{error.serverName}</div>
-                      <div className="text-red-700 mt-1 text-xs">{error.message}</div>
+                      <div className="font-medium text-feedback-error">{error.serverName}</div>
+                      <div className="text-feedback-error mt-1 text-xs">{error.message}</div>
 
                       {/* 詳細情報の表示 */}
                       {error.details && (
@@ -348,7 +350,7 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
                           <button
                             type="button"
                             onClick={() => toggleErrorDetails(error.serverName)}
-                            className="inline-flex items-center space-x-1 text-xs text-red-800 hover:text-red-900 transition-colors"
+                            className="inline-flex items-center space-x-1 text-xs text-feedback-error hover:text-feedback-error transition-colors"
                           >
                             {isExpanded ? (
                               <ChevronDown className="w-3 h-3" />
@@ -361,8 +363,8 @@ export const MCPConfigEditor: React.FC<MCPConfigEditorProps> = ({
                           </button>
 
                           {isExpanded && (
-                            <div className="mt-2 p-3 bg-red-100 rounded border border-red-300 overflow-x-auto">
-                              <pre className="text-xs font-mono text-red-900 whitespace-pre-wrap break-all">
+                            <div className="mt-2 p-3 bg-red-100 rounded border border-feedback-error-border overflow-x-auto">
+                              <pre className="text-xs font-mono text-feedback-error whitespace-pre-wrap break-all">
                                 {error.details}
                               </pre>
                             </div>

@@ -279,7 +279,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
             {/* Basic Settings Tab */}
             {activeTab === 'basic' && (
               <div className="space-y-6 max-w-5xl mx-auto">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                <h2 className="text-lg font-semibold text-fg-default mb-6">
                   {t('triggers.tabs.basic')}
                 </h2>
 
@@ -319,7 +319,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
             {/* Trigger Configuration Tab */}
             {activeTab === 'trigger' && (
               <div className="space-y-6 max-w-5xl mx-auto">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">
+                <h2 className="text-lg font-semibold text-fg-default mb-6">
                   {t('triggers.tabs.trigger')}
                 </h2>
 
@@ -364,7 +364,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
             type="button"
             onClick={handleCancel}
             disabled={isSaving}
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm"
+            className="px-5 py-2.5 text-sm font-medium text-fg-secondary bg-gray-100 rounded-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm"
           >
             {t('triggers.form.cancel')}
           </button>
@@ -372,7 +372,7 @@ export function TriggerFormModal({ isOpen, onClose, trigger, onSave }: TriggerFo
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm flex items-center gap-2"
+            className="px-5 py-2.5 text-sm font-medium text-white bg-action-primary rounded-xl hover:bg-action-primary-hover active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shadow-sm flex items-center gap-2"
           >
             {isSaving && (
               <svg

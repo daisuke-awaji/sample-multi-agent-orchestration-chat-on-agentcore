@@ -41,24 +41,24 @@ function MemoryRecordItem({ record, onDelete, isDeleting }: MemoryRecordItemProp
   const canDelete = Boolean(record.recordId && record.recordId.trim());
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+    <div className="border border-border rounded-lg p-4 hover:bg-surface-secondary transition-colors">
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-900 leading-relaxed mb-2">{truncatedContent}</p>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <p className="text-sm text-fg-default leading-relaxed mb-2">{truncatedContent}</p>
+          <div className="flex items-center gap-4 text-xs text-fg-muted">
             <span>
               {t('memory.created')}: {new Date(record.createdAt).toLocaleDateString()}
             </span>
             <span>
               {t('memory.updated')}: {new Date(record.updatedAt).toLocaleDateString()}
             </span>
-            {!canDelete && <span className="text-red-500">{t('memory.cannotDelete')}</span>}
+            {!canDelete && <span className="text-feedback-error">{t('memory.cannotDelete')}</span>}
           </div>
         </div>
         <button
           onClick={handleDelete}
           disabled={isDeleting || !canDelete}
-          className="flex-shrink-0 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-shrink-0 p-2 text-fg-disabled hover:text-feedback-error hover:bg-feedback-error-bg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title={canDelete ? t('common.delete') : t('memory.cannotDeleteTooltip')}
         >
           {isDeleting ? (
@@ -141,28 +141,28 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl" className="max-w-4xl h-[70vh] flex flex-col">
       {/* ヘッダー */}
-      <div className="border-b border-gray-200 px-6 py-4 flex-shrink-0">
+      <div className="border-b border-border px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-gray-700" />
-            <h2 className="text-lg font-semibold text-gray-900">{t('memory.savedMemories')}</h2>
+            <Brain className="w-5 h-5 text-fg-secondary" />
+            <h2 className="text-lg font-semibold text-fg-default">{t('memory.savedMemories')}</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="rounded-md p-2 text-fg-disabled hover:text-fg-secondary hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-sm text-gray-600 mt-2">{t('memory.description')}</p>
+        <p className="text-sm text-fg-secondary mt-2">{t('memory.description')}</p>
       </div>
 
       {/* 検索セクション */}
-      <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
+      <div className="px-6 py-4 border-b border-border flex-shrink-0">
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="w-4 h-4 text-gray-400" />
+              <Search className="w-4 h-4 text-fg-disabled" />
             </div>
             <input
               type="text"
@@ -170,21 +170,21 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={t('memory.searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full pl-10 pr-4 py-2 border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-transparent text-sm"
             />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
-                <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                <X className="w-4 h-4 text-fg-disabled hover:text-fg-secondary" />
               </button>
             )}
           </div>
           <button
             onClick={handleSearch}
             disabled={isSearching || !searchQuery.trim()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-action-primary text-white text-sm font-medium rounded-md hover:bg-action-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : t('memory.searchButton')}
           </button>
@@ -195,13 +195,13 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
       <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0">
         {/* エラー表示 */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <div className="mb-4 p-3 bg-feedback-error-bg border border-feedback-error-border rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-feedback-error mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm text-red-800">{error}</p>
+              <p className="text-sm text-feedback-error">{error}</p>
               <button
                 onClick={clearError}
-                className="text-sm text-red-600 hover:text-red-800 font-medium mt-1"
+                className="text-sm text-feedback-error hover:text-feedback-error font-medium mt-1"
               >
                 {t('common.close')}
               </button>
@@ -212,8 +212,8 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
         {/* ローディング */}
         {isLoading && (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-sm text-gray-600">{t('common.loading')}</span>
+            <Loader2 className="w-6 h-6 animate-spin text-fg-disabled" />
+            <span className="ml-2 text-sm text-fg-secondary">{t('common.loading')}</span>
           </div>
         )}
 
@@ -222,7 +222,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
           <>
             {searchQuery && (
               <div className="mb-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-fg-secondary">
                   {t('memory.searchResults')}: {searchQuery} (
                   {t('memory.searchResultsCount', { count: searchResults.length })})
                 </p>
@@ -231,8 +231,8 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
 
             {displayRecords.length === 0 ? (
               <div className="text-center py-8">
-                <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-sm text-gray-600 mb-2">
+                <Brain className="w-12 h-12 text-fg-disabled mx-auto mb-4" />
+                <p className="text-sm text-fg-secondary mb-2">
                   {searchQuery
                     ? t('memory.noSearchResults')
                     : records.length === 0
@@ -240,7 +240,7 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
                       : t('memory.noMemories')}
                 </p>
                 {!searchQuery && records.length === 0 && (
-                  <p className="text-xs text-gray-500">{t('memory.autoAccumulate')}</p>
+                  <p className="text-xs text-fg-muted">{t('memory.autoAccumulate')}</p>
                 )}
               </div>
             ) : (
@@ -260,14 +260,14 @@ export function MemoryManagementModal({ isOpen, onClose }: MemoryManagementModal
       </div>
 
       {/* フッター */}
-      <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex-shrink-0">
+      <div className="border-t border-border px-6 py-4 bg-surface-secondary flex-shrink-0">
         <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-fg-muted">
             {t('memory.totalCount', { count: records.length })}
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-fg-secondary bg-white border border-border-strong rounded-md hover:bg-surface-secondary transition-colors"
           >
             {t('common.close')}
           </button>

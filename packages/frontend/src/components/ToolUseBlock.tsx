@@ -15,7 +15,7 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
     switch (toolUse.status) {
       case 'pending':
         return {
-          statusColor: 'text-gray-500',
+          statusColor: 'text-fg-muted',
           icon: (
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -29,7 +29,7 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
         };
       case 'running':
         return {
-          statusColor: 'text-blue-600',
+          statusColor: 'text-action-primary',
           icon: (
             <svg
               className="w-3 h-3 animate-spin"
@@ -62,7 +62,7 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
         };
       case 'error':
         return {
-          statusColor: 'text-red-600',
+          statusColor: 'text-feedback-error',
           icon: (
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -76,7 +76,7 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
         };
       default:
         return {
-          statusColor: 'text-gray-500',
+          statusColor: 'text-fg-muted',
           icon: (
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -103,24 +103,24 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
   return (
     <div className="tool-use-block w-full">
       {/* 白背景・グレー枠線のメインコンテナ */}
-      <div className="bg-white border border-gray-300 rounded-lg text-sm hover:shadow-sm transition-shadow">
+      <div className="bg-white border border-border-strong rounded-lg text-sm hover:shadow-sm transition-shadow">
         {/* ヘッダー部分（全体クリック可能） */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 px-3 py-1.5 w-full text-left hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 w-full text-left hover:bg-surface-secondary transition-colors"
           aria-label={isExpanded ? '入力を隠す' : '入力を表示'}
         >
           {/* アイコンとステータス */}
           <div className={`flex items-center ${statusStyles.statusColor}`}>{statusStyles.icon}</div>
 
           {/* ツール名 */}
-          <span className="font-medium text-gray-900">{toolUse.name}</span>
+          <span className="font-medium text-fg-default">{toolUse.name}</span>
 
           {/* ステータス */}
           <span className={`text-xs ${statusStyles.statusColor} capitalize`}>{toolUse.status}</span>
 
           {/* 展開ボタン */}
-          <div className="text-gray-400 ml-auto">
+          <div className="text-fg-disabled ml-auto">
             <svg
               className={`w-3 h-3 transform transition-transform duration-200 ${
                 isExpanded ? 'rotate-180' : ''
@@ -141,20 +141,20 @@ export const ToolUseBlock: React.FC<ToolUseBlockProps> = ({ toolUse }) => {
 
         {/* 入力内容（展開時、枠内に統合） */}
         {isExpanded && (
-          <div className="px-3 pb-3 pt-1 border-t border-gray-200">
+          <div className="px-3 pb-3 pt-1 border-t border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-500 text-xs font-medium">
+              <span className="text-fg-muted text-xs font-medium">
                 {t('common.inputParameters')}
               </span>
               <button
                 onClick={() => navigator.clipboard.writeText(inputString)}
-                className="text-gray-400 hover:text-gray-600 text-xs px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                className="text-fg-disabled hover:text-fg-secondary text-xs px-2 py-1 rounded hover:bg-gray-100 transition-colors"
                 title={t('common.copyToClipboard')}
               >
                 {t('common.copy')}
               </button>
             </div>
-            <pre className="text-gray-800 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words bg-gray-50 p-2 rounded border border-gray-200">
+            <pre className="text-fg-default text-xs font-mono overflow-x-auto whitespace-pre-wrap break-words bg-surface-secondary p-2 rounded border border-border">
               {inputString}
             </pre>
           </div>

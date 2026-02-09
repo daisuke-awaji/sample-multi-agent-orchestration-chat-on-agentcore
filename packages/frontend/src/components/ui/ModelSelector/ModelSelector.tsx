@@ -43,36 +43,36 @@ export const ModelSelector: React.FC = () => {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded-lg transition-colors"
       >
-        <Sparkles className="w-4 h-4 text-gray-400" />
+        <Sparkles className="w-4 h-4 text-fg-disabled" />
         <span className="font-medium">{selectedModel ? selectedModel.name : 'Select Model'}</span>
-        {selectedModel && <span className="text-gray-400">({selectedModel.provider})</span>}
+        {selectedModel && <span className="text-fg-disabled">({selectedModel.provider})</span>}
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-fg-disabled transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+        <div className="absolute bottom-full left-0 mb-2 w-72 bg-white rounded-xl shadow-lg border border-border py-2 z-50">
           <div className="max-h-64 overflow-y-auto">
             {AVAILABLE_MODELS.map((model) => (
               <button
                 key={model.id}
                 type="button"
                 onClick={() => handleModelSelect(model.id)}
-                className={`w-full px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                  model.id === selectedModelId ? 'bg-blue-50' : ''
+                className={`w-full px-3 py-2 text-left hover:bg-surface-secondary transition-colors ${
+                  model.id === selectedModelId ? 'bg-feedback-info-bg' : ''
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">{model.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{model.provider}</div>
+                    <div className="text-sm font-medium text-fg-default">{model.name}</div>
+                    <div className="text-xs text-fg-muted mt-0.5">{model.provider}</div>
                   </div>
                   {model.id === selectedModelId && (
-                    <div className="w-2 h-2 rounded-full bg-blue-600 ml-2" />
+                    <div className="w-2 h-2 rounded-full bg-action-primary ml-2" />
                   )}
                 </div>
               </button>

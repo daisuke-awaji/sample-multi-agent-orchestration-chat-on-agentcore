@@ -48,10 +48,14 @@ export const MessageList: React.FC<MessageListProps> = ({ onScenarioClick }) => 
       <div className="max-w-4xl mx-auto p-4 pb-32">
         {/* エラー表示 */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4">
+          <div className="mb-6 bg-feedback-error-bg border border-feedback-error-border rounded-2xl p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="h-5 w-5 text-feedback-error"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -60,8 +64,8 @@ export const MessageList: React.FC<MessageListProps> = ({ onScenarioClick }) => 
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <h3 className="text-sm font-medium text-feedback-error">{t('common.error')}</h3>
+                <p className="mt-1 text-sm text-feedback-error">{error}</p>
               </div>
             </div>
           </div>
@@ -74,16 +78,16 @@ export const MessageList: React.FC<MessageListProps> = ({ onScenarioClick }) => 
         {messages.length === 0 && !error && !isLoadingEvents && selectedAgent && (
           <div className="text-center py-12">
             <div className="mx-auto w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-8 h-8 text-fg-disabled" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
                 <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
               </svg>
             </div>
 
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-2xl font-semibold text-fg-default mb-2">
               {translateIfKey(selectedAgent.name, t)}
             </h3>
-            <p className="text-gray-600 max-w-md mx-auto mb-8">
+            <p className="text-fg-secondary max-w-md mx-auto mb-8">
               {translateIfKey(selectedAgent.description, t)}
             </p>
 
@@ -94,7 +98,7 @@ export const MessageList: React.FC<MessageListProps> = ({ onScenarioClick }) => 
                   <button
                     key={scenario.id}
                     onClick={() => onScenarioClick?.(translateIfKey(scenario.prompt, t))}
-                    className="px-4 py-3 text-left text-sm text-gray-700 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors"
+                    className="px-4 py-3 text-left text-sm text-fg-secondary bg-white hover:bg-surface-secondary rounded-xl border border-border transition-colors"
                   >
                     {translateIfKey(scenario.title, t)}
                   </button>

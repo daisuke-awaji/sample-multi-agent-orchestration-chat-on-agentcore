@@ -16,6 +16,8 @@ import { useAgentStore } from '../stores/agentStore';
 import { useAuthStore } from '../stores/authStore';
 import { createAgent } from '../api/agents';
 import { useUIStore } from '../stores/uiStore';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
 interface SharedAgentDetailModalProps {
   agent: Agent | null;
@@ -103,21 +105,21 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-              <AgentIcon className="w-6 h-6 text-gray-600" />
+            <div className="w-12 h-12 rounded-card bg-surface-secondary flex items-center justify-center">
+              <AgentIcon className="w-6 h-6 text-fg-secondary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-fg-default">
                 {translateIfKey(agent.name, t)}
               </h2>
-              <p className="text-sm text-gray-600">{translateIfKey(agent.description, t)}</p>
+              <p className="text-sm text-fg-secondary">{translateIfKey(agent.description, t)}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 text-fg-disabled hover:text-fg-secondary rounded-btn hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,11 +130,11 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             {/* 左側: System Prompt */}
             <div className="flex flex-col min-h-0">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+              <h3 className="text-sm font-semibold text-fg-default mb-3">
                 {t('agent.systemPromptLabel2')}
               </h3>
-              <div className="bg-gray-50 rounded-lg p-4 flex-1 overflow-y-auto max-h-[50vh]">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono">
+              <div className="bg-surface-secondary rounded-card p-4 flex-1 overflow-y-auto max-h-[50vh]">
+                <pre className="text-sm text-fg-secondary whitespace-pre-wrap font-mono">
                   {agent.systemPrompt}
                 </pre>
               </div>
@@ -142,36 +144,33 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
             <div className="space-y-6">
               {/* Tools */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                <h3 className="text-sm font-semibold text-fg-default mb-3">
                   {t('agent.toolsLabel')}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {agent.enabledTools.map((tool) => (
-                    <span
-                      key={tool}
-                      className="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg"
-                    >
+                    <Badge key={tool} variant="info">
                       {tool}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>
 
               {/* Scenarios */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                <h3 className="text-sm font-semibold text-fg-default mb-3">
                   {t('agent.scenarioLabel')}
                 </h3>
                 <div className="space-y-2">
                   {agent.scenarios.map((scenario) => (
                     <div
                       key={scenario.id}
-                      className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                      className="bg-surface-secondary rounded-card p-3 hover:bg-gray-100 transition-colors"
                     >
-                      <h4 className="text-sm font-medium text-gray-900 mb-1">
+                      <h4 className="text-sm font-medium text-fg-default mb-1">
                         {translateIfKey(scenario.title, t)}
                       </h4>
-                      <p className="text-xs text-gray-600 line-clamp-2">
+                      <p className="text-xs text-fg-secondary line-clamp-2">
                         {translateIfKey(scenario.prompt, t)}
                       </p>
                     </div>
@@ -183,45 +182,34 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          {/* 作成者情報 */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+          {/* Author info */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="w-4 h-4 text-gray-600" />
+            <div className="w-8 h-8 rounded-full bg-surface-secondary flex items-center justify-center">
+              <User className="w-4 h-4 text-fg-secondary" />
             </div>
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-fg-secondary">
               <span className="font-medium">{agent.createdBy}</span>
             </span>
           </div>
 
-          {/* アクションボタン */}
+          {/* Action buttons */}
           <div className="flex items-center gap-3">
             {!isMobileView && (
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+              <Button variant="outline" size="md" onClick={onClose}>
                 {t('common.close')}
-              </button>
+              </Button>
             )}
             {isOwnAgent ? (
-              <button
-                onClick={handleUnshare}
-                disabled={isUnsharing}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
+              <Button variant="danger" size="md" onClick={handleUnshare} loading={isUnsharing}>
                 {isUnsharing ? t('agentDirectory.unsharing') : t('agentDirectory.unshare')}
-              </button>
+              </Button>
             ) : (
-              <button
-                onClick={handleAddToMyAgents}
-                disabled={isCloning}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
+              <Button variant="primary" size="md" onClick={handleAddToMyAgents} loading={isCloning}>
                 {isCloning
                   ? t('agentDirectory.addingToMyAgents')
                   : t('agentDirectory.addToMyAgents')}
-              </button>
+              </Button>
             )}
           </div>
         </div>

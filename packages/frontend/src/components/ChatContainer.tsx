@@ -61,15 +61,15 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ sessionId, onCreat
             ) : (
               <button
                 onClick={() => setIsAgentModalOpen(true)}
-                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-surface-secondary transition-colors group"
               >
                 {(() => {
                   const AgentIcon = selectedAgent?.icon
                     ? (icons[selectedAgent.icon as keyof typeof icons] as LucideIcon) || Bot
                     : Bot;
-                  return <AgentIcon className="w-6 h-6 text-gray-700" />;
+                  return <AgentIcon className="w-6 h-6 text-fg-secondary" />;
                 })()}
-                <h1 className="text-lg font-semibold text-gray-900">
+                <h1 className="text-lg font-semibold text-fg-default">
                   {selectedAgent ? translateIfKey(selectedAgent.name, t) : '汎用アシスタント'}
                 </h1>
               </button>

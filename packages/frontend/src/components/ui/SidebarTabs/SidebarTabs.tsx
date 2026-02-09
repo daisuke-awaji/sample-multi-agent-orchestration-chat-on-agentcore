@@ -17,7 +17,7 @@ export function SidebarTabs<T extends string>({
   if (isMobileView) {
     // モバイル: 上部に横並びタブ
     return (
-      <div className={`w-full border-b border-gray-200 flex-shrink-0 ${className}`}>
+      <div className={`w-full border-b border-border flex-shrink-0 ${className}`}>
         <nav className="flex space-x-1 px-4 py-2 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -29,8 +29,8 @@ export function SidebarTabs<T extends string>({
                 onClick={() => onTabChange(tab.id)}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-feedback-info-bg text-action-primary font-medium'
+                    : 'text-fg-secondary hover:bg-surface-secondary'
                 }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
@@ -45,7 +45,7 @@ export function SidebarTabs<T extends string>({
 
   // デスクトップ: 左側に縦並びタブ
   return (
-    <div className={`w-48 border-r border-gray-200 flex-shrink-0 ${className}`}>
+    <div className={`w-48 border-r border-border flex-shrink-0 ${className}`}>
       <nav className="p-4 space-y-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -56,7 +56,9 @@ export function SidebarTabs<T extends string>({
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
+                isActive
+                  ? 'bg-feedback-info-bg text-action-primary font-medium'
+                  : 'text-fg-secondary hover:bg-surface-secondary'
               }`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />

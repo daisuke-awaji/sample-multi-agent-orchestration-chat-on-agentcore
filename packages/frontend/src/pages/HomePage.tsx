@@ -51,7 +51,7 @@ export function HomePage() {
 
       {/* フッター */}
       <footer className="p-6 text-center">
-        <p className="text-sm text-gray-500">{t('home.footer')}</p>
+        <p className="text-sm text-fg-muted">{t('home.footer')}</p>
       </footer>
     </>
   );

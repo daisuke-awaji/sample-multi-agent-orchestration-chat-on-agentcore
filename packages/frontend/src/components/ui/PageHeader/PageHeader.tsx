@@ -38,11 +38,11 @@ export function PageHeader({ icon: Icon, title, actions }: PageHeaderProps) {
   }
 
   return (
-    <header className="border-b border-gray-200 bg-white px-6 py-4">
+    <header className="border-b border-border bg-surface-primary px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Icon className="w-6 h-6 text-gray-700" />
-          <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+          <Icon className="w-6 h-6 text-fg-secondary" />
+          <h1 className="text-xl font-semibold text-fg-default">{title}</h1>
         </div>
         {actions && <div>{actions}</div>}
       </div>

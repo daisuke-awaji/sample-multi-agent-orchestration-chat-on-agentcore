@@ -104,23 +104,23 @@ export const ForceChangePasswordForm: React.FC<ForceChangePasswordFormProps> = (
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <div className="max-w-md w-full space-y-8 p-8 text-center">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-green-200 rounded-full blur-2xl opacity-30 scale-125"></div>
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-fg-default mb-2">
             {t('auth.forceChangePassword.successTitle')}
           </h2>
-          <p className="text-gray-600">{t('auth.forceChangePassword.successDescription')}</p>
+          <p className="text-fg-secondary">{t('auth.forceChangePassword.successDescription')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <div className="relative mb-6">
@@ -130,13 +130,16 @@ export const ForceChangePasswordForm: React.FC<ForceChangePasswordFormProps> = (
           <h2 className="text-3xl font-bold text-amber-900 mb-2">
             {t('auth.forceChangePassword.title')}
           </h2>
-          <p className="text-gray-600 text-sm">{t('auth.forceChangePassword.description')}</p>
+          <p className="text-fg-secondary text-sm">{t('auth.forceChangePassword.description')}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-fg-secondary mb-2"
+              >
                 {t('auth.forceChangePassword.newPassword')}
               </label>
               <input
@@ -153,15 +156,15 @@ export const ForceChangePasswordForm: React.FC<ForceChangePasswordFormProps> = (
                 placeholder={t('auth.forceChangePassword.newPasswordPlaceholder')}
               />
               {validationErrors.newPassword && (
-                <p className="mt-2 text-sm text-red-600">{validationErrors.newPassword}</p>
+                <p className="mt-2 text-sm text-feedback-error">{validationErrors.newPassword}</p>
               )}
-              <p className="mt-2 text-xs text-gray-500">{t('auth.passwordRequirements')}</p>
+              <p className="mt-2 text-xs text-fg-muted">{t('auth.passwordRequirements')}</p>
             </div>
 
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-fg-secondary mb-2"
               >
                 {t('auth.forceChangePassword.confirmNewPassword')}
               </label>
@@ -179,14 +182,16 @@ export const ForceChangePasswordForm: React.FC<ForceChangePasswordFormProps> = (
                 placeholder={t('auth.forceChangePassword.confirmNewPasswordPlaceholder')}
               />
               {validationErrors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-600">{validationErrors.confirmPassword}</p>
+                <p className="mt-2 text-sm text-feedback-error">
+                  {validationErrors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="rounded-md bg-feedback-error-bg p-4">
+              <p className="text-sm text-feedback-error">{error}</p>
             </div>
           )}
 

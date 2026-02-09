@@ -5,11 +5,17 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Wrench, Search, Loader2, AlertCircle, XCircle, RefreshCw } from 'lucide-react';
+import { Wrench, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useToolStore } from '../stores/toolStore';
 import { LoadingIndicator } from '../components/ui/LoadingIndicator';
 import { PageHeader } from '../components/ui/PageHeader';
+import { IconButton } from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
+import { EmptyState } from '../components/ui/EmptyState';
+import { SearchSection } from '../components/ui/SearchSection';
 import { getToolIcon } from '../utils/toolIcons';
 import type { MCPTool } from '../api/tools';
 
@@ -24,7 +30,6 @@ function ToolItem({ tool }: ToolItemProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // パラメータの表示
   const renderParameters = () => {
     if (!tool.inputSchema.properties) return null;
 
@@ -32,8 +37,8 @@ function ToolItem({ tool }: ToolItemProps) {
     const required = tool.inputSchema.required || [];
 
     return (
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <h4 className="text-xs font-medium text-gray-700 mb-2">{t('tool.parameters')}:</h4>
+      <div className="mt-3 pt-3 border-t border-border">
+        <h4 className="text-xs font-medium text-fg-secondary mb-2">{t('tool.parameters')}:</h4>
         <div className="space-y-2">
           {Object.entries(properties).map(([paramName, paramInfo]) => {
             const info = paramInfo as Record<string, unknown>;
@@ -41,15 +46,15 @@ function ToolItem({ tool }: ToolItemProps) {
             const description = typeof info.description === 'string' ? info.description : null;
 
             return (
-              <div key={paramName} className="bg-gray-50 px-3 py-2 rounded text-xs">
+              <div key={paramName} className="bg-surface-secondary px-3 py-2 rounded text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-blue-600">{paramName}</span>
-                  <span className="text-gray-500">({typeString})</span>
+                  <span className="font-mono text-action-primary">{paramName}</span>
+                  <span className="text-fg-muted">({typeString})</span>
                   {required.includes(paramName) && (
-                    <span className="text-red-500 text-xs">*{t('tool.required')}</span>
+                    <span className="text-feedback-error text-xs">*{t('tool.required')}</span>
                   )}
                 </div>
-                {description && <p className="text-gray-600 mt-1">{description}</p>}
+                {description && <p className="text-fg-secondary mt-1">{description}</p>}
               </div>
             );
           })}
@@ -59,23 +64,20 @@ function ToolItem({ tool }: ToolItemProps) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <Card variant="default" padding="md">
       <div className="flex items-start gap-3">
-        {/* アイコン */}
-        <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+        <div className="flex-shrink-0 w-8 h-8 bg-surface-secondary rounded-btn flex items-center justify-center text-fg-secondary">
           {getToolIcon(tool.name)}
         </div>
 
-        {/* メインコンテンツ */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900 truncate">{tool.name}</h3>
+            <h3 className="text-sm font-medium text-fg-default truncate">{tool.name}</h3>
 
-            {/* 詳細展開ボタン */}
             {tool.inputSchema.properties && Object.keys(tool.inputSchema.properties).length > 0 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 rounded"
+                className="flex-shrink-0 p-1 text-fg-disabled hover:text-fg-secondary rounded"
                 aria-label={isExpanded ? t('tool.hideDetails') : t('tool.showDetails')}
               >
                 <svg
@@ -93,16 +95,14 @@ function ToolItem({ tool }: ToolItemProps) {
             )}
           </div>
 
-          {/* Description */}
           {tool.description && (
-            <p className="text-gray-600 text-sm mt-1 leading-relaxed">{tool.description}</p>
+            <p className="text-fg-secondary text-sm mt-1 leading-relaxed">{tool.description}</p>
           )}
 
-          {/* パラメータ詳細（展開時のみ） */}
           {isExpanded && renderParameters()}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -131,14 +131,12 @@ export function ToolsPage() {
 
   const [localSearchQuery, setLocalSearchQuery] = useState('');
 
-  // 初回ロード
   useEffect(() => {
     if (user) {
       loadTools();
     }
   }, [user, loadTools]);
 
-  // 検索実行
   const handleSearch = async () => {
     if (!user) return;
     if (!localSearchQuery.trim()) {
@@ -148,21 +146,12 @@ export function ToolsPage() {
     await searchToolsWithQuery(localSearchQuery.trim());
   };
 
-  // Enterキーでの検索
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // 検索クリア
   const handleClearSearch = () => {
     setLocalSearchQuery('');
     setSearchQuery('');
     clearSearch();
   };
 
-  // 再読み込み
   const handleRefresh = () => {
     if (user) {
       clearError();
@@ -170,14 +159,12 @@ export function ToolsPage() {
     }
   };
 
-  // 次のページを読み込み
   const handleLoadMore = async () => {
     if (user) {
       await loadMoreTools();
     }
   };
 
-  // 表示するツール一覧を決定
   const displayTools = searchQuery ? searchResults : tools;
   const currentLoading = searchQuery ? isSearching : isLoading;
   const currentError = searchQuery ? searchError : error;
@@ -188,100 +175,53 @@ export function ToolsPage() {
 
   return (
     <>
-      {/* ヘッダー */}
       <PageHeader
         icon={Wrench}
         title={t('tool.availableTools')}
         actions={
-          <button
-            onClick={handleRefresh}
+          <IconButton
+            icon={RefreshCw}
+            label={t('tool.refresh')}
+            variant="subtle"
             disabled={currentLoading}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-            aria-label={t('tool.refresh')}
-          >
-            <RefreshCw className={`w-4 h-4 ${currentLoading ? 'animate-spin' : ''}`} />
-          </button>
+            className={currentLoading ? '[&>svg]:animate-spin' : ''}
+            onClick={handleRefresh}
+          />
         }
       />
 
-      {/* メインコンテンツ */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* 検索セクション */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Search className="w-4 h-4 text-gray-600" />
-            <h2 className="text-sm font-medium text-gray-900">{t('tool.searchTools')}</h2>
-          </div>
+      <div className="flex-1 overflow-y-auto p-page">
+        {/* Search Section */}
+        <SearchSection
+          value={localSearchQuery}
+          onChange={setLocalSearchQuery}
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          isSearching={isSearching}
+          placeholder={t('tool.searchPlaceholder')}
+          title={t('tool.searchTools')}
+          activeQuery={searchQuery || undefined}
+          className="mb-section"
+        />
 
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={localSearchQuery}
-                onChange={(e) => setLocalSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={t('tool.searchPlaceholder')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-              {localSearchQuery && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isSearching || !localSearchQuery.trim()}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.search')}
-            </button>
-          </div>
-
-          {searchQuery && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
-              <span>
-                {t('tool.searchingFor')}: {searchQuery}
-              </span>
-              <button
-                onClick={handleClearSearch}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                {t('common.clear')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* エラー表示 */}
+        {/* Error */}
         {currentError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <div>
-                <h3 className="text-sm font-medium text-red-900">{t('common.error')}</h3>
-                <p className="text-red-700 text-sm mt-1">{currentError}</p>
-                <button
-                  onClick={() => clearError()}
-                  className="mt-2 text-red-600 hover:text-red-700 font-medium text-xs"
-                >
-                  {t('tool.closeError')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <Alert
+            variant="error"
+            title={t('common.error')}
+            onDismiss={() => clearError()}
+            className="mb-section"
+          >
+            {currentError}
+          </Alert>
         )}
 
-        {/* ツール一覧 */}
+        {/* Tool list */}
         <div>
-          {/* ヘッダー情報 */}
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-medium text-gray-900">
+            <h2 className="text-lg font-medium text-fg-default">
               {searchQuery ? t('tool.searchResults') : t('tool.availableTools')}
-              <span className="ml-2 text-gray-500 font-normal text-sm">
+              <span className="ml-2 text-fg-muted font-normal text-sm">
                 (
                 {currentLoading
                   ? t('common.loading')
@@ -291,12 +231,10 @@ export function ToolsPage() {
             </h2>
           </div>
 
-          {/* Description文 */}
           {!searchQuery && (
-            <p className="text-xs text-gray-500 mb-4">{t('tool.toolsPageDescription')}</p>
+            <p className="text-xs text-fg-muted mb-4">{t('tool.toolsPageDescription')}</p>
           )}
 
-          {/* ローディング */}
           {currentLoading && displayTools.length === 0 && (
             <LoadingIndicator
               message={searchQuery ? t('tool.searching') : t('tool.loadingTools')}
@@ -304,20 +242,16 @@ export function ToolsPage() {
             />
           )}
 
-          {/* ツールがない場合 */}
           {!currentLoading && displayTools.length === 0 && !currentError && (
-            <div className="text-center py-12">
-              <Wrench className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-sm font-medium text-gray-600 mb-2">
-                {searchQuery ? t('tool.noSearchResults') : t('tool.noToolsFound')}
-              </h3>
-              <p className="text-gray-500 text-sm">
-                {searchQuery ? t('tool.tryDifferentKeyword') : t('tool.noToolsRegistered')}
-              </p>
-            </div>
+            <EmptyState
+              icon={Wrench}
+              title={searchQuery ? t('tool.noSearchResults') : t('tool.noToolsFound')}
+              description={
+                searchQuery ? t('tool.tryDifferentKeyword') : t('tool.noToolsRegistered')
+              }
+            />
           )}
 
-          {/* ツールリスト */}
           {displayTools.length > 0 && (
             <div className="space-y-4">
               {displayTools.map((tool, index) => (
@@ -326,40 +260,18 @@ export function ToolsPage() {
             </div>
           )}
 
-          {/* ページネーション（検索時は非表示） */}
+          {/* Pagination */}
           {!searchQuery && nextCursor && displayTools.length > 0 && (
-            <div className="flex justify-center mt-8 pt-6 border-t border-gray-100">
-              <button
-                onClick={handleLoadMore}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('common.loading')}
-                  </>
-                ) : (
-                  <>
-                    {t('tool.loadMore')}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </>
-                )}
-              </button>
+            <div className="flex justify-center mt-8 pt-6 border-t border-border">
+              <Button variant="secondary" size="lg" onClick={handleLoadMore} loading={isLoading}>
+                {isLoading ? t('common.loading') : t('tool.loadMore')}
+              </Button>
             </div>
           )}
 
-          {/* ページネーション情報 */}
           {!searchQuery && displayTools.length > 0 && (
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-fg-muted">
                 {displayTools.length}
                 {t('tool.displayedCount')}
                 {nextCursor ? ` / ${t('tool.hasMore')}` : ` / ${t('tool.allLoaded')}`}

@@ -87,12 +87,12 @@ export function EventSourceSelector({
   if (loading) {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-fg-secondary">
           {t('triggers.eventSource.label')}
         </label>
-        <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg border border-gray-200">
-          <LucideIcons.Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
-          <span className="ml-2 text-sm text-gray-500">{t('common.loading')}</span>
+        <div className="flex items-center justify-center p-8 bg-surface-secondary rounded-lg border border-border">
+          <LucideIcons.Loader2 className="w-6 h-6 text-fg-disabled animate-spin" />
+          <span className="ml-2 text-sm text-fg-muted">{t('common.loading')}</span>
         </div>
       </div>
     );
@@ -102,11 +102,11 @@ export function EventSourceSelector({
   if (error) {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-fg-secondary">
           {t('triggers.eventSource.label')}
         </label>
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="p-4 bg-feedback-error-bg border border-feedback-error-border rounded-lg">
+          <p className="text-sm text-feedback-error">{error}</p>
         </div>
       </div>
     );
@@ -116,11 +116,13 @@ export function EventSourceSelector({
   if (eventSources.length === 0) {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-fg-secondary">
           {t('triggers.eventSource.label')}
         </label>
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-sm text-gray-600">{t('triggers.eventSource.noSourcesAvailable')}</p>
+        <div className="p-4 bg-surface-secondary border border-border rounded-lg">
+          <p className="text-sm text-fg-secondary">
+            {t('triggers.eventSource.noSourcesAvailable')}
+          </p>
         </div>
       </div>
     );
@@ -155,7 +157,7 @@ export function EventSourceSelector({
         <button
           type="button"
           onClick={(e) => toggleDetails(source.id, e)}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors w-full"
+          className="flex items-center gap-1.5 text-xs text-fg-muted hover:text-fg-secondary transition-colors w-full"
         >
           <LucideIcons.ChevronRight
             className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -164,7 +166,7 @@ export function EventSourceSelector({
         </button>
 
         {isExpanded && (
-          <pre className="mt-2 p-3 bg-gray-50 rounded text-xs font-mono text-gray-700 overflow-x-auto animate-subtle-fade-in">
+          <pre className="mt-2 p-3 bg-surface-secondary rounded text-xs font-mono text-fg-secondary overflow-x-auto animate-subtle-fade-in">
             {JSON.stringify(source.eventPattern, null, 2)}
           </pre>
         )}
@@ -175,7 +177,7 @@ export function EventSourceSelector({
   // Grid card selector
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-fg-secondary">
         {t('triggers.eventSource.label')}
       </label>
 
@@ -192,8 +194,8 @@ export function EventSourceSelector({
                 rounded-lg border transition-all
                 ${
                   isSelected
-                    ? 'border-blue-300 bg-white ring-1 ring-blue-100'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                    ? 'border-feedback-info-border bg-white ring-1 ring-blue-100'
+                    : 'border-border hover:border-border-strong bg-white'
                 }
                 ${disabled ? 'opacity-50' : ''}
               `}
@@ -213,19 +215,21 @@ export function EventSourceSelector({
                   <div
                     className={`
                       flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center
-                      ${isSelected ? 'bg-blue-600' : 'bg-gray-100'}
+                      ${isSelected ? 'bg-action-primary' : 'bg-gray-100'}
                     `}
                   >
-                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
+                    <Icon
+                      className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-fg-secondary'}`}
+                    />
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-gray-900">{source.name}</p>
-                      {isSelected && <LucideIcons.Check className="w-4 h-4 text-blue-600" />}
+                      <p className="text-sm font-semibold text-fg-default">{source.name}</p>
+                      {isSelected && <LucideIcons.Check className="w-4 h-4 text-action-primary" />}
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">{source.description}</p>
+                    <p className="text-xs text-fg-secondary mt-1">{source.description}</p>
                   </div>
                 </div>
               </button>
@@ -240,7 +244,7 @@ export function EventSourceSelector({
       </div>
 
       {/* Help text */}
-      <p className="text-xs text-gray-500">{t('triggers.eventSource.helpText')}</p>
+      <p className="text-xs text-fg-muted">{t('triggers.eventSource.helpText')}</p>
     </div>
   );
 }

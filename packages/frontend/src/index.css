@@ -2,9 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+ * Design Tokens - CSS Custom Properties
+ * ============================================ */
 @layer base {
+  :root {
+    /* --- Brand Colors --- */
+    --color-brand: #d97706; /* amber-600 */
+    --color-brand-light: #fde68a; /* amber-200 */
+    --color-brand-dark: #78350f; /* amber-900 */
+    --color-brand-accent: #f59e0b; /* amber-500 */
+    --color-brand-fg: #92400e; /* amber-800 */
+
+    /* --- Action Colors --- */
+    --color-action-primary: #2563eb; /* blue-600 */
+    --color-action-primary-hover: #1d4ed8; /* blue-700 */
+    --color-action-primary-fg: #ffffff;
+    --color-action-danger: #dc2626; /* red-600 */
+    --color-action-danger-hover: #b91c1c; /* red-700 */
+    --color-action-danger-fg: #ffffff;
+    --color-action-danger-light: #fef2f2; /* red-50 */
+    --color-action-success: #16a34a; /* green-600 */
+    --color-action-success-fg: #ffffff;
+
+    /* --- Surface Colors --- */
+    --color-surface-primary: #ffffff;
+    --color-surface-secondary: #f9fafb; /* gray-50 */
+    --color-surface-elevated: #ffffff;
+    --color-surface-overlay: rgba(0, 0, 0, 0.1);
+
+    /* --- Border Colors --- */
+    --color-border-default: #e5e7eb; /* gray-200 */
+    --color-border-strong: #d1d5db; /* gray-300 */
+    --color-border-focus: #2563eb; /* blue-600 */
+
+    /* --- Foreground (Text) Colors --- */
+    --color-fg-default: #111827; /* gray-900 */
+    --color-fg-secondary: #4b5563; /* gray-600 */
+    --color-fg-muted: #6b7280; /* gray-500 */
+    --color-fg-disabled: #9ca3af; /* gray-400 */
+    --color-fg-inverse: #ffffff;
+    --color-fg-link: #2563eb; /* blue-600 */
+
+    /* --- Feedback Colors --- */
+    --color-feedback-error: #dc2626; /* red-600 */
+    --color-feedback-error-bg: #fef2f2; /* red-50 */
+    --color-feedback-error-border: #fecaca; /* red-200 */
+    --color-feedback-success: #16a34a; /* green-600 */
+    --color-feedback-success-bg: #f0fdf4; /* green-50 */
+    --color-feedback-success-border: #bbf7d0; /* green-200 */
+    --color-feedback-warning: #d97706; /* amber-600 */
+    --color-feedback-warning-bg: #fffbeb; /* amber-50 */
+    --color-feedback-warning-border: #fde68a; /* amber-200 */
+    --color-feedback-info: #2563eb; /* blue-600 */
+    --color-feedback-info-bg: #eff6ff; /* blue-50 */
+    --color-feedback-info-border: #bfdbfe; /* blue-200 */
+
+    /* --- Border Radius Tokens --- */
+    --radius-btn: 0.5rem; /* 8px - rounded-lg */
+    --radius-input: 0.5rem; /* 8px - rounded-lg */
+    --radius-card: 0.75rem; /* 12px - rounded-xl */
+    --radius-card-lg: 1rem; /* 16px - rounded-2xl */
+    --radius-modal: 1.5rem; /* 24px - rounded-3xl */
+
+    /* --- Spacing Tokens --- */
+    --spacing-page: 1.5rem; /* 24px */
+    --spacing-section: 1.5rem; /* 24px */
+    --spacing-card: 1rem; /* 16px */
+    --spacing-card-lg: 1.5rem; /* 24px */
+  }
+
   body {
-    @apply bg-white text-gray-900 font-sans antialiased;
+    background-color: var(--color-surface-primary);
+    color: var(--color-fg-default);
+    @apply font-sans antialiased;
   }
 
   #root {
@@ -12,40 +83,20 @@
   }
 }
 
+/* ============================================
+ * Component Layer - Shared Styles
+ * ============================================ */
 @layer components {
   .chat-container {
-    @apply w-full flex flex-col bg-white;
-    height: 100vh; /* フォールバック */
-    height: 100dvh; /* モバイル対応 */
+    @apply w-full flex flex-col;
+    background-color: var(--color-surface-primary);
+    height: 100vh;
+    height: 100dvh;
   }
 
-  .message-bubble {
-    @apply max-w-full p-4 rounded-2xl;
-  }
-
-  .message-user {
-    @apply bg-white text-gray-900 ml-auto;
-  }
-
-  .message-assistant {
-    @apply bg-white text-gray-900;
-  }
-
-  .input-field {
-    @apply w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent resize-none;
-  }
-
-  .button-primary {
-    @apply px-6 py-2 bg-gray-900 text-white rounded-2xl hover:bg-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
-  }
-
-  .button-secondary {
-    @apply px-6 py-2 bg-gray-100 text-gray-900 rounded-2xl hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
-  }
-
-  /* Markdownスタイル調整 */
+  /* Markdown content styles */
   .markdown-content {
-    @apply text-gray-900;
+    color: var(--color-fg-default);
   }
 
   .markdown-content h1,
@@ -54,7 +105,8 @@
   .markdown-content h4,
   .markdown-content h5,
   .markdown-content h6 {
-    @apply font-semibold text-gray-900 mt-4 mb-2;
+    @apply font-semibold mt-4 mb-2;
+    color: var(--color-fg-default);
   }
 
   .markdown-content h1 {
@@ -99,19 +151,23 @@
   }
 
   .markdown-content a {
-    @apply text-blue-600 hover:text-blue-800 underline;
+    color: var(--color-fg-link);
+  }
+
+  .markdown-content a:hover {
+    text-decoration: underline;
   }
 
   .markdown-content hr {
-    @apply border-gray-300 my-4;
+    @apply my-4;
+    border-color: var(--color-border-default);
   }
 
-  /* コードブロックのスタイル調整 */
   .markdown-content pre {
     @apply my-4 rounded-lg overflow-x-auto;
   }
 
-  /* KaTeX数式のスタイル調整 */
+  /* KaTeX math styles */
   .markdown-content .katex-display {
     overflow-x: auto;
     overflow-y: hidden;
@@ -125,30 +181,25 @@
     display: inline-block;
   }
 
-  /* インライン数式のサイズ調整 */
   .markdown-content .katex {
     font-size: 1em;
     max-width: 100%;
   }
 
-  /* KaTeX HTMLレンダリングの調整 */
   .markdown-content .katex-html {
     max-width: 100%;
     overflow: visible;
   }
 
-  /* KaTeX SVGの調整 */
   .markdown-content .katex svg {
     max-width: 100%;
     height: auto;
   }
 
-  /* 長い数式の行列などに対する調整 */
   .markdown-content .katex .mord {
     white-space: nowrap;
   }
 
-  /* KaTeX重複表示の防止 - MathMLとスクリーンリーダー用テキストのみ非表示 */
   .markdown-content .katex-mathml {
     display: none !important;
   }
@@ -157,12 +208,10 @@
     display: none !important;
   }
 
-  /* HTMLレンダリングは表示する */
   .markdown-content .katex-html {
     display: inline !important;
   }
 
-  /* 行列とテーブルの表示修正 */
   .markdown-content .katex .arraycolsep {
     width: 0.5em;
   }
@@ -181,40 +230,65 @@
     display: table-row;
   }
 
-  /* 括弧の位置調整 */
   .markdown-content .katex .left-right {
     display: inline-block;
     vertical-align: middle;
   }
 
-  /* フォールバック表示の隠蔽 */
   .markdown-content .katex + .katex-fallback {
     display: none;
   }
 
-  /* ツールコンポーネントのシンプルアニメーション */
+  /* Tool component animations */
   .tool-use-block {
-    animation: fadeIn 0.2s ease-out;
+    @apply animate-fade-in;
   }
 
   .tool-result-block {
-    animation: fadeIn 0.2s ease-out;
+    @apply animate-fade-in;
   }
 
+  /* ============================================
+   * Legacy classes - To be removed after migration
+   * ============================================ */
+  .message-bubble {
+    @apply max-w-full p-4 rounded-2xl;
+  }
+
+  .message-user {
+    @apply ml-auto;
+    background-color: var(--color-surface-primary);
+    color: var(--color-fg-default);
+  }
+
+  .message-assistant {
+    background-color: var(--color-surface-primary);
+    color: var(--color-fg-default);
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 focus:outline-none focus:ring-2 focus:border-transparent resize-none;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-input);
+  }
+
+  .input-field:focus {
+    --tw-ring-color: var(--color-border-focus);
+  }
+
+  .button-primary {
+    @apply px-6 py-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
+    border-radius: var(--radius-btn);
+  }
+
+  .button-secondary {
+    @apply px-6 py-2 bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300;
+    border-radius: var(--radius-btn);
+  }
 }
 
 @layer utilities {
-  /* シンプルなフェードインアニメーション */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  /* モバイル対応 - シンプル化 */
+  /* Mobile responsive utilities */
   @media (max-width: 768px) {
     .tool-use-block,
     .tool-result-block {

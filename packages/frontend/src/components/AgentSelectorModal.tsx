@@ -159,8 +159,8 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
               <div className="h-full">
                 {/* エラー表示 */}
                 {error && (
-                  <div className="mx-6 mt-6 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{error}</p>
+                  <div className="mx-6 mt-6 mb-4 p-4 bg-feedback-error-bg border border-feedback-error-border rounded-lg">
+                    <p className="text-sm text-feedback-error">{error}</p>
                   </div>
                 )}
                 <AgentForm
@@ -178,7 +178,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                   setEditingAgent(null);
                 }}
                 disabled={isLoading}
-                className="px-6 py-3 text-sm md:text-base font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[48px]"
+                className="px-6 py-3 text-sm md:text-base font-medium text-fg-secondary border border-border-strong rounded-lg hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[48px]"
               >
                 {t('common.cancel')}
               </button>
@@ -186,7 +186,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                 type="submit"
                 form="agent-form"
                 disabled={isLoading}
-                className="inline-flex items-center justify-center space-x-2 px-6 py-3 text-sm md:text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[48px]"
+                className="inline-flex items-center justify-center space-x-2 px-6 py-3 text-sm md:text-base font-medium text-white bg-action-primary rounded-lg hover:bg-action-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[48px]"
               >
                 <span>{isLoading ? t('common.saving') : t('common.save')}</span>
               </button>
@@ -200,8 +200,8 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
             <Modal.Content>
               <div className="h-[81vh] overflow-y-auto">
                 {error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{error}</p>
+                  <div className="mb-6 p-4 bg-feedback-error-bg border border-feedback-error-border rounded-lg">
+                    <p className="text-sm text-feedback-error">{error}</p>
                   </div>
                 )}
 
@@ -213,19 +213,19 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                   <div className="mb-6 flex items-center gap-4">
                     {/* 検索バー（左側） */}
                     <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-disabled" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t('agent.searchPlaceholder')}
-                        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full pl-10 pr-10 py-2.5 border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-transparent text-sm"
                       />
                       {searchQuery && (
                         <button
                           type="button"
                           onClick={() => setSearchQuery('')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-disabled hover:text-fg-secondary"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -235,7 +235,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                     {/* 新規作成ボタン（右側） - モバイル: アイコンのみ、デスクトップ: フルテキスト */}
                     <button
                       onClick={() => setMode('create')}
-                      className={`inline-flex items-center text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm ${
+                      className={`inline-flex items-center text-white bg-action-primary rounded-xl hover:bg-action-primary-hover transition-colors shadow-sm ${
                         isMobileView ? 'p-2.5' : 'space-x-2 px-6 py-2.5'
                       }`}
                       title={isMobileView ? t('agent.createNewAgent') : undefined}
@@ -251,28 +251,28 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                 {/* Agent一覧 */}
                 {!isLoading && agents.length === 0 ? (
                   <div className="text-center py-20">
-                    <Bot className="w-16 h-16 text-gray-300 mx-auto mb-6" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <Bot className="w-16 h-16 text-fg-disabled mx-auto mb-6" />
+                    <h3 className="text-lg font-medium text-fg-default mb-2">
                       {t('agent.noAgentsTitle')}
                     </h3>
-                    <p className="text-gray-500 mb-6">{t('agent.noAgentsDescription')}</p>
+                    <p className="text-fg-muted mb-6">{t('agent.noAgentsDescription')}</p>
                     <button
                       onClick={() => setMode('create')}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-action-primary hover:text-action-primary font-medium"
                     >
                       {t('agent.createAgentButton')}
                     </button>
                   </div>
                 ) : !isLoading && filteredAgents.length === 0 ? (
                   <div className="text-center py-20">
-                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-6" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <Search className="w-16 h-16 text-fg-disabled mx-auto mb-6" />
+                    <h3 className="text-lg font-medium text-fg-default mb-2">
                       {t('agent.noSearchResults')}
                     </h3>
-                    <p className="text-gray-500 mb-6">{t('agent.noSearchResultsDescription')}</p>
+                    <p className="text-fg-muted mb-6">{t('agent.noSearchResultsDescription')}</p>
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-action-primary hover:text-action-primary font-medium"
                     >
                       {t('agent.clearSearch')}
                     </button>
@@ -293,7 +293,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                             className={`relative bg-white rounded-2xl transition-all cursor-pointer border ${
                               isSelected
                                 ? 'border-blue-500 ring-2 ring-blue-100'
-                                : 'border-gray-100 hover:border-gray-300'
+                                : 'border-border hover:border-border-strong'
                             }`}
                             onClick={() => handleAgentSelect(agent)}
                           >
@@ -307,17 +307,17 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                   >
                                     <AgentIcon
                                       className={`w-5 h-5 ${
-                                        isSelected ? 'text-blue-600' : 'text-gray-600'
+                                        isSelected ? 'text-action-primary' : 'text-fg-secondary'
                                       }`}
                                     />
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2">
-                                      <h3 className="font-medium text-gray-900">
+                                      <h3 className="font-medium text-fg-default">
                                         {translateIfKey(agent.name, t)}
                                       </h3>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                    <p className="text-sm text-fg-muted mt-1 line-clamp-2">
                                       {translateIfKey(agent.description, t)}
                                     </p>
                                   </div>
@@ -326,14 +326,14 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                 <div className="relative ml-2">
                                   <button
                                     onClick={(e) => toggleMenu(agent.agentId, e)}
-                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                    className="p-1.5 text-fg-disabled hover:text-fg-secondary hover:bg-gray-100 rounded transition-colors"
                                   >
                                     <MoreHorizontal className="w-5 h-5" />
                                   </button>
 
                                   {/* ドロップダウンメニュー */}
                                   {openMenuId === agent.agentId && (
-                                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-border py-1 z-10">
                                       <button
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
@@ -344,7 +344,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                           setMode('edit');
                                           setOpenMenuId(null);
                                         }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                                        className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
                                       >
                                         <Edit2 className="w-3 h-3" />
                                         <span>{t('common.edit')}</span>
@@ -373,7 +373,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                           }
                                           setOpenMenuId(null);
                                         }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                                        className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
                                       >
                                         <Share2 className="w-3 h-3" />
                                         <span>
@@ -389,7 +389,7 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                           setDeleteConfirmAgent(agent);
                                           setOpenMenuId(null);
                                         }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                                        className="w-full px-3 py-1.5 text-left text-sm text-feedback-error hover:bg-feedback-error-bg flex items-center space-x-2"
                                       >
                                         <Trash2 className="w-3 h-3" />
                                         <span>{t('common.delete')}</span>

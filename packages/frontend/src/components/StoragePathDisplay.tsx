@@ -22,7 +22,7 @@ export function StoragePathDisplay({ onClick }: StoragePathDisplayProps) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200 group"
+      className="flex items-center gap-2 px-3 py-1.5 text-sm text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded-lg transition-all duration-200 group"
       title={`Storage: ${agentWorkingDirectory}`}
     >
       <Folder

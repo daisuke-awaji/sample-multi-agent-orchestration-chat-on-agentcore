@@ -24,11 +24,12 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   size = 'md',
   center = true,
   spacing = 'md',
-  textColor = 'text-gray-500',
+  textColor = 'text-fg-muted',
 }) => {
   const { t } = useTranslation();
   const displayMessage = message ?? t('common.loading');
-  // スピナーサイズの定義
+
+  // Spinner size definitions
   const spinnerSizeClasses = {
     sm: 'w-3 h-3',
     md: 'w-4 h-4',
@@ -51,7 +52,7 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     <div className={containerClasses}>
       <div className={`inline-flex items-center gap-2 text-sm ${textColor}`}>
         <div
-          className={`${spinnerSizeClasses[size]} border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin`}
+          className={`${spinnerSizeClasses[size]} border-2 border-border-strong border-t-fg-secondary rounded-full animate-spin`}
         />
         {displayMessage}
       </div>

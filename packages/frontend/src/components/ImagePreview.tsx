@@ -18,13 +18,13 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove, di
   if (images.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 p-2 border-b border-gray-200">
+    <div className="flex flex-wrap gap-2 p-2 border-b border-border">
       {images.map((image) => (
         <div key={image.id} className="relative group">
           <img
             src={image.previewUrl}
             alt={image.fileName}
-            className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+            className="w-20 h-20 object-cover rounded-lg border border-border"
           />
           {!disabled && (
             <button

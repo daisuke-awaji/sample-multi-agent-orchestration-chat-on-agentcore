@@ -42,33 +42,33 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
       case 'success':
         return {
           icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
+          bgColor: 'bg-feedback-success-bg',
+          borderColor: 'border-feedback-success-border',
           textColor: 'text-green-700',
           label: t('triggers.history.success'),
         };
       case 'failure':
         return {
-          icon: <XCircle className="w-5 h-5 text-red-600" />,
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-700',
+          icon: <XCircle className="w-5 h-5 text-feedback-error" />,
+          bgColor: 'bg-feedback-error-bg',
+          borderColor: 'border-feedback-error-border',
+          textColor: 'text-feedback-error',
           label: t('triggers.history.failure'),
         };
       case 'in_progress':
         return {
-          icon: <Clock className="w-5 h-5 text-blue-600 animate-spin" />,
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          textColor: 'text-blue-700',
+          icon: <Clock className="w-5 h-5 text-action-primary animate-spin" />,
+          bgColor: 'bg-feedback-info-bg',
+          borderColor: 'border-feedback-info-border',
+          textColor: 'text-action-primary',
           label: t('triggers.history.inProgress'),
         };
       default:
         return {
-          icon: <Clock className="w-5 h-5 text-gray-600" />,
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
-          textColor: 'text-gray-700',
+          icon: <Clock className="w-5 h-5 text-fg-secondary" />,
+          bgColor: 'bg-surface-secondary',
+          borderColor: 'border-border',
+          textColor: 'text-fg-secondary',
           label: status || 'Unknown',
         };
     }
@@ -93,17 +93,17 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
               <span className={`text-sm font-medium ${statusDisplay.textColor}`}>
                 {statusDisplay.label}
               </span>
-              <span className="text-xs text-gray-500">{formatDuration(execution.duration)}</span>
+              <span className="text-xs text-fg-muted">{formatDuration(execution.duration)}</span>
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-fg-secondary mt-1">
               {t('triggers.history.executedAt')}: {formatDate(execution.startTime)}
             </p>
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
+          <ChevronUp className="w-5 h-5 text-fg-disabled" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
+          <ChevronDown className="w-5 h-5 text-fg-disabled" />
         )}
       </button>
 
@@ -113,11 +113,11 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
           {/* Input */}
           {execution.input && (
             <div>
-              <p className="text-xs font-medium text-gray-700 mb-1">
+              <p className="text-xs font-medium text-fg-secondary mb-1">
                 {t('triggers.history.input')}
               </p>
-              <div className="p-3 bg-gray-50 rounded-md">
-                <pre className="text-xs text-gray-800 whitespace-pre-wrap font-mono">
+              <div className="p-3 bg-surface-secondary rounded-md">
+                <pre className="text-xs text-fg-default whitespace-pre-wrap font-mono">
                   {execution.input}
                 </pre>
               </div>
@@ -127,11 +127,11 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
           {/* Output (for success) */}
           {execution.status === 'success' && execution.output && (
             <div>
-              <p className="text-xs font-medium text-gray-700 mb-1">
+              <p className="text-xs font-medium text-fg-secondary mb-1">
                 {t('triggers.history.output')}
               </p>
-              <div className="p-3 bg-gray-50 rounded-md max-h-60 overflow-y-auto">
-                <pre className="text-xs text-gray-800 whitespace-pre-wrap font-mono">
+              <div className="p-3 bg-surface-secondary rounded-md max-h-60 overflow-y-auto">
+                <pre className="text-xs text-fg-default whitespace-pre-wrap font-mono">
                   {execution.output}
                 </pre>
               </div>
@@ -141,9 +141,11 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
           {/* Error (for failure) */}
           {execution.status === 'failure' && execution.error && (
             <div>
-              <p className="text-xs font-medium text-red-700 mb-1">{t('triggers.history.error')}</p>
-              <div className="p-3 bg-red-50 rounded-md">
-                <pre className="text-xs text-red-800 whitespace-pre-wrap font-mono">
+              <p className="text-xs font-medium text-feedback-error mb-1">
+                {t('triggers.history.error')}
+              </p>
+              <div className="p-3 bg-feedback-error-bg rounded-md">
+                <pre className="text-xs text-feedback-error whitespace-pre-wrap font-mono">
                   {execution.error}
                 </pre>
               </div>
@@ -152,7 +154,7 @@ export function ExecutionItem({ execution }: ExecutionItemProps) {
 
           {/* Metadata */}
           <div className="pt-2 border-t">
-            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+            <div className="grid grid-cols-2 gap-2 text-xs text-fg-secondary">
               <div>
                 <span className="font-medium">{t('triggers.history.executionId')}:</span>
                 <br />

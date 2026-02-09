@@ -119,16 +119,16 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
         <div className="max-w-md w-full space-y-8 p-8 text-center">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-green-200 rounded-full blur-2xl opacity-30 scale-125"></div>
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-fg-default mb-2">
             {t('auth.resetPassword.successTitle')}
           </h2>
-          <p className="text-gray-600">{t('auth.resetPassword.successDescription')}</p>
+          <p className="text-fg-secondary">{t('auth.resetPassword.successDescription')}</p>
           <div className="flex justify-center">
             <svg className="animate-spin h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24">
               <circle
@@ -152,7 +152,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-surface-secondary">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <div className="relative mb-6">
@@ -162,8 +162,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
           <h2 className="text-3xl font-bold text-amber-900 mb-2">
             {t('auth.resetPassword.title')}
           </h2>
-          <p className="text-gray-600 text-sm">{t('auth.resetPassword.description')}</p>
-          <p className="text-gray-600 text-sm mt-2">
+          <p className="text-fg-secondary text-sm">{t('auth.resetPassword.description')}</p>
+          <p className="text-fg-secondary text-sm mt-2">
             {t('auth.email')}: <span className="font-semibold">{email}</span>
           </p>
         </div>
@@ -171,7 +171,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="code" className="block text-sm font-medium text-fg-secondary mb-2">
                 {t('auth.resetPassword.code')}
               </label>
               <input
@@ -187,12 +187,15 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                 placeholder="6桁の確認コードを入力"
               />
               {validationErrors.code && (
-                <p className="mt-2 text-sm text-red-600">{validationErrors.code}</p>
+                <p className="mt-2 text-sm text-feedback-error">{validationErrors.code}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-fg-secondary mb-2"
+              >
                 {t('auth.resetPassword.newPassword')}
               </label>
               <input
@@ -209,15 +212,15 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                 placeholder="新しいパスワードを入力"
               />
               {validationErrors.newPassword && (
-                <p className="mt-2 text-sm text-red-600">{validationErrors.newPassword}</p>
+                <p className="mt-2 text-sm text-feedback-error">{validationErrors.newPassword}</p>
               )}
-              <p className="mt-2 text-xs text-gray-500">{t('auth.passwordRequirements')}</p>
+              <p className="mt-2 text-xs text-fg-muted">{t('auth.passwordRequirements')}</p>
             </div>
 
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-fg-secondary mb-2"
               >
                 {t('auth.resetPassword.confirmNewPassword')}
               </label>
@@ -235,16 +238,22 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                 placeholder="パスワードを再入力"
               />
               {validationErrors.confirmPassword && (
-                <p className="mt-2 text-sm text-red-600">{validationErrors.confirmPassword}</p>
+                <p className="mt-2 text-sm text-feedback-error">
+                  {validationErrors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <div className="bg-feedback-error-bg border border-feedback-error-border rounded-2xl p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg
+                    className="h-5 w-5 text-feedback-error"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -253,7 +262,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
+                  <p className="text-sm text-feedback-error">{error}</p>
                 </div>
               </div>
             </div>
@@ -298,7 +307,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center justify-center w-full text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center justify-center w-full text-sm text-fg-secondary hover:text-fg-default transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t('auth.resetPassword.backToForgotPassword')}

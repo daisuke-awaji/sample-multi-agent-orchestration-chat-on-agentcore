@@ -41,13 +41,13 @@ export function getFileIcon(filename: string): FileIconConfig {
 
   // ドキュメント系
   if (ext === 'pdf') {
-    return { icon: FileText, color: 'text-red-500' };
+    return { icon: FileText, color: 'text-feedback-error' };
   }
   if (['doc', 'docx'].includes(ext)) {
-    return { icon: FileText, color: 'text-blue-500' };
+    return { icon: FileText, color: 'text-action-primary' };
   }
   if (['txt', 'md', 'markdown'].includes(ext)) {
-    return { icon: FileText, color: 'text-gray-500' };
+    return { icon: FileText, color: 'text-fg-muted' };
   }
 
   // スプレッドシート系
@@ -72,7 +72,7 @@ export function getFileIcon(filename: string): FileIconConfig {
 
   // コード系（Python）
   if (['py', 'pyc', 'pyd', 'pyw'].includes(ext)) {
-    return { icon: FileCode, color: 'text-blue-600' };
+    return { icon: FileCode, color: 'text-action-primary' };
   }
 
   // コード系（Web）
@@ -108,5 +108,5 @@ export function getFileIcon(filename: string): FileIconConfig {
   }
 
   // デフォルト（不明な拡張子）
-  return { icon: File, color: 'text-blue-500' };
+  return { icon: File, color: 'text-action-primary' };
 }

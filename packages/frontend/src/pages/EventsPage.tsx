@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarRange, CalendarPlus } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
+import { Button, IconButton } from '../components/ui/Button';
 import { TriggerList } from '../components/triggers/TriggerList';
 import { TriggerFormModal } from '../components/triggers/TriggerFormModal';
 import { ExecutionHistoryModal } from '../components/triggers/ExecutionHistory';
@@ -45,13 +46,7 @@ export function EventsPage() {
   // Set mobile header action on mount, clear on unmount
   useEffect(() => {
     setMobileHeaderAction(
-      <button
-        onClick={handleCreate}
-        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-        aria-label={t('triggers.create')}
-      >
-        <CalendarPlus className="w-5 h-5" />
-      </button>
+      <IconButton icon={CalendarPlus} label={t('triggers.create')} onClick={handleCreate} />
     );
 
     // Cleanup: clear mobile header action when leaving the page
@@ -134,22 +129,21 @@ export function EventsPage() {
         title={t('navigation.events')}
         actions={
           <>
-            {/* Desktop: Icon + Text */}
-            <button
+            <Button
+              variant="ghost"
+              size="md"
+              leftIcon={CalendarPlus}
               onClick={handleCreate}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+              className="hidden md:inline-flex"
             >
-              <CalendarPlus className="w-5 h-5" />
               {t('triggers.create')}
-            </button>
-            {/* Mobile: Icon Only - not shown in PageHeader (handled by MainLayout) */}
-            <button
+            </Button>
+            <IconButton
+              icon={CalendarPlus}
+              label={t('triggers.create')}
               onClick={handleCreate}
-              className="md:hidden p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label={t('triggers.create')}
-            >
-              <CalendarPlus className="w-5 h-5" />
-            </button>
+              className="md:hidden"
+            />
           </>
         }
       />
@@ -157,8 +151,10 @@ export function EventsPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         {/* Description Section */}
-        <div className="mb-6">
-          <p className="text-sm text-gray-600 leading-relaxed">{t('triggers.pageDescription')}</p>
+        <div className="mb-section">
+          <p className="text-sm text-fg-secondary leading-relaxed">
+            {t('triggers.pageDescription')}
+          </p>
         </div>
 
         <TriggerList

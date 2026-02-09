@@ -492,6 +492,12 @@ settings:
 error:
   generic: An error occurred
   network: Network error
+  boundary:
+    title: An Error Occurred
+    description: An unexpected error occurred. Please reload the page.
+    reload: Reload Page
+    backToHome: Back to Home
+    developerInfo: Developer Information
   notFound: Not found
   unauthorized: Authentication required
   authenticationRequired: Authentication required. Please log in again.

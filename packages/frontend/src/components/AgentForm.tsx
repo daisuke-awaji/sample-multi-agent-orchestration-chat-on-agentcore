@@ -5,6 +5,8 @@ import { ToolSelector } from './ToolSelector';
 import { MCPConfigEditor } from './MCPConfigEditor';
 import { IconPicker } from './ui/IconPicker';
 import { SidebarTabsLayout, type TabItem } from './ui/SidebarTabs';
+import { FormField } from './ui/FormField';
+import { Button } from './ui/Button';
 import type { CreateAgentInput, Agent, Scenario } from '../types/agent';
 import { streamAgentResponse, createAgentConfigGenerationPrompt } from '../api/agent';
 import { useToolStore } from '../stores/toolStore';
@@ -249,16 +251,17 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* 基本設定パネル */}
           {activeTab === 'basic' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              <h2 className="text-lg font-semibold text-fg-default mb-6">
                 {t('agent.basicSettings')}
               </h2>
 
               {/* Agent name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('agent.nameAndIcon')}
-                </label>
-                <p className="text-sm text-gray-500 mb-3">{t('agent.nameDescription')}</p>
+              <FormField
+                label={t('agent.nameAndIcon')}
+                htmlFor="name"
+                description={t('agent.nameDescription')}
+                error={errors.name}
+              >
                 <div className="flex flex-col md:flex-row md:items-center space-y-3 md:space-y-0 md:space-x-3">
                   <IconPicker
                     value={formData.icon}
@@ -277,28 +280,20 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                     }}
                     disabled={isLoading || isGenerating}
                     placeholder={t('agent.namePlaceholder')}
-                    className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
+                    className={`flex-1 px-4 py-3 border rounded-input bg-surface-primary text-fg-default focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-surface-secondary disabled:cursor-not-allowed ${
+                      errors.name ? 'border-feedback-error' : 'border-border'
                     }`}
                   />
                 </div>
-                {errors.name && (
-                  <div className="flex items-center space-x-1 mt-2">
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.name}</span>
-                  </div>
-                )}
-              </div>
+              </FormField>
 
               {/* Description */}
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  {t('agent.descriptionLabel')}
-                </label>
-                <p className="text-sm text-gray-500 mb-3">{t('agent.descriptionDescription')}</p>
+              <FormField
+                label={t('agent.descriptionLabel')}
+                htmlFor="description"
+                description={t('agent.descriptionDescription')}
+                error={errors.description}
+              >
                 <textarea
                   id="description"
                   value={formData.description}
@@ -311,27 +306,23 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                   disabled={isLoading || isGenerating}
                   placeholder={t('agent.descriptionPlaceholder2')}
                   rows={3}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none ${
-                    errors.description ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border rounded-input bg-surface-primary text-fg-default focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-surface-secondary disabled:cursor-not-allowed resize-none ${
+                    errors.description ? 'border-feedback-error' : 'border-border'
                   }`}
                 />
-                {errors.description && (
-                  <div className="flex items-center space-x-1 mt-2">
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.description}</span>
-                  </div>
-                )}
-              </div>
+              </FormField>
 
               {/* System prompt */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="systemPrompt" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="systemPrompt" className="text-sm font-medium text-fg-secondary">
                     {t('agent.systemPromptRequired')}
                   </label>
-                  {/* AI自動生成ボタン */}
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    leftIcon={Sparkles}
                     onClick={handleAIGeneration}
                     disabled={
                       isLoading ||
@@ -339,13 +330,11 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                       !formData.name.trim() ||
                       !formData.description.trim()
                     }
-                    className="inline-flex items-center space-x-1 px-3 py-1.5 text-xs text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isGenerating ? t('agent.aiGenerating') : t('agent.aiGenerate')}</span>
-                  </button>
+                    {isGenerating ? t('agent.aiGenerating') : t('agent.aiGenerate')}
+                  </Button>
                 </div>
-                <p className="text-sm text-gray-500 mb-3">{t('agent.systemPromptDescription')}</p>
+                <p className="text-sm text-fg-muted mb-3">{t('agent.systemPromptDescription')}</p>
                 <textarea
                   id="systemPrompt"
                   value={formData.systemPrompt}
@@ -358,47 +347,46 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                   disabled={isLoading || isGenerating}
                   placeholder={t('agent.systemPromptPlaceholder2')}
                   rows={12}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-y font-mono text-sm ${
-                    errors.systemPrompt ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-input bg-surface-primary text-fg-default focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-surface-secondary disabled:cursor-not-allowed resize-y font-mono text-sm ${
+                    errors.systemPrompt ? 'border-feedback-error' : 'border-border'
                   }`}
                 />
                 {errors.systemPrompt && (
                   <div className="flex items-center space-x-1 mt-2">
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.systemPrompt}</span>
+                    <AlertCircle className="w-4 h-4 text-feedback-error" />
+                    <span className="text-sm text-feedback-error">{errors.systemPrompt}</span>
                   </div>
                 )}
                 {errors.generation && (
                   <div className="flex items-center space-x-1 mt-2">
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600">{errors.generation}</span>
+                    <AlertCircle className="w-4 h-4 text-feedback-error" />
+                    <span className="text-sm text-feedback-error">{errors.generation}</span>
                   </div>
                 )}
               </div>
 
-              {/* シナリオ管理 */}
+              {/* Scenarios */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-fg-secondary">
                     {t('agent.scenarios')}
                   </label>
                   <button
                     type="button"
                     onClick={addScenario}
                     disabled={isLoading || isGenerating}
-                    className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="inline-flex items-center space-x-1 text-sm text-action-primary hover:opacity-80 disabled:text-fg-disabled disabled:cursor-not-allowed"
                   >
                     <Plus className="w-4 h-4" />
                     <span>{t('agent.addScenario')}</span>
                   </button>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-4">{t('agent.scenariosDescription')}</p>
+                <p className="text-sm text-fg-muted mb-4">{t('agent.scenariosDescription')}</p>
 
                 <div className="space-y-3">
                   {formData.scenarios.map((scenario, index) => (
                     <div key={index} className="flex items-start space-x-3">
-                      {/* タイトル（左側） */}
                       <div className="flex-shrink-0 w-48">
                         <textarea
                           value={scenario.title}
@@ -406,21 +394,22 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                           disabled={isLoading || isGenerating}
                           placeholder={t('agent.scenarioTitlePlaceholder')}
                           rows={2}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-y ${
-                            errors[`scenario_title_${index}`] ? 'border-red-500' : 'border-gray-300'
+                          className={`w-full px-3 py-2 border rounded-input bg-surface-primary text-fg-default focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-surface-secondary disabled:cursor-not-allowed resize-y ${
+                            errors[`scenario_title_${index}`]
+                              ? 'border-feedback-error'
+                              : 'border-border'
                           }`}
                         />
                         {errors[`scenario_title_${index}`] && (
                           <div className="flex items-center space-x-1 mt-1">
-                            <AlertCircle className="w-3 h-3 text-red-500" />
-                            <span className="text-xs text-red-600">
+                            <AlertCircle className="w-3 h-3 text-feedback-error" />
+                            <span className="text-xs text-feedback-error">
                               {errors[`scenario_title_${index}`]}
                             </span>
                           </div>
                         )}
                       </div>
 
-                      {/* プロンプト（右側） */}
                       <div className="flex-1">
                         <textarea
                           value={scenario.prompt}
@@ -428,28 +417,27 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                           disabled={isLoading || isGenerating}
                           placeholder={t('agent.scenarioPromptPlaceholder')}
                           rows={2}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-y ${
+                          className={`w-full px-3 py-2 border rounded-input bg-surface-primary text-fg-default focus:ring-2 focus:ring-border-focus focus:border-transparent disabled:bg-surface-secondary disabled:cursor-not-allowed resize-y ${
                             errors[`scenario_prompt_${index}`]
-                              ? 'border-red-500'
-                              : 'border-gray-300'
+                              ? 'border-feedback-error'
+                              : 'border-border'
                           }`}
                         />
                         {errors[`scenario_prompt_${index}`] && (
                           <div className="flex items-center space-x-1 mt-1">
-                            <AlertCircle className="w-3 h-3 text-red-500" />
-                            <span className="text-xs text-red-600">
+                            <AlertCircle className="w-3 h-3 text-feedback-error" />
+                            <span className="text-xs text-feedback-error">
                               {errors[`scenario_prompt_${index}`]}
                             </span>
                           </div>
                         )}
                       </div>
 
-                      {/* 削除ボタン */}
                       <button
                         type="button"
                         onClick={() => removeScenario(index)}
                         disabled={isLoading || isGenerating}
-                        className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+                        className="flex-shrink-0 p-1 text-fg-disabled hover:text-feedback-error disabled:text-fg-disabled disabled:cursor-not-allowed transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -457,9 +445,8 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                   ))}
                 </div>
 
-                {/* 空の状態 */}
                 {formData.scenarios.length === 0 && (
-                  <div className="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-lg border border-gray-200 border-dashed">
+                  <div className="text-center py-6 text-fg-disabled text-sm bg-surface-secondary rounded-card border border-border border-dashed">
                     {t('agent.emptyScenarios')}
                   </div>
                 )}
@@ -470,7 +457,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* ツールパネル */}
           {activeTab === 'tools' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              <h2 className="text-lg font-semibold text-fg-default mb-6">
                 {t('agent.toolSelection')}
               </h2>
               <ToolSelector
@@ -486,7 +473,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           {/* MCP パネル */}
           {activeTab === 'mcp' && (
             <div className="space-y-6 max-w-5xl mx-auto">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              <h2 className="text-lg font-semibold text-fg-default mb-6">
                 {t('agent.mcpServerSettings')}
               </h2>
               <MCPConfigEditor

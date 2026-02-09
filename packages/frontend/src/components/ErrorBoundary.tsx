@@ -3,13 +3,13 @@
  * Catches React errors and displays fallback UI
  */
 
-/* eslint-disable i18next/no-literal-string */
-
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { withTranslation } from 'react-i18next';
+import type { WithTranslation } from 'react-i18next';
 
-interface Props {
+interface Props extends WithTranslation {
   children: ReactNode;
 }
 
@@ -19,7 +19,7 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryInner extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -48,25 +48,25 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   render(): ReactNode {
+    const { t } = this.props;
+
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
+        <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-surface-primary rounded-card shadow-elevation-4 p-6">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-feedback-error-bg rounded-full mb-4">
+              <AlertTriangle className="w-6 h-6 text-feedback-error" />
             </div>
-            
-            <h1 className="text-xl font-semibold text-gray-900 text-center mb-2">
-              エラーが発生しました
+
+            <h1 className="text-xl font-semibold text-fg-default text-center mb-2">
+              {t('error.boundary.title')}
             </h1>
-            
-            <p className="text-gray-600 text-center mb-6">
-              予期しないエラーが発生しました。ページをリロードしてください。
-            </p>
+
+            <p className="text-fg-secondary text-center mb-6">{t('error.boundary.description')}</p>
 
             {this.state.error && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <p className="text-sm font-mono text-gray-700 break-all">
+              <div className="bg-surface-secondary rounded-card p-4 mb-6">
+                <p className="text-sm font-mono text-fg-secondary break-all">
                   {this.state.error.message}
                 </p>
               </div>
@@ -75,23 +75,23 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3">
               <button
                 onClick={this.handleReload}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-action-primary text-action-primary-fg rounded-btn hover:bg-action-primary-hover transition-colors"
               >
-                ページをリロード
+                {t('error.boundary.reload')}
               </button>
-              
+
               <button
                 onClick={() => (window.location.href = '/')}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-surface-secondary text-fg-secondary rounded-btn hover:bg-gray-200 transition-colors"
               >
-                ホームに戻る
+                {t('error.boundary.backToHome')}
               </button>
             </div>
 
             {import.meta.env.DEV && this.state.errorInfo && (
               <details className="mt-6">
-                <summary className="text-sm text-gray-600 cursor-pointer hover:text-gray-900">
-                  開発者向け情報
+                <summary className="text-sm text-fg-secondary cursor-pointer hover:text-fg-default">
+                  {t('error.boundary.developerInfo')}
                 </summary>
                 <pre className="mt-2 text-xs bg-gray-100 rounded p-3 overflow-auto max-h-64">
                   {this.state.errorInfo.componentStack}
@@ -106,3 +106,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = withTranslation()(ErrorBoundaryInner);

@@ -160,12 +160,14 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
     >
       {/* ローディング中 */}
       {isRendering && (
-        <div className="text-blue-500 text-sm italic py-2">{t('common.renderingDiagram')}</div>
+        <div className="text-action-primary text-sm italic py-2">
+          {t('common.renderingDiagram')}
+        </div>
       )}
 
       {/* 構文エラーの場合 */}
       {isValidSyntax === false && chart.trim() && !isRendering && (
-        <div className="text-gray-400 text-sm italic py-2">{t('common.diagramLoading')}</div>
+        <div className="text-fg-disabled text-sm italic py-2">{t('common.diagramLoading')}</div>
       )}
 
       {/* SVGコンテンツを表示（React管理下で） */}

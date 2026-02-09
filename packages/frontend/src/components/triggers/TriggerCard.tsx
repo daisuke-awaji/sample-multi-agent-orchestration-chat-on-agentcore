@@ -3,7 +3,7 @@
  * Displays individual trigger information with action buttons
  */
 
-import { Clock, Bot, Calendar, Edit, Trash2, History, Loader2, Zap, Bell } from 'lucide-react';
+import { Clock, Bot, Calendar, Edit, Trash2, History, Zap, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import type { Trigger, ScheduleConfig, EventConfig } from '../../types/trigger';
@@ -11,6 +11,9 @@ import { useAgentStore } from '../../stores/agentStore';
 import { useTriggerStore } from '../../stores/triggerStore';
 import { translateIfKey } from '../../utils/agent-translation';
 import { getEventSources } from '../../api/events';
+import { Button } from '../ui/Button';
+import { Toggle } from '../ui/Toggle';
+import { Card } from '../ui/Card';
 
 interface TriggerCardProps {
   trigger: Trigger;
@@ -68,40 +71,28 @@ export function TriggerCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-sm transition-shadow flex flex-col h-full">
+    <Card
+      variant="default"
+      padding="lg"
+      className="flex flex-col h-full hover:shadow-elevation-2 transition-shadow"
+    >
       {/* Header with Toggle */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0 pr-4">
-          <h3 className="text-lg font-semibold text-gray-900 truncate mb-2">{trigger.name}</h3>
+          <h3 className="text-lg font-semibold text-fg-default truncate mb-2">{trigger.name}</h3>
           {trigger.description && (
-            <p className="text-sm text-gray-600 line-clamp-2">{trigger.description}</p>
+            <p className="text-sm text-fg-secondary line-clamp-2">{trigger.description}</p>
           )}
         </div>
 
         {/* Toggle Switch */}
         <div className="flex-shrink-0">
-          <button
-            onClick={() => onToggle(trigger.id, !isEnabled)}
-            disabled={isToggling}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed ${
-              isEnabled ? 'bg-amber-500 focus:ring-amber-400' : 'bg-gray-200 focus:ring-gray-400'
-            }`}
-            role="switch"
-            aria-checked={isEnabled}
-            aria-label={isEnabled ? t('triggers.card.enabled') : t('triggers.card.disabled')}
-          >
-            {isToggling ? (
-              <span className="inline-block w-full flex items-center justify-center">
-                <Loader2 className="w-3 h-3 text-white animate-spin" />
-              </span>
-            ) : (
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            )}
-          </button>
+          <Toggle
+            checked={isEnabled}
+            onChange={(checked) => onToggle(trigger.id, checked)}
+            loading={isToggling}
+            label={isEnabled ? t('triggers.card.enabled') : t('triggers.card.disabled')}
+          />
         </div>
       </div>
 
@@ -110,14 +101,14 @@ export function TriggerCard({
         {trigger.type === 'schedule' ? (
           <>
             {/* Schedule Type */}
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-fg-secondary">
+              <Clock className="w-4 h-4 text-fg-disabled flex-shrink-0" />
               <span className="font-medium">{t('triggers.card.schedule')}:</span>
               <span className="truncate">{scheduleConfig?.expression || 'N/A'}</span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-fg-secondary">
+              <Calendar className="w-4 h-4 text-fg-disabled flex-shrink-0" />
               <span className="font-medium">{t('triggers.card.timezone')}:</span>
               <span className="truncate">{scheduleConfig?.timezone || 'N/A'}</span>
             </div>
@@ -125,16 +116,16 @@ export function TriggerCard({
         ) : (
           <>
             {/* Event Type */}
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Zap className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-fg-secondary">
+              <Zap className="w-4 h-4 text-fg-disabled flex-shrink-0" />
               <span className="font-medium">{t('triggers.card.eventSource')}:</span>
               <span className="truncate">
                 {eventSourceName || eventConfig?.eventSourceId || 'N/A'}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <Bell className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-fg-secondary">
+              <Bell className="w-4 h-4 text-fg-disabled flex-shrink-0" />
               <span className="font-medium">{t('triggers.card.triggerCondition')}:</span>
               <span className="truncate">{t('triggers.card.onEventReceived')}</span>
             </div>
@@ -142,8 +133,8 @@ export function TriggerCard({
         )}
 
         {/* Common: Agent */}
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Bot className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <div className="flex items-center gap-2 text-sm text-fg-secondary">
+          <Bot className="w-4 h-4 text-fg-disabled flex-shrink-0" />
           <span className="font-medium">{t('triggers.card.agent')}:</span>
           <span className="truncate">
             {agent ? translateIfKey(agent.name, t) : trigger.agentId}
@@ -153,45 +144,45 @@ export function TriggerCard({
 
       {/* Last Execution */}
       {trigger.lastExecutedAt && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600">
+        <div className="mb-4 p-3 bg-surface-secondary rounded-lg">
+          <p className="text-xs text-fg-secondary">
             {t('triggers.card.lastExecution')}: {formatLastExecution(trigger.lastExecutedAt)}
           </p>
         </div>
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-        {/* Edit Button */}
-        <button
+      <div className="flex items-center gap-2 pt-4 border-t border-border">
+        <Button
+          variant="outline"
+          size="sm"
+          leftIcon={Edit}
           onClick={() => onEdit(trigger)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial"
-          aria-label={t('triggers.edit')}
+          className="flex-1 lg:flex-initial"
         >
-          <Edit className="w-4 h-4 flex-shrink-0" />
           <span className="hidden lg:inline">{t('triggers.edit')}</span>
-        </button>
+        </Button>
 
-        {/* History Button */}
-        <button
+        <Button
+          variant="outline"
+          size="sm"
+          leftIcon={History}
           onClick={() => onViewHistory(trigger.id)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial"
-          aria-label={t('triggers.viewHistory')}
+          className="flex-1 lg:flex-initial"
         >
-          <History className="w-4 h-4 flex-shrink-0" />
           <span className="hidden lg:inline">{t('triggers.viewHistory')}</span>
-        </button>
+        </Button>
 
-        {/* Delete Button */}
-        <button
+        <Button
+          variant="danger"
+          size="sm"
+          leftIcon={Trash2}
           onClick={() => onDelete(trigger.id)}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors whitespace-nowrap flex-1 lg:flex-initial lg:ml-auto"
-          aria-label={t('triggers.delete')}
+          className="flex-1 lg:flex-initial lg:ml-auto"
         >
-          <Trash2 className="w-4 h-4 flex-shrink-0" />
           <span className="hidden lg:inline">{t('triggers.delete')}</span>
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

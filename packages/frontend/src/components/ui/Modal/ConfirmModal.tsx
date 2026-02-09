@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from './index';
+import { Button } from '../Button';
 import type { ConfirmModalProps } from './types';
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -25,24 +26,20 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       </Modal.Header>
 
       <Modal.Content>
-        <p className="text-sm text-gray-600">{message}</p>
+        <p className="text-sm text-fg-secondary">{message}</p>
       </Modal.Content>
 
       <Modal.Footer>
-        <button
-          onClick={onClose}
-          className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
+        <Button variant="outline" size="md" onClick={onClose}>
           {cancelText}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant={variant === 'danger' ? 'danger' : 'primary'}
+          size="md"
           onClick={handleConfirm}
-          className={`px-4 py-2 text-sm text-white rounded-lg transition-colors ${
-            variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
         >
           {confirmText}
-        </button>
+        </Button>
       </Modal.Footer>
     </Modal>
   );

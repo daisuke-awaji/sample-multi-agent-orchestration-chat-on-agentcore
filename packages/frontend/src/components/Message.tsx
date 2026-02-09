@@ -118,7 +118,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           // Code blocks without language specification
           return (
             <code
-              className="block whitespace-pre-wrap bg-[#fafafa] text-gray-800 p-4 rounded-lg text-sm overflow-x-auto font-mono"
+              className="block whitespace-pre-wrap bg-[#fafafa] text-fg-default p-4 rounded-lg text-sm overflow-x-auto font-mono"
               {...props}
             >
               {children}
@@ -128,7 +128,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
 
         // Inline code
         return (
-          <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
+          <code className="bg-gray-100 text-fg-default px-1 py-0.5 rounded text-sm" {...props}>
             {children}
           </code>
         );
@@ -137,7 +137,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       table: ({ children, ...props }: any) => (
         <div className="overflow-x-auto my-4">
-          <table className="min-w-full border-collapse border border-gray-300" {...props}>
+          <table className="min-w-full border-collapse border border-border-strong" {...props}>
             {children}
           </table>
         </div>
@@ -145,7 +145,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       th: ({ children, ...props }: any) => (
         <th
-          className="border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-left"
+          className="border border-border-strong px-4 py-2 bg-surface-secondary font-semibold text-left"
           {...props}
         >
           {children}
@@ -153,7 +153,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       ),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       td: ({ children, ...props }: any) => (
-        <td className="border border-gray-300 px-4 py-2" {...props}>
+        <td className="border border-border-strong px-4 py-2" {...props}>
           {children}
         </td>
       ),
@@ -161,7 +161,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       blockquote: ({ children, ...props }: any) => (
         <blockquote
-          className="border-l-4 border-gray-300 pl-4 py-2 my-4 bg-gray-50 italic"
+          className="border-l-4 border-border-strong pl-4 py-2 my-4 bg-surface-secondary italic"
           {...props}
         >
           {children}
@@ -217,7 +217,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
         >
           {/* エラーアイコン表示 */}
           {message.isError && (
-            <div className="flex items-center gap-2 mb-2 text-red-600">
+            <div className="flex items-center gap-2 mb-2 text-feedback-error">
               <AlertTriangle className="w-5 h-5" />
               <span className="text-sm font-medium">{t('common.errorOccurred')}</span>
             </div>
@@ -267,7 +267,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                         <img
                           src={imageSrc}
                           alt={content.image.fileName || 'Attached image'}
-                          className="max-w-xs max-h-48 object-contain rounded-lg border border-gray-200"
+                          className="max-w-xs max-h-48 object-contain rounded-lg border border-border"
                         />
                       </div>
                     ) : null;
@@ -275,7 +275,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
 
                   default:
                     return (
-                      <div key={`unknown-${index}`} className="text-gray-500 text-sm">
+                      <div key={`unknown-${index}`} className="text-fg-muted text-sm">
                         {t('common.unsupportedContentType', { type: content.type })}
                       </div>
                     );

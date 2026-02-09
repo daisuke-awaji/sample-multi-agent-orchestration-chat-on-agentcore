@@ -96,11 +96,11 @@ export const S3FileLink: React.FC<S3FileLinkProps> = ({ path, children }) => {
         onClick={handleClick}
         className={`
           inline-flex items-center gap-1
-          text-blue-600 hover:text-blue-800 
+          text-action-primary hover:text-action-primary 
           underline decoration-blue-300 hover:decoration-blue-500
           transition-colors cursor-pointer
           ${isLoading ? 'opacity-50 cursor-wait' : ''}
-          ${error ? 'text-red-600' : ''}
+          ${error ? 'text-feedback-error' : ''}
         `}
         title={error || (isLoading ? 'Loading...' : `Download: ${fileName}`)}
       >
@@ -108,7 +108,9 @@ export const S3FileLink: React.FC<S3FileLinkProps> = ({ path, children }) => {
         <span>{children}</span>
         {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
       </a>
-      {error && <span className="text-xs text-red-600 ml-1">({t('storage.failedToLoad')})</span>}
+      {error && (
+        <span className="text-xs text-feedback-error ml-1">({t('storage.failedToLoad')})</span>
+      )}
     </span>
   );
 };

@@ -39,9 +39,9 @@ export function TriggerList({
   if (triggers.length === 0) {
     return (
       <div className="text-center py-12">
-        <CalendarRange className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500 text-lg mb-2">{t('triggers.empty.title')}</p>
-        <p className="text-gray-400 text-sm">{t('triggers.empty.description')}</p>
+        <CalendarRange className="w-16 h-16 text-fg-disabled mx-auto mb-4" />
+        <p className="text-fg-muted text-lg mb-2">{t('triggers.empty.title')}</p>
+        <p className="text-fg-disabled text-sm">{t('triggers.empty.description')}</p>
       </div>
     );
   }

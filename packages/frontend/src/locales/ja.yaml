@@ -491,6 +491,12 @@ settings:
 error:
   generic: エラーが発生しました
   network: ネットワークエラー
+  boundary:
+    title: エラーが発生しました
+    description: 予期しないエラーが発生しました。ページをリロードしてください。
+    reload: ページをリロード
+    backToHome: ホームに戻る
+    developerInfo: 開発者向け情報
   notFound: 見つかりませんでした
   unauthorized: 認証が必要です
   authenticationRequired: 認証が必要です。再ログインしてください。

@@ -27,10 +27,10 @@ export function ScheduleConfig({
   return (
     <div>
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">
+        <h3 className="text-base font-semibold text-fg-default">
           {t('triggers.form.scheduleConfig')}
         </h3>
-        <p className="text-sm text-gray-500 mt-1">{t('triggers.form.scheduleConfigDescription')}</p>
+        <p className="text-sm text-fg-muted mt-1">{t('triggers.form.scheduleConfigDescription')}</p>
       </div>
 
       <CronBuilder

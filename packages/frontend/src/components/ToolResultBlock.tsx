@@ -14,7 +14,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
   const getResultStyles = () => {
     if (toolResult.isError) {
       return {
-        statusColor: 'text-red-600',
+        statusColor: 'text-feedback-error',
         label: t('tool.errorResult'),
         icon: (
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +29,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
       };
     }
     return {
-      statusColor: 'text-blue-600',
+      statusColor: 'text-action-primary',
       label: t('tool.executionResult'),
       icon: (
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,21 +66,21 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
   return (
     <div className="tool-result-block w-full">
       {/* 白背景・グレー枠線のメインコンテナ */}
-      <div className="bg-white border border-gray-300 rounded-lg text-sm hover:shadow-sm transition-shadow">
+      <div className="bg-white border border-border-strong rounded-lg text-sm hover:shadow-sm transition-shadow">
         {/* ヘッダー部分（全体クリック可能） */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 px-3 py-1.5 w-full text-left hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 w-full text-left hover:bg-surface-secondary transition-colors"
           aria-label={isExpanded ? '結果を隠す' : '結果を表示'}
         >
           {/* アイコンとステータス */}
           <div className={`flex items-center ${resultStyles.statusColor}`}>{resultStyles.icon}</div>
 
           {/* ラベル（シンプル化） */}
-          <span className="font-medium text-gray-900 text-xs">{resultStyles.label}</span>
+          <span className="font-medium text-fg-default text-xs">{resultStyles.label}</span>
 
           {/* 展開ボタン */}
-          <div className="text-gray-400 ml-auto">
+          <div className="text-fg-disabled ml-auto">
             <svg
               className={`w-3 h-3 transform transition-transform duration-200 ${
                 isExpanded ? 'rotate-180' : ''
@@ -101,14 +101,14 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
 
         {/* 詳細コンテンツ（展開時、枠内に統合） */}
         {isExpanded && (
-          <div className="px-3 pb-3 pt-1 border-t border-gray-200">
+          <div className="px-3 pb-3 pt-1 border-t border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-500 text-xs font-medium">
+              <span className="text-fg-muted text-xs font-medium">
                 {formattedContent.isJson ? t('tool.jsonResponse') : t('tool.textResult')}
               </span>
               <button
                 onClick={() => navigator.clipboard.writeText(toolResult.content)}
-                className="text-gray-400 hover:text-gray-600 text-xs px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                className="text-fg-disabled hover:text-fg-secondary text-xs px-2 py-1 rounded hover:bg-gray-100 transition-colors"
                 title={t('common.copyToClipboard')}
               >
                 {t('common.copy')}
@@ -119,8 +119,8 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
             <div className="max-h-64 overflow-y-auto">
               <pre
                 className={`
-                  text-gray-800 text-xs overflow-x-auto whitespace-pre-wrap break-words
-                  bg-gray-50 p-2 rounded border border-gray-200
+                  text-fg-default text-xs overflow-x-auto whitespace-pre-wrap break-words
+                  bg-surface-secondary p-2 rounded border border-border
                   ${formattedContent.isJson ? 'font-mono' : 'font-sans'}
                 `}
               >
@@ -130,8 +130,8 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
 
             {/* 統計情報 */}
             {formattedContent.content.length > 500 && (
-              <div className="mt-2 pt-2 border-t border-gray-200">
-                <p className="text-gray-400 text-xs">
+              <div className="mt-2 pt-2 border-t border-border">
+                <p className="text-fg-disabled text-xs">
                   {t('common.charactersWithStatus', {
                     count: formattedContent.content.length,
                     status: toolResult.isError ? t('common.errorStatus') : t('common.success'),

@@ -6,13 +6,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Bot, Users, XCircle, Loader2 } from 'lucide-react';
+import { Bot, Users } from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSharedAgentStore } from '../stores/sharedAgentStore';
 import { SharedAgentDetailModal } from '../components/SharedAgentDetailModal';
 import { LoadingIndicator } from '../components/ui/LoadingIndicator';
 import { PageHeader } from '../components/ui/PageHeader';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Alert } from '../components/ui/Alert';
+import { EmptyState } from '../components/ui/EmptyState';
+import { SearchSection } from '../components/ui/SearchSection';
 import type { Agent } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
 
@@ -48,7 +53,7 @@ export function AgentDirectoryPage() {
     });
   }, [sharedAgents, localSearchQuery, t]);
 
-  // URLパラメータから選択されたエージェントを派生させる（useEffectではなくuseMemoを使用）
+  // URLパラメータから選択されたエージェントを派生
   const selectedAgent = useMemo(() => {
     const agentParam = searchParams.get('agent');
     if (agentParam && sharedAgents.length > 0) {
@@ -62,18 +67,10 @@ export function AgentDirectoryPage() {
     fetchSharedAgents();
   }, [fetchSharedAgents]);
 
-  // DynamoDB検索を実行（デフォルトエージェントはフロントエンドでフィルタリング済み）
+  // DynamoDB検索を実行
   const handleSearch = () => {
     if (localSearchQuery.trim()) {
-      // DynamoDB側の検索も実行
       fetchSharedAgents(localSearchQuery);
-    }
-  };
-
-  // Enterキーで検索
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
     }
   };
 
@@ -84,91 +81,62 @@ export function AgentDirectoryPage() {
 
   // エージェントカードクリック
   const handleAgentClick = (agent: Agent) => {
-    // URLパラメータを更新
     setSearchParams({ agent: `${agent.createdBy}-${agent.agentId}` });
   };
 
   // モーダルをクローズ
   const handleCloseModal = () => {
-    // URLパラメータを削除
     setSearchParams({});
   };
 
   return (
     <>
-      {/* ヘッダー */}
       <PageHeader icon={Users} title={t('navigation.searchAgents')} />
 
-      {/* メインコンテンツ */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* Description文 */}
-        <p className="text-sm text-gray-600 mb-6">{t('agentDirectory.description')}</p>
+      <div className="flex-1 overflow-y-auto p-page">
+        <p className="text-sm text-fg-secondary mb-section">{t('agentDirectory.description')}</p>
 
-        {/* 検索セクション */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Search className="w-4 h-4 text-gray-600" />
-            <h2 className="text-sm font-medium text-gray-900">{t('agentDirectory.searchTitle')}</h2>
-          </div>
+        {/* Search Section */}
+        <SearchSection
+          value={localSearchQuery}
+          onChange={setLocalSearchQuery}
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          isSearching={isLoading}
+          placeholder={t('agentDirectory.searchPlaceholder')}
+          title={t('agentDirectory.searchTitle')}
+          className="mb-section"
+        />
 
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={localSearchQuery}
-                onChange={(e) => setLocalSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={t('agentDirectory.searchPlaceholder')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-              {localSearchQuery && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isLoading || !localSearchQuery.trim()}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.search')}
-            </button>
-          </div>
-        </div>
-
-        {/* エラー表示 */}
+        {/* Error */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+          <Alert variant="error" className="mb-section">
+            {error}
+          </Alert>
         )}
 
-        {/* ローディング */}
+        {/* Loading */}
         {isLoading && (
           <div className="py-20">
             <LoadingIndicator message={t('agentDirectory.loading')} size="lg" />
           </div>
         )}
 
-        {/* エージェント一覧 */}
+        {/* Empty state */}
         {!isLoading && filteredAgents.length === 0 && (
-          <div className="text-center py-20">
-            <Bot className="w-16 h-16 text-gray-300 mx-auto mb-6" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {t('agentDirectory.noAgentsFound')}
-            </h3>
-            <p className="text-gray-500">
-              {localSearchQuery
+          <EmptyState
+            icon={Bot}
+            title={t('agentDirectory.noAgentsFound')}
+            description={
+              localSearchQuery
                 ? t('agentDirectory.noAgentsDescription')
-                : t('agentDirectory.noAgentsEmpty')}
-            </p>
-          </div>
+                : t('agentDirectory.noAgentsEmpty')
+            }
+            className="py-20"
+          />
         )}
 
+        {/* Agent grid */}
         {!isLoading && filteredAgents.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -176,60 +144,55 @@ export function AgentDirectoryPage() {
                 const AgentIcon = (icons[agent.icon as keyof typeof icons] as LucideIcon) || Bot;
 
                 return (
-                  <div
+                  <Card
                     key={`${agent.createdBy}-${agent.agentId}`}
+                    variant="default"
+                    padding="md"
+                    interactive
                     onClick={() => handleAgentClick(agent)}
-                    className="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-md transition-all cursor-pointer"
                   >
-                    {/* アイコンと名前 */}
+                    {/* Icon and name */}
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <AgentIcon className="w-5 h-5 text-gray-600" />
+                      <div className="w-10 h-10 rounded-btn bg-surface-secondary flex items-center justify-center flex-shrink-0">
+                        <AgentIcon className="w-5 h-5 text-fg-secondary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">
+                        <h3 className="font-medium text-fg-default truncate">
                           {translateIfKey(agent.name, t)}
                         </h3>
                       </div>
                     </div>
 
                     {/* Description */}
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                    <p className="text-sm text-fg-secondary line-clamp-2 mb-3">
                       {translateIfKey(agent.description, t)}
                     </p>
 
-                    {/* 作成者 */}
-                    <div className="text-xs text-gray-500">
+                    {/* Author */}
+                    <div className="text-xs text-fg-muted">
                       {t('agentDirectory.createdBy')}:{' '}
                       <span className="font-medium">{agent.createdBy}</span>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
 
-            {/* ページネーション: もっと読み込むボタン */}
+            {/* Load more */}
             {hasMore && (
-              <div className="flex justify-center mt-8 pt-6 border-t border-gray-100">
-                <button
+              <div className="flex justify-center mt-8 pt-6 border-t border-border">
+                <Button
+                  variant="secondary"
+                  size="lg"
                   onClick={loadMoreAgents}
-                  disabled={isLoadingMore}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  loading={isLoadingMore}
                 >
-                  {isLoadingMore ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('common.loading')}
-                    </>
-                  ) : (
-                    <>{t('agentDirectory.loadMore')}</>
-                  )}
-                </button>
+                  {isLoadingMore ? t('common.loading') : t('agentDirectory.loadMore')}
+                </Button>
               </div>
             )}
 
-            {/* 表示件数情報 */}
-            <p className="text-center text-xs text-gray-500 mt-4">
+            <p className="text-center text-xs text-fg-muted mt-4">
               {filteredAgents.length}
               {t('agentDirectory.itemsDisplayed')}{' '}
               {hasMore ? `/ ${t('agentDirectory.hasMore')}` : `/ ${t('agentDirectory.allLoaded')}`}
@@ -238,7 +201,6 @@ export function AgentDirectoryPage() {
         )}
       </div>
 
-      {/* 共有エージェント詳細モーダル */}
       <SharedAgentDetailModal agent={selectedAgent} onClose={handleCloseModal} />
     </>
   );

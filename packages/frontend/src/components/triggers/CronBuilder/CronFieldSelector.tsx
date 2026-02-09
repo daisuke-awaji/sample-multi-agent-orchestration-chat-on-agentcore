@@ -28,10 +28,10 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-surface-secondary rounded-lg">
       {/* Minute */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.minute')} {t('triggers.cron.minuteRange')}
         </label>
         <input
@@ -40,13 +40,13 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           onChange={(e) => onChange('minute', e.target.value)}
           disabled={disabled}
           placeholder="0, *, 0-30"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
       {/* Hour */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.hour')} {t('triggers.cron.hourRange')}
         </label>
         <input
@@ -55,13 +55,13 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           onChange={(e) => onChange('hour', e.target.value)}
           disabled={disabled}
           placeholder="0, *, 9-17"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
       </div>
 
       {/* Day of Month */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.dayOfMonth')} {t('triggers.cron.dayOfMonthRange')}
         </label>
         <input
@@ -70,21 +70,21 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           onChange={(e) => onChange('dayOfMonth', e.target.value)}
           disabled={disabled}
           placeholder="1, *, ?, 1-15"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
-        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.dayOfMonthHint')}</p>
+        <p className="mt-1 text-xs text-fg-muted">{t('triggers.cron.dayOfMonthHint')}</p>
       </div>
 
       {/* Month */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.month')}
         </label>
         <select
           value={fields.month}
           onChange={(e) => onChange('month', e.target.value)}
           disabled={disabled}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <option value="*">{t('triggers.cron.optionAll')}</option>
           {MONTH_OPTIONS.map((month) => (
@@ -97,14 +97,14 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
 
       {/* Day of Week */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.dayOfWeek')}
         </label>
         <select
           value={fields.dayOfWeek}
           onChange={(e) => onChange('dayOfWeek', e.target.value)}
           disabled={disabled}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <option value="?">{t('triggers.cron.optionNotSpecified')}</option>
           <option value="*">{t('triggers.cron.optionAll')}</option>
@@ -115,12 +115,12 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.dayOfWeekHint')}</p>
+        <p className="mt-1 text-xs text-fg-muted">{t('triggers.cron.dayOfWeekHint')}</p>
       </div>
 
       {/* Year */}
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
+        <label className="block text-xs font-medium text-fg-secondary mb-1">
           {t('triggers.cron.year')}
         </label>
         <input
@@ -129,14 +129,14 @@ export function CronFieldSelector({ fields, onChange, disabled = false }: CronFi
           onChange={(e) => onChange('year', e.target.value)}
           disabled={disabled}
           placeholder="*, 2024"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 text-sm border border-border-strong rounded-md focus:outline-none focus:ring-2 focus:ring-border-focus disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
-        <p className="mt-1 text-xs text-gray-500">{t('triggers.cron.yearHint')}</p>
+        <p className="mt-1 text-xs text-fg-muted">{t('triggers.cron.yearHint')}</p>
       </div>
 
       {/* Help Text */}
       <div className="col-span-2 md:col-span-3 mt-2">
-        <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-md">
+        <div className="text-xs text-fg-secondary bg-feedback-info-bg p-3 rounded-md">
           <p className="font-medium mb-1">{t('triggers.cron.hintsTitle')}</p>
           <ul className="space-y-1 ml-4 list-disc">
             <li>{t('triggers.cron.hintAll')}</li>
