@@ -8,9 +8,6 @@ interface MermaidDiagramProps {
   className?: string;
 }
 
-// Initialize Mermaid (run once)
-let isInitialized = false;
-
 // Function to generate unique ID
 const generateUniqueId = () => {
   return `mermaid-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -57,7 +54,6 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
         gridLineStartPadding: 35,
       },
     });
-    isInitialized = true;
   }, [resolvedTheme]);
 
   useEffect(() => {
