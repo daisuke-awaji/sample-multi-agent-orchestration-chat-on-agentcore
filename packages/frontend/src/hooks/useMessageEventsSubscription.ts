@@ -128,23 +128,40 @@ function convertContent(apiContent: unknown): MessageContent {
   return content as unknown as MessageContent;
 }
 
-/**
- * Extract text content from message contents for comparison
- */
-function getTextContent(msgContents: MessageContent[]): string {
-  return msgContents
-    .filter((c): c is MessageContent & { type: 'text'; text: string } => c.type === 'text')
-    .map((c) => c.text)
-    .join('')
-    .substring(0, 200);
-}
-
 // ============================================================
 // Hook
 // ============================================================
 
 /**
  * Custom hook for subscribing to real-time message updates
+ *
+ * ## WHY: Two-stage deduplication guard for MESSAGE_ADDED events
+ *
+ * Messages arrive via two channels simultaneously:
+ * 1. HTTP Streaming (fast) — text deltas build the message in real-time
+ * 2. AppSync Events (slow) — publishMessageEvent() in agent handler uses
+ *    SigV4 signing + HTTP POST to AppSync HTTP endpoint, which takes longer
+ *
+ * Without guards, the sender tab displays the same message twice:
+ * once from HTTP stream, once from AppSync.
+ *
+ * Guard 1 (isLoading): Covers events arriving DURING streaming.
+ * Guard 2 (grace period): Covers events arriving AFTER streaming completes.
+ *   publishMessageEvent() is fire-and-forget (.catch()) in the agent handler,
+ *   so it often completes after serverCompletionEvent is sent via HTTP stream.
+ *
+ * WHY NOT disable subscription (enabled=false) during streaming:
+ * We tried setting enabled={!!sessionId && !!userId && !isLoading} to disable
+ * the AppSync subscription during HTTP streaming. This failed because when
+ * isLoading flipped to false, React re-rendered and re-subscribed, and the
+ * late-arriving AppSync event was delivered immediately after re-subscribe,
+ * still causing duplicates.
+ *
+ * WHY NOT content-based deduplication:
+ * The original approach compared message text (first 200 chars). This had gaps:
+ * - Tool-only messages have empty text → comparison was skipped entirely
+ * - Only first 200 chars compared → unreliable for long messages
+ * - No stable message ID shared between HTTP stream and AppSync event
  *
  * @param sessionId - The active session ID to subscribe to
  */
@@ -190,27 +207,31 @@ export function useMessageEventsSubscription(sessionId: string | null) {
           const sessionState = chatStore.getSessionState(event.sessionId);
           if (!sessionState) break;
 
-          // Skip if this tab is currently sending (to avoid duplicates)
+          // Guard 1: Skip while HTTP streaming is active (sender tab).
+          // During streaming, the sender tab already receives all messages
+          // via HTTP stream — AppSync events would be duplicates.
           if (sessionState.isLoading) {
-            console.log('⚠️ Skipping message event while loading (sender tab)');
+            console.log('⚠️ Skipping message event (HTTP streaming active)');
             break;
           }
 
-          // Convert content first for comparison
+          // Guard 2: Skip during grace period after streaming completed.
+          // WHY: publishMessageEvent() in the agent handler is fire-and-forget
+          // (.catch()) and involves SigV4 signing + HTTPS POST to AppSync HTTP
+          // endpoint, which typically takes 1-5 seconds. The HTTP stream's
+          // serverCompletionEvent arrives first (isLoading→false), then the
+          // AppSync event arrives later — this grace period catches those late events.
+          // WHY 10 seconds: provides a safe margin for slow networks without
+          // meaningfully delaying cross-tab sync (which only matters for OTHER tabs).
+          const GRACE_PERIOD_MS = 10_000;
+          const lastCompleted = chatStore.lastStreamCompletedAt?.[event.sessionId];
+          if (lastCompleted && Date.now() - lastCompleted < GRACE_PERIOD_MS) {
+            console.log('⚠️ Skipping message event (grace period after streaming)');
+            break;
+          }
+
+          // Convert content
           const contents: MessageContent[] = event.message.content.map(convertContent);
-
-          // Check for duplicate by message content
-          const eventText = getTextContent(contents);
-          const isDuplicate = sessionState.messages.some((msg) => {
-            if (msg.type !== event.message!.role) return false;
-            const msgText = getTextContent(msg.contents);
-            return msgText === eventText && eventText.length > 0;
-          });
-
-          if (isDuplicate) {
-            console.log('⚠️ Duplicate message detected (by content), skipping');
-            break;
-          }
 
           // Add message to store
           const newMessage: Message = {
@@ -319,7 +340,17 @@ export function useMessageEventsSubscription(sessionId: string | null) {
     prevSessionIdRef.current = sessionId;
   }, [sessionId, unsubscribe]);
 
-  // Subscribe to message channel using shared connection
+  /**
+   * WHY NOT: We do NOT use !isLoading in the enabled condition.
+   *
+   * Previously we tried: enabled={!!sessionId && !!userId && !isLoading}
+   * This disabled the subscription during streaming, but when isLoading
+   * flipped to false, React re-subscribed and the late-arriving AppSync
+   * event was immediately delivered, still causing duplicates.
+   *
+   * Instead, we keep the subscription always active and filter events
+   * in the handler using the two-stage guard above.
+   */
   useAppSyncSubscription(channel, subscriptionId, handleMessageEvent, !!sessionId && !!userId);
 
   return {

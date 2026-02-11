@@ -134,12 +134,39 @@ export const useAppSyncConnectionStore = create<AppSyncConnectionState>()(
         return;
       }
 
+      /**
+       * WHY: Set _isConnecting BEFORE any async operation
+       *
+       * connect() is called from useAppSyncConnection hook in React's useEffect.
+       * In React StrictMode (development) and with multiple component renders,
+       * connect() can be invoked multiple times in rapid succession.
+       *
+       * The _isConnecting guard at the top prevents duplicate calls, but only if
+       * the flag is already true. If we set it AFTER the await (as was originally
+       * implemented), the following race condition occurs:
+       *
+       *   Call 1: _isConnecting=false → passes guard → await getValidAccessToken()
+       *   Call 2: _isConnecting=false → passes guard → await getValidAccessToken()
+       *   Call 1: set({ _isConnecting: true }) → creates WebSocket #1
+       *   Call 2: set({ _isConnecting: true }) → creates WebSocket #2
+       *
+       * Result: Two WebSocket connections established, each receiving the same
+       * AppSync events, causing duplicate message delivery to the UI.
+       *
+       * WHY NOT module-level lock: We considered using a module-level variable
+       * (let connecting = false) instead of Zustand state, but Zustand state is
+       * already the single source of truth for connection state and is consistent
+       * with the store's existing patterns.
+       */
+      set({ _isConnecting: true });
+
       // Get fresh access token (auto-refreshes if expired)
       const accessToken = await getValidAccessToken();
       const userId = useAuthStore.getState().user?.userId;
 
       if (!accessToken || !userId) {
         logger.log('🔌 No auth token available, skipping');
+        set({ _isConnecting: false });
         return;
       }
 
@@ -147,8 +174,6 @@ export const useAppSyncConnectionStore = create<AppSyncConnectionState>()(
       if (state._ws) {
         state._ws.close(1000, 'Reconnecting');
       }
-
-      set({ _isConnecting: true });
 
       try {
         const endpoint = appsyncEventsConfig.realtimeEndpoint;

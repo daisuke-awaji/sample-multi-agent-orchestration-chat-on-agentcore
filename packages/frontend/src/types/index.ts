@@ -85,6 +85,19 @@ export interface SessionChatState {
 export interface ChatState {
   sessions: Record<string, SessionChatState>;
   activeSessionId: string | null;
+  /**
+   * WHY: Tracks when HTTP streaming completed per session (epoch ms).
+   *
+   * Used by useMessageEventsSubscription to ignore late-arriving AppSync
+   * events in the sender tab during a grace period after streaming ends.
+   * This is tab-local (Zustand state is not shared across browser tabs),
+   * so it only suppresses duplicates in the tab that sent the message —
+   * other tabs still receive AppSync events normally for cross-tab sync.
+   *
+   * See useMessageEventsSubscription hook JSDoc for the full deduplication
+   * strategy explanation.
+   */
+  lastStreamCompletedAt: Record<string, number>;
 }
 
 // Auth types

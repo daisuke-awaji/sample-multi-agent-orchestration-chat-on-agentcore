@@ -125,6 +125,23 @@ export const useChatStore = create<ChatStore>()(
       // State
       sessions: {},
       activeSessionId: null,
+      /**
+       * WHY: lastStreamCompletedAt tracks per-session streaming completion time (epoch ms)
+       *
+       * This enables the grace-period guard in useMessageEventsSubscription.
+       * After HTTP streaming completes (isLoading→false), AppSync events may
+       * still arrive due to the async nature of publishMessageEvent() in the
+       * agent handler (SigV4 signing + HTTPS POST).
+       *
+       * This field is tab-local (Zustand store is not shared across browser tabs):
+       * - Sender tab: has timestamp → grace period active → skips AppSync events
+       * - Other tabs: no timestamp → grace period inactive → receives events normally
+       *
+       * WHY NOT ref: We considered storing this in a React ref instead of Zustand
+       * state, but the handler in useMessageEventsSubscription accesses chatStore
+       * via getState() (not React hooks), so it must be in the store.
+       */
+      lastStreamCompletedAt: {},
 
       // Actions
       getSessionState: (sessionId: string) => {
@@ -460,7 +477,7 @@ export const useChatStore = create<ChatStore>()(
                   isStreaming: false,
                 });
 
-                const { sessions } = get();
+                const { sessions, lastStreamCompletedAt } = get();
                 const currentState = sessions[sessionId] || createDefaultSessionState();
 
                 set({
@@ -470,6 +487,13 @@ export const useChatStore = create<ChatStore>()(
                       ...currentState,
                       isLoading: false,
                     },
+                  },
+                  // WHY: Record completion time for the grace-period dedup guard.
+                  // See useMessageEventsSubscription for the full explanation of
+                  // why this timestamp is needed to prevent duplicate messages.
+                  lastStreamCompletedAt: {
+                    ...lastStreamCompletedAt,
+                    [sessionId]: Date.now(),
                   },
                 });
 

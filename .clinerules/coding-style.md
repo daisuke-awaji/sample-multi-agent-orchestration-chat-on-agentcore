@@ -207,7 +207,7 @@ async function getUser(userId: string): Promise<User | null> {
 ```
 
 ### Inline Comments
-- Use comments to explain "why", not "what"
+- !IMPORTANT: Use comments to explain "WHY" and "WHY NOT", not "WHAT"
 - Avoid obvious comments
 - Keep comments up-to-date with code
 
@@ -281,30 +281,3 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onEdit }) => {
   // ...
 };
 ```
-
-## Tools and Automation
-
-### Pre-commit Hooks
-- Automatically runs on `git commit`
-- Formats staged files with Prettier
-- Lints with ESLint
-- Configured via Husky and lint-staged
-
-### VS Code Settings
-Recommended `.vscode/settings.json`:
-```json
-{
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  }
-}
-```
-
-## Enforcement
-
-- ESLint runs on `npm run lint`
-- Prettier runs on `npm run format`
-- Pre-commit hooks prevent non-compliant code
-- CI/CD pipeline enforces checks
