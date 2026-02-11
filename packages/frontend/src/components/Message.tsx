@@ -5,9 +5,11 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import type { Message as MessageType } from '../types/index';
+import { useThemeStore } from '../stores/themeStore';
 import { TypingIndicator } from './TypingIndicator';
 import { ToolUseBlock } from './ToolUseBlock';
 import { ToolResultBlock } from './ToolResultBlock';
@@ -22,6 +24,8 @@ interface MessageProps {
 
 export const Message: React.FC<MessageProps> = ({ message }) => {
   const { t } = useTranslation();
+  const resolvedTheme = useThemeStore((s) => s.resolvedTheme);
+  const isDark = resolvedTheme === 'dark';
   const isUser = message.type === 'user';
 
   // Check if message contains toolUse/toolResult
@@ -103,7 +107,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           // Code blocks with language specification
           return (
             <SyntaxHighlighter
-              style={oneLight}
+              style={isDark ? oneDark : oneLight}
               language={language}
               PreTag="div"
               className="rounded-lg text-sm"
@@ -118,7 +122,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
           // Code blocks without language specification
           return (
             <code
-              className="block whitespace-pre-wrap bg-[#fafafa] text-fg-default p-4 rounded-lg text-sm overflow-x-auto font-mono"
+              className="block whitespace-pre-wrap bg-surface-secondary text-fg-default p-4 rounded-lg text-sm overflow-x-auto font-mono"
               {...props}
             >
               {children}
@@ -196,8 +200,8 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
         return <p {...props}>{children}</p>;
       },
     }),
-    []
-  ); // Empty dependency array to keep same reference during component lifetime
+    [isDark]
+  );
 
   return (
     <div

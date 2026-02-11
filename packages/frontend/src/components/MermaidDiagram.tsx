@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import mermaid from 'mermaid';
+import { useThemeStore } from '../stores/themeStore';
 
 interface MermaidDiagramProps {
   chart: string;
   className?: string;
 }
-
-// Initialize Mermaid (run once)
-let isInitialized = false;
 
 // Function to generate unique ID
 const generateUniqueId = () => {
@@ -17,46 +15,46 @@ const generateUniqueId = () => {
 
 const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, className = '' }) => {
   const { t } = useTranslation();
+  const resolvedTheme = useThemeStore((s) => s.resolvedTheme);
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [isValidSyntax, setIsValidSyntax] = useState<boolean | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const debounceTimerRef = useRef<number | undefined>(undefined);
   const currentChartRef = useRef<string>('');
+  const currentThemeRef = useRef<string>('');
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!isInitialized) {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        securityLevel: 'loose',
-        fontFamily: 'inherit',
-        fontSize: 14,
-        flowchart: {
-          htmlLabels: true,
-          curve: 'basis',
-        },
-        sequence: {
-          diagramMarginX: 50,
-          diagramMarginY: 10,
-          actorMargin: 50,
-          width: 150,
-          height: 65,
-          boxMargin: 10,
-          boxTextMargin: 5,
-          noteMargin: 10,
-          messageMargin: 35,
-        },
-        gantt: {
-          titleTopMargin: 25,
-          barHeight: 20,
-          fontSize: 12,
-          gridLineStartPadding: 35,
-        },
-      });
-      isInitialized = true;
-    }
-  }, []);
+    const mermaidTheme = resolvedTheme === 'dark' ? 'dark' : 'default';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: mermaidTheme,
+      securityLevel: 'loose',
+      fontFamily: 'inherit',
+      fontSize: 14,
+      flowchart: {
+        htmlLabels: true,
+        curve: 'basis',
+      },
+      sequence: {
+        diagramMarginX: 50,
+        diagramMarginY: 10,
+        actorMargin: 50,
+        width: 150,
+        height: 65,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 35,
+      },
+      gantt: {
+        titleTopMargin: 25,
+        barHeight: 20,
+        fontSize: 12,
+        gridLineStartPadding: 35,
+      },
+    });
+  }, [resolvedTheme]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -81,12 +79,13 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
         return;
       }
 
-      // Skip if same as current chart (prevent infinite rendering)
-      if (currentChartRef.current === chart.trim()) {
+      // Skip if same chart and same theme (prevent infinite rendering)
+      if (currentChartRef.current === chart.trim() && currentThemeRef.current === resolvedTheme) {
         return;
       }
 
       currentChartRef.current = chart.trim();
+      currentThemeRef.current = resolvedTheme;
       setIsRendering(true);
 
       try {
@@ -136,7 +135,7 @@ const MermaidDiagramComponent: React.FC<MermaidDiagramProps> = ({ chart, classNa
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [chart]);
+  }, [chart, resolvedTheme]);
 
   // Cleanup on unmount
   useEffect(() => {
