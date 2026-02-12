@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "description": "AgentCore Gateway Lambda Tools Collection",
   "scripts": {
-    "build": "npm run build:utility-tools",
+    "build": "npm run build:shared && npm run build:utility-tools && npm run build:athena-tools",
+    "build:shared": "cd shared && npm install && npm run build",
     "build:utility-tools": "cd tools/utility-tools && npm install && npm run build",
-    "clean": "npm run clean:utility-tools",
+    "build:athena-tools": "cd tools/athena-tools && npm install && npm run build",
+    "clean": "npm run clean:shared && npm run clean:utility-tools && npm run clean:athena-tools",
+    "clean:shared": "cd shared && npm run clean",
     "clean:utility-tools": "cd tools/utility-tools && npm run clean",
-    "test": "npm run test:utility-tools",
-    "test:utility-tools": "cd tools/utility-tools && npm install && npm run test"
+    "clean:athena-tools": "cd tools/athena-tools && npm run clean",
+    "test": "npm run build:shared && npm run test:utility-tools && npm run test:athena-tools",
+    "test:utility-tools": "cd tools/utility-tools && npm install && npm run test",
+    "test:athena-tools": "cd tools/athena-tools && npm install && npm run test"
   },
   "keywords": [
     "lambda",

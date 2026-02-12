@@ -1,16 +1,15 @@
 /**
- * Knowledge Base Retrieve ツール実装
+ * Knowledge Base Retrieve tool implementation
  *
- * Amazon Bedrock Knowledge Base から関連するチャンクを取得するツール
+ * Retrieves relevant chunks from Amazon Bedrock Knowledge Base
+ * using semantic search.
  */
 
 import { BedrockAgentRuntimeClient, RetrieveCommand } from '@aws-sdk/client-bedrock-agent-runtime';
-import { ToolInput, ToolResult } from '../types.js';
-import { Tool, ToolValidationError } from './types.js';
-import { logger } from '../logger.js';
+import { ToolInput, ToolResult, Tool, ToolValidationError, logger } from '@lambda-tools/shared';
 
 /**
- * Knowledge Base Retrieve ツールの入力型
+ * Knowledge Base Retrieve tool input type
  */
 interface KbRetrieveInput extends ToolInput {
   knowledgeBaseId?: string;
@@ -19,7 +18,7 @@ interface KbRetrieveInput extends ToolInput {
 }
 
 /**
- * Knowledge Base Retrieve ツールの出力型
+ * Knowledge Base Retrieve tool output type
  */
 interface KbRetrieveResult extends ToolResult {
   retrievedChunks: {
@@ -37,22 +36,22 @@ interface KbRetrieveResult extends ToolResult {
 }
 
 /**
- * Bedrock Agent Runtime クライアントのインスタンス
+ * Bedrock Agent Runtime client instance
  */
 const bedrockClient = new BedrockAgentRuntimeClient({
   region: process.env.AWS_REGION || 'us-east-1',
 });
 
 /**
- * Knowledge Base Retrieve ツールのメイン処理
+ * Main handler for the kb-retrieve tool
  *
- * @param input 入力データ
- * @returns Knowledge Base からの検索結果
+ * @param input - Tool input data
+ * @returns Retrieved chunks from Knowledge Base
  */
 async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
   const kbInput = input as KbRetrieveInput;
 
-  // 入力検証
+  // Validate required parameters
   if (!kbInput.knowledgeBaseId) {
     throw new ToolValidationError(
       "Knowledge Base Retrieve tool requires a 'knowledgeBaseId' parameter",
@@ -73,15 +72,14 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
   const query = kbInput.query;
   const numberOfResults = kbInput.numberOfResults || 5;
 
-  // 検索パラメータのログ出力
   logger.info('KB_RETRIEVE_START', {
     knowledgeBaseId,
-    query: query.substring(0, 100), // ログ用に短縮
+    query: query.substring(0, 100), // Truncate for logging
     numberOfResults,
   });
 
   try {
-    // Bedrock Knowledge Base から検索を実行
+    // Execute retrieval from Bedrock Knowledge Base
     const command = new RetrieveCommand({
       knowledgeBaseId: knowledgeBaseId,
       retrievalQuery: {
@@ -96,7 +94,7 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
 
     const response = await bedrockClient.send(command);
 
-    // レスポンスの処理
+    // Process the response
     const retrievalResults = response.retrievalResults || [];
     const retrievedChunks = retrievalResults.map((result) => ({
       content: result.content?.text || '',
@@ -110,7 +108,6 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
       metadata: result.metadata || {},
     }));
 
-    // 検索結果のログ出力
     logger.info('KB_RETRIEVE_SUCCESS', {
       knowledgeBaseId,
       totalChunks: retrievedChunks.length,
@@ -122,7 +119,6 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
       hasResults: retrievedChunks.length > 0,
     });
 
-    // 結果を生成
     const result: KbRetrieveResult = {
       retrievedChunks,
       totalCount: retrievedChunks.length,
@@ -132,7 +128,6 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
 
     return result;
   } catch (error) {
-    // エラーログ出力
     logger.error('KB_RETRIEVE_ERROR', {
       knowledgeBaseId,
       query: query.substring(0, 100),
@@ -140,13 +135,12 @@ async function handleKbRetrieve(input: ToolInput): Promise<KbRetrieveResult> {
       errorType: error instanceof Error ? error.constructor.name : 'Unknown',
     });
 
-    // エラーを再投げ
     throw error;
   }
 }
 
 /**
- * Knowledge Base Retrieve ツールの定義
+ * Knowledge Base Retrieve tool definition
  */
 export const kbRetrieveTool: Tool = {
   name: 'kb-retrieve',

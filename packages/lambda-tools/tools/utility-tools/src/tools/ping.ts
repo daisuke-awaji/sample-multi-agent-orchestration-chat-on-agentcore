@@ -1,15 +1,13 @@
 /**
- * Ping ツール実装
+ * Ping tool implementation
  *
- * 接続確認とシステム情報を返すツール
+ * Returns connection status and system information for health checks.
  */
 
-import { ToolInput, ToolResult } from '../types.js';
-import { Tool } from './types.js';
-import { logger } from '../logger.js';
+import { ToolInput, ToolResult, Tool, logger } from '@lambda-tools/shared';
 
 /**
- * Pingツールの出力型
+ * Ping tool output type
  */
 interface PingResult extends ToolResult {
   status: 'pong';
@@ -22,16 +20,15 @@ interface PingResult extends ToolResult {
 }
 
 /**
- * Pingツールのメイン処理
+ * Main handler for the ping tool
  *
- * @param input 入力データ（Pingでは使用しない）
- * @returns Pingの実行結果
+ * @param input - Tool input data (unused by ping)
+ * @returns System status information
  */
 async function handlePing(input: ToolInput): Promise<PingResult> {
   const memory = process.memoryUsage();
   const timestamp = new Date().toISOString();
 
-  // ログ出力
   logger.debug('PING_RESULT', {
     uptime: Math.round(process.uptime()),
     nodeVersion: process.version,
@@ -41,7 +38,6 @@ async function handlePing(input: ToolInput): Promise<PingResult> {
     inputSize: input ? JSON.stringify(input).length : 0,
   });
 
-  // 結果を生成
   const result: PingResult = {
     status: 'pong',
     timestamp,
@@ -56,7 +52,7 @@ async function handlePing(input: ToolInput): Promise<PingResult> {
 }
 
 /**
- * Pingツールの定義
+ * Ping tool definition
  */
 export const pingTool: Tool = {
   name: 'ping',

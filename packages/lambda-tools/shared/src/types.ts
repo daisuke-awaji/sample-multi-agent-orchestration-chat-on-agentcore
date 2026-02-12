@@ -1,24 +1,19 @@
 /**
- * AgentCore Gateway Echo/Ping Tool 共通型定義
+ * Shared type definitions for AgentCore Gateway Lambda Tools
  */
 
 /**
- * ツール入力の基本型
+ * Tool input data type
  */
-export interface ToolInput {
-  message?: string;
-  [key: string]: unknown;
-}
+export type ToolInput = Record<string, unknown>;
 
 /**
- * ツール実行結果の基本型
+ * Tool result data type
  */
-export interface ToolResult {
-  [key: string]: unknown;
-}
+export type ToolResult = Record<string, unknown>;
 
 /**
- * レスポンスメタデータ
+ * Response metadata attached to every AgentCore response
  */
 export interface ResponseMetadata {
   timestamp: string;
@@ -27,7 +22,7 @@ export interface ResponseMetadata {
 }
 
 /**
- * AgentCore Gateway からのリクエスト形式
+ * Standard request format from AgentCore Gateway
  */
 export interface AgentCoreRequest {
   tool: string;
@@ -37,7 +32,7 @@ export interface AgentCoreRequest {
 }
 
 /**
- * AgentCore Gateway への応答形式
+ * Standard response format to AgentCore Gateway
  */
 export interface AgentCoreResponse {
   result: ToolResult | null;

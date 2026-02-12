@@ -1,8 +1,8 @@
 /**
- * 構造化ログユーティリティ
+ * Structured logging utility
  *
- * 1行のJSONログを出力する独自ロガー
- * リクエストIDの自動付与やログレベル対応を提供
+ * Outputs single-line JSON logs with automatic request ID injection
+ * and log level filtering.
  */
 
 interface LogContext {
@@ -16,21 +16,21 @@ class Logger {
   private logLevel: LogLevel = 'INFO';
 
   /**
-   * リクエストIDを設定（全ログに自動付与される）
+   * Set the request ID (auto-injected into all subsequent logs)
    */
   setRequestId(reqId: string): void {
     this.reqId = reqId;
   }
 
   /**
-   * ログレベルを設定
+   * Set the minimum log level threshold
    */
   setLogLevel(level: LogLevel): void {
     this.logLevel = level;
   }
 
   /**
-   * ログレベルの数値化（比較用）
+   * Convert log level to numeric value for comparison
    */
   private getLogLevelValue(level: LogLevel): number {
     const levels = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
@@ -38,17 +38,17 @@ class Logger {
   }
 
   /**
-   * ログ出力の共通処理
+   * Core log output handler
    */
   private log(level: LogLevel, tag: string, data: LogContext): void {
     if (this.getLogLevelValue(level) < this.getLogLevelValue(this.logLevel)) {
       return;
     }
 
-    // リクエストIDを自動付与
+    // Auto-inject request ID
     const logData = this.reqId ? { reqId: this.reqId, ...data } : data;
 
-    // エラーオブジェクトの特殊処理
+    // Serialize Error objects for JSON output
     const processedData = this.processErrorObjects(logData);
 
     const logMessage = `[${tag}] ${JSON.stringify(processedData)}`;
@@ -69,7 +69,7 @@ class Logger {
   }
 
   /**
-   * エラーオブジェクトをログ出力可能な形式に変換
+   * Recursively convert Error objects into JSON-serializable format
    */
   private processErrorObjects(obj: unknown): unknown {
     if (obj instanceof Error) {
@@ -95,43 +95,35 @@ class Logger {
     return obj;
   }
 
-  /**
-   * DEBUGレベルログ
-   */
+  /** DEBUG level log */
   debug(tag: string, data: LogContext = {}): void {
     this.log('DEBUG', tag, data);
   }
 
-  /**
-   * INFOレベルログ
-   */
+  /** INFO level log */
   info(tag: string, data: LogContext = {}): void {
     this.log('INFO', tag, data);
   }
 
-  /**
-   * WARNレベルログ
-   */
+  /** WARN level log */
   warn(tag: string, data: LogContext = {}): void {
     this.log('WARN', tag, data);
   }
 
-  /**
-   * ERRORレベルログ
-   */
+  /** ERROR level log */
   error(tag: string, data: LogContext = {}): void {
     this.log('ERROR', tag, data);
   }
 
   /**
-   * リクエストID付きでコンテキストを簡単に作成
+   * Create a context object with request ID auto-injected
    */
   createContext(data: LogContext = {}): LogContext {
     return this.reqId ? { reqId: this.reqId, ...data } : data;
   }
 
   /**
-   * タイムスタンプ付きコンテキスト
+   * Create a context object with request ID and timestamp
    */
   createTimestampedContext(data: LogContext = {}): LogContext {
     return {
@@ -141,7 +133,7 @@ class Logger {
   }
 
   /**
-   * パフォーマンス測定用のヘルパー
+   * Measure synchronous function execution time and log the result
    */
   measureExecution<T>(tag: string, fn: () => T): T {
     const start = process.hrtime.bigint();
@@ -166,11 +158,11 @@ class Logger {
 }
 
 /**
- * シングルトンロガーインスタンス
+ * Singleton logger instance
  */
 export const logger = new Logger();
 
-// 環境変数でログレベル設定
+// Configure log level from environment variable
 const envLogLevel = process.env.LOG_LEVEL?.toUpperCase() as LogLevel;
 if (envLogLevel && ['DEBUG', 'INFO', 'WARN', 'ERROR'].includes(envLogLevel)) {
   logger.setLogLevel(envLogLevel);

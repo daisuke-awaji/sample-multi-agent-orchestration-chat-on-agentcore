@@ -1,12 +1,14 @@
 /**
- * AgentCore Gateway Context解析ユーティリティ
+ * AgentCore Gateway context parsing utility
+ *
+ * Extracts tool name and metadata from Lambda execution context.
  */
 
 import { Context } from 'aws-lambda';
 import { logger } from './logger.js';
 
 /**
- * Lambda ClientContext の型定義
+ * Lambda ClientContext type definition
  */
 interface LambdaClientContext {
   custom?: {
@@ -17,14 +19,17 @@ interface LambdaClientContext {
 }
 
 /**
- * コンテキストからツール名を安全に抽出する
+ * Safely extract tool name from the Lambda execution context
  *
- * @param context Lambda実行コンテキスト
- * @returns 抽出されたツール名、またはnull
+ * The tool name is injected by AgentCore Gateway via `clientContext.custom.bedrockAgentCoreToolName`.
+ * The value may include a Gateway Target prefix (e.g., "athena-tools___athena-query")
+ * which is automatically stripped.
+ *
+ * @param context - Lambda execution context
+ * @returns Extracted tool name, or null if not available
  */
 export function extractToolName(context: Context): string | null {
   try {
-    // clientContextの存在確認
     if (!context.clientContext) {
       logger.info('CONTEXT', {
         status: 'no_client_context',
@@ -33,7 +38,6 @@ export function extractToolName(context: Context): string | null {
       return null;
     }
 
-    // customフィールドの存在確認（実際のAWS環境では小文字）
     const customContext = (context.clientContext as unknown as LambdaClientContext).custom;
 
     if (!customContext) {
@@ -44,7 +48,6 @@ export function extractToolName(context: Context): string | null {
       return null;
     }
 
-    // ツール名の取得
     const originalToolName = customContext.bedrockAgentCoreToolName as string;
 
     if (!originalToolName) {
@@ -55,7 +58,7 @@ export function extractToolName(context: Context): string | null {
       return null;
     }
 
-    // Gateway Target プレフィックスを除去 (echo-tool___ping → ping)
+    // Strip Gateway Target prefix (e.g., "athena-tools___athena-query" -> "athena-query")
     const processedToolName = extractActualToolName(originalToolName);
 
     logger.info('CONTEXT', {
@@ -75,10 +78,10 @@ export function extractToolName(context: Context): string | null {
 }
 
 /**
- * ツール名からプレフィックスを除去する
+ * Strip the Gateway Target prefix from a tool name
  *
- * @param toolName 完全なツール名（例: "echo-tool___echo"）
- * @returns 実際のツール名（例: "echo"）
+ * @param toolName - Full tool name (e.g., "echo-tool___echo")
+ * @returns Actual tool name (e.g., "echo")
  */
 export function extractActualToolName(toolName: string): string {
   const delimiter = '___';
@@ -91,10 +94,10 @@ export function extractActualToolName(toolName: string): string {
 }
 
 /**
- * コンテキストの詳細情報をログ出力用に整理する
+ * Build a context summary for structured logging
  *
- * @param context Lambda実行コンテキスト
- * @returns ログ出力用の整理されたコンテキスト情報
+ * @param context - Lambda execution context
+ * @returns Structured context summary
  */
 export function getContextSummary(context: Context) {
   return {

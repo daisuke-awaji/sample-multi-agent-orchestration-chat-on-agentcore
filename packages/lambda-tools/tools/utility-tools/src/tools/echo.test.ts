@@ -3,8 +3,7 @@
  */
 
 import { echoTool } from './echo.js';
-import { ToolValidationError } from './types.js';
-import { ToolInput } from '../types.js';
+import { ToolValidationError, ToolInput } from '@lambda-tools/shared';
 
 describe('Echo Tool', () => {
   describe('正常系テスト', () => {

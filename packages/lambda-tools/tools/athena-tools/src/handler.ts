@@ -1,7 +1,7 @@
 /**
- * AgentCore Gateway Utility Tools Lambda Handler
+ * AgentCore Gateway Athena Tools Lambda Handler
  *
- * Uses the shared handler factory with the utility tools registry.
+ * Uses the shared handler factory with the Athena tools registry.
  * Invoked directly via Lambda Invoke API by AgentCore Gateway.
  */
 
@@ -15,5 +15,5 @@ import { getToolHandler } from './tools/index.js';
 export const handler: (event: ToolInput, context: Context) => Promise<AgentCoreResponse> =
   createHandler({
     getToolHandler,
-    defaultToolName: 'ping',
+    defaultToolName: 'athena-list-tables',
   });

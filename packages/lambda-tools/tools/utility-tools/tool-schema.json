@@ -17,13 +17,13 @@
   "tools": [
     {
       "name": "echo",
-      "description": "入力されたメッセージをそのまま返すツール。メッセージの長さや大文字小文字変換も提供します。",
+      "description": "A tool that returns the input message as-is. Also provides message length and case conversion.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "message": {
             "type": "string",
-            "description": "エコーするメッセージ文字列"
+            "description": "The message string to echo"
           }
         },
         "required": ["message"],
@@ -32,7 +32,7 @@
     },
     {
       "name": "ping",
-      "description": "Lambda関数の接続確認とシステム情報を取得するツール。レスポンス時間やメモリ使用量などの情報を返します。",
+      "description": "A tool that performs a connectivity check for the Lambda function and retrieves system information. Returns details such as response time and memory usage.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -41,21 +41,21 @@
     },
     {
       "name": "kb-retrieve",
-      "description": "Amazon Bedrock Knowledge Base から関連するチャンクをセマンティック検索で取得するツール。指定されたクエリに最も関連性の高いドキュメントチャンクを返します。",
+      "description": "A tool that retrieves relevant chunks from an Amazon Bedrock Knowledge Base using semantic search. Returns the most relevant document chunks for the specified query.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "knowledgeBaseId": {
             "type": "string",
-            "description": "検索対象のKnowledge BaseのID"
+            "description": "The ID of the Knowledge Base to search"
           },
           "query": {
             "type": "string",
-            "description": "検索クエリ文字列"
+            "description": "The search query string"
           },
           "numberOfResults": {
             "type": "integer",
-            "description": "取得する結果の最大件数（デフォルト: 5）",
+            "description": "Maximum number of results to retrieve (default: 5)",
             "default": 5,
             "minimum": 1,
             "maximum": 100

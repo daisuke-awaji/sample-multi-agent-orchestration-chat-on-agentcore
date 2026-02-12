@@ -1,0 +1,19 @@
+{
+  "name": "@lambda-tools/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities for AgentCore Gateway Lambda Tools",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

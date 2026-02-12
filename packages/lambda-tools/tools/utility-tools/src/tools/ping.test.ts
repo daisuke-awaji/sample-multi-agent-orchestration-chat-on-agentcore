@@ -3,7 +3,7 @@
  */
 
 import { pingTool } from './ping.js';
-import { ToolInput } from '../types.js';
+import { ToolInput } from '@lambda-tools/shared';
 
 describe('Ping Tool', () => {
   describe('正常系テスト', () => {

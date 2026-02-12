@@ -1,22 +1,20 @@
 /**
- * Echo ツール実装
+ * Echo tool implementation
  *
- * 入力されたメッセージをそのまま返すツール
+ * Returns the input message as-is along with text transformations.
  */
 
-import { ToolInput, ToolResult } from '../types.js';
-import { Tool, ToolValidationError } from './types.js';
-import { logger } from '../logger.js';
+import { ToolInput, ToolResult, Tool, ToolValidationError, logger } from '@lambda-tools/shared';
 
 /**
- * Echoツールの入力型
+ * Echo tool input type
  */
 interface EchoInput extends ToolInput {
   message?: string;
 }
 
 /**
- * Echoツールの出力型
+ * Echo tool output type
  */
 interface EchoResult extends ToolResult {
   echo: string;
@@ -26,31 +24,26 @@ interface EchoResult extends ToolResult {
 }
 
 /**
- * Echoツールのメイン処理
+ * Main handler for the echo tool
  *
- * @param input 入力データ
- * @returns Echoの実行結果
+ * @param input - Tool input data
+ * @returns Echo result with text transformations
  */
 async function handleEcho(input: ToolInput): Promise<EchoResult> {
   const echoInput = input as EchoInput;
 
-  // 入力検証
   if (echoInput.message === undefined || echoInput.message === null) {
     throw new ToolValidationError("Echo tool requires a 'message' parameter", 'echo', 'message');
   }
 
   const message = echoInput.message;
-
-  // メッセージの特性を分析
   const messageAnalysis = analyzeMessage(message);
 
-  // ログ出力
   logger.debug('ECHO_RESULT', {
     messageLength: message.length,
     ...messageAnalysis,
   });
 
-  // 結果を生成
   const result: EchoResult = {
     echo: message,
     length: message.length,
@@ -62,10 +55,10 @@ async function handleEcho(input: ToolInput): Promise<EchoResult> {
 }
 
 /**
- * メッセージの特性を分析する
+ * Analyze message characteristics
  *
- * @param message 分析対象のメッセージ
- * @returns メッセージの特性情報
+ * @param message - Message to analyze
+ * @returns Message characteristic metrics
  */
 function analyzeMessage(message: string) {
   return {
@@ -80,7 +73,7 @@ function analyzeMessage(message: string) {
 }
 
 /**
- * Echoツールの定義
+ * Echo tool definition
  */
 export const echoTool: Tool = {
   name: 'echo',

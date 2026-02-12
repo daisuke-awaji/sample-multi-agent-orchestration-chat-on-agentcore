@@ -75,6 +75,7 @@ Thumbs.db
 
 # CDK Context
 packages/cdk/cdk.context.json
+cdk.out
 
 # Build output
 dist/

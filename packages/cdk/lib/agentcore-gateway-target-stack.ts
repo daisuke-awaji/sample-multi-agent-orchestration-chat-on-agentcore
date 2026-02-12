@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { Construct } from 'constructs';
 import { AgentCoreLambdaTarget } from './constructs/agentcore';
@@ -58,6 +59,16 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
    */
   public readonly utilityToolsTarget: AgentCoreLambdaTarget;
 
+  /**
+   * Athena Tools Lambda Target
+   */
+  public readonly athenaToolsTarget: AgentCoreLambdaTarget;
+
+  /**
+   * S3 bucket for Athena query results
+   */
+  public readonly athenaOutputBucket: s3.Bucket;
+
   constructor(scope: Construct, id: string, props: AgentCoreGatewayTargetStackProps) {
     super(scope, id, props);
 
@@ -79,6 +90,7 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
       role: iam.Role.fromRoleArn(this, 'ImportedGatewayRole', gatewayRoleArn),
     });
 
+    // ── Utility Tools Target ──
     this.utilityToolsTarget = new AgentCoreLambdaTarget(this, 'UtilityToolsTarget', {
       resourcePrefix,
       targetName: 'utility-tools',
@@ -96,6 +108,94 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
         resources: [`arn:aws:bedrock:${this.region}:${this.account}:knowledge-base/*`],
       })
     );
+
+    // ── Athena Tools Target ──
+
+    // Create S3 bucket for Athena query results
+    this.athenaOutputBucket = new s3.Bucket(this, 'AthenaOutputBucket', {
+      bucketName: `${resourcePrefix}-athena-output-${this.account}-${this.region}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      lifecycleRules: [{ expiration: cdk.Duration.days(7) }],
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+    });
+
+    this.athenaToolsTarget = new AgentCoreLambdaTarget(this, 'AthenaToolsTarget', {
+      resourcePrefix,
+      targetName: 'athena-tools',
+      description: 'Lambda function providing Athena S3 query tools',
+      lambdaCodePath: 'packages/lambda-tools/tools/athena-tools',
+      toolSchemaPath: 'packages/lambda-tools/tools/athena-tools/tool-schema.json',
+      timeout: 180,
+      memorySize: 512,
+      environment: {
+        LOG_LEVEL: 'INFO',
+        ATHENA_WORKGROUP: 'primary',
+        ATHENA_OUTPUT_BUCKET: this.athenaOutputBucket.bucketName,
+        ALLOWED_DATABASES: '*',
+        ALLOWED_TABLES: '*',
+      },
+    });
+    this.athenaToolsTarget.addToImportedGateway(importedGateway, 'AthenaToolsGatewayTarget');
+
+    // Athena query execution permissions (all workgroups)
+    this.athenaToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'athena:StartQueryExecution',
+          'athena:GetQueryExecution',
+          'athena:GetQueryResults',
+          'athena:StopQueryExecution',
+        ],
+        resources: [`arn:aws:athena:${this.region}:${this.account}:workgroup/*`],
+      })
+    );
+
+    // Glue Data Catalog read permissions (all databases and tables)
+    this.athenaToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'glue:GetDatabase',
+          'glue:GetDatabases',
+          'glue:GetTable',
+          'glue:GetTables',
+          'glue:GetPartitions',
+        ],
+        resources: [
+          `arn:aws:glue:${this.region}:${this.account}:catalog`,
+          `arn:aws:glue:${this.region}:${this.account}:database/*`,
+          `arn:aws:glue:${this.region}:${this.account}:table/*/*`,
+        ],
+      })
+    );
+
+    // S3 read permissions for all source data buckets
+    this.athenaToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['s3:GetObject', 's3:ListBucket', 's3:GetBucketLocation'],
+        resources: ['*'],
+      })
+    );
+
+    // Athena query results S3 permissions (output bucket)
+    this.athenaOutputBucket.grantReadWrite(this.athenaToolsTarget.lambdaFunction);
+
+    // Athena Tools outputs
+    new cdk.CfnOutput(this, 'AthenaToolsLambdaArn', {
+      value: this.athenaToolsTarget.lambdaFunction.functionArn,
+      description: 'Athena Tools Lambda Function ARN',
+    });
+
+    new cdk.CfnOutput(this, 'AthenaToolsLambdaName', {
+      value: this.athenaToolsTarget.lambdaFunction.functionName,
+      description: 'Athena Tools Lambda Function Name',
+    });
+
+    new cdk.CfnOutput(this, 'AthenaOutputBucketName', {
+      value: this.athenaOutputBucket.bucketName,
+      description: 'S3 Bucket for Athena query results',
+    });
 
     // CloudFormation outputs
     new cdk.CfnOutput(this, 'GatewayArn', {
