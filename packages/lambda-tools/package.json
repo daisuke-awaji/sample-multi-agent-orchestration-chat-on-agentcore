@@ -11,7 +11,7 @@
     "clean:shared": "cd shared && npm run clean",
     "clean:utility-tools": "cd tools/utility-tools && npm run clean",
     "clean:athena-tools": "cd tools/athena-tools && npm run clean",
-    "test": "npm run test:utility-tools && npm run test:athena-tools",
+    "test": "npm run build:shared && npm run test:utility-tools && npm run test:athena-tools",
     "test:utility-tools": "cd tools/utility-tools && npm install && npm run test",
     "test:athena-tools": "cd tools/athena-tools && npm install && npm run test"
   },
