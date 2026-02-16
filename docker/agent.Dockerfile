@@ -43,9 +43,10 @@ RUN cd packages/agent && npm run build
 # Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
 FROM public.ecr.aws/docker/library/node:22-slim
 
-# Install required tools (Python, AWS CLI, GitHub CLI, uv)
+# Install required tools (Python, AWS CLI, GitHub CLI, GitLab CLI, uv)
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
     python3 \
     python3-pip \
     gnupg \
@@ -63,6 +64,14 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
     apt-get update && \
     apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
+
+# Install GitLab CLI (glab)
+RUN ARCH=$(dpkg --print-architecture) && \
+    GLAB_VERSION=$(curl -fsSL "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases/permalink/latest" | grep -o '"tag_name":"v[^"]*"' | head -1 | sed 's/"tag_name":"v\(.*\)"/\1/') && \
+    curl -fsSL "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_${ARCH}.deb" -o /tmp/glab.deb && \
+    dpkg -i /tmp/glab.deb && \
+    rm /tmp/glab.deb && \
+    glab --version
 
 # Install uv/uvx for Python MCP servers
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \

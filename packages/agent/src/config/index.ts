@@ -28,6 +28,8 @@ const envSchema = z.object({
   // Secrets Manager Configuration
   TAVILY_API_KEY_SECRET_NAME: z.string().optional(),
   GITHUB_TOKEN_SECRET_NAME: z.string().optional(),
+  GITLAB_TOKEN_SECRET_NAME: z.string().optional(),
+  GITLAB_HOST: z.string().default('gitlab.com'),
 
   // Debug Configuration
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

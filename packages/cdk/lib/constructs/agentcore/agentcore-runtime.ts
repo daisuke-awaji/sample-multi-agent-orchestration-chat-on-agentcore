@@ -88,6 +88,19 @@ export interface AgentCoreRuntimeProps {
   readonly githubTokenSecretName?: string;
 
   /**
+   * GitLab Token Secret Name (Secrets Manager) (optional)
+   * When set, runtime retrieves GitLab token from Secrets Manager for glab CLI authentication
+   */
+  readonly gitlabTokenSecretName?: string;
+
+  /**
+   * GitLab Host (optional)
+   * Hostname of the GitLab instance (e.g., 'gitlab.com' or 'gitlab.example.com')
+   * @default 'gitlab.com'
+   */
+  readonly gitlabHost?: string;
+
+  /**
    * User Storage bucket name (optional)
    * Required for using S3 storage tools
    */
@@ -227,6 +240,16 @@ export class AgentCoreRuntime extends Construct {
     // Set GitHub Token Secret Name
     if (props.githubTokenSecretName) {
       environmentVariables.GITHUB_TOKEN_SECRET_NAME = props.githubTokenSecretName;
+    }
+
+    // Set GitLab Token Secret Name
+    if (props.gitlabTokenSecretName) {
+      environmentVariables.GITLAB_TOKEN_SECRET_NAME = props.gitlabTokenSecretName;
+    }
+
+    // Set GitLab Host
+    if (props.gitlabHost) {
+      environmentVariables.GITLAB_HOST = props.gitlabHost;
     }
 
     // Set User Storage bucket name
@@ -397,6 +420,20 @@ export class AgentCoreRuntime extends Construct {
           actions: ['secretsmanager:GetSecretValue'],
           resources: [
             `arn:aws:secretsmanager:${region}:${account}:secret:${props.githubTokenSecretName}*`,
+          ],
+        })
+      );
+    }
+
+    // Secrets Manager access permissions (GitLab Token)
+    if (props.gitlabTokenSecretName) {
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'SecretsManagerGitLabTokenAccess',
+          effect: iam.Effect.ALLOW,
+          actions: ['secretsmanager:GetSecretValue'],
+          resources: [
+            `arn:aws:secretsmanager:${region}:${account}:secret:${props.gitlabTokenSecretName}*`,
           ],
         })
       );

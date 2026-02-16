@@ -25,6 +25,7 @@ export const BASE_PREFIX = 'donuts';
  *   - logRetentionDays: 7
  *   - tavilyApiKeySecretName: 'agentcore/default/tavily-api-key'
  *   - githubTokenSecretName: 'agentcore/default/github-token'
+ *   - gitlabTokenSecretName: 'agentcore/default/gitlab-token'
  */
 export const environments: Record<Environment, EnvironmentConfigInput> = {
   /**
@@ -38,6 +39,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   dev: {
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
+    gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
     eventRules: [
       {
         id: 's3-upload',
@@ -83,6 +85,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     logRetentionDays: 14,
     tavilyApiKeySecretName: 'agentcore/stg/tavily-api-key',
     githubTokenSecretName: 'agentcore/stg/github-token',
+    gitlabTokenSecretName: 'agentcore/stg/gitlab-token',
   },
 
   /**
@@ -98,5 +101,6 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     logRetentionDays: 30,
     tavilyApiKeySecretName: 'agentcore/prd/tavily-api-key',
     githubTokenSecretName: 'agentcore/prd/github-token',
+    gitlabTokenSecretName: 'agentcore/prd/gitlab-token',
   },
 };

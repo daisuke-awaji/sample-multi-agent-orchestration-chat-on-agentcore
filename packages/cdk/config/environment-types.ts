@@ -86,6 +86,22 @@ export interface EnvironmentConfig {
   githubTokenSecretName?: string;
 
   /**
+   * GitLab Token Secret Name (Secrets Manager)
+   * Set for environments to retrieve GitLab token from Secrets Manager
+   * Used for glab CLI authentication and git credential configuration
+   * NOTE: This is a secret NAME/ID reference, not the actual secret value
+   * pragma: allowlist secret
+   */
+  gitlabTokenSecretName?: string;
+
+  /**
+   * GitLab Host (optional)
+   * Hostname of the GitLab instance (e.g., 'gitlab.com' or 'gitlab.example.com')
+   * @default 'gitlab.com'
+   */
+  gitlabHost?: string;
+
+  /**
    * Allowed email domains for sign-up (optional)
    * If set, only emails from these domains can sign up
    * Example: ['amazon.com', 'amazon.jp']

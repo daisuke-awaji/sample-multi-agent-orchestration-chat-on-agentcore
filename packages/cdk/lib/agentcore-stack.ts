@@ -76,6 +76,19 @@ export interface AgentCoreStackProps extends cdk.StackProps {
    * When set, runtime will retrieve GitHub token from Secrets Manager for gh CLI authentication
    */
   readonly githubTokenSecretName?: string;
+
+  /**
+   * GitLab Token Secret Name (Secrets Manager) (optional)
+   * When set, runtime will retrieve GitLab token from Secrets Manager for glab CLI authentication
+   */
+  readonly gitlabTokenSecretName?: string;
+
+  /**
+   * GitLab Host (optional)
+   * Hostname of the GitLab instance
+   * @default 'gitlab.com'
+   */
+  readonly gitlabHost?: string;
 }
 
 /**
@@ -374,6 +387,8 @@ export class AgentCoreStack extends cdk.Stack {
       },
       tavilyApiKeySecretName: props?.tavilyApiKeySecretName || envConfig.tavilyApiKeySecretName, // Pass Tavily API Key Secret Name
       githubTokenSecretName: props?.githubTokenSecretName || envConfig.githubTokenSecretName, // Pass GitHub Token Secret Name
+      gitlabTokenSecretName: props?.gitlabTokenSecretName || envConfig.gitlabTokenSecretName, // Pass GitLab Token Secret Name
+      gitlabHost: props?.gitlabHost || envConfig.gitlabHost, // Pass GitLab Host
       userStorageBucketName: this.userStorage.bucketName, // Pass User Storage bucket name
       sessionsTableName: this.sessionsTable.tableName, // Pass Sessions Table name
       backendApiUrl: this.backendApi.apiUrl, // Pass Backend API URL for call_agent tool
