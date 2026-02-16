@@ -43,12 +43,13 @@ RUN cd packages/agent && npm run build
 # Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
 FROM public.ecr.aws/docker/library/node:22-slim
 
-# Install required tools (Python, AWS CLI, GitHub CLI, uv)
+# Install required tools (Python, AWS CLI, GitHub CLI, uv, LibreOffice)
 RUN apt-get update && apt-get install -y \
     curl \
     python3 \
     python3-pip \
     gnupg \
+    libreoffice-impress \
     && rm -rf /var/lib/apt/lists/*
 
 # Install AWS CLI
