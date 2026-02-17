@@ -10,6 +10,7 @@ export * from './image-to-text.js';
 export * from './call-agent.js';
 export * from './nova-reel.js';
 export * from './manage-agent.js';
+export * from './memory-search.js';
 
 import { executeCommandDefinition } from './execute-command.js';
 import { fileEditorDefinition } from './file-editor.js';
@@ -23,6 +24,7 @@ import { imageToTextDefinition } from './image-to-text.js';
 import { callAgentDefinition } from './call-agent.js';
 import { novaReelDefinition } from './nova-reel.js';
 import { manageAgentDefinition } from './manage-agent.js';
+import { memorySearchDefinition } from './memory-search.js';
 
 /**
  * All tool definitions array
@@ -40,6 +42,7 @@ export const allToolDefinitions = [
   callAgentDefinition,
   novaReelDefinition,
   manageAgentDefinition,
+  memorySearchDefinition,
 ];
 
 /**
