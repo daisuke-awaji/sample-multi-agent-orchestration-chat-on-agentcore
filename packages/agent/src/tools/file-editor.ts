@@ -5,25 +5,9 @@
 import { tool } from '@strands-agents/sdk';
 import { fileEditorDefinition } from '@fullstack-agentcore/tool-definitions';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
-import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';
-
-/**
- * Convert file path to display path for chat UI
- * e.g., /tmp/ws/data/file.txt -> /storagePath/data/file.txt
- */
-function toDisplayPath(filePath: string): string {
-  const storagePath = getCurrentStoragePath();
-  const relativePath = filePath.startsWith(WORKSPACE_DIRECTORY)
-    ? filePath.slice(WORKSPACE_DIRECTORY.length)
-    : filePath;
-
-  // Combine storagePath with relativePath, handling slashes
-  const normalizedStoragePath = storagePath.endsWith('/') ? storagePath.slice(0, -1) : storagePath;
-  const normalizedRelativePath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-
-  return `${normalizedStoragePath}${normalizedRelativePath}`;
-}
+import { logger } from '../config/index.js';
+import { getCurrentContext } from '../context/request-context.js';
+import { toDisplayPath } from '../utils/display-path.js';
 
 /**
  * Check if oldString appears exactly once in the file content

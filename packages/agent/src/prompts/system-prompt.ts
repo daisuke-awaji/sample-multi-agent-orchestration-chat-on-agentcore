@@ -1,3 +1,4 @@
+import path from 'path';
 import { MCPToolDefinition } from '../schemas/types.js';
 import { generateDefaultContext } from './default-context.js';
 import { WORKSPACE_DIRECTORY } from '../config/index.js';
@@ -33,6 +34,12 @@ ${options.longTermMemories.map((memory, index) => `${index + 1}. ${memory}`).joi
 `;
   }
 
+  // Compute active working directory (used in multiple prompt sections)
+  const normalizedStoragePath = (options.storagePath || '/').replace(/^\/+|\/+$/g, '');
+  const activeWorkDir = normalizedStoragePath
+    ? path.join(WORKSPACE_DIRECTORY, normalizedStoragePath)
+    : WORKSPACE_DIRECTORY;
+
   // Add workspace and storage path information
   if (options.storagePath) {
     basePrompt += `
@@ -41,64 +48,39 @@ ${options.longTermMemories.map((memory, index) => `${index + 1}. ${memory}`).joi
 Your workspace is synchronized with the user's S3 storage at path "${options.storagePath}".
 
 ### Working Directory
-- Default working directory: ${WORKSPACE_DIRECTORY}
-- All commands (execute_command) run from ${WORKSPACE_DIRECTORY} by default
+- Default working directory: ${activeWorkDir}
+- All commands (execute_command) run from ${activeWorkDir} by default
 - Files from S3 are automatically synced to this directory
 
 ### File Operations
 When you create or edit files:
-1. Use ${WORKSPACE_DIRECTORY} as your working directory (this is the default)
+1. Use ${activeWorkDir} as your working directory (this is the default)
 2. Files are automatically uploaded to S3 after tool execution
 3. No need to manually use S3 upload tools - changes sync automatically
 4. When using execute_command, you don't need to specify workingDirectory
 
 The workspace sync handles most file operations automatically, making your workflow seamless.
 
-### Displaying S3 Storage Files
-When referencing files in the user's S3 storage in your responses, ALWAYS use relative path format starting with "/" that INCLUDES the storage path prefix:
+### Displaying Files in Chat
+When referencing files in chat, strip "${WORKSPACE_DIRECTORY}" from the local path to get the display path:
+- Local: ${activeWorkDir}/report.md → Chat: ${options.storagePath}/report.md
+- Local: ${activeWorkDir}/plots/chart.png → Chat: ${options.storagePath}/plots/chart.png
 
-**Current storage path**: "${options.storagePath}"
-
-**For images** (will be displayed automatically):
-\`\`\`markdown
-![Image Description](${options.storagePath || '/'}path/to/image.png)
-\`\`\`
-
-**For videos** (will be displayed with inline video player):
-\`\`\`markdown
-![Video Description](${options.storagePath || '/'}path/to/video.mp4)
-\`\`\`
-or
-\`\`\`markdown
-[Video File](${options.storagePath || '/'}path/to/video.mp4)
-\`\`\`
+**For images**: \`![Chart](${options.storagePath || '/'}plots/chart.png)\`
+**For videos**: \`![Video](${options.storagePath || '/'}demo.mp4)\` or \`[Video](${options.storagePath || '/'}demo.mp4)\`
+**For other files**: \`[Report](${options.storagePath || '/'}documents/report.pdf)\`
 
 Supported video formats: .mp4, .webm, .mov, .avi, .mkv, .m4v
-Note: Both image syntax \`![alt](url)\` and link syntax \`[text](url)\` work for video files.
-The frontend automatically detects video file extensions and renders an inline video player with controls.
 
-**For other files** (clickable download links):
-\`\`\`markdown
-[File Name](${options.storagePath || '/'}path/to/document.pdf)
-\`\`\`
-
-**IMPORTANT**:
-- ❌ DO NOT generate presigned URLs or full S3 URLs like "https://bucket.s3.amazonaws.com/..."
-- ❌ DO NOT use fake or placeholder URLs
-- ❌ DO NOT include workspace paths like "/tmp/ws/" or "/tmp/" in file references
-- ✅ ALWAYS use relative paths starting with "/" that INCLUDE the storage path prefix
-- ✅ Storage path prefix "${options.storagePath || '/'}" MUST be included in all file paths
+**Rules:**
+- ✅ ALWAYS strip "${WORKSPACE_DIRECTORY}" prefix from paths when referencing files in chat
 - ✅ The frontend will automatically generate secure download URLs when needed
-
-**Path Examples** (assuming storage path is "${options.storagePath}"):
-- ✅ Correct: \`[Data](${options.storagePath || '/'}sample_sales.csv)\` or \`![Chart](${options.storagePath || '/'}plots/chart.png)\`
-- ❌ Wrong: \`[Data](/tmp/ws/sample_sales.csv)\` or \`[Data](/tmp/sample_sales.csv)\`
-- ❌ Wrong: \`[Data](/sample_sales.csv)\` (missing storage path prefix)
+- ❌ NEVER include "${WORKSPACE_DIRECTORY}" or "/tmp/" in file references shown to users
+- ❌ NEVER generate presigned URLs or full S3 URLs like "https://bucket.s3.amazonaws.com/..."
 
 **Examples** (with storage path "${options.storagePath}"):
-- Images: \`![Chart](${options.storagePath || '/'}reports/chart.png)\`
-- PDFs: \`[Report](${options.storagePath || '/'}documents/report.pdf)\`
-- Any file: \`[Data](${options.storagePath || '/'}data/results.csv)\`
+- ✅ Correct: \`![Chart](${options.storagePath || '/'}chart.png)\`, \`[Data](${options.storagePath || '/'}results.csv)\`
+- ❌ Wrong: \`![Chart](${activeWorkDir}/chart.png)\`, \`[Data](/tmp/ws/results.csv)\`
 `;
 
     // Check S3 tool availability
@@ -131,7 +113,7 @@ When using the code_interpreter tool, follow these critical guidelines for relia
 | DO ✅ | DON'T ❌ |
 |-------|----------|
 | Create file → downloadFiles → Use userPath | Reference files without downloading |
-| \`![Chart](${options.storagePath || '/'}chart.png)\` | \`![Chart](/tmp/ws/chart.png)\` |
+| \`![Chart](${options.storagePath || '/'}chart.png)\` | \`![Chart](${activeWorkDir}/chart.png)\` |
 | \`![Chart](${options.storagePath || '/'}chart.png)\` | \`![Chart](/opt/amazon/.../chart.png)\` |
 | Check downloadFiles result for userPath | Use localPath or internal paths |
 
@@ -147,7 +129,7 @@ Step 3: Use 'userPath' from result (NOT 'localPath')
 | Environment | Location | Accessible from Runtime? |
 |------------|----------|-------------------------|
 | Code Interpreter | /opt/amazon/genesis1p-tools/var | ❌ NO - Isolated environment |
-| AgentCore Runtime | /tmp/ws (your workspace) | ✅ YES - Your working directory |
+| AgentCore Runtime | ${activeWorkDir} (your workspace) | ✅ YES - Your working directory |
 
 **Key Facts:**
 - Files created by \`executeCode\` or \`executeCommand\` exist ONLY in Code Interpreter environment
@@ -162,7 +144,7 @@ Step 3: Use 'userPath' from result (NOT 'localPath')
 
 **ALWAYS follow this pattern:**
 1. ✅ Create files in Code Interpreter (executeCode/executeCommand)
-2. ✅ Download files to Runtime (\`downloadFiles\` to /tmp/ws)
+2. ✅ Download files to Runtime (\`downloadFiles\` to ${activeWorkDir})
 3. ✅ Verify download success
 4. ✅ Return relative paths starting with "/" (e.g., /chart.png, /report.pdf)
 
@@ -186,7 +168,7 @@ Step 3: Use 'userPath' from result (NOT 'localPath')
   "action": "downloadFiles",
   "sessionName": "data-analysis",
   "sourcePaths": ["chart.png"],
-  "destinationDir": "/tmp/ws"
+  "destinationDir": "${activeWorkDir}"
 }
 \`\`\`
 
@@ -215,9 +197,9 @@ Then immediately: "Here is your analysis: ![Result](/analysis.png)"
 
 ❌ **WRONG: Including workspace path in user-facing references**
 \`\`\`
-"Your file is at /tmp/ws/report.pdf"
+"Your file is at ${activeWorkDir}/report.pdf"
 \`\`\`
-→ Should be just "/report.pdf" for proper S3 integration
+→ Should strip "${WORKSPACE_DIRECTORY}" prefix for proper S3 integration
 
 ✅ **CORRECT: Complete workflow**
 \`\`\`python
@@ -226,7 +208,7 @@ plt.savefig('analysis.png')
 \`\`\`
 \`\`\`json
 // Step 2: Download
-{"action": "downloadFiles", "sourcePaths": ["analysis.png"], "destinationDir": "/tmp/ws"}
+{"action": "downloadFiles", "sourcePaths": ["analysis.png"], "destinationDir": "${activeWorkDir}"}
 \`\`\`
 "Here is your analysis: ![Result](/analysis.png)" // Step 3: Reference
 
@@ -234,9 +216,9 @@ plt.savefig('analysis.png')
 
 Before returning any file reference to the user, verify:
 - [ ] Did I create a file via executeCode/executeCommand?
-- [ ] Did I run \`downloadFiles\` to transfer it to /tmp/ws?
+- [ ] Did I run \`downloadFiles\` to transfer it to ${activeWorkDir}?
 - [ ] Did the download succeed? (Check tool response)
-- [ ] Am I using relative path with "/" prefix? (e.g., /file.png, not /tmp/ws/file.png)
+- [ ] Am I using relative path with "/" prefix? (e.g., ${options.storagePath || '/'}/file.png, not ${activeWorkDir}/file.png)
 - [ ] Am I NOT using Code Interpreter internal paths?
 
 If you answer "No" to any of these, DO NOT reference the file yet.
@@ -293,10 +275,10 @@ Step 4: Download results if needed
 
 ### S3 Synchronization (IMPORTANT)
 When using \`downloadFiles\`:
-- **Download to /tmp/ws or subdirectories** (e.g., /tmp/ws/downloads) for automatic S3 sync
+- **Download to ${activeWorkDir} or subdirectories** for automatic S3 sync
 - Files are automatically uploaded to S3 after tool execution via Workspace Sync Hook
 - **Avoid other paths** like /tmp/downloads or /Users/xxx - these will NOT sync to S3
-- Example: \`destinationDir: "/tmp/ws/analysis-results"\` ✓ Syncs to S3
+- Example: \`destinationDir: "${activeWorkDir}"\` ✓ Syncs to S3
 - Example: \`destinationDir: "/tmp/downloads"\` ✗ Does NOT sync to S3
 
 ### Package Installation

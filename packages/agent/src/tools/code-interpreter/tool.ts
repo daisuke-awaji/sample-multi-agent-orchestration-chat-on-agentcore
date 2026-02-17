@@ -122,7 +122,7 @@ export const codeInterpreterTool = tool({
 
         // Add warning if needed
         if (needsDownloadWarning) {
-          formattedResult += `\n\n⚠️ IMPORTANT: If you created files (images, videos, data files, etc.), you MUST use the 'downloadFiles' action before referencing them in your response. Files remain in the isolated CodeInterpreter environment until downloaded to /tmp/ws.`;
+          formattedResult += `\n\n⚠️ IMPORTANT: If you created files (images, videos, data files, etc.), you MUST use the 'downloadFiles' action before referencing them in your response. Files remain in the isolated CodeInterpreter environment until downloaded to your workspace.`;
         }
 
         return formattedResult;
