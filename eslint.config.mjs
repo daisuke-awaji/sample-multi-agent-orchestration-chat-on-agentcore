@@ -59,6 +59,14 @@ export default tseslint.config(
       ],
     },
   },
+  // Backend パッケージ: no-console を warn で有効化（structured logging 移行を促進）
+  {
+    files: ['packages/backend/src/**/*.ts'],
+    ignores: ['packages/backend/src/tests/**'],
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
   // Agent と Backend パッケージ: 日本語文字列を検出
   {
     files: ['packages/agent/**/*.ts', 'packages/backend/**/*.ts'],

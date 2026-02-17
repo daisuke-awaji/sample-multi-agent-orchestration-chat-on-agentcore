@@ -88,6 +88,11 @@ build/
 tmp/
 temp/
 
+# Backup and merge artifact files
+*.bak
+*.tmp
+*.orig
+
 # Local authentication files
 .env.local
 *.local.sh
