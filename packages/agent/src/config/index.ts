@@ -16,7 +16,7 @@ const envSchema = z.object({
   AGENTCORE_GATEWAY_ENDPOINT: z.string().url(),
 
   // Bedrock Configuration
-  BEDROCK_MODEL_ID: z.string().default('global.anthropic.claude-sonnet-4-5-20250929-v1:0'),
+  BEDROCK_MODEL_ID: z.string().default('global.anthropic.claude-sonnet-4-6'),
   BEDROCK_REGION: z.string().default('us-east-1'),
 
   // Nova Canvas Configuration
