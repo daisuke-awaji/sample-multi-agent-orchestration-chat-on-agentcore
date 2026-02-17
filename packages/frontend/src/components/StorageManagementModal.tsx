@@ -580,13 +580,22 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       // ZIP download for folders
       await handleFolderDownload(item.path, item.name);
     } else {
-      // Download with signed URL for files
+      // Open window immediately (within user gesture context) to avoid mobile popup blockers
+      const newWindow = window.open('', '_blank');
+
       try {
         const downloadUrl = await generateDownloadUrl(item.path);
-        // Open download URL in new tab
-        window.open(downloadUrl, '_blank');
+
+        if (newWindow) {
+          newWindow.location.href = downloadUrl;
+        } else {
+          window.location.href = downloadUrl;
+        }
       } catch (error) {
         console.error('Download error:', error);
+        if (newWindow) {
+          newWindow.close();
+        }
       }
     }
   };
