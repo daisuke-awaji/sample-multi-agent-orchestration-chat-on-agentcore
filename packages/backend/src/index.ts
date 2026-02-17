@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { config } from './config/index.js';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from './middleware/auth.js';
+import { routeErrorHandler } from './middleware/error-handler.js';
 import { hydrateJWKS } from './utils/jwks.js';
 import agentsRouter from './routes/agents.js';
 import sessionsRouter from './routes/sessions.js';
@@ -173,21 +174,7 @@ app.use('*', (req: Request, res: Response) => {
 /**
  * Error handler
  */
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  console.error('💥 Unhandled error:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    ip: req.ip,
-  });
-
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: config.isDevelopment ? err.message : 'Something went wrong',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use(routeErrorHandler);
 
 /**
  * Start server
