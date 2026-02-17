@@ -7,7 +7,7 @@ import { tool, ToolContext } from '@strands-agents/sdk';
 import { subAgentTaskManager } from '../services/sub-agent-task-manager.js';
 import { listAgents } from '../services/agent-registry.js';
 import { logger } from '../config/index.js';
-import { getCurrentContext } from '../context/request-context.js';
+import { getCurrentContext, getCurrentAuthHeader } from '../context/request-context.js';
 import { callAgentDefinition } from '@fullstack-agentcore/tool-definitions';
 
 /**
@@ -22,7 +22,13 @@ function sleep(ms: number): Promise<void> {
  */
 async function handleListAgents(): Promise<Record<string, unknown>> {
   try {
-    const agents = await listAgents();
+    // Pass auth context explicitly for Machine User support
+    const authHeader = getCurrentAuthHeader();
+    const currentContext = getCurrentContext();
+    const agents = await listAgents({
+      authHeader,
+      userId: currentContext?.userId,
+    });
 
     return {
       agents: agents.map((agent) => ({
