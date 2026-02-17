@@ -3,29 +3,64 @@
  * API for managing event-driven agent triggers
  */
 
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/async-handler.js';
+import { AppError } from '../middleware/error-handler.js';
 import { getTriggersDynamoDBService } from '../services/triggers-dynamodb.js';
 import { getSchedulerService } from '../services/scheduler-service.js';
 
 const router = Router();
 
+function requireUserId(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
+  const auth = getCurrentAuth(req);
+  if (!auth.userId) {
+    return next(new AppError(400, 'Failed to retrieve user ID'));
+  }
+  next();
+}
+
+function requireTriggersService(_req: AuthenticatedRequest, _res: Response, next: NextFunction) {
+  const triggersService = getTriggersDynamoDBService();
+  if (!triggersService.isConfigured()) {
+    return next(new AppError(500, 'Triggers Table is not configured'));
+  }
+  next();
+}
+
+const triggerMiddleware = [jwtAuthMiddleware, requireUserId, requireTriggersService];
+
+function formatTriggerResponse(trigger: Record<string, unknown>) {
+  return {
+    id: trigger.id,
+    name: trigger.name,
+    description: trigger.description,
+    type: trigger.type,
+    enabled: trigger.enabled,
+    agentId: trigger.agentId,
+    prompt: trigger.prompt,
+    sessionId: trigger.sessionId,
+    modelId: trigger.modelId,
+    workingDirectory: trigger.workingDirectory,
+    enabledTools: trigger.enabledTools,
+    scheduleConfig: trigger.scheduleConfig,
+    eventConfig: trigger.eventConfig,
+    createdAt: trigger.createdAt,
+    updatedAt: trigger.updatedAt,
+    lastExecutedAt: trigger.lastExecutedAt,
+  };
+}
+
 /**
  * List all triggers for the authenticated user
  * GET /triggers
  */
-router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
+    const userId = auth.userId!;
 
     console.log('📋 Triggers list retrieval started (%s):', auth.requestId, {
       userId,
@@ -33,15 +68,6 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     });
 
     const triggersService = getTriggersDynamoDBService();
-
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
     const triggers = await triggersService.listTriggers(userId);
 
     console.log(
@@ -49,24 +75,9 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
     );
 
     res.status(200).json({
-      triggers: triggers.map((trigger) => ({
-        id: trigger.id,
-        name: trigger.name,
-        description: trigger.description,
-        type: trigger.type,
-        enabled: trigger.enabled,
-        agentId: trigger.agentId,
-        prompt: trigger.prompt,
-        sessionId: trigger.sessionId,
-        modelId: trigger.modelId,
-        workingDirectory: trigger.workingDirectory,
-        enabledTools: trigger.enabledTools,
-        scheduleConfig: trigger.scheduleConfig,
-        eventConfig: trigger.eventConfig,
-        createdAt: trigger.createdAt,
-        updatedAt: trigger.updatedAt,
-        lastExecutedAt: trigger.lastExecutedAt,
-      })),
+      triggers: triggers.map((trigger) =>
+        formatTriggerResponse(trigger as unknown as Record<string, unknown>)
+      ),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
@@ -74,35 +85,20 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
         count: triggers.length,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Triggers list retrieval error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to retrieve triggers list',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Get a specific trigger
  * GET /triggers/:id
  */
-router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.get(
+  '/:id',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId!;
     const { id: triggerId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
 
     console.log('🔍 Trigger retrieval started (%s):', auth.requestId, {
       userId,
@@ -110,81 +106,36 @@ router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
     });
 
     const triggersService = getTriggersDynamoDBService();
-
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
     const trigger = await triggersService.getTrigger(userId, triggerId);
 
     if (!trigger) {
-      console.warn('⚠️ Trigger not found (%s): ${triggerId}', auth.requestId);
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
+      console.warn('⚠️ Trigger not found (%s): %s', auth.requestId, triggerId);
+      throw new AppError(404, 'Trigger not found');
     }
 
     console.log('✅ Trigger retrieval completed (%s)', auth.requestId);
 
     res.status(200).json({
-      trigger: {
-        id: trigger.id,
-        name: trigger.name,
-        description: trigger.description,
-        type: trigger.type,
-        enabled: trigger.enabled,
-        agentId: trigger.agentId,
-        prompt: trigger.prompt,
-        sessionId: trigger.sessionId,
-        modelId: trigger.modelId,
-        workingDirectory: trigger.workingDirectory,
-        enabledTools: trigger.enabledTools,
-        scheduleConfig: trigger.scheduleConfig,
-        eventConfig: trigger.eventConfig,
-        createdAt: trigger.createdAt,
-        updatedAt: trigger.updatedAt,
-        lastExecutedAt: trigger.lastExecutedAt,
-      },
+      trigger: formatTriggerResponse(trigger as unknown as Record<string, unknown>),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger retrieval error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to retrieve trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Create a new trigger
  * POST /triggers
  */
-router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.post(
+  '/',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
+    const userId = auth.userId!;
 
     const {
       name,
@@ -200,21 +151,15 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
       eventConfig,
     } = req.body;
 
-    // Validation
     if (!name || !type || !agentId || !prompt) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Required fields: name, type, agentId, prompt',
-        requestId: auth.requestId,
-      });
+      throw new AppError(400, 'Required fields: name, type, agentId, prompt');
     }
 
     if (type === 'schedule' && !scheduleConfig?.expression) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'scheduleConfig.expression is required for schedule type triggers',
-        requestId: auth.requestId,
-      });
+      throw new AppError(
+        400,
+        'scheduleConfig.expression is required for schedule type triggers'
+      );
     }
 
     console.log('✨ Trigger creation started (%s):', auth.requestId, {
@@ -226,15 +171,6 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
 
     const triggersService = getTriggersDynamoDBService();
 
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
-    // Create trigger in DynamoDB
     const trigger = await triggersService.createTrigger({
       userId,
       name,
@@ -250,7 +186,6 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
       eventConfig,
     });
 
-    // If schedule type, create EventBridge Schedule
     if (type === 'schedule' && scheduleConfig) {
       try {
         const schedulerService = getSchedulerService();
@@ -279,7 +214,6 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
           roleArn,
         });
 
-        // Update trigger with scheduler ARN
         await triggersService.updateTrigger(userId, trigger.id, {
           scheduleConfig: {
             ...scheduleConfig,
@@ -291,7 +225,6 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
         console.log(`✅ EventBridge Schedule created: ${schedulerArn}`);
       } catch (scheduleError) {
         console.error('Failed to create EventBridge Schedule:', scheduleError);
-        // Rollback: delete the trigger
         await triggersService.deleteTrigger(userId, trigger.id);
         throw new Error(
           `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
@@ -299,61 +232,30 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
       }
     }
 
-    console.log('✅ Trigger created successfully (%s): ${trigger.id}', auth.requestId);
+    console.log('✅ Trigger created successfully (%s): %s', auth.requestId, trigger.id);
 
     res.status(201).json({
-      trigger: {
-        id: trigger.id,
-        name: trigger.name,
-        description: trigger.description,
-        type: trigger.type,
-        enabled: trigger.enabled,
-        agentId: trigger.agentId,
-        prompt: trigger.prompt,
-        sessionId: trigger.sessionId,
-        modelId: trigger.modelId,
-        workingDirectory: trigger.workingDirectory,
-        enabledTools: trigger.enabledTools,
-        scheduleConfig: trigger.scheduleConfig,
-        eventConfig: trigger.eventConfig,
-        createdAt: trigger.createdAt,
-        updatedAt: trigger.updatedAt,
-      },
+      trigger: formatTriggerResponse(trigger as unknown as Record<string, unknown>),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger creation error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to create trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Update a trigger
  * PUT /triggers/:id
  */
-router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.put(
+  '/:id',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId!;
     const { id: triggerId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
 
     console.log('✏️ Trigger update started (%s):', auth.requestId, {
       userId,
@@ -362,22 +264,9 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
 
     const triggersService = getTriggersDynamoDBService();
 
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
-    // Check trigger exists and user owns it
     const existingTrigger = await triggersService.getTrigger(userId, triggerId);
     if (!existingTrigger) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
+      throw new AppError(404, 'Trigger not found');
     }
 
     const {
@@ -396,11 +285,9 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
 
     const typeChanged = type && type !== existingTrigger.type;
 
-    // Handle type change: schedule -> event
     if (typeChanged && existingTrigger.type === 'schedule' && type === 'event') {
       console.log('🔄 Type change detected: schedule -> event (%s)', auth.requestId);
 
-      // Delete existing EventBridge Schedule
       try {
         const schedulerService = getSchedulerService();
         await schedulerService.deleteSchedule(triggerId);
@@ -410,19 +297,16 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       }
     }
 
-    // Handle type change: event -> schedule
     if (typeChanged && existingTrigger.type === 'event' && type === 'schedule') {
       console.log('🔄 Type change detected: event -> schedule (%s)', auth.requestId);
 
       if (!scheduleConfig?.expression) {
-        return res.status(400).json({
-          error: 'Validation Error',
-          message: 'scheduleConfig.expression is required when changing to schedule type',
-          requestId: auth.requestId,
-        });
+        throw new AppError(
+          400,
+          'scheduleConfig.expression is required when changing to schedule type'
+        );
       }
 
-      // Create new EventBridge Schedule
       try {
         const schedulerService = getSchedulerService();
         const targetArn = process.env.TRIGGER_LAMBDA_ARN;
@@ -460,22 +344,21 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       }
     }
 
-    // Update trigger in DynamoDB
-    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
-      name,
-      description,
-      type,
-      agentId,
-      prompt,
-      sessionId,
-      modelId,
-      workingDirectory,
-      enabledTools,
-      scheduleConfig,
-      eventConfig,
-    });
+    const updateData: Record<string, unknown> = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (type !== undefined) updateData.type = type;
+    if (agentId !== undefined) updateData.agentId = agentId;
+    if (prompt !== undefined) updateData.prompt = prompt;
+    if (sessionId !== undefined) updateData.sessionId = sessionId;
+    if (modelId !== undefined) updateData.modelId = modelId;
+    if (workingDirectory !== undefined) updateData.workingDirectory = workingDirectory;
+    if (enabledTools !== undefined) updateData.enabledTools = enabledTools;
+    if (scheduleConfig !== undefined) updateData.scheduleConfig = scheduleConfig;
+    if (eventConfig !== undefined) updateData.eventConfig = eventConfig;
 
-    // If schedule type (and not changed from event) and schedule config changed, update EventBridge Schedule
+    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, updateData);
+
     if (updatedTrigger.type === 'schedule' && !typeChanged && scheduleConfig) {
       try {
         const schedulerService = getSchedulerService();
@@ -511,59 +394,27 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
     console.log('✅ Trigger updated successfully (%s)', auth.requestId);
 
     res.status(200).json({
-      trigger: {
-        id: updatedTrigger.id,
-        name: updatedTrigger.name,
-        description: updatedTrigger.description,
-        type: updatedTrigger.type,
-        enabled: updatedTrigger.enabled,
-        agentId: updatedTrigger.agentId,
-        prompt: updatedTrigger.prompt,
-        sessionId: updatedTrigger.sessionId,
-        modelId: updatedTrigger.modelId,
-        workingDirectory: updatedTrigger.workingDirectory,
-        enabledTools: updatedTrigger.enabledTools,
-        scheduleConfig: updatedTrigger.scheduleConfig,
-        eventConfig: updatedTrigger.eventConfig,
-        createdAt: updatedTrigger.createdAt,
-        updatedAt: updatedTrigger.updatedAt,
-        lastExecutedAt: updatedTrigger.lastExecutedAt,
-      },
+      trigger: formatTriggerResponse(updatedTrigger as unknown as Record<string, unknown>),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger update error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to update trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Delete a trigger
  * DELETE /triggers/:id
  */
-router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.delete(
+  '/:id',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId!;
     const { id: triggerId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
 
     console.log('🗑️ Trigger deletion started (%s):', auth.requestId, {
       userId,
@@ -572,25 +423,11 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
 
     const triggersService = getTriggersDynamoDBService();
 
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
-    // Check trigger exists and user owns it
     const trigger = await triggersService.getTrigger(userId, triggerId);
     if (!trigger) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
+      throw new AppError(404, 'Trigger not found');
     }
 
-    // Delete EventBridge Schedule if exists
     if (trigger.type === 'schedule') {
       try {
         const schedulerService = getSchedulerService();
@@ -604,7 +441,6 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
       }
     }
 
-    // Delete trigger from DynamoDB
     await triggersService.deleteTrigger(userId, triggerId);
 
     console.log('✅ Trigger deleted successfully (%s)', auth.requestId);
@@ -619,35 +455,20 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
         triggerId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger deletion error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to delete trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Enable a trigger
  * POST /triggers/:id/enable
  */
-router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.post(
+  '/:id/enable',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId!;
     const { id: triggerId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
 
     console.log('▶️ Trigger enable started (%s):', auth.requestId, {
       userId,
@@ -656,30 +477,15 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
 
     const triggersService = getTriggersDynamoDBService();
 
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
-    // Check trigger exists and user owns it
     const trigger = await triggersService.getTrigger(userId, triggerId);
     if (!trigger) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
+      throw new AppError(404, 'Trigger not found');
     }
 
-    // Update trigger status
     const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
       enabled: true,
     });
 
-    // Enable EventBridge Schedule if exists
     if (trigger.type === 'schedule') {
       try {
         const schedulerService = getSchedulerService();
@@ -695,59 +501,27 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
     console.log('✅ Trigger enabled successfully (%s)', auth.requestId);
 
     res.status(200).json({
-      trigger: {
-        id: updatedTrigger.id,
-        name: updatedTrigger.name,
-        description: updatedTrigger.description,
-        type: updatedTrigger.type,
-        enabled: updatedTrigger.enabled,
-        agentId: updatedTrigger.agentId,
-        prompt: updatedTrigger.prompt,
-        sessionId: updatedTrigger.sessionId,
-        modelId: updatedTrigger.modelId,
-        workingDirectory: updatedTrigger.workingDirectory,
-        enabledTools: updatedTrigger.enabledTools,
-        scheduleConfig: updatedTrigger.scheduleConfig,
-        eventConfig: updatedTrigger.eventConfig,
-        createdAt: updatedTrigger.createdAt,
-        updatedAt: updatedTrigger.updatedAt,
-        lastExecutedAt: updatedTrigger.lastExecutedAt,
-      },
+      trigger: formatTriggerResponse(updatedTrigger as unknown as Record<string, unknown>),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger enable error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to enable trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Disable a trigger
  * POST /triggers/:id/disable
  */
-router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
-  try {
+router.post(
+  '/:id/disable',
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId!;
     const { id: triggerId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
 
     console.log('⏸️ Trigger disable started (%s):', auth.requestId, {
       userId,
@@ -756,30 +530,15 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
 
     const triggersService = getTriggersDynamoDBService();
 
-    if (!triggersService.isConfigured()) {
-      return res.status(500).json({
-        error: 'Configuration Error',
-        message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
-      });
-    }
-
-    // Check trigger exists and user owns it
     const trigger = await triggersService.getTrigger(userId, triggerId);
     if (!trigger) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
+      throw new AppError(404, 'Trigger not found');
     }
 
-    // Update trigger status
     const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
       enabled: false,
     });
 
-    // Disable EventBridge Schedule if exists
     if (trigger.type === 'schedule') {
       try {
         const schedulerService = getSchedulerService();
@@ -795,41 +554,15 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
     console.log('✅ Trigger disabled successfully (%s)', auth.requestId);
 
     res.status(200).json({
-      trigger: {
-        id: updatedTrigger.id,
-        name: updatedTrigger.name,
-        description: updatedTrigger.description,
-        type: updatedTrigger.type,
-        enabled: updatedTrigger.enabled,
-        agentId: updatedTrigger.agentId,
-        prompt: updatedTrigger.prompt,
-        sessionId: updatedTrigger.sessionId,
-        modelId: updatedTrigger.modelId,
-        workingDirectory: updatedTrigger.workingDirectory,
-        enabledTools: updatedTrigger.enabledTools,
-        scheduleConfig: updatedTrigger.scheduleConfig,
-        eventConfig: updatedTrigger.eventConfig,
-        createdAt: updatedTrigger.createdAt,
-        updatedAt: updatedTrigger.updatedAt,
-        lastExecutedAt: updatedTrigger.lastExecutedAt,
-      },
+      trigger: formatTriggerResponse(updatedTrigger as unknown as Record<string, unknown>),
       metadata: {
         requestId: auth.requestId,
         timestamp: new Date().toISOString(),
         userId,
       },
     });
-  } catch (error) {
-    const auth = getCurrentAuth(req);
-    console.error('💥 Trigger disable error (%s):', auth.requestId, error);
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to disable trigger',
-      requestId: auth.requestId,
-    });
-  }
-});
+  })
+);
 
 /**
  * Get execution history for a trigger
@@ -837,106 +570,68 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
  */
 router.get(
   '/:id/executions',
-  jwtAuthMiddleware,
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const auth = getCurrentAuth(req);
-      const userId = auth.userId;
-      const { id: triggerId } = req.params;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
-      const nextToken = req.query.nextToken as string | undefined;
+  triggerMiddleware,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const auth = getCurrentAuth(req);
+    const userId = auth.userId!;
+    const { id: triggerId } = req.params;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    const nextToken = req.query.nextToken as string | undefined;
 
-      if (!userId) {
-        return res.status(400).json({
-          error: 'Invalid authentication',
-          message: 'Failed to retrieve user ID',
-          requestId: auth.requestId,
-        });
+    console.log('📊 Execution history retrieval started (%s):', auth.requestId, {
+      userId,
+      triggerId,
+      limit,
+      hasNextToken: !!nextToken,
+    });
+
+    const triggersService = getTriggersDynamoDBService();
+
+    const trigger = await triggersService.getTrigger(userId, triggerId);
+    if (!trigger) {
+      throw new AppError(404, 'Trigger not found');
+    }
+
+    let exclusiveStartKey: Record<string, unknown> | undefined;
+    if (nextToken) {
+      try {
+        exclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+      } catch {
+        throw new AppError(400, 'Invalid nextToken format');
       }
+    }
 
-      console.log('📊 Execution history retrieval started (%s):', auth.requestId, {
+    const result = await triggersService.getExecutions(triggerId, limit, exclusiveStartKey);
+
+    const responseNextToken = result.lastEvaluatedKey
+      ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
+      : undefined;
+
+    console.log(
+      `✅ Execution history retrieval completed (${auth.requestId}): ${result.executions.length} items, hasMore: ${!!responseNextToken}`
+    );
+
+    res.status(200).json({
+      executions: result.executions.map((execution) => ({
+        executionId: execution.executionId,
+        triggerId: execution.triggerId,
+        startTime: execution.startedAt,
+        endTime: execution.completedAt,
+        status: execution.status,
+        requestId: execution.requestId,
+        sessionId: execution.sessionId,
+        error: execution.error,
+      })),
+      nextToken: responseNextToken,
+      metadata: {
+        requestId: auth.requestId,
+        timestamp: new Date().toISOString(),
         userId,
         triggerId,
-        limit,
-        hasNextToken: !!nextToken,
-      });
-
-      const triggersService = getTriggersDynamoDBService();
-
-      if (!triggersService.isConfigured()) {
-        return res.status(500).json({
-          error: 'Configuration Error',
-          message: 'Triggers Table is not configured',
-          requestId: auth.requestId,
-        });
-      }
-
-      // Check trigger exists and user owns it
-      const trigger = await triggersService.getTrigger(userId, triggerId);
-      if (!trigger) {
-        return res.status(404).json({
-          error: 'Not Found',
-          message: 'Trigger not found',
-          requestId: auth.requestId,
-        });
-      }
-
-      // Decode nextToken if provided
-      let exclusiveStartKey: Record<string, unknown> | undefined;
-      if (nextToken) {
-        try {
-          exclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
-        } catch {
-          return res.status(400).json({
-            error: 'Invalid Parameter',
-            message: 'Invalid nextToken format',
-            requestId: auth.requestId,
-          });
-        }
-      }
-
-      const result = await triggersService.getExecutions(triggerId, limit, exclusiveStartKey);
-
-      // Encode lastEvaluatedKey as nextToken
-      const responseNextToken = result.lastEvaluatedKey
-        ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
-        : undefined;
-
-      console.log(
-        `✅ Execution history retrieval completed (${auth.requestId}): ${result.executions.length} items, hasMore: ${!!responseNextToken}`
-      );
-
-      res.status(200).json({
-        executions: result.executions.map((execution) => ({
-          executionId: execution.executionId,
-          triggerId: execution.triggerId,
-          startTime: execution.startedAt,
-          endTime: execution.completedAt,
-          status: execution.status,
-          requestId: execution.requestId,
-          sessionId: execution.sessionId,
-          error: execution.error,
-        })),
-        nextToken: responseNextToken,
-        metadata: {
-          requestId: auth.requestId,
-          timestamp: new Date().toISOString(),
-          userId,
-          triggerId,
-          count: result.executions.length,
-        },
-      });
-    } catch (error) {
-      const auth = getCurrentAuth(req);
-      console.error('💥 Execution history retrieval error (%s):', auth.requestId, error);
-
-      res.status(500).json({
-        error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Failed to retrieve execution history',
-        requestId: auth.requestId,
-      });
-    }
-  }
+        count: result.executions.length,
+      },
+    });
+  })
 );
 
 export default router;
