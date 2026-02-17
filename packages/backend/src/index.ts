@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { config } from './config/index.js';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from './middleware/auth.js';
+import { AppError } from './middleware/error-handler.js';
 import { hydrateJWKS } from './utils/jwks.js';
 import agentsRouter from './routes/agents.js';
 import sessionsRouter from './routes/sessions.js';
@@ -174,17 +175,25 @@ app.use('*', (req: Request, res: Response) => {
  * Error handler
  */
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  console.error('💥 Unhandled error:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    ip: req.ip,
-  });
+  const statusCode = err instanceof AppError ? err.statusCode : 500;
 
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: config.isDevelopment ? err.message : 'Something went wrong',
+  if (statusCode >= 500) {
+    console.error('💥 Unhandled error:', {
+      message: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+    });
+  }
+
+  const authReq = req as AuthenticatedRequest;
+  const requestId = authReq.requestId;
+
+  res.status(statusCode).json({
+    error: statusCode < 500 ? err.message : 'Internal Server Error',
+    message: statusCode < 500 || config.isDevelopment ? err.message : 'Something went wrong',
+    ...(requestId && { requestId }),
     timestamp: new Date().toISOString(),
   });
 });
