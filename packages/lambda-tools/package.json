@@ -12,7 +12,7 @@
     "clean:utility-tools": "cd tools/utility-tools && npm run clean",
     "clean:athena-tools": "cd tools/athena-tools && npm run clean",
     "test": "npm run build:shared && npm run test:shared && npm run test:utility-tools && npm run test:athena-tools",
-    "test:shared": "cd shared && npm install --no-workspaces && node_modules/.bin/jest",
+    "test:shared": "cd shared && npx --no-install jest",
     "test:utility-tools": "cd tools/utility-tools && npm install && npm run test",
     "test:athena-tools": "cd tools/athena-tools && npm install && npm run test"
   },
