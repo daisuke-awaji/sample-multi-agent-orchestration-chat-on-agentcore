@@ -374,6 +374,30 @@ export class AgentCoreRuntime extends Construct {
       })
     );
 
+    // Browser operation permissions
+    this.runtime.addToRolePolicy(
+      new iam.PolicyStatement({
+        sid: 'BedrockAgentCoreBrowserAccess',
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'bedrock-agentcore:CreateBrowser',
+          'bedrock-agentcore:StartBrowserSession',
+          'bedrock-agentcore:UpdateBrowserStream',
+          'bedrock-agentcore:StopBrowserSession',
+          'bedrock-agentcore:GetBrowserSession',
+          'bedrock-agentcore:SaveBrowserSessionProfile',
+          'bedrock-agentcore:DeleteBrowser',
+          'bedrock-agentcore:ListBrowsers',
+          'bedrock-agentcore:GetBrowser',
+          'bedrock-agentcore:ListBrowserSessions',
+        ],
+        resources: [
+          `arn:aws:bedrock-agentcore:${region}:${account}:browser/*`,
+          `arn:aws:bedrock-agentcore:${region}:aws:browser/*`, // AWS Managed Browser
+        ],
+      })
+    );
+
     // Secrets Manager access permissions (Tavily API Key)
     if (props.tavilyApiKeySecretName) {
       this.runtime.addToRolePolicy(
