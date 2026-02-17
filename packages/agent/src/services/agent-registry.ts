@@ -61,9 +61,42 @@ function getBackendApiUrl(): string {
 }
 
 /**
+ * Options for Backend API calls
+ * Used to pass auth context explicitly when AsyncLocalStorage context is unavailable
+ * (e.g., background sub-agent task execution)
+ */
+export interface AgentRegistryOptions {
+  /** Authorization header (Bearer token) — overrides AsyncLocalStorage context */
+  authHeader?: string;
+  /** User ID for Machine User requests — sent as X-Target-User-Id header */
+  userId?: string;
+}
+
+/**
+ * Build request headers for Backend API calls
+ * Resolves auth header from explicit options or AsyncLocalStorage context
+ */
+function buildHeaders(options?: AgentRegistryOptions): Record<string, string> {
+  const authHeader = options?.authHeader || getCurrentAuthHeader();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (authHeader) {
+    headers['Authorization'] = authHeader;
+  }
+  if (options?.userId) {
+    headers['X-Target-User-Id'] = options.userId;
+  }
+  return headers;
+}
+
+/**
  * Fetch agent definition from backend API by agentId
  */
-export async function getAgentDefinition(agentId: string): Promise<AgentDefinition | null> {
+export async function getAgentDefinition(
+  agentId: string,
+  options?: AgentRegistryOptions
+): Promise<AgentDefinition | null> {
   // Check cache
   const cached = agentCache.get(agentId);
   const cacheTime = cacheTimestamps.get(agentId);
@@ -78,21 +111,16 @@ export async function getAgentDefinition(agentId: string): Promise<AgentDefiniti
     // Use agentId directly - backend expects agentId parameter
     const url = `${backendUrl}/agents/${encodeURIComponent(agentId)}`;
 
-    // Get JWT token from request context
-    const authHeader = getCurrentAuthHeader();
+    const headers = buildHeaders(options);
 
     logger.info('🔍 Fetching agent definition:', {
       agentId,
       url,
-      hasAuth: !!authHeader,
+      hasAuth: !!headers['Authorization'],
+      hasTargetUserId: !!headers['X-Target-User-Id'],
     });
 
-    const response = await fetch(url, {
-      headers: {
-        ...(authHeader && { Authorization: authHeader }),
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(url, { headers });
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -142,27 +170,22 @@ export async function getAgentDefinition(agentId: string): Promise<AgentDefiniti
 /**
  * List all available agents with simplified information
  */
-export async function listAgents(): Promise<
-  Array<{ agentId: string; name: string; description: string }>
-> {
+export async function listAgents(
+  options?: AgentRegistryOptions
+): Promise<Array<{ agentId: string; name: string; description: string }>> {
   try {
     const backendUrl = getBackendApiUrl();
     const url = `${backendUrl}/agents`;
 
-    // Get JWT token from request context
-    const authHeader = getCurrentAuthHeader();
+    const headers = buildHeaders(options);
 
     logger.info('🔍 Fetching agent list:', {
       url,
-      hasAuth: !!authHeader,
+      hasAuth: !!headers['Authorization'],
+      hasTargetUserId: !!headers['X-Target-User-Id'],
     });
 
-    const response = await fetch(url, {
-      headers: {
-        ...(authHeader && { Authorization: authHeader }),
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(url, { headers });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);

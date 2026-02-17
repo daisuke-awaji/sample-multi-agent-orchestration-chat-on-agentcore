@@ -6,7 +6,7 @@
 import { logger, config } from '../config/index.js';
 import { createAgent } from '../agent.js';
 import { getAgentDefinition } from './agent-registry.js';
-import { getCurrentContext } from '../context/request-context.js';
+import { getCurrentContext, getCurrentAuthHeader } from '../context/request-context.js';
 import { WorkspaceSync } from './workspace-sync.js';
 import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
 import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
@@ -72,6 +72,8 @@ export interface SubAgentTask {
   maxDepth: number;
   currentDepth: number;
   storagePath?: string;
+  /** Captured auth header from parent request context (for Backend API calls in background) */
+  authHeader?: string;
 }
 
 /**
@@ -122,6 +124,10 @@ class SubAgentTaskManager {
     // Generate sessionId if not provided (pure alphanumeric, sessionType identifies it as subagent)
     const sessionId = options.sessionId || generateSessionId();
 
+    // Capture auth header from current request context while still in AsyncLocalStorage scope.
+    // Background executeTask() may run outside the original context, so we save it here.
+    const authHeader = getCurrentAuthHeader();
+
     const task: SubAgentTask = {
       taskId,
       agentId,
@@ -136,6 +142,7 @@ class SubAgentTaskManager {
       maxDepth: options.maxDepth || 2,
       currentDepth: options.currentDepth || 0,
       storagePath: options.storagePath,
+      authHeader,
     };
 
     this.tasks.set(taskId, task);
@@ -171,7 +178,11 @@ class SubAgentTaskManager {
       this.updateTaskStatus(taskId, 'running', 'Initializing sub-agent...');
 
       // Get agent definition from backend API
-      const agentDef = await getAgentDefinition(task.agentId);
+      // Use captured authHeader and userId from createTask to avoid AsyncLocalStorage context loss
+      const agentDef = await getAgentDefinition(task.agentId, {
+        authHeader: task.authHeader,
+        userId: task.userId,
+      });
       if (!agentDef) {
         throw new Error(`Agent "${task.agentId}" not found`);
       }
