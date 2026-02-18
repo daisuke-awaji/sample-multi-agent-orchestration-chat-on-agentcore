@@ -154,6 +154,7 @@ For advanced configuration options such as custom domains, environment-specific 
 - [Deployment Options](docs/deployment-options.md) - Environment configuration and customization
 - [Local Development Setup](docs/local-development-setup.md) - Explains environment setup automation
 - [JWT Authentication System](docs/jwt-authentication.md) - Explains the authentication mechanism
+- [Tools Reference](docs/tools.md) - Available tools and their parameters
 - [Architecture Diagram](docs/donuts-architecture.drawio.png)
 
 ## License
