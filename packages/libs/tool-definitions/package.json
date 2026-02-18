@@ -14,13 +14,17 @@
   "scripts": {
     "build": "tsc --build",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
-    "dev": "tsc --build --watch"
+    "dev": "tsc --build --watch",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --passWithNoTests"
   },
   "dependencies": {
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^30.2.0",
     "rimraf": "^5.0.5",
+    "ts-jest": "^29.4.6",
     "typescript": "~5.2.2"
   }
 }

@@ -21,6 +21,7 @@ const DEFAULT_CONFIG = {
   logRetentionDays: 7,
   tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
   githubTokenSecretName: 'agentcore/default/github-token',
+  gitlabTokenSecretName: 'agentcore/default/gitlab-token',
 };
 
 /**
@@ -58,6 +59,8 @@ function resolveConfig(env: Environment, input: EnvironmentConfigInput): Environ
     awsAccount: input.awsAccount,
     tavilyApiKeySecretName: input.tavilyApiKeySecretName ?? DEFAULT_CONFIG.tavilyApiKeySecretName,
     githubTokenSecretName: input.githubTokenSecretName ?? DEFAULT_CONFIG.githubTokenSecretName,
+    gitlabTokenSecretName: input.gitlabTokenSecretName ?? DEFAULT_CONFIG.gitlabTokenSecretName,
+    gitlabHost: input.gitlabHost,
     allowedSignUpEmailDomains: input.allowedSignUpEmailDomains,
     customDomain: input.customDomain,
     testUser: input.testUser,

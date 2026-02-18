@@ -12,6 +12,7 @@ export * from './nova-reel.js';
 export * from './manage-agent.js';
 export * from './todo-init.js';
 export * from './todo-update.js';
+export * from './think.js';
 
 import { executeCommandDefinition } from './execute-command.js';
 import { fileEditorDefinition } from './file-editor.js';
@@ -27,6 +28,7 @@ import { novaReelDefinition } from './nova-reel.js';
 import { manageAgentDefinition } from './manage-agent.js';
 import { todoInitDefinition } from './todo-init.js';
 import { todoUpdateDefinition } from './todo-update.js';
+import { thinkDefinition } from './think.js';
 
 /**
  * All tool definitions array
@@ -46,6 +48,7 @@ export const allToolDefinitions = [
   manageAgentDefinition,
   todoInitDefinition,
   todoUpdateDefinition,
+  thinkDefinition,
 ];
 
 /**

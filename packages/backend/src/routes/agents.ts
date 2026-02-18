@@ -4,7 +4,12 @@
  */
 
 import { Router, Response } from 'express';
-import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
+import {
+  jwtAuthMiddleware,
+  AuthenticatedRequest,
+  getCurrentAuth,
+  AuthInfo,
+} from '../middleware/auth.js';
 import {
   createAgentsService,
   CreateAgentInput,
@@ -16,6 +21,40 @@ import { DEFAULT_AGENTS } from '../data/default-agents.js';
 const router = Router();
 
 /**
+ * UUID format regex for validating X-Target-User-Id
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve effective userId for agent API requests.
+ *
+ * For regular users: uses userId from JWT token.
+ * For machine users (Client Credentials Flow): uses X-Target-User-Id header.
+ * This enables EventBridge Scheduler triggered agents to access agent definitions
+ * on behalf of the target user.
+ */
+function resolveUserId(
+  auth: AuthInfo,
+  req: AuthenticatedRequest
+): { userId: string } | { error: string } {
+  if (auth.isMachineUser) {
+    const targetUserId = req.headers['x-target-user-id'] as string | undefined;
+    if (!targetUserId) {
+      return { error: 'X-Target-User-Id header is required for machine user requests' };
+    }
+    if (!UUID_REGEX.test(targetUserId)) {
+      return { error: 'X-Target-User-Id must be a valid UUID format' };
+    }
+    return { userId: targetUserId };
+  }
+
+  if (!auth.userId) {
+    return { error: 'Failed to retrieve user ID' };
+  }
+  return { userId: auth.userId };
+}
+
+/**
  * Agent list retrieval endpoint
  * GET /agents
  * JWT authentication required
@@ -23,15 +62,17 @@ const router = Router();
 router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const result = resolveUserId(auth, req);
 
-    if (!userId) {
+    if ('error' in result) {
       return res.status(400).json({
         error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
+        message: result.error,
         requestId: auth.requestId,
       });
     }
+
+    const { userId } = result;
 
     console.log('📋 Agent list retrieval started (%s):', auth.requestId, {
       userId,
@@ -72,16 +113,18 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
 router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const result = resolveUserId(auth, req);
     const { agentId } = req.params;
 
-    if (!userId) {
+    if ('error' in result) {
       return res.status(400).json({
         error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
+        message: result.error,
         requestId: auth.requestId,
       });
     }
+
+    const { userId } = result;
 
     if (!agentId) {
       return res.status(400).json({

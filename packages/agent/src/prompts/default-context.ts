@@ -62,11 +62,31 @@ ${enabledToolsList}
   </user_storage>`;
   }
 
+  // Think ツールが有効かどうかをチェック
+  const hasThinkTool = tools.some((tool) => tool.name === 'think');
+
+  let thinkToolSection = '';
+  if (hasThinkTool) {
+    thinkToolSection = `
+
+  ## Thinking Tool
+
+  You have access to a \`think\` tool. Use it to reason through complex situations BEFORE taking action:
+
+  - **After receiving tool results**: Analyze what the results mean before making the next tool call
+  - **When facing ambiguous requests**: Think through the user's intent before proceeding
+  - **For multi-step planning**: Plan your approach before executing a sequence of actions
+  - **When deciding between approaches**: Evaluate trade-offs before committing to one path
+  - **Before critical operations**: Verify your reasoning before executing destructive or irreversible actions
+
+  You do NOT need to use \`think\` for simple, straightforward tasks.`;
+  }
+
   return `
 <context>
   <current_time>${currentTime}</current_time>
   <markdown_rules>
 ${markdownRules}
-  </markdown_rules>${userStorageSection}
+  </markdown_rules>${userStorageSection}${thinkToolSection}
 </context>`;
 }
