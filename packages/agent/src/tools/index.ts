@@ -11,7 +11,7 @@ export { imageToTextTool } from './image-to-text/index.js';
 export { novaReelTool } from './nova-reel/index.js';
 export { callAgentTool } from './call-agent.js';
 export { manageAgentTool } from './manage-agent.js';
-export { todoInitTool, todoUpdateTool } from './todo/index.js';
+export { todoTool } from './todo/index.js';
 export { thinkTool } from './think.js';
 
 // ローカルツール配列のインポート
@@ -27,7 +27,7 @@ import { imageToTextTool } from './image-to-text/index.js';
 import { novaReelTool } from './nova-reel/index.js';
 import { callAgentTool } from './call-agent.js';
 import { manageAgentTool } from './manage-agent.js';
-import { todoInitTool, todoUpdateTool } from './todo/index.js';
+import { todoTool } from './todo/index.js';
 import { thinkTool } from './think.js';
 
 /**
@@ -47,7 +47,6 @@ export const localTools = [
   novaReelTool,
   callAgentTool,
   manageAgentTool,
-  todoInitTool,
-  todoUpdateTool,
+  todoTool,
   thinkTool,
 ];
