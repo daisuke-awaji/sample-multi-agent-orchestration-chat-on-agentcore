@@ -7,7 +7,7 @@
  *   - USER_STORAGE_BUCKET_NAME environment variable set
  *
  * Run:
- *   cd packages/shared/s3-workspace-sync
+ *   cd packages/libs/s3-workspace-sync
  *   npm run test:integration
  */
 

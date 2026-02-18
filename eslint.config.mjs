@@ -44,7 +44,7 @@ export default tseslint.config(
   },
   // s3-workspace-sync パッケージ: ESM モードで .js 拡張子を強制
   {
-    files: ['packages/shared/s3-workspace-sync/**/*.ts'],
+    files: ['packages/libs/s3-workspace-sync/**/*.ts'],
     plugins: {
       import: importPlugin,
     },
