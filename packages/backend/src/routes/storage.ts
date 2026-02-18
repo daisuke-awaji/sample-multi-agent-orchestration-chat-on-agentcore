@@ -3,281 +3,131 @@
  * ユーザーファイルストレージのAPI
  */
 
-import { Router, Response } from 'express';
-import { jwtAuthMiddleware, AuthenticatedRequest } from '../middleware/auth.js';
+import { Router } from 'express';
+import { jwtAuthMiddleware } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/async-handler.js';
+import { AppError } from '../middleware/error-handler.js';
 import * as storageService from '../services/s3-storage.js';
 
 const router = Router();
 
-// 全ルートにJWT認証を適用
 router.use(jwtAuthMiddleware);
 
-/**
- * GET /storage/list
- * ディレクトリ内のファイル・フォルダ一覧を取得
- */
-router.get('/list', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
+function requireUserId(userId: string | undefined): asserts userId is string {
+  if (!userId) throw new AppError(401, 'User ID not found');
+}
 
+router.get(
+  '/list',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = (req.query.path as string) || '/';
-
-    const result = await storageService.listStorageItems(userId, path);
-
+    const result = await storageService.listStorageItems(req.userId, path);
     res.status(200).json(result);
-  } catch (error) {
-    console.error('❌ Storage list error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to list storage items',
-    });
-  }
-});
+  })
+);
 
-/**
- * GET /storage/size
- * ディレクトリ内のすべてのファイルサイズを再帰的に計算
- */
-router.get('/size', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.get(
+  '/size',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = (req.query.path as string) || '/';
-
-    const result = await storageService.getDirectorySize(userId, path);
-
+    const result = await storageService.getDirectorySize(req.userId, path);
     res.status(200).json(result);
-  } catch (error) {
-    console.error('❌ Storage size calculation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to calculate directory size',
-    });
-  }
-});
+  })
+);
 
-/**
- * POST /storage/upload
- * ファイルアップロード用の署名付きURLを生成
- */
-router.post('/upload', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.post(
+  '/upload',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const { fileName, path, contentType } = req.body;
-
-    if (!fileName) {
-      return res.status(400).json({ error: 'Bad Request', message: 'fileName is required' });
-    }
-
-    const result = await storageService.generateUploadUrl(userId, fileName, path, contentType);
-
+    if (!fileName) throw new AppError(400, 'fileName is required');
+    const result = await storageService.generateUploadUrl(req.userId, fileName, path, contentType);
     res.status(200).json(result);
-  } catch (error) {
-    console.error('❌ Storage upload URL generation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to generate upload URL',
-    });
-  }
-});
+  })
+);
 
-/**
- * POST /storage/directory
- * 新しいディレクトリを作成
- */
-router.post('/directory', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.post(
+  '/directory',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const { directoryName, path } = req.body;
-
-    if (!directoryName) {
-      return res.status(400).json({ error: 'Bad Request', message: 'directoryName is required' });
-    }
-
-    const result = await storageService.createDirectory(userId, directoryName, path);
-
+    if (!directoryName) throw new AppError(400, 'directoryName is required');
+    const result = await storageService.createDirectory(req.userId, directoryName, path);
     res.status(201).json(result);
-  } catch (error) {
-    console.error('❌ Storage directory creation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to create directory',
-    });
-  }
-});
+  })
+);
 
-/**
- * DELETE /storage/file
- * ファイルを削除
- */
-router.delete('/file', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.delete(
+  '/file',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = req.query.path as string;
-
-    if (!path) {
-      return res.status(400).json({ error: 'Bad Request', message: 'path is required' });
-    }
-
-    const result = await storageService.deleteFile(userId, path);
-
+    if (!path) throw new AppError(400, 'path is required');
+    const result = await storageService.deleteFile(req.userId, path);
     res.status(200).json(result);
-  } catch (error) {
-    console.error('❌ Storage file deletion error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to delete file',
-    });
-  }
-});
+  })
+);
 
-/**
- * DELETE /storage/directory
- * ディレクトリを削除
- * クエリパラメータ force=true で、ディレクトリ内のすべてのファイルを含めて削除
- */
-router.delete('/directory', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.delete(
+  '/directory',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = req.query.path as string;
     const force = req.query.force === 'true';
-
-    if (!path) {
-      return res.status(400).json({ error: 'Bad Request', message: 'path is required' });
+    if (!path) throw new AppError(400, 'path is required');
+    try {
+      const result = await storageService.deleteDirectory(req.userId, path, force);
+      res.status(200).json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Directory is not empty') {
+        throw new AppError(400, 'Directory is not empty');
+      }
+      throw error;
     }
+  })
+);
 
-    const result = await storageService.deleteDirectory(userId, path, force);
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error('❌ Storage directory deletion error:', error);
-
-    if (error instanceof Error && error.message === 'Directory is not empty') {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Directory is not empty',
-      });
-    }
-
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to delete directory',
-    });
-  }
-});
-
-/**
- * GET /storage/download
- * ファイルダウンロード用の署名付きURLを生成
- */
-router.get('/download', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.get(
+  '/download',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = req.query.path as string;
-
-    if (!path) {
-      return res.status(400).json({ error: 'Bad Request', message: 'path is required' });
-    }
-
-    const downloadUrl = await storageService.generateDownloadUrl(userId, path);
-
+    if (!path) throw new AppError(400, 'path is required');
+    const downloadUrl = await storageService.generateDownloadUrl(req.userId, path);
     res.status(200).json({ downloadUrl });
-  } catch (error) {
-    console.error('❌ Storage download URL generation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to generate download URL',
-    });
-  }
-});
+  })
+);
 
-/**
- * GET /storage/tree
- * フォルダツリー構造を取得
- */
-router.get('/tree', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
-    const tree = await storageService.getFolderTree(userId);
-
+router.get(
+  '/tree',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
+    const tree = await storageService.getFolderTree(req.userId);
     res.status(200).json({ tree });
-  } catch (error) {
-    console.error('❌ Storage tree generation error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to generate folder tree',
-    });
-  }
-});
+  })
+);
 
-/**
- * GET /storage/download-folder
- * フォルダ内のすべてのファイルの署名付きURLを取得（ZIP作成用）
- */
-router.get('/download-folder', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
-    }
-
+router.get(
+  '/download-folder',
+  asyncHandler(async (req, res) => {
+    requireUserId(req.userId);
     const path = req.query.path as string;
+    if (!path) throw new AppError(400, 'path is required');
 
-    if (!path) {
-      return res.status(400).json({ error: 'Bad Request', message: 'path is required' });
-    }
+    const downloadInfo = await storageService.getRecursiveDownloadUrls(req.userId, path);
 
-    const downloadInfo = await storageService.getRecursiveDownloadUrls(userId, path);
-
-    // 1GB制限チェック
-    const maxSize = 1024 * 1024 * 1024; // 1GB
+    const maxSize = 1024 * 1024 * 1024;
     if (downloadInfo.totalSize > maxSize) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: `Folder size (${Math.round(downloadInfo.totalSize / 1024 / 1024)}MB) exceeds 1GB limit`,
-        totalSize: downloadInfo.totalSize,
-        fileCount: downloadInfo.fileCount,
-      });
+      throw new AppError(
+        400,
+        `Folder size (${Math.round(downloadInfo.totalSize / 1024 / 1024)}MB) exceeds 1GB limit`
+      );
     }
 
     res.status(200).json(downloadInfo);
-  } catch (error) {
-    console.error('❌ Storage folder download error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to get folder download URLs',
-    });
-  }
-});
+  })
+);
 
 export default router;
