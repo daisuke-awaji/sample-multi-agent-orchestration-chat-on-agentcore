@@ -38,18 +38,13 @@ export interface UploadUrlResponse {
   expiresIn: number;
 }
 
-/**
- * ユーザーのストレージパスプレフィックスを生成
- */
-function getUserStoragePrefix(userId: string): string {
+/** @internal Exported for testing */
+export function getUserStoragePrefix(userId: string): string {
   return `users/${userId}`;
 }
 
-/**
- * パスを正規化（先頭・末尾のスラッシュを削除、ローカルワークスペースパスを除去、二重エンコード対策）
- * 生成AIが出力するテキストはエンコードされている場合もあれば、そうでない場合もあるため二重エンコード対策を含めておく
- */
-function normalizePath(path: string): string {
+/** @internal Exported for testing */
+export function normalizePath(path: string): string {
   let normalized = path;
 
   // 1. 二重エンコード対策（最大2回までデコード）
