@@ -1150,3 +1150,25 @@ defaultAgents:
       taskAutomation:
         title: タスク自動化エージェントを作成
         prompt: "特定のタスクを自動化するエージェントを作成したいです。\n\n自動化するタスク: \n入力形式: \n期待される出力: \n頻度: \n\nこのワークフローに最適化されたエージェントを設計してください。"
+  browserAgent:
+    name: Web ブラウザエージェント
+    description: ウェブサイトを操作し、スクリーンショットで進捗を表示しながらウェブ業務を代行するエージェント
+    scenarios:
+      infoGathering:
+        title: ウェブサイト情報収集
+        prompt: "以下のURLにアクセスして、ページの主要な情報を収集してください。\n\nURL: https://example.com\n\n各ページのスクリーンショットを撮りながら、内容をまとめてください。"
+      pageCapture:
+        title: ページのスクリーンショット
+        prompt: "以下のURLにアクセスしてスクリーンショットを撮ってください。\n\nURL: https://example.com\n\nページ全体をスクロールしながら複数のスクリーンショットを撮影してください。"
+      webSearch:
+        title: ウェブ検索＋閲覧
+        prompt: "「Amazon Bedrock AgentCore」について最新情報を検索し、上位結果のページを実際にブラウザで開いて詳細を確認してください。スクリーンショット付きでレポートしてください。"
+      formOperation:
+        title: フォーム操作
+        prompt: "以下のウェブサイトにアクセスし、指定された情報をフォームに入力してください。各ステップのスクリーンショットを表示してください。\n\nURL: \n入力情報: "
+      siteExploration:
+        title: サイト探索
+        prompt: "以下のウェブサイトを探索し、サイト構成と主要コンテンツを把握してください。トップページから主要なリンクを辿り、各ページのスクリーンショットを撮りながらサイトマップを作成してください。\n\nURL: https://example.com"
+      monitoring:
+        title: ページ状態の確認
+        prompt: "以下のURLにアクセスし、現在のページ状態をスクリーンショットで確認してください。ページが正常に表示されているか、エラーがないかをチェックしてください。\n\nURL: https://example.com"

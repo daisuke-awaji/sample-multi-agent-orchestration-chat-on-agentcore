@@ -28,4 +28,3 @@ export function formatTodoList(todoList: TodoList | null): string {
 
   return markdown;
 }
-
