@@ -1,0 +1,47 @@
+name: Security Scan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  security-ash:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Install git
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends git
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Run ASH scan
+        run: uvx 'git+https://github.com/awslabs/automated-security-helper.git@v3.1.5'
+        continue-on-error: true
+
+      - name: Upload ASH reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ash-security-reports
+          path: .ash/ash_output/
+          retention-days: 7
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: .ash/ash_output/reports/ash.sarif
+          category: ash-security-scan

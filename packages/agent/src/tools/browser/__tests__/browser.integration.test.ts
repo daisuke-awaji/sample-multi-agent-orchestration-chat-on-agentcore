@@ -39,6 +39,7 @@ afterAll(async () => {
       );
       console.log(`Cleanup: Session ${testSessionId} stopped`);
     } catch (error) {
+      // nosemgrep: unsafe-formatstring - test cleanup log, no user-controlled input
       console.warn(`Cleanup: Failed to stop session ${testSessionId}:`, error);
     }
   }

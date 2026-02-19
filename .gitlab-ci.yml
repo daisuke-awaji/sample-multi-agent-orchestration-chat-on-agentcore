@@ -1,5 +1,6 @@
 stages:
   - lint
+  - security
   - test
   - build
   - deploy
@@ -39,11 +40,26 @@ lint:prettier:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-lint:openapi:
-  <<: *node_template
+# ========================================
+# SECURITY STAGE
+# ========================================
+
+security:ash:
   stage: lint
+  image: python:3.12-slim
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends git
+    - pip install uv
   script:
-    - npm run docs:lint
+    - uvx 'git+https://github.com/awslabs/automated-security-helper.git@v3.1.5'
+  artifacts:
+    when: always
+    paths:
+      - .ash/ash_output/
+    reports:
+      sast: .ash/ash_output/reports/ash.gl-sast-report.json
+    expire_in: 1 week
+  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -164,23 +180,6 @@ build:packages:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-# ========================================
-# DEPLOY STAGE
-# ========================================
-
-pages:
-  stage: deploy
-  dependencies:
-    - build:docs
-  script:
-    - echo "Deploying OpenAPI documentation to GitLab Pages"
-    - ls -la public/
-  artifacts:
-    paths:
-      - public/
-  only:
-    - main
 
 # ========================================
 # MANUAL JOBS (for debugging)
