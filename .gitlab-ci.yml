@@ -45,7 +45,7 @@ lint:prettier:
 # ========================================
 
 security:ash:
-  stage: security
+  stage: lint
   image: python:3.12-slim
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends git
