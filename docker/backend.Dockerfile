@@ -104,6 +104,10 @@ ENV AWS_NODEJS_CONNECTION_REUSE_ENABLED=1
 # 実行権限の設定
 RUN chmod +x /opt/extensions/lambda-adapter
 
+# Health check for container image security compliance
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8080/ping || exit 1
+
 # Run as non-root user for security
 USER node
 
