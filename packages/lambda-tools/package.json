@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/lambda-tools",
+  "name": "@moca/lambda-tools",
   "version": "0.1.0",
   "description": "AgentCore Gateway Lambda Tools Collection",
   "scripts": {

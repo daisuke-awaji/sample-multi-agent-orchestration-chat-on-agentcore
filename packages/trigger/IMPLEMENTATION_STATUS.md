@@ -1,7 +1,7 @@
 # Trigger Package Implementation Status
 
 **Created**: 2025-01-15  
-**Package**: `@fullstack-agentcore/trigger`  
+**Package**: `@moca/trigger`  
 **Status**: Phase 1 Complete (Lambda Implementation)
 
 ## ✅ Completed Components
@@ -256,7 +256,7 @@ AWS_REGION=us-east-1
 
 ## 🚀 Deployment Checklist
 
-- [ ] Build trigger package: `npm run build --workspace=@fullstack-agentcore/trigger`
+- [ ] Build trigger package: `npm run build --workspace=@moca/trigger`
 - [ ] Deploy CDK stack with trigger resources
 - [ ] Verify Lambda environment variables
 - [ ] Test with sample EventBridge event

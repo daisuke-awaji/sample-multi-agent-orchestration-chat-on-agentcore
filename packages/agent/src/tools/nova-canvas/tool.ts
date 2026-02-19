@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { novaCanvasDefinition } from '@fullstack-agentcore/tool-definitions';
+import { novaCanvasDefinition } from '@moca/tool-definitions';
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { config, logger } from '../../config/index.js';

@@ -1,6 +1,6 @@
 # UI Design Guide
 
-UI/UX design rules and conventions for the Donuts frontend. Built with React, Tailwind CSS, and Atomic Design methodology.
+UI/UX design rules and conventions for the Moca frontend. Built with React, Tailwind CSS, and Atomic Design methodology.
 
 ## Design Principles
 

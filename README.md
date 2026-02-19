@@ -1,14 +1,12 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/daisuke-awaji/donuts) 
-
 Language: [English](./README.md) / [Japanese](./README-ja.md)
 
-# 🍩 Donuts
+# ☕ Moca — Multi-agent Orchestration Chat on AgentCore
 
-An AI agent platform built on Amazon Bedrock AgentCore. 
+A multi-agent orchestration chat platform built on Amazon Bedrock AgentCore.
 
 ## Overview
 
-Donuts is a multi-agent platform that enables teams to **create and customize** AI agents and share them across your organization. Built on Amazon Bedrock AgentCore, you can easily build agents tailored to your needs.
+Moca is a multi-agent platform that enables teams to **create and customize** AI agents and share them across your organization. Built on Amazon Bedrock AgentCore, you can easily build agents tailored to your needs.
 
 Preset agents are also available for immediate use, covering various domains including software development, data analysis, and content creation.
 
@@ -54,7 +52,7 @@ This application uses a fully serverless architecture built on Amazon Bedrock Ag
 <br>
 
 <div align="center">
-  <img src="./docs/donuts-architecture.drawio.png" alt="Architecture Diagram" width="100%">
+  <img src="./docs/moca-architecture.drawio.png" alt="Architecture Diagram" width="100%">
 </div>
 
 <br>
@@ -154,7 +152,7 @@ For advanced configuration options such as custom domains, environment-specific 
 - [Deployment Options](docs/deployment-options.md) - Environment configuration and customization
 - [Local Development Setup](docs/local-development-setup.md) - Explains environment setup automation
 - [JWT Authentication System](docs/jwt-authentication.md) - Explains the authentication mechanism
-- [Architecture Diagram](docs/donuts-architecture.drawio.png)
+- [Architecture Diagram](docs/moca-architecture.drawio.png)
 
 ## License
 

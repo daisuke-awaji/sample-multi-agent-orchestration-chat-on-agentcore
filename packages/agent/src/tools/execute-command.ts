@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { executeCommandDefinition } from '@fullstack-agentcore/tool-definitions';
+import { executeCommandDefinition } from '@moca/tool-definitions';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';

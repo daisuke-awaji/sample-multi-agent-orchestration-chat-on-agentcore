@@ -1,6 +1,6 @@
 /**
  * Workspace Sync Service
- * Thin adapter over @fullstack-agentcore/s3-workspace-sync that maps
+ * Thin adapter over @moca/s3-workspace-sync that maps
  * the agent-specific (userId, storagePath) convention to the generic package API.
  *
  * The local workspace directory includes the storagePath as a subdirectory
@@ -9,8 +9,8 @@
  */
 
 import path from 'path';
-import { S3WorkspaceSync } from '@fullstack-agentcore/s3-workspace-sync';
-import type { SyncResult } from '@fullstack-agentcore/s3-workspace-sync';
+import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
+import type { SyncResult } from '@moca/s3-workspace-sync';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
 
 export type { SyncResult };

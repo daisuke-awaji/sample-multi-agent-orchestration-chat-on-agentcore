@@ -10,7 +10,7 @@ import {
   ListAsyncInvokesCommand,
 } from '@aws-sdk/client-bedrock-runtime';
 import { S3Client, CopyObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { novaReelDefinition } from '@fullstack-agentcore/tool-definitions';
+import { novaReelDefinition } from '@moca/tool-definitions';
 import { logger } from '../../config/index.js';
 import { getCurrentContext, getCurrentStoragePath } from '../../context/request-context.js';
 import type {

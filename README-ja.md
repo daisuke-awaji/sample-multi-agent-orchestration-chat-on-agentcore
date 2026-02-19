@@ -1,12 +1,12 @@
 Language: [English](./README.md) / [Japanese](./README-ja.md)
 
-# 🍩 Donuts
+# ☕ Moca — Multi-agent Orchestration Chat on AgentCore
 
-Amazon Bedrock AgentCore を基盤とした AI エージェントプラットフォームです。
+Amazon Bedrock AgentCore を活用したマルチエージェント協調チャットプラットフォームです。
 
 ## 概要
 
-Donutsは、チームが AI エージェントを**自由に作成・カスタマイズ**し、組織全体で共有できるマルチエージェントプラットフォームです。Amazon Bedrock AgentCore をベースに構築されており、用途に応じたエージェントを簡単に構築できます。
+Mocaは、チームが AI エージェントを**自由に作成・カスタマイズ**し、組織全体で共有できるマルチエージェントプラットフォームです。Amazon Bedrock AgentCore をベースに構築されており、用途に応じたエージェントを簡単に構築できます。
 
 すぐに使い始められるプリセットエージェントも用意されており、ソフトウェア開発、データ分析、コンテンツ作成など、様々な分野に対応しています。
 
@@ -52,7 +52,7 @@ Donutsは、チームが AI エージェントを**自由に作成・カスタ�
 <br>
 
 <div align="center">
-  <img src="./docs/donuts-architecture.drawio.png" alt="アーキテクチャ図" width="100%">
+  <img src="./docs/moca-architecture.drawio.png" alt="アーキテクチャ図" width="100%">
 </div>
 
 <br>
@@ -153,7 +153,7 @@ npm run deploy
 - [Deployment Options](docs/deployment-options.md) - 環境設定とカスタマイズオプション
 - [ローカル開発環境のセットアップ](docs/local-development-setup.md) - 環境セットアップの自動化について説明しています
 - [JWT認証システム](docs/jwt-authentication.md) - 認証の仕組みについて説明しています
-- [アーキテクチャ図](docs/donuts-architecture.drawio.png)
+- [アーキテクチャ図](docs/moca-architecture.drawio.png)
 
 ## ライセンス
 
@@ -171,6 +171,5 @@ npm run deploy
 - [AgentCore Gateway & M365統合ガイド](https://github.com/akadesilva/agentcore-gateway-demos/blob/main/guides/sharepoint-quickstart.md)
 
 ---
-
 
 このリポジトリは実験的なサンプルアプリケーションであり、後方互換性を考慮せず更新される可能性があります。AWS が公式で公開している AgentCore のサンプルコードは [fullstack-solution-template-for-agentcore](https://github.com/awslabs/fullstack-solution-template-for-agentcore) や [sample-amazon-bedrock-agentcore-fullstack-webapp](https://github.com/aws-samples/sample-amazon-bedrock-agentcore-fullstack-webapp) をご覧ください。

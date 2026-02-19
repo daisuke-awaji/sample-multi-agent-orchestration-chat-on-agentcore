@@ -8,7 +8,7 @@ import { subAgentTaskManager } from '../services/sub-agent-task-manager.js';
 import { listAgents } from '../services/agent-registry.js';
 import { logger } from '../config/index.js';
 import { getCurrentContext, getCurrentAuthHeader } from '../context/request-context.js';
-import { callAgentDefinition } from '@fullstack-agentcore/tool-definitions';
+import { callAgentDefinition } from '@moca/tool-definitions';
 
 /**
  * Sleep utility for polling

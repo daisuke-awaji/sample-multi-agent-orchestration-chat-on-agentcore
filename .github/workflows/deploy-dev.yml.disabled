@@ -55,7 +55,7 @@ jobs:
       - name: Get deployment outputs
         id: outputs
         run: |
-          STACK_NAME="DonutsAgentCoreAppDev"
+          STACK_NAME="MocaAgentCoreAppDev"
 
           FRONTEND_URL=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \

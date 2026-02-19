@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/tool-definitions",
+  "name": "@moca/tool-definitions",
   "version": "0.1.0",
   "description": "Shared tool definitions for AgentCore",
   "type": "module",

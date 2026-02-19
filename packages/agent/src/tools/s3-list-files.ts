@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { s3ListFilesDefinition } from '@fullstack-agentcore/tool-definitions';
+import { s3ListFilesDefinition } from '@moca/tool-definitions';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';

@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { fileEditorDefinition } from '@fullstack-agentcore/tool-definitions';
+import { fileEditorDefinition } from '@moca/tool-definitions';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { logger } from '../config/index.js';
 import { getCurrentContext } from '../context/request-context.js';

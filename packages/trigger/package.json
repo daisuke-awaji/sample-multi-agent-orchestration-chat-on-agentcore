@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/trigger",
+  "name": "@moca/trigger",
   "version": "0.1.0",
   "description": "Event-driven trigger Lambda for AgentCore invocations",
   "type": "module",

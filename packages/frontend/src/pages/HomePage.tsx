@@ -5,7 +5,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Donut, MessageCircle } from 'lucide-react';
+import { Coffee, MessageCircle } from 'lucide-react';
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -18,7 +18,7 @@ export function HomePage() {
           {/* メインアイコン */}
           <div className="relative">
             <div className="absolute inset-0 bg-amber-200 rounded-full blur-3xl opacity-30 scale-150"></div>
-            <Donut className="w-24 h-24 text-amber-600 mx-auto" />
+            <Coffee className="w-24 h-24 text-amber-600 mx-auto" />
           </div>
 
           {/* タイトルと説明 */}
@@ -26,7 +26,6 @@ export function HomePage() {
             <h1 className="text-6xl font-extrabold text-amber-900 tracking-tight">
               {t('auth.welcomeTitle')}
             </h1>
-            <p className="text-xl text-amber-700 font-medium leading-relaxed">{t('home.title')}</p>
             <p className="text-md text-amber-600 leading-relaxed max-w-lg mx-auto">
               {t('home.description')}
               <br />

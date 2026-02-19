@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/s3-workspace-sync",
+  "name": "@moca/s3-workspace-sync",
   "version": "0.1.0",
   "description": "Bidirectional file sync between Amazon S3 and local workspace with hash-based diff detection, .syncignore support, and concurrent transfers",
   "type": "module",

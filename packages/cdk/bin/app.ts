@@ -14,17 +14,17 @@ const envName: Environment = envContext || 'default';
 // Get environment configuration
 const envConfig = getEnvironmentConfig(envName);
 
-// Stack name: DonutsAgentCoreApp (default), DonutsAgentCoreAppDev, DonutsAgentCoreAppStg, DonutsAgentCoreAppPrd, DonutsAgentCoreAppPr123
+// Stack name: MocaAgentCoreApp (default), MocaAgentCoreAppDev, MocaAgentCoreAppStg, MocaAgentCoreAppPrd, MocaAgentCoreAppPr123
 let stackName: string;
 if (!envContext) {
-  stackName = 'DonutsAgentCoreApp';
+  stackName = 'MocaAgentCoreApp';
 } else if (envName.startsWith('pr-')) {
-  // PR environment: DonutsAgentCoreAppPr123
+  // PR environment: MocaAgentCoreAppPr123
   const prNumber = envName.replace('pr-', '');
-  stackName = `DonutsAgentCoreAppPr${prNumber}`;
+  stackName = `MocaAgentCoreAppPr${prNumber}`;
 } else {
   // Standard environment: capitalize first letter
-  stackName = `DonutsAgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`;
+  stackName = `MocaAgentCoreApp${envName.charAt(0).toUpperCase() + envName.slice(1)}`;
 }
 
 // Core Stack: manages foundational resources (Gateway, Cognito, Memory, Storage, Runtime, Frontend).

@@ -97,7 +97,7 @@ export const useThemeStore = create<ThemeState>()(
         },
       }),
       {
-        name: 'donuts-theme',
+        name: 'moca-theme',
         partialize: (state) => ({
           theme: state.theme,
         }),

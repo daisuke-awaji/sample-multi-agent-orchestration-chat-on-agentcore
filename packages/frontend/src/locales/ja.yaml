@@ -61,9 +61,9 @@ auth:
   checkEmail: メールアドレスをご確認ください
   enterVerificationCode: 確認コードを入力してアカウントを有効化してください
   resendCode: コードを再送信
-  welcomeTitle: Donuts
-  welcomeDescription: これは Amazon Bedrock AgentCore を使った
-  welcomeDescriptionLine2: あなただけのAIエージェントのデモアプリです
+  welcomeTitle: Moca
+  welcomeDescription: つくる。つなげる。まかせる。
+  welcomeDescriptionLine2: '"あなた" だけの AI エージェントチーム'
   placeholderUsername: ユーザー名を入力
   placeholderPassword: パスワードを入力
   placeholderConfirmPassword: パスワードを再入力
@@ -775,11 +775,11 @@ triggers:
 
 # ホームページ
 home:
-  title: あなただけの AI エージェント
-  description: 質問、相談、アイデアの整理まで。
-  descriptionLine2: 甘いドーナツのように、いつでもあなたの傍にいます。
+  title: AI エージェントを、つくろう。
+  description: つくる。つなげる。まかせる。
+  descriptionLine2: '"あなた" だけの AI エージェントチーム'
   getStarted: 今すぐ始める
-  footer: © 2025 Donuts AI Assistant. Made with ❤️ and a lot of coffee.
+  footer: Moca - Multi-agent Orchestration Chat on AgentCore
 
 # モーダル
 modal:

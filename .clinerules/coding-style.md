@@ -1,11 +1,11 @@
 ---
 name: coding-style
-description: Code style guidelines and conventions for the Donuts project
+description: Code style guidelines and conventions for the Moca project
 ---
 
 # Coding Style Guide
 
-This document defines the code style and conventions for the Donuts project.
+This document defines the code style and conventions for the Moca project.
 
 ## Language
 

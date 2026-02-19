@@ -1,4 +1,4 @@
-# @fullstack-agentcore/s3-workspace-sync
+# @moca/s3-workspace-sync
 
 Bidirectional file sync between **Amazon S3** and a **local workspace directory** with MD5-hash-based diff detection, `.syncignore` support, and configurable concurrent transfers.
 
@@ -118,7 +118,7 @@ This pattern reduces perceived latency — in production, a 2,116-file workspace
 ## Installation
 
 ```bash
-npm install @fullstack-agentcore/s3-workspace-sync @aws-sdk/client-s3
+npm install @moca/s3-workspace-sync @aws-sdk/client-s3
 ```
 
 `@aws-sdk/client-s3` is a peer dependency — you must install it alongside this package.
@@ -126,7 +126,7 @@ npm install @fullstack-agentcore/s3-workspace-sync @aws-sdk/client-s3
 ## Quick Start
 
 ```typescript
-import { S3WorkspaceSync } from '@fullstack-agentcore/s3-workspace-sync';
+import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
 
 const sync = new S3WorkspaceSync({
   bucket: 'my-app-storage',
@@ -245,7 +245,7 @@ import {
   validateStoragePath,
   SyncIgnoreFilter,
   calculateFileHash,
-} from '@fullstack-agentcore/s3-workspace-sync';
+} from '@moca/s3-workspace-sync';
 
 guessContentType('photo.png');       // "image/png"
 guessContentType('app.ts');          // "application/typescript; charset=utf-8"

@@ -1,6 +1,3 @@
-# GitLab CI/CD Pipeline for fullstack-agentcore
-# Stages: lint → test → build → deploy
-
 stages:
   - lint
   - test
@@ -93,7 +90,7 @@ build:docs:
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Donuts API Documentation</title>
+        <title>Moca API Documentation</title>
         <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -132,7 +129,7 @@ build:docs:
         </style>
       </head>
       <body>
-        <h1>Donuts API Documentation</h1>
+        <h1>Moca API Documentation</h1>
         <p>Choose an API to view its documentation:</p>
         <div class="api-links">
           <a href="backend.html" class="api-card">

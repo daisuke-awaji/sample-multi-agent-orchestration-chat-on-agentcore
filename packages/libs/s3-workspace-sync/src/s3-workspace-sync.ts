@@ -42,7 +42,7 @@ const DEFAULT_UPLOAD_CONCURRENCY = 10;
  *
  * @example
  * ```typescript
- * import { S3WorkspaceSync } from '@fullstack-agentcore/s3-workspace-sync';
+ * import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
  *
  * const sync = new S3WorkspaceSync({
  *   bucket: 'my-bucket',

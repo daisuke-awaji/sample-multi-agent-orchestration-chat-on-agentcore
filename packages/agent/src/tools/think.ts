@@ -7,7 +7,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { thinkDefinition } from '@fullstack-agentcore/tool-definitions';
+import { thinkDefinition } from '@moca/tool-definitions';
 import { logger } from '../config/index.js';
 
 /**

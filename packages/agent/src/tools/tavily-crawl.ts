@@ -3,7 +3,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { tavilyCrawlDefinition } from '@fullstack-agentcore/tool-definitions';
+import { tavilyCrawlDefinition } from '@moca/tool-definitions';
 import { logger } from '../config/index.js';
 import { getTavilyApiKey } from './tavily-common.js';
 

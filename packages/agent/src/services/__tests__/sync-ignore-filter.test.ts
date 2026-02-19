@@ -1,11 +1,11 @@
 /**
  * Tests for SyncIgnoreFilter
- * Now imported from @fullstack-agentcore/s3-workspace-sync
+ * Now imported from @moca/s3-workspace-sync
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { SyncIgnoreFilter } from '@fullstack-agentcore/s3-workspace-sync';
-import type { SyncLogger } from '@fullstack-agentcore/s3-workspace-sync';
+import { SyncIgnoreFilter } from '@moca/s3-workspace-sync';
+import type { SyncLogger } from '@moca/s3-workspace-sync';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

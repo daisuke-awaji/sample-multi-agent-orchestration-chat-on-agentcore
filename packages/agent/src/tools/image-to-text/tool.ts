@@ -14,7 +14,7 @@ import { readFile } from 'fs/promises';
 import { config, logger } from '../../config/index.js';
 import { getCurrentContext } from '../../context/request-context.js';
 import type { ImageToTextResult, ImageFormat, ImageSource } from './types.js';
-import { imageToTextDefinition } from '@fullstack-agentcore/tool-definitions';
+import { imageToTextDefinition } from '@moca/tool-definitions';
 
 // Create Bedrock Runtime client
 const bedrockClient = new BedrockRuntimeClient({ region: config.BEDROCK_REGION });

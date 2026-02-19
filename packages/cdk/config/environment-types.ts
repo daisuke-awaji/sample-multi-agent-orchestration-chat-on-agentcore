@@ -23,7 +23,7 @@ export interface EnvironmentConfig {
    * Resource name prefix
    * Used as common prefix for all resources (Gateway, Cognito, S3, API, etc.)
    * Must contain only lowercase letters and numbers (no hyphens or underscores)
-   * Examples: 'donuts', 'donutsdev', 'donutsstg', 'donutsprd'
+   * Examples: 'moca', 'mocadev', 'mocastg', 'mocaprd'
    */
   resourcePrefix: string;
 

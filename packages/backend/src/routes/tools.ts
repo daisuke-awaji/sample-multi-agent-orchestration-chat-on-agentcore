@@ -7,7 +7,7 @@ import express, { Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
 import { gatewayService } from '../services/agentcore-gateway.js';
 import { fetchToolsFromMCPConfig, MCPConfig } from '../mcp/index.js';
-import { allMCPToolDefinitions } from '@fullstack-agentcore/tool-definitions';
+import { allMCPToolDefinitions } from '@moca/tool-definitions';
 
 const router = express.Router();
 

@@ -1,11 +1,11 @@
 ---
 name: testing
-description: Testing guidelines and best practices for Donuts
+description: Testing guidelines and best practices for Moca
 ---
 
 # Testing Guide
 
-This document outlines testing practices, conventions, and guidelines for the Donuts project.
+This document outlines testing practices, conventions, and guidelines for the Moca project.
 
 ## Local development
 
@@ -344,7 +344,7 @@ npm test
 
 ### Specific Package
 ```bash
-npm test --workspace=@fullstack-agentcore/agent
+npm test --workspace=@moca/agent
 ```
 
 ### Watch Mode

@@ -7,7 +7,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Donut,
+  Coffee,
   SquarePen,
   PanelRight,
   Wrench,
@@ -345,7 +345,7 @@ export function SessionSidebar() {
                 className="flex items-center gap-2 rounded-lg p-2 pb-1 pt-1 transition-colors group no-underline"
                 title="Return to home page"
               >
-                <Donut className="w-5 h-5 text-fg-secondary group-hover:text-amber-600 transition-colors" />
+                <Coffee className="w-5 h-5 text-fg-secondary group-hover:text-amber-600 transition-colors" />
                 <span className="text-lg font-semibold text-fg-default group-hover:text-amber-700 transition-colors">
                   {t('auth.welcomeTitle')}
                 </span>
@@ -366,7 +366,7 @@ export function SessionSidebar() {
               className="p-2 text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded-lg transition-colors group"
               title="Open sidebar"
             >
-              <Donut className="w-5 h-5 text-amber-600 group-hover:hidden" />
+              <Coffee className="w-5 h-5 text-amber-600 group-hover:hidden" />
               <PanelRight className="w-5 h-5 hidden group-hover:block" />
             </button>
           )}

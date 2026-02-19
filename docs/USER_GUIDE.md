@@ -1,8 +1,8 @@
-# Donuts User Guide
+# Moca User Guide
 
 > [🇯🇵 日本語版ユーザーガイドはこちら / Japanese User Guide](./USER_GUIDE-ja.md)
 
-Donuts is a powerful AI agent platform built on Amazon Bedrock. This guide introduces the main features and how to use them.
+Moca is a powerful AI agent platform built on Amazon Bedrock. This guide introduces the main features and how to use them.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ Donuts is a powerful AI agent platform built on Amazon Bedrock. This guide intro
 
 ### Chat Interface
 
-The main screen of Donuts features a simple and intuitive chat interface.
+The main screen of Moca features a simple and intuitive chat interface.
 
 ![Main Screen](./assets/agentchat.geeawa.net_chat.png)
 
@@ -49,7 +49,7 @@ Select the AI model from the dropdown menu at the bottom of the screen.
 
 ### AI Agent Management
 
-Donuts allows you to select, create, and customize AI agents specialized in various domains.
+Moca allows you to select, create, and customize AI agents specialized in various domains.
 
 #### Selecting an Agent
 

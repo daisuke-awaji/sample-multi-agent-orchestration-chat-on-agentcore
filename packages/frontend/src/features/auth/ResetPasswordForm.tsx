@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ZodError, z } from 'zod';
-import { Donut, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Coffee, ArrowLeft, CheckCircle } from 'lucide-react';
 import { confirmResetPassword } from '../../lib/cognito';
 import { useTranslation } from 'react-i18next';
 
@@ -157,7 +157,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
         <div className="text-center">
           <div className="relative mb-6">
             <div className="absolute inset-0 bg-amber-200 rounded-full blur-2xl opacity-30 scale-125"></div>
-            <Donut className="w-16 h-16 text-amber-600 mx-auto" />
+            <Coffee className="w-16 h-16 text-amber-600 mx-auto" />
           </div>
           <h2 className="text-3xl font-bold text-amber-900 mb-2">
             {t('auth.resetPassword.title')}

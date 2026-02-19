@@ -4,15 +4,15 @@ import type { Environment, EnvironmentConfigInput } from './environment-types';
 /**
  * Base prefix for resource naming
  * All resources are named in the format: {BASE_PREFIX}{env}
- * Examples: donuts, donutsdev, donutsstg, donutsprd
+ * Examples: moca, mocadev, mocastg, mocaprd
  */
-export const BASE_PREFIX = 'donuts';
+export const BASE_PREFIX = 'moca';
 
 /**
  * Environment-specific configurations
  *
  * - env: Automatically derived from object key
- * - resourcePrefix: Auto-generated as 'donuts' + env if not specified
+ * - resourcePrefix: Auto-generated as 'moca' + env if not specified
  * - Others: Default values applied if not specified
  *
  * Default values:
@@ -50,7 +50,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
           detailType: ['Object Created'],
           detail: {
             bucket: {
-              name: [{ prefix: 'donuts-user-storage-' }],
+              name: [{ prefix: 'moca-user-storage-' }],
             },
           },
         },

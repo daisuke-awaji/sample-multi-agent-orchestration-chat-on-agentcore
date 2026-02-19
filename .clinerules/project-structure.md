@@ -1,18 +1,18 @@
 ---
 name: project-structure
-description: Project structure and organization guidelines for Donuts
+description: Project structure and organization guidelines for Moca
 ---
 
 # Project Structure Guide
 
-This document defines the structure and organization of the Donuts monorepo.
+This document defines the structure and organization of the Moca monorepo.
 
 ## Monorepo Architecture
 
 The project uses npm workspaces for managing multiple packages:
 
 ```
-fullstack-agentcore/
+/
 ├── packages/           # All application packages
 ├── docs/              # Project documentation
 ├── scripts/           # Build and utility scripts
@@ -201,7 +201,7 @@ Use workspace protocol for internal packages:
 ```json
 {
   "dependencies": {
-    "@fullstack-agentcore/agent": "workspace:*"
+    "@moca/agent": "workspace:*"
   }
 }
 ```

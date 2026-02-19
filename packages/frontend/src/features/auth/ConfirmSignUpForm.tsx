@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ZodError } from 'zod';
-import { Donut } from 'lucide-react';
+import { Coffee } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { createConfirmSignUpSchema, type ConfirmSignUpFormData } from '../../schemas/auth';
 
@@ -112,7 +112,7 @@ export const ConfirmSignUpForm: React.FC<ConfirmSignUpFormProps> = ({
           {/* メインアイコン */}
           <div className="relative mb-4">
             <div className="absolute inset-0 bg-amber-200 rounded-full blur-2xl opacity-30 scale-125"></div>
-            <Donut className="w-12 h-12 text-amber-600 mx-auto mb-2" />
+            <Coffee className="w-12 h-12 text-amber-600 mx-auto mb-2" />
           </div>
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
             <svg

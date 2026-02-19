@@ -4,7 +4,7 @@ This guide explains how to customize your deployment by modifying `packages/cdk/
 
 ## Overview
 
-The Donuts platform supports multiple deployment environments (default, dev, stg, prd) with customizable configurations. Each environment can have different settings for security, storage, logging, and integrations.
+The Moca platform supports multiple deployment environments (default, dev, stg, prd) with customizable configurations. Each environment can have different settings for security, storage, logging, and integrations.
 
 ## Configuration File
 
@@ -129,7 +129,7 @@ dev: {
         detailType: ['Object Created'],
         detail: {
           bucket: {
-            name: [{ prefix: 'donuts-user-storage-' }],
+            name: [{ prefix: 'moca-user-storage-' }],
           },
         },
       },

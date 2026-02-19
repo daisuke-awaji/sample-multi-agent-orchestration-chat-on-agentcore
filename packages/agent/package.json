@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/agent",
+  "name": "@moca/agent",
   "version": "0.1.0",
   "description": "Strands AI Agent for Amazon Bedrock AgentCore Runtime",
   "type": "module",
@@ -45,8 +45,8 @@
     "@aws-sdk/credential-provider-node": "^3.654.0",
     "@aws-sdk/s3-request-presigner": "^3.654.0",
     "@aws-sdk/util-dynamodb": "^3.654.0",
-    "@fullstack-agentcore/s3-workspace-sync": "*",
-    "@fullstack-agentcore/tool-definitions": "*",
+    "@moca/s3-workspace-sync": "*",
+    "@moca/tool-definitions": "*",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "@smithy/signature-v4": "^4.0.0",
     "@strands-agents/sdk": "^0.1.3",

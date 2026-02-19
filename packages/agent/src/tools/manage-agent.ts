@@ -6,7 +6,7 @@
 import { tool } from '@strands-agents/sdk';
 import { logger } from '../config/index.js';
 import { getCurrentContext, getCurrentAuthHeader } from '../context/request-context.js';
-import { manageAgentDefinition } from '@fullstack-agentcore/tool-definitions';
+import { manageAgentDefinition } from '@moca/tool-definitions';
 
 /**
  * Get backend API URL

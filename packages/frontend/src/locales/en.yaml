@@ -62,9 +62,9 @@ auth:
   checkEmail: Please check your email
   enterVerificationCode: Enter the verification code to activate your account
   resendCode: Resend Code
-  welcomeTitle: Donuts
-  welcomeDescription: This is a demo application of your own
-  welcomeDescriptionLine2: AI Agent powered by Amazon Bedrock AgentCore
+  welcomeTitle: Moca
+  welcomeDescription: Create. Connect. Delegate.
+  welcomeDescriptionLine2: Your own AI agent team
   placeholderUsername: Enter username
   placeholderPassword: Enter password
   placeholderConfirmPassword: Re-enter password
@@ -770,11 +770,11 @@ triggers:
 
 # Home Page
 home:
-  title: Your Personal AI Agent
-  description: From questions to consultations and idea organization.
-  descriptionLine2: Like a sweet donut, always by your side.
+  title: Build your AI agents.
+  description: Create. Connect. Delegate.
+  descriptionLine2: Your own AI agent team
   getStarted: Get Started
-  footer: © 2025 Donuts AI Assistant. Made with ❤️ and a lot of coffee.
+  footer: Moca — Multi-agent Orchestratn Chat on AgentCore
 
 # Modal
 modal:

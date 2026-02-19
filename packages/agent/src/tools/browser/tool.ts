@@ -4,7 +4,7 @@
 
 import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
-import { browserDefinition } from '@fullstack-agentcore/tool-definitions';
+import { browserDefinition } from '@moca/tool-definitions';
 import { logger } from '../../config/index.js';
 import { AgentCoreBrowserClient } from './client.js';
 import { getCurrentStoragePath } from '../../context/request-context.js';

@@ -5,7 +5,7 @@
  */
 
 import { tool } from '@strands-agents/sdk';
-import { todoDefinition } from '@fullstack-agentcore/tool-definitions';
+import { todoDefinition } from '@moca/tool-definitions';
 import { logger } from '../../config/index.js';
 import { getTodoList, saveTodoList, formatTodoList } from './helpers.js';
 import type { TodoList, TodoItemUpdate } from './types.js';

@@ -1,9 +1,9 @@
 {
-  "name": "@fullstack-agentcore/cdk",
+  "name": "@moca/cdk",
   "version": "0.1.0",
   "description": "CDK スタックによる Amazon Bedrock AgentCore デプロイメント",
   "bin": {
-    "fullstack-agentcore": "bin/app.js"
+    "moca": "bin/app.js"
   },
   "scripts": {
     "build": "tsc",

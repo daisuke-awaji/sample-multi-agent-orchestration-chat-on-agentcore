@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
-        name: 'Donuts Chat',
-        short_name: 'Donuts',
+        name: 'Moca Chat',
+        short_name: 'Moca',
         description: 'AI Chat Application powered by AgentCore',
         start_url: '/',
         scope: '/',

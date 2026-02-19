@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack-agentcore/session-stream-handler",
+  "name": "@moca/session-stream-handler",
   "version": "0.1.0",
   "description": "DynamoDB Streams handler for session events, publishes to AppSync Events",
   "type": "module",

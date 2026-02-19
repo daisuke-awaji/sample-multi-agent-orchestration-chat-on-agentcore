@@ -17,7 +17,7 @@ import type {
   WriteFilesAction,
   DownloadFilesAction,
 } from './types.js';
-import { codeInterpreterDefinition } from '@fullstack-agentcore/tool-definitions';
+import { codeInterpreterDefinition } from '@moca/tool-definitions';
 
 /**
  * CodeInterpreter tool schema definition

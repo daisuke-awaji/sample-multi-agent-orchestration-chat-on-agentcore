@@ -1,4 +1,4 @@
-# @fullstack-agentcore/trigger
+# @moca/trigger
 
 Event-driven trigger Lambda for invoking AgentCore agents on schedule or events.
 

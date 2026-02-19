@@ -27,7 +27,7 @@ const DEFAULT_CONFIG = {
 /**
  * Generate default resource prefix from environment name
  * @param env Environment name
- * @returns Resource prefix (e.g., 'donuts', 'donutsdev', 'donutspr123')
+ * @returns Resource prefix (e.g., 'moca', 'mocadev', 'mocapr123')
  */
 function getDefaultResourcePrefix(env: Environment): string {
   if (env === 'default') {
@@ -82,7 +82,7 @@ function getPrEnvironmentConfig(env: string): EnvironmentConfigInput {
   }
 
   return {
-    // resourcePrefix is auto-generated as 'donutspr123' from env 'pr-123'
+    // resourcePrefix is auto-generated as 'mocapr123' from env 'pr-123'
     memoryExpirationDays: 7, // Short retention for PR environments
     logRetentionDays: 3, // Short retention for PR environments
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key', // Use dev secrets
