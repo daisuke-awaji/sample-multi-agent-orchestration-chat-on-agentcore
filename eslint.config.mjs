@@ -23,6 +23,11 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'complexity': ['warn', { max: 10 }],
+      'max-depth': ['warn', { max: 4 }],
+      'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
+      'max-params': ['warn', { max: 4 }],
+      'max-nested-callbacks': ['warn', { max: 3 }],
     },
   },
   // Agent パッケージ専用設定: ESM モードで .js 拡張子を強制
@@ -96,11 +101,14 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
-  // テストファイル専用設定: no-explicit-any を無効化
+  // テストファイル専用設定: no-explicit-any と複雑度ルールを緩和
   {
-    files: ['**/*.test.ts', '**/*.spec.ts'],
+    files: ['**/*.test.ts', '**/*.spec.ts', '**/__tests__/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      'max-lines-per-function': 'off',
+      'max-nested-callbacks': 'off',
+      'complexity': 'off',
     },
   },
   {
