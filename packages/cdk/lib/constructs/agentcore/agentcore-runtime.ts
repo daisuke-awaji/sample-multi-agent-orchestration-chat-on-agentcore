@@ -277,6 +277,23 @@ export class AgentCoreRuntime extends Construct {
       environmentVariables.APPSYNC_HTTP_ENDPOINT = props.appsyncHttpEndpoint;
     }
 
+    // AgentCore Observability (OpenTelemetry) configuration
+    const runtimeName = props.runtimeName;
+    const logGroupName = `/aws/bedrock-agentcore/runtimes/${runtimeName}`;
+    environmentVariables.AGENT_OBSERVABILITY_ENABLED = 'true';
+    environmentVariables.OTEL_RESOURCE_ATTRIBUTES = [
+      `service.name=${runtimeName}`,
+      `aws.log.group.names=${logGroupName}`,
+      `cloud.resource_id=${runtimeName}`,
+    ].join(',');
+    environmentVariables.OTEL_EXPORTER_OTLP_LOGS_HEADERS = [
+      `x-aws-log-group=${logGroupName}`,
+      `x-aws-log-stream=runtime-logs`,
+      `x-aws-metric-namespace=bedrock-agentcore`,
+    ].join(',');
+    environmentVariables.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
+    environmentVariables.OTEL_TRACES_EXPORTER = 'otlp';
+
     // Create AgentCore Runtime
     this.runtime = new agentcore.Runtime(this, 'Runtime', {
       runtimeName: props.runtimeName,
@@ -286,7 +303,7 @@ export class AgentCoreRuntime extends Construct {
       environmentVariables: environmentVariables,
       // Enable Authorization header forwarding for JWT authentication
       requestHeaderConfiguration: {
-        allowlistedHeaders: ['Authorization'],
+        allowlistedHeaders: ['Authorization', 'X-Amzn-Trace-Id'],
       },
     });
 

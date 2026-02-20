@@ -3,6 +3,7 @@
  */
 
 import { Request, Response } from 'express';
+import { context as otelContext, propagation } from '@opentelemetry/api';
 import { createAgent } from '../agent.js';
 import { getContextMetadata, getCurrentContext } from '../context/request-context.js';
 import { setupSession, getSessionStorage } from '../session/session-helper.js';
@@ -132,6 +133,16 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       // User-defined MCP server configuration
       mcpConfig,
     };
+
+    // Propagate session ID via OpenTelemetry baggage for CloudWatch session correlation
+    if (sessionId) {
+      const baggage = propagation.createBaggage({
+        'session.id': { value: sessionId },
+      });
+      otelContext.with(propagation.setBaggage(otelContext.active(), baggage), () => {
+        logger.debug('OTEL baggage set with session.id:', { sessionId });
+      });
+    }
 
     // Create Agent (register all hooks)
     const hooks = [sessionResult?.hook, workspaceSyncResult?.hook].filter(
