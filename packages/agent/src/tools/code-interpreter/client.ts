@@ -456,7 +456,6 @@ export class AgentCoreCodeInterpreterClient {
     logger.debug(`Downloading ${action.sourcePaths.length} files from session '${sessionName}'`);
 
     try {
-      // Validate and create destination directory
       if (!path.isAbsolute(action.destinationDir)) {
         return {
           status: 'error',
@@ -466,12 +465,77 @@ export class AgentCoreCodeInterpreterClient {
         };
       }
 
-      // Create destination directory (if it doesn't exist)
       fs.mkdirSync(action.destinationDir, { recursive: true });
 
-      // Generate Python code to base64 encode files in sandbox
-      const sourcePathsJson = JSON.stringify(action.sourcePaths);
-      const encodeCode = `
+      const resultFilePath = await this.encodeFilesInSandbox(sessionName, action.sourcePaths);
+      if (typeof resultFilePath !== 'string') return resultFilePath;
+
+      const encodedResults = await this.readEncodedResults(sessionName, resultFilePath);
+      if ('status' in encodedResults) return encodedResults as ToolResult;
+
+      const downloadedFiles: DownloadedFile[] = [];
+      const errors: string[] = [];
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const [sourcePath, result] of Object.entries(encodedResults as Record<string, any>)) {
+        if ('error' in result) {
+          errors.push(`${sourcePath}: ${result.error}`);
+          continue;
+        }
+        try {
+          const downloaded = this.saveFileToWorkspace(sourcePath, result, action.destinationDir);
+          downloadedFiles.push(downloaded);
+          logger.info(`Downloaded file: ${sourcePath} -> ${downloaded.localPath} (${result.size} bytes)`);
+        } catch (decodeError) {
+          errors.push(`${sourcePath}: Failed to decode/save file: ${decodeError}`);
+        }
+      }
+
+      if (errors.length > 0 && downloadedFiles.length === 0) {
+        return {
+          status: 'error',
+          content: [{ text: `All downloads failed: ${errors.join('; ')}` }],
+        };
+      }
+
+      const instruction = this.buildDownloadInstruction(downloadedFiles);
+
+      const responseData: DownloadResult = {
+        downloadedFiles: downloadedFiles,
+        totalFiles: downloadedFiles.length,
+        destinationDir: action.destinationDir,
+        storagePath: this.storagePath,
+        instruction: instruction,
+      };
+
+      if (errors.length > 0) {
+        responseData.errors = errors;
+      }
+
+      return {
+        status: 'success',
+        content: [{ json: responseData }],
+      };
+    } catch (error) {
+      const errorMsg = `Failed to download files from session '${sessionName}': ${error}`;
+      logger.error(errorMsg);
+      return {
+        status: 'error',
+        content: [{ text: errorMsg }],
+      };
+    }
+  }
+
+  /**
+   * Execute Python base64-encoding script in sandbox and return the result file path.
+   * Returns the file path string on success, or a ToolResult error on failure.
+   */
+  private async encodeFilesInSandbox(
+    sessionName: string,
+    sourcePaths: string[]
+  ): Promise<string | ToolResult> {
+    const sourcePathsJson = JSON.stringify(sourcePaths);
+    const encodeCode = `
 import base64
 import json
 import os
@@ -507,251 +571,208 @@ with open(result_file, 'w') as f:
 print(result_file)
 `;
 
-      // Execute encoding code in sandbox
-      const sessionInfo = this.sessions.get(sessionName)!;
+    const sessionInfo = this.sessions.get(sessionName)!;
+    const command = new InvokeCodeInterpreterCommand({
+      codeInterpreterIdentifier: this.identifier,
+      sessionId: sessionInfo.awsSessionId,
+      name: 'executeCode',
+      arguments: {
+        code: encodeCode,
+        language: 'python',
+        clearContext: false,
+      },
+    });
 
-      const command = new InvokeCodeInterpreterCommand({
-        codeInterpreterIdentifier: this.identifier,
-        sessionId: sessionInfo.awsSessionId,
-        name: 'executeCode',
-        arguments: {
-          code: encodeCode,
-          language: 'python',
-          clearContext: false,
-        },
-      });
+    const response = await this.client.send(command);
+    const executionResult = await this.createToolResult(response);
 
-      const response = await this.client.send(command);
-      const executionResult = await this.createToolResult(response);
-
-      if (executionResult.status !== 'success') {
-        return {
-          status: 'error',
-          content: [
-            {
-              text: `Failed to execute file encoding in sandbox: ${JSON.stringify(executionResult)}`,
-            },
-          ],
-        };
-      }
-
-      // Get JSON file path from execution result
-      const content = executionResult.content[0];
-      let resultFilePath: string;
-
-      if (content.text) {
-        // If content.text is JSON array, parse and extract text field
-        const outputText = content.text.trim();
-        try {
-          const parsed = JSON.parse(outputText);
-          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].text) {
-            resultFilePath = parsed[0].text.trim();
-          } else {
-            resultFilePath = outputText;
-          }
-        } catch {
-          // Use as-is if not JSON
-          resultFilePath = outputText;
-        }
-      } else {
-        return {
-          status: 'error',
-          content: [{ text: `Unexpected response format: ${JSON.stringify(executionResult)}` }],
-        };
-      }
-
-      logger.debug(`Result file path: ${resultFilePath}`);
-
-      // Read JSON file using readFiles API
-      const readAction: ReadFilesAction = {
-        action: 'readFiles',
-        sessionName: sessionName,
-        paths: [resultFilePath],
+    if (executionResult.status !== 'success') {
+      return {
+        status: 'error',
+        content: [
+          {
+            text: `Failed to execute file encoding in sandbox: ${JSON.stringify(executionResult)}`,
+          },
+        ],
       };
+    }
 
-      const readResult = await this.readFiles(readAction);
+    const content = executionResult.content[0];
+    if (!content.text) {
+      return {
+        status: 'error',
+        content: [{ text: `Unexpected response format: ${JSON.stringify(executionResult)}` }],
+      };
+    }
 
-      if (readResult.status !== 'success') {
-        return {
-          status: 'error',
-          content: [
-            {
-              text: `Failed to read results file ${resultFilePath}: ${JSON.stringify(readResult)}`,
-            },
-          ],
-        };
+    const outputText = content.text.trim();
+    try {
+      const parsed = JSON.parse(outputText);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].text) {
+        return parsed[0].text.trim() as string;
       }
+    } catch {
+      // Use as-is if not JSON
+    }
+    return outputText;
+  }
 
-      // Get JSON file content
-      const fileContent = readResult.content[0];
-      let resultsJson: string;
+  /**
+   * Read and parse the encoded results JSON file from the sandbox.
+   * Returns the parsed file-results map on success, or a ToolResult on error.
+   */
+  private async readEncodedResults(
+    sessionName: string,
+    resultFilePath: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<Record<string, any> | ToolResult> {
+    logger.debug(`Result file path: ${resultFilePath}`);
 
-      if (fileContent.text) {
-        // If text is JSON array string, parse and extract actual text
-        try {
-          const parsed = JSON.parse(fileContent.text);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const firstItem = parsed[0];
-            // For resource type, get data from resource.text
-            if (firstItem.type === 'resource' && firstItem.resource?.text) {
-              resultsJson = firstItem.resource.text;
-            } else if (firstItem.text) {
-              resultsJson = firstItem.text;
-            } else {
-              resultsJson = fileContent.text;
-            }
-          } else {
-            resultsJson = fileContent.text;
-          }
-        } catch {
-          // Use as-is if JSON parse fails
+    const readResult = await this.readFiles({
+      action: 'readFiles',
+      sessionName: sessionName,
+      paths: [resultFilePath],
+    });
+
+    if (readResult.status !== 'success') {
+      return {
+        status: 'error',
+        content: [
+          {
+            text: `Failed to read results file ${resultFilePath}: ${JSON.stringify(readResult)}`,
+          },
+        ],
+      };
+    }
+
+    const fileContent = readResult.content[0];
+    if (!fileContent.text) {
+      return {
+        status: 'error',
+        content: [{ text: `Failed to extract JSON content: ${JSON.stringify(readResult)}` }],
+      };
+    }
+
+    let resultsJson: string;
+    try {
+      const parsed = JSON.parse(fileContent.text);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const firstItem = parsed[0];
+        // For resource type, get data from resource.text
+        if (firstItem.type === 'resource' && firstItem.resource?.text) {
+          resultsJson = firstItem.resource.text;
+        } else if (firstItem.text) {
+          resultsJson = firstItem.text;
+        } else {
           resultsJson = fileContent.text;
         }
       } else {
-        return {
-          status: 'error',
-          content: [{ text: `Failed to extract JSON content: ${JSON.stringify(readResult)}` }],
-        };
+        resultsJson = fileContent.text;
       }
+    } catch {
+      // Use as-is if JSON parse fails
+      resultsJson = fileContent.text;
+    }
 
-      logger.debug(`Read JSON content (length: ${resultsJson.length})`);
+    logger.debug(`Read JSON content (length: ${resultsJson.length})`);
 
-      // Parse JSON
+    try {
+      await this.removeFiles({
+        action: 'removeFiles',
+        sessionName: sessionName,
+        paths: [resultFilePath],
+      });
+      logger.debug(`Cleaned up temporary file: ${resultFilePath}`);
+    } catch (cleanupError) {
+      logger.warn(`Failed to cleanup temporary file ${resultFilePath}: ${cleanupError}`);
+    }
+
+    try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let fileResults: Record<string, any>;
-      try {
-        fileResults = JSON.parse(resultsJson);
-        logger.debug(`Parsed fileResults with ${Object.keys(fileResults).length} files`);
-      } catch (jsonError) {
-        return {
-          status: 'error',
-          content: [
-            {
-              text: `Failed to parse download results JSON: ${jsonError}. Content: ${resultsJson.substring(0, 500)}`,
-            },
-          ],
-        };
-      }
-
-      // Remove temporary file
-      try {
-        await this.removeFiles({
-          action: 'removeFiles',
-          sessionName: sessionName,
-          paths: [resultFilePath],
-        });
-        logger.debug(`Cleaned up temporary file: ${resultFilePath}`);
-      } catch (cleanupError) {
-        logger.warn(`Failed to cleanup temporary file ${resultFilePath}: ${cleanupError}`);
-      }
-
-      // Process each file result
-      const downloadedFiles: DownloadedFile[] = [];
-      const errors: string[] = [];
-
-      for (const [sourcePath, result] of Object.entries(fileResults)) {
-        if ('error' in result) {
-          errors.push(`${sourcePath}: ${result.error}`);
-          continue;
-        }
-
-        try {
-          // Decode base64 data
-          const fileData = Buffer.from(result.data, 'base64');
-
-          // Determine local file path
-          const sourceFilename = path.basename(sourcePath);
-          // nosemgrep: path-join-resolve-traversal - destinationDir is validated, sourceFilename extracted via path.basename
-          let localPath = path.join(action.destinationDir, sourceFilename);
-
-          // Handle filename duplicates
-          let counter = 1;
-          const baseName = sourceFilename;
-          while (fs.existsSync(localPath)) {
-            if (baseName.includes('.')) {
-              const nameExt = baseName.split('.');
-              const ext = nameExt.pop();
-              const name = nameExt.join('.');
-              // nosemgrep: path-join-resolve-traversal - destinationDir is validated, filename is constructed safely
-              localPath = path.join(action.destinationDir, `${name}_${counter}.${ext}`);
-            } else {
-              // nosemgrep: path-join-resolve-traversal - destinationDir is validated, filename is constructed safely
-              localPath = path.join(action.destinationDir, `${baseName}_${counter}`);
-            }
-            counter++;
-          }
-
-          // Write file to local filesystem
-          fs.writeFileSync(localPath, fileData);
-
-          // Generate user-facing path by stripping WORKSPACE_DIRECTORY from local path.
-          // Since workspace dir now mirrors S3 path hierarchy (e.g., /tmp/ws/dev2/file.png),
-          // stripping /tmp/ws yields the correct display path (e.g., /dev2/file.png).
-          const userPath = localPath.startsWith(WORKSPACE_DIRECTORY)
-            ? localPath.slice(WORKSPACE_DIRECTORY.length) || `/${path.basename(localPath)}`
-            : `/${path.basename(localPath)}`;
-
-          downloadedFiles.push({
-            sourcePath: sourcePath,
-            localPath: localPath,
-            userPath: userPath,
-            size: result.size,
-          });
-
-          logger.info(`Downloaded file: ${sourcePath} -> ${localPath} (${result.size} bytes)`);
-        } catch (decodeError) {
-          errors.push(`${sourcePath}: Failed to decode/save file: ${decodeError}`);
-        }
-      }
-
-      // Prepare response
-      if (errors.length > 0 && downloadedFiles.length === 0) {
-        return {
-          status: 'error',
-          content: [{ text: `All downloads failed: ${errors.join('; ')}` }],
-        };
-      }
-
-      // Generate instruction for using userPath
-      const exampleFile = downloadedFiles[0];
-      const exampleExt = exampleFile ? path.extname(exampleFile.userPath).toLowerCase() : '';
-      const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(exampleExt);
-      const isVideo = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'].includes(exampleExt);
-
-      let instruction = `✅ Files downloaded successfully. Use 'userPath' for references:\n`;
-
-      if (isImage) {
-        instruction += `Example: ![Image Description](${exampleFile.userPath})`;
-      } else if (isVideo) {
-        instruction += `Example: ![Video Description](${exampleFile.userPath}) or [Video](${exampleFile.userPath})`;
-      } else {
-        instruction += `Example: [File Name](${exampleFile.userPath})`;
-      }
-
-      const responseData: DownloadResult = {
-        downloadedFiles: downloadedFiles,
-        totalFiles: downloadedFiles.length,
-        destinationDir: action.destinationDir,
-        storagePath: this.storagePath,
-        instruction: instruction,
-      };
-
-      if (errors.length > 0) {
-        responseData.errors = errors;
-      }
-
-      return {
-        status: 'success',
-        content: [{ json: responseData }],
-      };
-    } catch (error) {
-      const errorMsg = `Failed to download files from session '${sessionName}': ${error}`;
-      logger.error(errorMsg);
+      const fileResults: Record<string, any> = JSON.parse(resultsJson);
+      logger.debug(`Parsed fileResults with ${Object.keys(fileResults).length} files`);
+      return fileResults;
+    } catch (jsonError) {
       return {
         status: 'error',
-        content: [{ text: errorMsg }],
+        content: [
+          {
+            text: `Failed to parse download results JSON: ${jsonError}. Content: ${resultsJson.substring(0, 500)}`,
+          },
+        ],
       };
     }
+  }
+
+  /**
+   * Resolve a unique local file path within destinationDir, avoiding collisions.
+   */
+  private resolveUniqueLocalPath(destinationDir: string, sourceFilename: string): string {
+    // nosemgrep: path-join-resolve-traversal - destinationDir is validated, sourceFilename extracted via path.basename
+    let localPath = path.join(destinationDir, sourceFilename);
+    let counter = 1;
+    while (fs.existsSync(localPath)) {
+      if (sourceFilename.includes('.')) {
+        const nameExt = sourceFilename.split('.');
+        const ext = nameExt.pop();
+        const name = nameExt.join('.');
+        // nosemgrep: path-join-resolve-traversal - destinationDir is validated, filename is constructed safely
+        localPath = path.join(destinationDir, `${name}_${counter}.${ext}`);
+      } else {
+        // nosemgrep: path-join-resolve-traversal - destinationDir is validated, filename is constructed safely
+        localPath = path.join(destinationDir, `${sourceFilename}_${counter}`);
+      }
+      counter++;
+    }
+    return localPath;
+  }
+
+  /**
+   * Decode base64 file data, write to workspace, and return the DownloadedFile descriptor.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private saveFileToWorkspace(sourcePath: string, result: any, destinationDir: string): DownloadedFile {
+    const fileData = Buffer.from(result.data, 'base64');
+    const sourceFilename = path.basename(sourcePath);
+    const localPath = this.resolveUniqueLocalPath(destinationDir, sourceFilename);
+
+    fs.writeFileSync(localPath, fileData);
+
+    // Generate user-facing path by stripping WORKSPACE_DIRECTORY from local path.
+    // Since workspace dir now mirrors S3 path hierarchy (e.g., /tmp/ws/dev2/file.png),
+    // stripping /tmp/ws yields the correct display path (e.g., /dev2/file.png).
+    const userPath = localPath.startsWith(WORKSPACE_DIRECTORY)
+      ? localPath.slice(WORKSPACE_DIRECTORY.length) || `/${path.basename(localPath)}`
+      : `/${path.basename(localPath)}`;
+
+    return {
+      sourcePath: sourcePath,
+      localPath: localPath,
+      userPath: userPath,
+      size: result.size,
+    };
+  }
+
+  /**
+   * Build a markdown instruction string for referencing the downloaded files.
+   */
+  private buildDownloadInstruction(downloadedFiles: DownloadedFile[]): string {
+    const exampleFile = downloadedFiles[0];
+    const exampleExt = exampleFile ? path.extname(exampleFile.userPath).toLowerCase() : '';
+    const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(exampleExt);
+    const isVideo = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'].includes(exampleExt);
+
+    let instruction = `✅ Files downloaded successfully. Use 'userPath' for references:\n`;
+
+    if (isImage) {
+      instruction += `Example: ![Image Description](${exampleFile.userPath})`;
+    } else if (isVideo) {
+      instruction += `Example: ![Video Description](${exampleFile.userPath}) or [Video](${exampleFile.userPath})`;
+    } else {
+      instruction += `Example: [File Name](${exampleFile.userPath})`;
+    }
+
+    return instruction;
   }
 
   /**
@@ -761,62 +782,53 @@ print(result_file)
   private async createToolResult(response: any): Promise<ToolResult> {
     logger.debug(`Processing response: ${JSON.stringify(response, null, 2)}`);
 
-    if (response.stream) {
-      // Process streaming response
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const results: any[] = [];
-
-      try {
-        // Process AWS SDK v3 streaming response
-        for await (const event of response.stream) {
-          logger.debug(`Stream event: ${JSON.stringify(event)}`);
-
-          if (event.result) {
-            results.push(event.result);
-          } else if (event.chunk) {
-            // If chunk format
-            results.push(event.chunk);
-          } else {
-            // Other event formats
-            results.push(event);
-          }
-        }
-
-        if (results.length > 0) {
-          // Use last result
-          const lastResult = results[results.length - 1];
-          const isError = response.isError || false;
-
-          // Format according to result content
-          const content = lastResult.content || lastResult;
-          if (typeof content === 'string') {
-            return {
-              status: isError ? 'error' : 'success',
-              content: [{ text: content }],
-            };
-          } else {
-            return {
-              status: isError ? 'error' : 'success',
-              content: [{ text: JSON.stringify(content) }],
-            };
-          }
-        }
-
-        return {
-          status: 'error',
-          content: [{ text: 'No results received from stream' }],
-        };
-      } catch (streamError) {
-        logger.error(`Stream processing error: ${streamError}`);
-        return {
-          status: 'error',
-          content: [{ text: `Stream processing failed: ${streamError}` }],
-        };
-      }
+    if (!response.stream) {
+      return response;
     }
 
-    // Non-streaming response
-    return response;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results: any[] = [];
+    try {
+      for await (const event of response.stream) {
+        logger.debug(`Stream event: ${JSON.stringify(event)}`);
+
+        if (event.result) {
+          results.push(event.result);
+        } else if (event.chunk) {
+          results.push(event.chunk);
+        } else {
+          results.push(event);
+        }
+      }
+
+      if (results.length === 0) {
+        return this.formatErrorResult('No results received from stream');
+      }
+
+      return this.formatSuccessResult(results, response.isError || false);
+    } catch (streamError) {
+      logger.error(`Stream processing error: ${streamError}`);
+      return this.formatErrorResult(`Stream processing failed: ${streamError}`);
+    }
+  }
+
+  /**
+   * Build a ToolResult from a non-empty stream results array.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private formatSuccessResult(results: any[], isError: boolean): ToolResult {
+    const lastResult = results[results.length - 1];
+    const content = lastResult.content || lastResult;
+    const status = isError ? 'error' : 'success';
+    const text = typeof content === 'string' ? content : JSON.stringify(content);
+    return { status, content: [{ text }] };
+  }
+
+  /**
+   * Build an error ToolResult from a plain message string.
+   */
+  private formatErrorResult(errorMessage: string): ToolResult {
+    return { status: 'error', content: [{ text: errorMessage }] };
   }
 
   /**

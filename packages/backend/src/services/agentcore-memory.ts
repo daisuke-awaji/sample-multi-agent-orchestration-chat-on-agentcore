@@ -145,6 +145,82 @@ interface BlobData {
   content: StrandsContentBlock[]; // Array of Strands ContentBlocks
 }
 
+function convertTextBlock(block: StrandsContentBlock): MessageContent | null {
+  if ('text' in block && typeof block.text === 'string') {
+    return { type: 'text', text: block.text };
+  }
+  return null;
+}
+
+function convertToolUseBlock(block: StrandsContentBlock): MessageContent | null {
+  if (
+    'name' in block &&
+    'toolUseId' in block &&
+    'input' in block &&
+    block.name &&
+    block.toolUseId &&
+    block.input !== undefined
+  ) {
+    return {
+      type: 'toolUse',
+      toolUse: {
+        id: block.toolUseId,
+        name: block.name,
+        input: block.input || {},
+        status: 'completed', // Default status
+        originalToolUseId: block.toolUseId,
+      },
+    };
+  }
+  return null;
+}
+
+function convertToolResultBlock(block: StrandsContentBlock): MessageContent | null {
+  if ('toolUseId' in block && block.toolUseId) {
+    return {
+      type: 'toolResult',
+      toolResult: {
+        toolUseId: block.toolUseId,
+        content:
+          typeof block.content === 'string'
+            ? block.content
+            : JSON.stringify(block.content || {}),
+        isError: block.status === 'error' || false,
+      },
+    };
+  }
+  return null;
+}
+
+function convertImageBlock(block: StrandsContentBlock): MessageContent | null {
+  // Handle serialized ImageBlock (base64 format from converters.ts)
+  if ('base64' in block && typeof block.base64 === 'string' && block.format) {
+    const formatToMimeType: Record<string, string> = {
+      png: 'image/png',
+      jpeg: 'image/jpeg',
+      jpg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+    };
+    const mimeType = formatToMimeType[block.format] || 'image/png';
+    return {
+      type: 'image',
+      image: {
+        base64: block.base64,
+        mimeType,
+      },
+    };
+  }
+  return null;
+}
+
+const blockConverters: Record<string, (block: StrandsContentBlock) => MessageContent | null> = {
+  textBlock: convertTextBlock,
+  toolUseBlock: convertToolUseBlock,
+  toolResultBlock: convertToolResultBlock,
+  imageBlock: convertImageBlock,
+};
+
 /**
  * Convert Strands ContentBlock to MessageContent
  * @param contentBlocks Array of Strands SDK ContentBlocks
@@ -156,77 +232,14 @@ function convertToMessageContents(contentBlocks: StrandsContentBlock[]): Message
   for (const block of contentBlocks) {
     if (!block || typeof block !== 'object') continue;
 
-    switch (block.type) {
-      case 'textBlock':
-        if ('text' in block && typeof block.text === 'string') {
-          messageContents.push({ type: 'text', text: block.text });
-        }
-        break;
-
-      case 'toolUseBlock':
-        if (
-          'name' in block &&
-          'toolUseId' in block &&
-          'input' in block &&
-          block.name &&
-          block.toolUseId &&
-          block.input !== undefined
-        ) {
-          messageContents.push({
-            type: 'toolUse',
-            toolUse: {
-              id: block.toolUseId,
-              name: block.name,
-              input: block.input || {},
-              status: 'completed', // Default status
-              originalToolUseId: block.toolUseId,
-            },
-          });
-        }
-        break;
-
-      case 'toolResultBlock':
-        if ('toolUseId' in block && block.toolUseId) {
-          messageContents.push({
-            type: 'toolResult',
-            toolResult: {
-              toolUseId: block.toolUseId,
-              content:
-                typeof block.content === 'string'
-                  ? block.content
-                  : JSON.stringify(block.content || {}),
-              isError: block.status === 'error' || false,
-            },
-          });
-        }
-        break;
-
-      case 'imageBlock':
-        // Handle serialized ImageBlock (base64 format from converters.ts)
-        if ('base64' in block && typeof block.base64 === 'string' && block.format) {
-          // Map format to mimeType
-          const formatToMimeType: Record<string, string> = {
-            png: 'image/png',
-            jpeg: 'image/jpeg',
-            jpg: 'image/jpeg',
-            gif: 'image/gif',
-            webp: 'image/webp',
-          };
-          const mimeType = formatToMimeType[block.format] || 'image/png';
-
-          messageContents.push({
-            type: 'image',
-            image: {
-              base64: block.base64,
-              mimeType,
-            },
-          });
-        }
-        break;
-
-      default:
-        console.warn(`[AgentCoreMemoryService] Unknown ContentBlock type: ${block.type}`);
-        break;
+    const converter = blockConverters[block.type];
+    if (converter) {
+      const result = converter(block);
+      if (result !== null) {
+        messageContents.push(result);
+      }
+    } else {
+      console.warn(`[AgentCoreMemoryService] Unknown ContentBlock type: ${block.type}`);
     }
   }
 

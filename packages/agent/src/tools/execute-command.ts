@@ -81,6 +81,121 @@ function truncateOutput(output: string, maxLength: number = 4000): string {
 }
 
 /**
+ * Resolve the effective working directory, waiting for workspace sync if needed.
+ */
+async function resolveWorkingDirectory(
+  context: ReturnType<typeof getCurrentContext>,
+  workingDirectory: string | undefined,
+  activeDir: string
+): Promise<string> {
+  if (context?.workspaceSync) {
+    await context.workspaceSync.waitForInitialSync();
+  }
+  return workingDirectory || activeDir;
+}
+
+/**
+ * Validate command security and working directory.
+ * Returns an error string if invalid, or null if safe.
+ */
+function validateCommandSecurity(command: string, effectiveWorkingDirectory: string): string | null {
+  if (isDangerousCommand(command)) {
+    const errorMsg = `⚠️ Security Error: Dangerous command detected\nCommand: ${command}`;
+    logger.warn(errorMsg);
+    return errorMsg;
+  }
+
+  if (!isAllowedWorkingDirectory(effectiveWorkingDirectory)) {
+    const errorMsg = `⚠️ Security Error: Working directory not allowed\nDirectory: ${effectiveWorkingDirectory}`;
+    logger.warn(errorMsg);
+    return errorMsg;
+  }
+
+  return null;
+}
+
+/**
+ * Execute the command and format the result string.
+ */
+async function executeAndFormat(
+  command: string,
+  effectiveWorkingDirectory: string,
+  timeout: number | undefined
+): Promise<string> {
+  const execOptions = {
+    timeout,
+    maxBuffer: 1024 * 1024 * 10, // 10MB
+    cwd: effectiveWorkingDirectory,
+    encoding: 'utf8' as const,
+  };
+
+  const startTime = Date.now();
+  const result = await execAsync(command, execOptions);
+  const duration = Date.now() - startTime;
+
+  const stdout = truncateOutput(result.stdout || '');
+  const stderr = truncateOutput(result.stderr || '');
+
+  const output = `Execution Result:
+Command: ${command}
+Working Directory: ${effectiveWorkingDirectory}
+Execution Time: ${duration}ms
+Exit Code: 0
+
+Standard Output:
+${stdout || '(no output)'}
+
+${stderr ? `Standard Error:\n${stderr}` : ''}`.trim();
+
+  logger.info(`✅ Command execution succeeded: ${command} (${duration}ms)`);
+  return output;
+}
+
+/**
+ * Format error output for exec failures.
+ */
+function handleExecutionError(
+  error: unknown,
+  command: string,
+  effectiveWorkingDirectory: string,
+  timeout: number | undefined
+): string {
+  const execError = error as ExecError;
+
+  let errorOutput = `Execution Error:
+Command: ${command}
+Working Directory: ${effectiveWorkingDirectory}
+`;
+
+  if (execError.code !== undefined) {
+    errorOutput += `Exit Code: ${execError.code}\n`;
+  }
+
+  if (execError.signal) {
+    errorOutput += `Signal: ${execError.signal}\n`;
+  }
+
+  if (execError.stdout) {
+    errorOutput += `\nStandard Output:\n${truncateOutput(execError.stdout)}`;
+  }
+
+  if (execError.stderr) {
+    errorOutput += `\nStandard Error:\n${truncateOutput(execError.stderr)}`;
+  }
+
+  const isTimeout =
+    execError.signal === 'SIGTERM' ||
+    execError.message?.includes('timeout') ||
+    execError.message?.includes('ETIMEDOUT');
+  if (isTimeout) {
+    errorOutput += `\n⏰ Timeout: Execution interrupted after ${timeout}ms`;
+  }
+
+  logger.error(`❌ Command execution error: ${command}`, execError.message || 'Unknown error');
+  return errorOutput;
+}
+
+/**
  * Command execution tool
  */
 export const executeCommandTool = tool({
@@ -92,99 +207,23 @@ export const executeCommandTool = tool({
 
     logger.info(`🔧 Command execution started: ${command}`);
 
-    // Resolve active working directory (outside try/catch for error handler access)
     const context = getCurrentContext();
     const activeDir = context?.workspaceSync?.getActiveWorkingDirectory() || WORKSPACE_DIRECTORY;
 
     try {
-      // Wait for workspace sync to complete
-      if (context?.workspaceSync) {
-        await context.workspaceSync.waitForInitialSync();
-      }
+      const effectiveWorkingDirectory = await resolveWorkingDirectory(
+        context,
+        workingDirectory,
+        activeDir
+      );
 
-      // Set default working directory (use active workspace subdirectory if available)
-      const effectiveWorkingDirectory = workingDirectory || activeDir;
+      const securityError = validateCommandSecurity(command, effectiveWorkingDirectory);
+      if (securityError) return securityError;
 
-      // 1. Security check: Detect dangerous commands
-      if (isDangerousCommand(command)) {
-        const errorMsg = `⚠️ Security Error: Dangerous command detected\nCommand: ${command}`;
-        logger.warn(errorMsg);
-        return errorMsg;
-      }
-
-      // 2. Working directory check
-      if (!isAllowedWorkingDirectory(effectiveWorkingDirectory)) {
-        const errorMsg = `⚠️ Security Error: Working directory not allowed\nDirectory: ${effectiveWorkingDirectory}`;
-        logger.warn(errorMsg);
-        return errorMsg;
-      }
-
-      // 3. Execute command
-      const execOptions = {
-        timeout,
-        maxBuffer: 1024 * 1024 * 10, // 10MB
-        cwd: effectiveWorkingDirectory,
-        encoding: 'utf8' as const,
-      };
-
-      const startTime = Date.now();
-      const result = await execAsync(command, execOptions);
-      const duration = Date.now() - startTime;
-
-      // 4. Format result
-      const stdout = truncateOutput(result.stdout || '');
-      const stderr = truncateOutput(result.stderr || '');
-
-      const output = `Execution Result:
-Command: ${command}
-Working Directory: ${effectiveWorkingDirectory}
-Execution Time: ${duration}ms
-Exit Code: 0
-
-Standard Output:
-${stdout || '(no output)'}
-
-${stderr ? `Standard Error:\n${stderr}` : ''}`.trim();
-
-      logger.info(`✅ Command execution succeeded: ${command} (${duration}ms)`);
-      return output;
+      return await executeAndFormat(command, effectiveWorkingDirectory, timeout);
     } catch (error: unknown) {
-      // Error handling
-      const execError = error as ExecError;
       const effectiveWorkingDirectory = workingDirectory || activeDir;
-
-      let errorOutput = `Execution Error:
-Command: ${command}
-Working Directory: ${effectiveWorkingDirectory}
-`;
-
-      if (execError.code !== undefined) {
-        errorOutput += `Exit Code: ${execError.code}\n`;
-      }
-
-      if (execError.signal) {
-        errorOutput += `Signal: ${execError.signal}\n`;
-      }
-
-      if (execError.stdout) {
-        errorOutput += `\nStandard Output:\n${truncateOutput(execError.stdout)}`;
-      }
-
-      if (execError.stderr) {
-        errorOutput += `\nStandard Error:\n${truncateOutput(execError.stderr)}`;
-      }
-
-      // Special handling for timeout errors
-      const isTimeout =
-        execError.signal === 'SIGTERM' ||
-        execError.message?.includes('timeout') ||
-        execError.message?.includes('ETIMEDOUT');
-      if (isTimeout) {
-        errorOutput += `\n⏰ Timeout: Execution interrupted after ${timeout}ms`;
-      }
-
-      logger.error(`❌ Command execution error: ${command}`, execError.message || 'Unknown error');
-      return errorOutput;
+      return handleExecutionError(error, command, effectiveWorkingDirectory, timeout);
     }
   },
 });
