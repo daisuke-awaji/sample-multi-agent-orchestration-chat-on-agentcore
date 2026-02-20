@@ -337,6 +337,176 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
   }
 });
 
+// ── PUT /:id helpers ────────────────────────────────────────────────────────
+
+function validateTriggerUpdateAuth(
+  req: AuthenticatedRequest,
+  res: Response
+): { userId: string; requestId: string } | null {
+  const auth = getCurrentAuth(req);
+  if (!auth.userId) {
+    res.status(400).json({
+      error: 'Invalid authentication',
+      message: 'Failed to retrieve user ID',
+      requestId: auth.requestId,
+    });
+    return null;
+  }
+  return { userId: auth.userId, requestId: auth.requestId };
+}
+
+async function validateTriggerExists(
+  triggersService: ReturnType<typeof getTriggersDynamoDBService>,
+  userId: string,
+  triggerId: string,
+  res: Response,
+  requestId: string
+): Promise<import('../services/triggers-dynamodb.js').Trigger | null> {
+  const trigger = await triggersService.getTrigger(userId, triggerId);
+  if (!trigger) {
+    res.status(404).json({
+      error: 'Not Found',
+      message: 'Trigger not found',
+      requestId,
+    });
+    return null;
+  }
+  return trigger;
+}
+
+function validateTriggerUpdateFields(
+  body: Record<string, unknown>,
+  _res: Response,
+  _requestId: string
+): {
+  name: unknown;
+  description: unknown;
+  type: unknown;
+  agentId: unknown;
+  prompt: unknown;
+  sessionId: unknown;
+  modelId: unknown;
+  workingDirectory: unknown;
+  enabledTools: unknown;
+  scheduleConfig: { expression?: string; timezone?: string } | undefined;
+  eventConfig: unknown;
+} | null {
+  const { name, description, type, agentId, prompt, sessionId, modelId, workingDirectory, enabledTools, scheduleConfig, eventConfig } = body;
+  return { name, description, type, agentId, prompt, sessionId, modelId, workingDirectory, enabledTools, scheduleConfig: scheduleConfig as { expression?: string; timezone?: string } | undefined, eventConfig };
+}
+
+async function handleScheduleUpdate(
+  schedulerService: ReturnType<typeof getSchedulerService>,
+  trigger: import('../services/triggers-dynamodb.js').Trigger,
+  updatedFields: {
+    agentId: unknown;
+    prompt: unknown;
+    sessionId: unknown;
+    modelId: unknown;
+    workingDirectory: unknown;
+    enabledTools: unknown;
+    scheduleConfig: { expression?: string; timezone?: string } | undefined;
+    type: unknown;
+  },
+  updatedTrigger: import('../services/triggers-dynamodb.js').Trigger,
+  userId: string,
+  triggerId: string,
+  typeChanged: boolean,
+  requestId: string
+): Promise<void> {
+  const { agentId, prompt, sessionId, modelId, workingDirectory, enabledTools, scheduleConfig, type } = updatedFields;
+
+  const buildPayload = () => ({
+    triggerId,
+    userId,
+    agentId: (agentId as string) || trigger.agentId,
+    prompt: (prompt as string) || trigger.prompt,
+    sessionId: sessionId !== undefined ? (sessionId as string) : trigger.sessionId,
+    modelId: modelId !== undefined ? (modelId as string) : trigger.modelId,
+    workingDirectory: workingDirectory !== undefined ? (workingDirectory as string) : trigger.workingDirectory,
+    enabledTools: (enabledTools as string[]) || trigger.enabledTools,
+  });
+
+  // Handle type change: schedule -> event
+  if (typeChanged && trigger.type === 'schedule' && type === 'event') {
+    console.log('🔄 Type change detected: schedule -> event (%s)', requestId);
+    try {
+      await schedulerService.deleteSchedule(triggerId);
+      console.log(`✅ EventBridge Schedule deleted for type change`);
+    } catch (scheduleError) {
+      console.warn('Failed to delete EventBridge Schedule during type change:', scheduleError);
+    }
+    return;
+  }
+
+  // Handle type change: event -> schedule
+  if (typeChanged && trigger.type === 'event' && type === 'schedule') {
+    console.log('🔄 Type change detected: event -> schedule (%s)', requestId);
+
+    const targetArn = process.env.TRIGGER_LAMBDA_ARN;
+    const roleArn = process.env.SCHEDULER_ROLE_ARN;
+
+    if (!targetArn || !roleArn) {
+      throw new Error('TRIGGER_LAMBDA_ARN or SCHEDULER_ROLE_ARN not configured');
+    }
+
+    try {
+      const schedulerArn = await schedulerService.createSchedule({
+        name: `trigger-${triggerId}`,
+        expression: scheduleConfig!.expression,
+        timezone: scheduleConfig!.timezone,
+        payload: buildPayload(),
+        targetArn,
+        roleArn,
+      });
+      console.log(`✅ EventBridge Schedule created for type change: ${schedulerArn}`);
+    } catch (scheduleError) {
+      console.error('Failed to create EventBridge Schedule during type change:', scheduleError);
+      throw new Error(
+        `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+      );
+    }
+    return;
+  }
+
+  // Same type = schedule, config updated
+  if (updatedTrigger.type === 'schedule' && !typeChanged && scheduleConfig) {
+    const targetArn = process.env.TRIGGER_LAMBDA_ARN;
+    const roleArn = process.env.SCHEDULER_ROLE_ARN;
+
+    if (targetArn && roleArn) {
+      try {
+        await schedulerService.updateSchedule(triggerId, {
+          expression: scheduleConfig.expression,
+          timezone: scheduleConfig.timezone,
+          payload: buildPayload(),
+          targetArn,
+          roleArn,
+        });
+      } catch (scheduleError) {
+        console.warn('Failed to update EventBridge Schedule (non-critical):', scheduleError);
+      }
+    }
+  }
+}
+
+function buildTriggerUpdatePayload(body: Record<string, unknown>): import('../services/triggers-dynamodb.js').UpdateTriggerInput {
+  const { name, description, type, agentId, prompt, sessionId, modelId, workingDirectory, enabledTools, scheduleConfig, eventConfig } = body;
+  return {
+    name: name as string | undefined,
+    description: description as string | undefined,
+    type: type as import('../services/triggers-dynamodb.js').TriggerType | undefined,
+    agentId: agentId as string | undefined,
+    prompt: prompt as string | undefined,
+    sessionId: sessionId as string | undefined,
+    modelId: modelId as string | undefined,
+    workingDirectory: workingDirectory as string | undefined,
+    enabledTools: enabledTools as string[] | undefined,
+    scheduleConfig: scheduleConfig as import('../services/triggers-dynamodb.js').ScheduleTriggerConfig | undefined,
+    eventConfig: eventConfig as import('../services/triggers-dynamodb.js').EventTriggerConfig | undefined,
+  };
+}
+
 /**
  * Update a trigger
  * PUT /triggers/:id
@@ -344,21 +514,13 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
 router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
     const { id: triggerId } = req.params;
 
-    if (!userId) {
-      return res.status(400).json({
-        error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
-        requestId: auth.requestId,
-      });
-    }
+    const authResult = validateTriggerUpdateAuth(req, res);
+    if (!authResult) return;
+    const { userId, requestId } = authResult;
 
-    console.log('✏️ Trigger update started (%s):', auth.requestId, {
-      userId,
-      triggerId,
-    });
+    console.log('✏️ Trigger update started (%s):', requestId, { userId, triggerId });
 
     const triggersService = getTriggersDynamoDBService();
 
@@ -366,149 +528,46 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       return res.status(500).json({
         error: 'Configuration Error',
         message: 'Triggers Table is not configured',
-        requestId: auth.requestId,
+        requestId,
       });
     }
 
-    // Check trigger exists and user owns it
-    const existingTrigger = await triggersService.getTrigger(userId, triggerId);
-    if (!existingTrigger) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'Trigger not found',
-        requestId: auth.requestId,
-      });
-    }
+    const existingTrigger = await validateTriggerExists(triggersService, userId, triggerId, res, requestId);
+    if (!existingTrigger) return;
 
-    const {
-      name,
-      description,
-      type,
-      agentId,
-      prompt,
-      sessionId,
-      modelId,
-      workingDirectory,
-      enabledTools,
-      scheduleConfig,
-      eventConfig,
-    } = req.body;
+    const fields = validateTriggerUpdateFields(req.body, res, requestId);
+    if (!fields) return;
 
-    const typeChanged = type && type !== existingTrigger.type;
+    const typeChanged = fields.type && fields.type !== existingTrigger.type;
 
-    // Handle type change: schedule -> event
-    if (typeChanged && existingTrigger.type === 'schedule' && type === 'event') {
-      console.log('🔄 Type change detected: schedule -> event (%s)', auth.requestId);
-
-      // Delete existing EventBridge Schedule
-      try {
-        const schedulerService = getSchedulerService();
-        await schedulerService.deleteSchedule(triggerId);
-        console.log(`✅ EventBridge Schedule deleted for type change`);
-      } catch (scheduleError) {
-        console.warn('Failed to delete EventBridge Schedule during type change:', scheduleError);
-      }
-    }
-
-    // Handle type change: event -> schedule
-    if (typeChanged && existingTrigger.type === 'event' && type === 'schedule') {
-      console.log('🔄 Type change detected: event -> schedule (%s)', auth.requestId);
-
-      if (!scheduleConfig?.expression) {
-        return res.status(400).json({
+    // Handle type change: schedule -> event (needs early validation before DB update)
+    if (typeChanged && existingTrigger.type === 'event' && fields.type === 'schedule') {
+      if (!fields.scheduleConfig?.expression) {
+        res.status(400).json({
           error: 'Validation Error',
           message: 'scheduleConfig.expression is required when changing to schedule type',
-          requestId: auth.requestId,
+          requestId,
         });
-      }
-
-      // Create new EventBridge Schedule
-      try {
-        const schedulerService = getSchedulerService();
-        const targetArn = process.env.TRIGGER_LAMBDA_ARN;
-        const roleArn = process.env.SCHEDULER_ROLE_ARN;
-
-        if (!targetArn || !roleArn) {
-          throw new Error('TRIGGER_LAMBDA_ARN or SCHEDULER_ROLE_ARN not configured');
-        }
-
-        const schedulerArn = await schedulerService.createSchedule({
-          name: `trigger-${triggerId}`,
-          expression: scheduleConfig.expression,
-          timezone: scheduleConfig.timezone,
-          payload: {
-            triggerId,
-            userId,
-            agentId: agentId || existingTrigger.agentId,
-            prompt: prompt || existingTrigger.prompt,
-            sessionId: sessionId !== undefined ? sessionId : existingTrigger.sessionId,
-            modelId: modelId !== undefined ? modelId : existingTrigger.modelId,
-            workingDirectory:
-              workingDirectory !== undefined ? workingDirectory : existingTrigger.workingDirectory,
-            enabledTools: enabledTools || existingTrigger.enabledTools,
-          },
-          targetArn,
-          roleArn,
-        });
-
-        console.log(`✅ EventBridge Schedule created for type change: ${schedulerArn}`);
-      } catch (scheduleError) {
-        console.error('Failed to create EventBridge Schedule during type change:', scheduleError);
-        throw new Error(
-          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
-        );
+        return;
       }
     }
 
-    // Update trigger in DynamoDB
-    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, {
-      name,
-      description,
-      type,
-      agentId,
-      prompt,
-      sessionId,
-      modelId,
-      workingDirectory,
-      enabledTools,
-      scheduleConfig,
-      eventConfig,
-    });
+    const updatePayload = buildTriggerUpdatePayload(req.body);
+    const updatedTrigger = await triggersService.updateTrigger(userId, triggerId, updatePayload);
 
-    // If schedule type (and not changed from event) and schedule config changed, update EventBridge Schedule
-    if (updatedTrigger.type === 'schedule' && !typeChanged && scheduleConfig) {
-      try {
-        const schedulerService = getSchedulerService();
-        const targetArn = process.env.TRIGGER_LAMBDA_ARN;
-        const roleArn = process.env.SCHEDULER_ROLE_ARN;
+    const schedulerService = getSchedulerService();
+    await handleScheduleUpdate(
+      schedulerService,
+      existingTrigger,
+      { ...fields, type: fields.type },
+      updatedTrigger,
+      userId,
+      triggerId,
+      !!typeChanged,
+      requestId
+    );
 
-        if (targetArn && roleArn) {
-          await schedulerService.updateSchedule(triggerId, {
-            expression: scheduleConfig.expression,
-            timezone: scheduleConfig.timezone,
-            payload: {
-              triggerId,
-              userId,
-              agentId: agentId || existingTrigger.agentId,
-              prompt: prompt || existingTrigger.prompt,
-              sessionId: sessionId !== undefined ? sessionId : existingTrigger.sessionId,
-              modelId: modelId !== undefined ? modelId : existingTrigger.modelId,
-              workingDirectory:
-                workingDirectory !== undefined
-                  ? workingDirectory
-                  : existingTrigger.workingDirectory,
-              enabledTools: enabledTools || existingTrigger.enabledTools,
-            },
-            targetArn,
-            roleArn,
-          });
-        }
-      } catch (scheduleError) {
-        console.warn('Failed to update EventBridge Schedule (non-critical):', scheduleError);
-      }
-    }
-
-    console.log('✅ Trigger updated successfully (%s)', auth.requestId);
+    console.log('✅ Trigger updated successfully (%s)', requestId);
 
     res.status(200).json({
       trigger: {
