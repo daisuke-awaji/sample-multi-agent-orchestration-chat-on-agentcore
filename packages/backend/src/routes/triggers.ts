@@ -352,7 +352,7 @@ function validateTriggerUpdateAuth(
     });
     return null;
   }
-  return { userId: auth.userId, requestId: auth.requestId };
+  return { userId: auth.userId, requestId: auth.requestId || 'unknown' };
 }
 
 async function validateTriggerExists(
@@ -453,7 +453,7 @@ async function handleScheduleUpdate(
     try {
       const schedulerArn = await schedulerService.createSchedule({
         name: `trigger-${triggerId}`,
-        expression: scheduleConfig!.expression,
+        expression: scheduleConfig!.expression!,
         timezone: scheduleConfig!.timezone,
         payload: buildPayload(),
         targetArn,
