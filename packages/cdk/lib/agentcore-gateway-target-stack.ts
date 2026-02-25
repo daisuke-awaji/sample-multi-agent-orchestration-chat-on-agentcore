@@ -5,6 +5,7 @@ import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { Construct } from 'constructs';
 import { AgentCoreLambdaTarget } from './constructs/agentcore';
 import { EnvironmentConfig } from '../config';
+import * as path from 'path';
 
 export interface AgentCoreGatewayTargetStackProps extends cdk.StackProps {
   /**
@@ -196,6 +197,39 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
       value: this.athenaOutputBucket.bucketName,
       description: 'S3 Bucket for Athena query results',
     });
+
+    // ── OneDrive (Microsoft Graph) OpenAPI Target ──
+    // Conditionally created only when OAuth provider ARN and secret ARN are configured
+    if (envConfig.microsoftGraphOAuthProviderArn && envConfig.microsoftGraphOAuthSecretArn) {
+      const oneDriveSchema = agentcore.ApiSchema.fromLocalAsset(
+        path.join(__dirname, '..', 'schemas', 'microsoft-graph-onedrive.json')
+      );
+
+      const oneDriveTarget = agentcore.GatewayTarget.forOpenApi(this, 'OneDriveOpenApiTarget', {
+        gateway: importedGateway,
+        gatewayTargetName: 'onedrive',
+        description:
+          'Microsoft Graph API target for OneDrive file operations (list, upload, download, search, delete)',
+        apiSchema: oneDriveSchema,
+        credentialProviderConfigurations: [
+          agentcore.GatewayCredentialProvider.fromOauthIdentityArn({
+            providerArn: envConfig.microsoftGraphOAuthProviderArn,
+            secretArn: envConfig.microsoftGraphOAuthSecretArn,
+            scopes: ['https://graph.microsoft.com/.default'],
+          }),
+        ],
+      });
+
+      new cdk.CfnOutput(this, 'OneDriveTargetId', {
+        value: oneDriveTarget.targetId,
+        description: 'OneDrive OpenAPI Gateway Target ID',
+      });
+
+      new cdk.CfnOutput(this, 'OneDriveTargetArn', {
+        value: oneDriveTarget.targetArn,
+        description: 'OneDrive OpenAPI Gateway Target ARN',
+      });
+    }
 
     // CloudFormation outputs
     new cdk.CfnOutput(this, 'GatewayArn', {
