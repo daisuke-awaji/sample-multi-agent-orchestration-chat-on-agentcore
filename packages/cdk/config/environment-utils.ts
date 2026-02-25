@@ -45,7 +45,12 @@ function getDefaultResourcePrefix(env: Environment): string {
  */
 function resolveConfig(env: Environment, input: EnvironmentConfigInput): EnvironmentConfig {
   return {
-    env: env,
+    // Spread input first so optional properties are automatically passed through.
+    // Adding a new optional property to EnvironmentConfig no longer requires
+    // updating this function — only properties with defaults need explicit entries below.
+    ...input,
+    // Required properties (derived or with defaults)
+    env,
     resourcePrefix: input.resourcePrefix ?? getDefaultResourcePrefix(env),
     deletionProtection: input.deletionProtection ?? DEFAULT_CONFIG.deletionProtection,
     corsAllowedOrigins: input.corsAllowedOrigins ?? DEFAULT_CONFIG.corsAllowedOrigins,
@@ -55,16 +60,9 @@ function resolveConfig(env: Environment, input: EnvironmentConfigInput): Environ
     cognitoDeletionProtection:
       input.cognitoDeletionProtection ?? DEFAULT_CONFIG.cognitoDeletionProtection,
     logRetentionDays: input.logRetentionDays ?? DEFAULT_CONFIG.logRetentionDays,
-    // Pass through optional properties
-    awsAccount: input.awsAccount,
     tavilyApiKeySecretName: input.tavilyApiKeySecretName ?? DEFAULT_CONFIG.tavilyApiKeySecretName,
     githubTokenSecretName: input.githubTokenSecretName ?? DEFAULT_CONFIG.githubTokenSecretName,
     gitlabTokenSecretName: input.gitlabTokenSecretName ?? DEFAULT_CONFIG.gitlabTokenSecretName,
-    gitlabHost: input.gitlabHost,
-    allowedSignUpEmailDomains: input.allowedSignUpEmailDomains,
-    customDomain: input.customDomain,
-    testUser: input.testUser,
-    eventRules: input.eventRules,
   };
 }
 

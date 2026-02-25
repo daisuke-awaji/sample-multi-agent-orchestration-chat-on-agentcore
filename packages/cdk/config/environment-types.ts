@@ -148,6 +148,24 @@ export interface EnvironmentConfig {
   };
 
   /**
+   * Microsoft Graph OAuth2 Credential Provider ARN (optional)
+   * Created via AgentCore Identity management console.
+   * When set together with microsoftGraphOAuthSecretArn, enables OneDrive OpenAPI target.
+   * Format: arn:aws:bedrock-agentcore:{region}:{account}:token-vault/{id}/oauth2credentialprovider/{name}
+   */
+  microsoftGraphOAuthProviderArn?: string;
+
+  /**
+   * Microsoft Graph OAuth2 Secret ARN (optional)
+   * The Secrets Manager secret ARN auto-generated when creating the OAuth2 credential provider.
+   * Required together with microsoftGraphOAuthProviderArn to enable OneDrive OpenAPI target.
+   * Format: arn:aws:secretsmanager:{region}:{account}:secret:{name}
+   * NOTE: This is a secret ARN reference, not the actual secret value
+   * pragma: allowlist secret
+   */
+  microsoftGraphOAuthSecretArn?: string;
+
+  /**
    * Event rules configuration (optional)
    * Predefined EventBridge rules that users can subscribe to for triggers
    */

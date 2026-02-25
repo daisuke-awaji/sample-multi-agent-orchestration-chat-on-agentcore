@@ -35,3 +35,5 @@ global_settings:
       reason: 'Test files - no security risk'
     - path: 'docker/backend.Dockerfile'
       reason: 'AWS Lambda container - HEALTHCHECK added for compliance but Lambda Web Adapter handles health via AWS_LWA_READINESS_CHECK_PATH'
+    - path: 'packages/cdk/schemas/microsoft-graph-onedrive.json'
+      reason: 'AgentCore Gateway OpenAPI target - security/securitySchemes are intentionally omitted because CDK L2 Construct explicitly prohibits them in OpenAPI schemas. Authentication is managed via Gateway outbound authorization configuration (credentialProviderConfigurations in CDK).'
