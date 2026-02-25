@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { loadEnvFile } from '../load-env.js';
-import { writeFileSync, unlinkSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
