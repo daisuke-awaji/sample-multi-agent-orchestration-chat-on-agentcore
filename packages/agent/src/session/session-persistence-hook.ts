@@ -14,6 +14,7 @@ import {
 import { SessionConfig, SessionStorage } from './types.js';
 import { getSessionsService } from '../services/sessions-service.js';
 import { getTitleGenerator } from '../services/title-generator.js';
+import { publishMessageEvent } from '../services/appsync-events-publisher.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -94,13 +95,50 @@ export class SessionPersistenceHook implements HookProvider {
 
   /**
    * Event handler when a message is added
-   * Creates session in DynamoDB on first user message, updates timestamp on subsequent messages
-   * Triggers async title generation on first assistant message for new sessions
+   * 1. Saves message content to AgentCore Memory in real-time (for both invoke() and stream() modes)
+   * 2. Creates session in DynamoDB on first user message, updates timestamp on subsequent messages
+   * 3. Triggers async title generation on first assistant message for new sessions
    */
   private async onMessageAdded(event: MessageAddedEvent): Promise<void> {
     const message = event.message;
     const { actorId, sessionId } = this.sessionConfig;
 
+    // Real-time message persistence to AgentCore Memory
+    // This ensures messages are saved immediately for both invoke() and stream() modes,
+    // which is critical for sub-agent tasks that use invoke() and previously only saved
+    // messages on AfterInvocationEvent (i.e., only after the entire session completed).
+    try {
+      await this.storage.appendMessage(this.sessionConfig, message);
+      logger.info('[SessionPersistenceHook] Message saved in real-time:', {
+        sessionId,
+        role: message.role,
+        contentBlocks: message.content.length,
+      });
+    } catch (error) {
+      // Non-blocking: AfterInvocationEvent fallback will attempt to save all unsaved messages
+      logger.warn('[SessionPersistenceHook] Real-time message save failed (non-blocking):', {
+        sessionId,
+        role: message.role,
+        error,
+      });
+    }
+
+    // Publish to AppSync Events for cross-tab/cross-device sync
+    // This runs for both main agents (stream mode) and sub-agents (invoke mode),
+    // ensuring real-time UI updates regardless of execution mode.
+    publishMessageEvent(actorId, sessionId, {
+      type: 'MESSAGE_ADDED',
+      sessionId,
+      message: {
+        role: message.role as 'user' | 'assistant',
+        content: message.content,
+        timestamp: new Date().toISOString(),
+      },
+    }).catch((err) => {
+      logger.warn('[SessionPersistenceHook] AppSync Events publish failed (non-critical):', err);
+    });
+
+    // DynamoDB session metadata management
     const sessionsService = getSessionsService();
     if (!sessionsService.isConfigured()) {
       logger.debug(

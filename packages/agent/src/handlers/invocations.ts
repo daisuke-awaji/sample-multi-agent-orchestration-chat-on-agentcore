@@ -16,7 +16,6 @@ import {
 } from '../utils/index.js';
 import { validateImageData } from '../validation/index.js';
 import { resolveEffectiveUserId } from './auth-resolver.js';
-import { publishMessageEvent } from '../services/appsync-events-publisher.js';
 import type { InvocationRequest } from './types.js';
 import type { SessionType } from '../session/types.js';
 
@@ -160,34 +159,9 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       const agentInput = buildInputContent(prompt, images);
 
       // Send streaming events as NDJSON
+      // Message persistence and AppSync Events publishing are handled centrally
+      // by SessionPersistenceHook.onMessageAdded (for both stream and invoke modes)
       for await (const event of agent.stream(agentInput)) {
-        // For messageAddedEvent, save in real-time (only if session exists)
-        if (event.type === 'messageAddedEvent' && event.message && sessionResult) {
-          try {
-            await sessionStorage.appendMessage(sessionResult.config, event.message);
-            logger.info('Message saved in real-time:', {
-              role: event.message.role,
-              contentBlocks: event.message.content.length,
-            });
-
-            // Publish to AppSync Events for cross-tab/cross-device sync
-            publishMessageEvent(actorId, sessionResult.config.sessionId, {
-              type: 'MESSAGE_ADDED',
-              sessionId: sessionResult.config.sessionId,
-              message: {
-                role: event.message.role as 'user' | 'assistant',
-                content: event.message.content,
-                timestamp: new Date().toISOString(),
-              },
-            }).catch((err) => {
-              logger.warn('AppSync Events publish failed (non-critical):', err);
-            });
-          } catch (saveError) {
-            logger.error('Message save failed (streaming continues):', saveError);
-            // Continue streaming even if save error occurs
-          }
-        }
-
         // Serialize event avoiding circular references
         const safeEvent = serializeStreamEvent(event);
         res.write(`${JSON.stringify(safeEvent)}\n`);
