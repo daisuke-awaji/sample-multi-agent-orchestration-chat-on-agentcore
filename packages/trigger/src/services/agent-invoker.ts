@@ -33,6 +33,7 @@ interface AgentInvocationRequest {
   sessionId?: string;
   systemPrompt?: string;
   mcpConfig?: MCPConfig;
+  agentId?: string;
 }
 
 /**
@@ -118,6 +119,7 @@ export class AgentInvoker {
       systemPrompt, // Use event-driven system prompt if context provided, otherwise original
       enabledTools: agent.enabledTools, // Always use Agent's enabledTools
       mcpConfig: agent.mcpConfig, // Include MCP configuration if available
+      agentId: payload.agentId, // Pass agentId for DynamoDB session metadata tracking
     };
 
     console.log('Invoking Agent API:', {
