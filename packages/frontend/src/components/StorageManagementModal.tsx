@@ -302,7 +302,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       // Use URL hash if explicitly set,
       // otherwise use currently selected path (currentPath)
       const hasExplicitHash = window.location.hash.startsWith('#storage=');
-      const initialPath = hasExplicitHash ? getPathFromHash() : currentPath || '/';
+      const initialPath = hasExplicitHash ? getPathFromHash() : agentWorkingDirectory || '/';
 
       // Set URL hash on initial display (add to history)
       setPathToHash(initialPath);
@@ -819,7 +819,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
             className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <FolderCog className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">{t('storage.setAsWorkingDirectory')}</span>
+            <span>{t('storage.setAsWorkingDirectory')}</span>
           </button>
 
           <input
@@ -880,49 +880,55 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
         <div className="flex-1 flex flex-col min-w-0">
           {/* パンくずナビゲーション */}
           <div className="px-4 md:px-6 py-3 border-b border-border bg-surface-primary">
-            <div className="flex flex-wrap items-center gap-1 text-sm overflow-x-auto">
-              <button
-                onClick={handleNavigateToRoot}
-                className="flex items-center gap-1 px-2 py-1 text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded transition-colors whitespace-nowrap"
-              >
-                <Home className="w-4 h-4 flex-shrink-0" />
-                <span>{t('storage.root')}</span>
-              </button>
+            <div className="flex items-center gap-2">
+              {/* パンくず部分（スクロール可能） */}
+              <div className="flex items-center gap-1 text-sm overflow-x-auto flex-1 min-w-0">
+                <button
+                  onClick={handleNavigateToRoot}
+                  className="flex items-center gap-1 px-2 py-1 text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded transition-colors whitespace-nowrap"
+                >
+                  <Home className="w-4 h-4 flex-shrink-0" />
+                  <span>{t('storage.root')}</span>
+                </button>
 
-              {/* Directory size warning */}
+                {pathSegments.map((segment, index) => {
+                  const segmentPath = '/' + pathSegments.slice(0, index + 1).join('/');
+                  return (
+                    <div key={segmentPath} className="flex items-center gap-1">
+                      <ChevronRight className="w-4 h-4 text-fg-disabled flex-shrink-0" />
+                      <button
+                        onClick={() => handleNavigate(segmentPath)}
+                        className="px-2 py-1 text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded transition-colors truncate max-w-[120px] sm:max-w-none"
+                      >
+                        {segment}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Directory size warning icon (outside overflow container) */}
               {sizeWarning?.show && (
-                <div className="mt-2 mb-0 w-full">
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">
-                        {t('storage.largeSizeWarningTitle')}
-                      </p>
-                      <p className="text-sm text-amber-700 mt-1">
+                <Tooltip
+                  content={
+                    <div className="text-xs leading-relaxed">
+                      <p className="font-medium">{t('storage.largeSizeWarningTitle')}</p>
+                      <p className="mt-1">
                         {t('storage.largeSizeWarningMessage', {
                           size: formatSizeForWarning(sizeWarning.totalSize),
                           count: sizeWarning.fileCount,
                         })}
                       </p>
                     </div>
+                  }
+                  position="left"
+                  width="320px"
+                >
+                  <div className="flex-shrink-0 p-1 cursor-help">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
                   </div>
-                </div>
+                </Tooltip>
               )}
-
-              {pathSegments.map((segment, index) => {
-                const segmentPath = '/' + pathSegments.slice(0, index + 1).join('/');
-                return (
-                  <div key={segmentPath} className="flex items-center gap-1">
-                    <ChevronRight className="w-4 h-4 text-fg-disabled flex-shrink-0" />
-                    <button
-                      onClick={() => handleNavigate(segmentPath)}
-                      className="px-2 py-1 text-fg-secondary hover:text-fg-default hover:bg-surface-secondary rounded transition-colors truncate max-w-[120px] sm:max-w-none"
-                    >
-                      {segment}
-                    </button>
-                  </div>
-                );
-              })}
             </div>
           </div>
 

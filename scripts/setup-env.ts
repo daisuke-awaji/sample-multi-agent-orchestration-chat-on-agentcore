@@ -38,7 +38,7 @@ interface StackOutputs {
   AppSyncEventsHttpEndpoint?: string;
 }
 
-const STACK_NAME = process.env.STACK_NAME || 'AgentCoreApp';
+const STACK_NAME = process.env.STACK_NAME || 'MocaAgentCoreApp';
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 /**
