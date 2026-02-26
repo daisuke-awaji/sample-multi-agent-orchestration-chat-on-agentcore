@@ -417,7 +417,7 @@ storage:
   dropFiles: ファイルをドロップ
   folderNamePlaceholder: フォルダ名を入力
   folderNameSpaceError: フォルダ名にスペースを含めることはできません
-  itemCount: '{{count}} 件のアイテム • 最大ファイルサイズ: 5MB'
+  itemCount: '{{count}} 件のアイテム • 最大ファイルサイズ: 500MB'
   setAsWorkingDirectory: 作業ディレクトリに設定
   currentWorkingDirectory: 現在の作業ディレクトリ
   workingDirectory: 作業ディレクトリ

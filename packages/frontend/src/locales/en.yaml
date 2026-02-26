@@ -418,7 +418,7 @@ storage:
   dropFiles: Drop files
   folderNamePlaceholder: Enter folder name
   folderNameSpaceError: Folder name cannot contain spaces
-  itemCount: '{{count}} items • Max file size: 5MB'
+  itemCount: '{{count}} items • Max file size: 500MB'
   setAsWorkingDirectory: Set as working directory
   currentWorkingDirectory: Current working directory
   workingDirectory: Working directory

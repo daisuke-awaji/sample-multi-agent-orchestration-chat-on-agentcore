@@ -107,13 +107,13 @@ export const useStorageStore = create<StorageState>()(
         // Batch upload multiple files
         uploadFiles: async (files: Array<{ file: File; relativePath: string }>) => {
           const currentPath = get().currentPath;
-          const maxSize = 5 * 1024 * 1024; // 5MB
+          const maxSize = 500 * 1024 * 1024; // 500MB
 
           // File size check
           const oversizedFiles = files.filter((f) => f.file.size > maxSize);
           if (oversizedFiles.length > 0) {
             set({
-              error: `The following files exceed 5MB: ${oversizedFiles.map((f) => f.file.name).join(', ')}`,
+              error: `The following files exceed 500MB: ${oversizedFiles.map((f) => f.file.name).join(', ')}`,
             });
             return;
           }
