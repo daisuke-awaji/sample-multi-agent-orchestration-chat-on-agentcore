@@ -52,7 +52,6 @@ interface StorageItemComponentProps {
   onDownload: (item: StorageItem) => void;
   onContextMenu: (e: React.MouseEvent, item: StorageItem) => void;
   onSetWorkingDirectory?: (path: string) => void;
-  isDeleting: boolean;
 }
 
 function StorageItemComponent({
@@ -62,7 +61,6 @@ function StorageItemComponent({
   onDownload,
   onContextMenu,
   onSetWorkingDirectory,
-  isDeleting,
 }: StorageItemComponentProps) {
   const { t } = useTranslation();
 
@@ -181,15 +179,10 @@ function StorageItemComponent({
           </button>
           <button
             onClick={handleDelete}
-            disabled={isDeleting}
-            className="p-2 text-fg-disabled hover:text-feedback-error hover:bg-feedback-error-bg rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-fg-disabled hover:text-feedback-error hover:bg-feedback-error-bg rounded-lg transition-colors"
             title={t('common.delete')}
           >
-            {isDeleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -566,11 +559,6 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
     setShowNewDirectoryInput(false);
   };
 
-  // 削除
-  const handleDelete = async (item: StorageItem) => {
-    await deleteItem(item);
-  };
-
   // ダウンロード
   const handleDownload = async (item: StorageItem) => {
     if (item.type === 'directory') {
@@ -654,7 +642,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
 
       if (window.confirm(confirmMessage)) {
         setContextMenu(null);
-        await handleDelete(item);
+        await deleteItem(item);
       } else {
         setContextMenu(null);
       }
@@ -674,7 +662,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
         path: folderContextMenu.path,
         type: 'directory',
       };
-      await handleDelete(folderItem);
+      await deleteItem(folderItem);
     } else {
       setFolderContextMenu(null);
     }
@@ -977,12 +965,11 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
                       <StorageItemComponent
                         key={item.path}
                         item={item}
-                        onDelete={handleDelete}
+                        onDelete={deleteItem}
                         onNavigate={handleNavigate}
                         onDownload={handleDownload}
                         onContextMenu={handleContextMenu}
                         onSetWorkingDirectory={setAgentWorkingDirectory}
-                        isDeleting={false}
                       />
                     ))}
 

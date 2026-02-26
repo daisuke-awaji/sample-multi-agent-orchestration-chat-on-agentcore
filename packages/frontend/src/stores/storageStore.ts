@@ -47,302 +47,307 @@ interface StorageState {
 export const useStorageStore = create<StorageState>()(
   devtools(
     persist(
-      (set, get) => ({
-        // Initial state
-        currentPath: '/',
-        agentWorkingDirectory: '/',
-        items: [],
-        isLoading: false,
-        error: null,
-        isUploading: false,
-        uploadProgress: 0,
-        uploadTotal: 0,
-        uploadCompleted: 0,
-
-        // Folder tree initial state
-        folderTree: [],
-        isTreeLoading: false,
-        expandedFolders: ['/'],
-
-        // Set path
-        setCurrentPath: (path: string) => {
-          set({ currentPath: path });
-        },
-
-        // Set agent working directory
-        setAgentWorkingDirectory: (path: string) => {
-          set({ agentWorkingDirectory: path });
-          logger.log(`📁 Agent working directory set to: ${path}`);
-        },
-
-        // Load item list
-        loadItems: async (path?: string) => {
-          const targetPath = path ?? get().currentPath;
-
-          set({ isLoading: true, error: null });
-
+      (set, get) => {
+        // Silent sync helpers (no loading spinners)
+        const silentSyncItems = async (targetPath: string): Promise<void> => {
           try {
-            const response: ListStorageResponse = await storageApi.listStorageItems(targetPath);
-
-            set({
-              items: response.items,
-              currentPath: response.path,
-              isLoading: false,
-            });
-          } catch (error) {
-            logger.error('Failed to load storage items:', error);
-            set({
-              error: extractErrorMessage(error, 'Failed to load storage items'),
-              isLoading: false,
-            });
-          }
-        },
-
-        // Upload single file
-        uploadFile: async (file: File, relativePathOrPath?: string) => {
-          const relativePath = relativePathOrPath || file.name;
-          await get().uploadFiles([{ file, relativePath }]);
-        },
-
-        // Batch upload multiple files
-        uploadFiles: async (files: Array<{ file: File; relativePath: string }>) => {
-          const currentPath = get().currentPath;
-          const maxSize = 500 * 1024 * 1024; // 500MB
-
-          // File size check
-          const oversizedFiles = files.filter((f) => f.file.size > maxSize);
-          if (oversizedFiles.length > 0) {
-            set({
-              error: `The following files exceed 500MB: ${oversizedFiles.map((f) => f.file.name).join(', ')}`,
-            });
-            return;
-          }
-
-          set({
-            isUploading: true,
-            uploadProgress: 0,
-            uploadTotal: files.length,
-            uploadCompleted: 0,
-            error: null,
-          });
-
-          let completed = 0;
-          const errors: string[] = [];
-
-          try {
-            // Upload each file sequentially
-            for (const { file, relativePath } of files) {
-              try {
-                let targetPath: string;
-                let fileName: string;
-
-                if (relativePath.includes('/')) {
-                  // Relative path included
-                  const pathParts = relativePath.split('/');
-                  fileName = pathParts[pathParts.length - 1];
-                  const dirPath = pathParts.slice(0, -1).join('/');
-                  targetPath = currentPath === '/' ? `/${dirPath}` : `${currentPath}/${dirPath}`;
-                } else {
-                  // File name only
-                  fileName = relativePath;
-                  targetPath = currentPath;
-                }
-
-                // Get signed URL
-                const uploadUrlResponse = await storageApi.generateUploadUrl(
-                  fileName,
-                  targetPath,
-                  file.type
-                );
-
-                // Upload to S3
-                await storageApi.uploadFileToS3(uploadUrlResponse.uploadUrl, file);
-
-                completed++;
-                set({
-                  uploadCompleted: completed,
-                  uploadProgress: Math.round((completed / files.length) * 100),
-                });
-              } catch (error) {
-                logger.error('Failed to upload file %s:', file.name, error);
-                errors.push(`${file.name}: ${extractErrorMessage(error, 'Unknown error')}`);
-              }
-            }
-
-            // Refresh list and tree once after all uploads
-            await get().loadItems(currentPath);
-            await get().loadFolderTree();
-
-            set({
-              isUploading: false,
-              uploadProgress: 100,
-              uploadTotal: 0,
-              uploadCompleted: 0,
-            });
-
-            // Show errors if any
-            if (errors.length > 0) {
-              set({
-                error: `Some files failed to upload:\n${errors.join('\n')}`,
-              });
-            }
-
-            // Reset progress
-            setTimeout(() => {
-              set({ uploadProgress: 0 });
-            }, 1000);
-          } catch (error) {
-            logger.error('Failed to upload files:', error);
-            set({
-              error: extractErrorMessage(error, 'Failed to upload files'),
-              isUploading: false,
-              uploadProgress: 0,
-              uploadTotal: 0,
-              uploadCompleted: 0,
-            });
-          }
-        },
-
-        // Create directory (optimistic UI)
-        createDirectory: async (directoryName: string, path?: string) => {
-          const targetPath = path ?? get().currentPath;
-          const previousItems = get().items;
-
-          // Optimistic update: add a placeholder directory item immediately
-          const isCurrentPathTarget = targetPath === get().currentPath;
-          if (isCurrentPathTarget) {
-            const newDirPath =
-              targetPath === '/' ? `/${directoryName}` : `${targetPath}/${directoryName}`;
-            const optimisticItem: StorageItem = {
-              name: directoryName,
-              path: newDirPath,
-              type: 'directory',
-            };
-            // Insert at the beginning (directories first), avoiding duplicates
-            const filtered = previousItems.filter((i) => i.path !== newDirPath);
-            const dirs = filtered.filter((i) => i.type === 'directory');
-            const files = filtered.filter((i) => i.type === 'file');
-            set({ items: [...dirs, optimisticItem, ...files], error: null });
-          }
-
-          try {
-            await storageApi.createDirectory(directoryName, targetPath);
-
-            // Silent sync: reload without showing loading spinner
             const response = await storageApi.listStorageItems(targetPath);
+            // Only update if still on the same path
             if (targetPath === get().currentPath) {
               set({ items: response.items, currentPath: response.path });
             }
+          } catch (syncError) {
+            logger.error('Failed to silent sync items:', syncError);
+          }
+        };
 
-            // Silent tree sync (no loading spinner)
+        const silentSyncFolderTree = async (): Promise<void> => {
+          try {
+            const treeResponse = await storageApi.fetchFolderTree();
+            set({ folderTree: treeResponse.tree });
+          } catch (treeError) {
+            logger.error('Failed to silent sync folder tree:', treeError);
+          }
+        };
+
+        return {
+          // Initial state
+          currentPath: '/',
+          agentWorkingDirectory: '/',
+          items: [],
+          isLoading: false,
+          error: null,
+          isUploading: false,
+          uploadProgress: 0,
+          uploadTotal: 0,
+          uploadCompleted: 0,
+
+          // Folder tree initial state
+          folderTree: [],
+          isTreeLoading: false,
+          expandedFolders: ['/'],
+
+          // Set path
+          setCurrentPath: (path: string) => {
+            set({ currentPath: path });
+          },
+
+          // Set agent working directory
+          setAgentWorkingDirectory: (path: string) => {
+            set({ agentWorkingDirectory: path });
+            logger.log(`📁 Agent working directory set to: ${path}`);
+          },
+
+          // Load item list
+          loadItems: async (path?: string) => {
+            const targetPath = path ?? get().currentPath;
+
+            set({ isLoading: true, error: null });
+
             try {
-              const treeResponse = await storageApi.fetchFolderTree();
-              set({ folderTree: treeResponse.tree });
-            } catch (treeError) {
-              logger.error('Failed to sync folder tree:', treeError);
+              const response: ListStorageResponse = await storageApi.listStorageItems(targetPath);
+
+              set({
+                items: response.items,
+                currentPath: response.path,
+                isLoading: false,
+              });
+            } catch (error) {
+              logger.error('Failed to load storage items:', error);
+              set({
+                error: extractErrorMessage(error, 'Failed to load storage items'),
+                isLoading: false,
+              });
             }
-          } catch (error) {
-            logger.error('Failed to create directory:', error);
-            // Rollback on failure
-            if (isCurrentPathTarget) {
-              set({ items: previousItems });
-            }
-            set({
-              error: extractErrorMessage(error, 'Failed to create directory'),
-            });
-          }
-        },
+          },
 
-        // Delete item (optimistic UI)
-        deleteItem: async (item: StorageItem) => {
-          const previousItems = get().items;
+          // Upload single file
+          uploadFile: async (file: File, relativePathOrPath?: string) => {
+            const relativePath = relativePathOrPath || file.name;
+            await get().uploadFiles([{ file, relativePath }]);
+          },
 
-          // Optimistic update: remove the item immediately
-          set({
-            items: previousItems.filter((i) => i.path !== item.path),
-            error: null,
-          });
-
-          try {
-            if (item.type === 'file') {
-              await storageApi.deleteFile(item.path);
-            } else {
-              // Force delete directory (including contents)
-              await storageApi.deleteDirectory(item.path, true);
-            }
-
-            // Silent sync: reload without showing loading spinner
+          // Batch upload multiple files
+          uploadFiles: async (files: Array<{ file: File; relativePath: string }>) => {
             const currentPath = get().currentPath;
-            const response = await storageApi.listStorageItems(currentPath);
-            if (currentPath === get().currentPath) {
-              set({ items: response.items, currentPath: response.path });
+            const maxSize = 500 * 1024 * 1024; // 500MB
+
+            // File size check
+            const oversizedFiles = files.filter((f) => f.file.size > maxSize);
+            if (oversizedFiles.length > 0) {
+              set({
+                error: `The following files exceed 500MB: ${oversizedFiles.map((f) => f.file.name).join(', ')}`,
+              });
+              return;
             }
 
-            // Silent tree sync if directory was deleted (no loading spinner)
-            if (item.type === 'directory') {
-              try {
-                const treeResponse = await storageApi.fetchFolderTree();
-                set({ folderTree: treeResponse.tree });
-              } catch (treeError) {
-                logger.error('Failed to sync folder tree:', treeError);
+            set({
+              isUploading: true,
+              uploadProgress: 0,
+              uploadTotal: files.length,
+              uploadCompleted: 0,
+              error: null,
+            });
+
+            let completed = 0;
+            const errors: string[] = [];
+
+            try {
+              // Upload each file sequentially
+              for (const { file, relativePath } of files) {
+                try {
+                  let targetPath: string;
+                  let fileName: string;
+
+                  if (relativePath.includes('/')) {
+                    // Relative path included
+                    const pathParts = relativePath.split('/');
+                    fileName = pathParts[pathParts.length - 1];
+                    const dirPath = pathParts.slice(0, -1).join('/');
+                    targetPath = currentPath === '/' ? `/${dirPath}` : `${currentPath}/${dirPath}`;
+                  } else {
+                    // File name only
+                    fileName = relativePath;
+                    targetPath = currentPath;
+                  }
+
+                  // Get signed URL
+                  const uploadUrlResponse = await storageApi.generateUploadUrl(
+                    fileName,
+                    targetPath,
+                    file.type
+                  );
+
+                  // Upload to S3
+                  await storageApi.uploadFileToS3(uploadUrlResponse.uploadUrl, file);
+
+                  completed++;
+                  set({
+                    uploadCompleted: completed,
+                    uploadProgress: Math.round((completed / files.length) * 100),
+                  });
+                } catch (error) {
+                  logger.error('Failed to upload file %s:', file.name, error);
+                  errors.push(`${file.name}: ${extractErrorMessage(error, 'Unknown error')}`);
+                }
               }
+
+              // Refresh list and tree once after all uploads
+              await get().loadItems(currentPath);
+              await get().loadFolderTree();
+
+              set({
+                isUploading: false,
+                uploadProgress: 100,
+                uploadTotal: 0,
+                uploadCompleted: 0,
+              });
+
+              // Show errors if any
+              if (errors.length > 0) {
+                set({
+                  error: `Some files failed to upload:\n${errors.join('\n')}`,
+                });
+              }
+
+              // Reset progress
+              setTimeout(() => {
+                set({ uploadProgress: 0 });
+              }, 1000);
+            } catch (error) {
+              logger.error('Failed to upload files:', error);
+              set({
+                error: extractErrorMessage(error, 'Failed to upload files'),
+                isUploading: false,
+                uploadProgress: 0,
+                uploadTotal: 0,
+                uploadCompleted: 0,
+              });
             }
-          } catch (error) {
-            logger.error('Failed to delete item:', error);
-            // Rollback on failure
+          },
+
+          // Create directory (optimistic UI)
+          createDirectory: async (directoryName: string, path?: string) => {
+            const targetPath = path ?? get().currentPath;
+            const previousItems = get().items;
+
+            // Optimistic update: add a placeholder directory item immediately
+            const isCurrentPathTarget = targetPath === get().currentPath;
+            if (isCurrentPathTarget) {
+              const newDirPath =
+                targetPath === '/' ? `/${directoryName}` : `${targetPath}/${directoryName}`;
+              const optimisticItem: StorageItem = {
+                name: directoryName,
+                path: newDirPath,
+                type: 'directory',
+              };
+              // Insert at the beginning (directories first), avoiding duplicates
+              const filtered = previousItems.filter((i) => i.path !== newDirPath);
+              const dirs = filtered.filter((i) => i.type === 'directory');
+              const files = filtered.filter((i) => i.type === 'file');
+              set({ items: [...dirs, optimisticItem, ...files], error: null });
+            }
+
+            try {
+              await storageApi.createDirectory(directoryName, targetPath);
+
+              // Silent sync: reload without showing loading spinner
+              await silentSyncItems(targetPath);
+              await silentSyncFolderTree();
+            } catch (error) {
+              logger.error('Failed to create directory:', error);
+              // Rollback on failure
+              if (isCurrentPathTarget) {
+                set({ items: previousItems });
+              }
+              set({
+                error: extractErrorMessage(error, 'Failed to create directory'),
+              });
+            }
+          },
+
+          // Delete item (optimistic UI)
+          deleteItem: async (item: StorageItem) => {
+            const previousItems = get().items;
+
+            // Optimistic update: remove the item immediately
             set({
-              items: previousItems,
-              error: extractErrorMessage(error, 'Failed to delete item'),
+              items: previousItems.filter((i) => i.path !== item.path),
+              error: null,
             });
-          }
-        },
 
-        // Reload current path
-        refresh: async () => {
-          await get().loadItems();
-        },
+            try {
+              if (item.type === 'file') {
+                await storageApi.deleteFile(item.path);
+              } else {
+                // Force delete directory (including contents)
+                await storageApi.deleteDirectory(item.path, true);
+              }
 
-        // Clear errors
-        clearError: () => {
-          set({ error: null });
-        },
+              // Silent sync: reload without showing loading spinner
+              await silentSyncItems(get().currentPath);
 
-        // Load folder tree
-        loadFolderTree: async () => {
-          set({ isTreeLoading: true });
+              // Silent tree sync if directory was deleted
+              if (item.type === 'directory') {
+                await silentSyncFolderTree();
+              }
+            } catch (error) {
+              logger.error('Failed to delete item:', error);
+              // Rollback on failure
+              set({
+                items: previousItems,
+                error: extractErrorMessage(error, 'Failed to delete item'),
+              });
+            }
+          },
 
-          try {
-            const response = await storageApi.fetchFolderTree();
-            set({
-              folderTree: response.tree,
-              isTreeLoading: false,
-            });
-          } catch (error) {
-            logger.error('Failed to load folder tree:', error);
-            set({
-              error: extractErrorMessage(error, 'Failed to load folder tree'),
-              isTreeLoading: false,
-            });
-          }
-        },
+          // Reload current path
+          refresh: async () => {
+            await get().loadItems();
+          },
 
-        // Toggle folder expand/collapse
-        toggleFolderExpand: (path: string) => {
-          const expandedFolders = [...get().expandedFolders];
-          const index = expandedFolders.indexOf(path);
-          if (index >= 0) {
-            expandedFolders.splice(index, 1);
-          } else {
-            expandedFolders.push(path);
-          }
-          set({ expandedFolders });
-        },
+          // Clear errors
+          clearError: () => {
+            set({ error: null });
+          },
 
-        // Set expanded folders
-        setExpandedFolders: (folders: string[]) => {
-          set({ expandedFolders: folders });
-        },
-      }),
+          // Load folder tree
+          loadFolderTree: async () => {
+            set({ isTreeLoading: true });
+
+            try {
+              const response = await storageApi.fetchFolderTree();
+              set({
+                folderTree: response.tree,
+                isTreeLoading: false,
+              });
+            } catch (error) {
+              logger.error('Failed to load folder tree:', error);
+              set({
+                error: extractErrorMessage(error, 'Failed to load folder tree'),
+                isTreeLoading: false,
+              });
+            }
+          },
+
+          // Toggle folder expand/collapse
+          toggleFolderExpand: (path: string) => {
+            const expandedFolders = [...get().expandedFolders];
+            const index = expandedFolders.indexOf(path);
+            if (index >= 0) {
+              expandedFolders.splice(index, 1);
+            } else {
+              expandedFolders.push(path);
+            }
+            set({ expandedFolders });
+          },
+
+          // Set expanded folders
+          setExpandedFolders: (folders: string[]) => {
+            set({ expandedFolders: folders });
+          },
+        };
+      },
       {
         name: 'storage-settings',
         partialize: (state) => ({
