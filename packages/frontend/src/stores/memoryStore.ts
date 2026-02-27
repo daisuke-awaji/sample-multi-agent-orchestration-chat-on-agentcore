@@ -37,6 +37,7 @@ interface MemoryState {
   // Actions
   setMemoryEnabled: (enabled: boolean) => void;
   loadMemoryRecords: () => Promise<void>;
+  loadMoreMemoryRecords: () => Promise<void>;
   deleteMemoryRecord: (recordId: string) => Promise<void>;
   searchMemoryRecords: (query: string) => Promise<MemoryRecord[]>;
   clearError: () => void;
@@ -83,6 +84,33 @@ export const useMemoryStore = create<MemoryState>()(
             const errorMessage = extractErrorMessage(error, 'Failed to load memory records');
             set({ error: errorMessage });
             logger.error('[MemoryStore] Error loading records:', error);
+          } finally {
+            set({ isLoading: false });
+          }
+        },
+
+        /**
+         * Load next page of memory records (append to existing list)
+         */
+        loadMoreMemoryRecords: async () => {
+          const { nextToken } = get();
+          if (!nextToken) return;
+
+          try {
+            set({ isLoading: true, error: null });
+
+            const data = await fetchMemoryRecords(nextToken);
+
+            set((state) => ({
+              records: [...state.records, ...data.records],
+              nextToken: data.nextToken,
+            }));
+
+            logger.log(`[MemoryStore] Loaded ${data.records.length} more records`);
+          } catch (error) {
+            const errorMessage = extractErrorMessage(error, 'Failed to load more memory records');
+            set({ error: errorMessage });
+            logger.error('[MemoryStore] Error loading more records:', error);
           } finally {
             set({ isLoading: false });
           }

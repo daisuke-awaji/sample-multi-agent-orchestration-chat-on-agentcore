@@ -465,6 +465,7 @@ memory:
   cannotDeleteTooltip: Cannot delete (Invalid record ID)
   deleteConfirm: Are you sure you want to delete this memory?
   searching: Searching
+  loadMore: Load More
 
 # Settings
 settings:

@@ -464,6 +464,7 @@ memory:
   cannotDeleteTooltip: 削除不可（レコードIDが無効）
   deleteConfirm: このメモリを削除しますか？
   searching: 検索中
+  loadMore: さらに読み込む
 
 # 設定
 settings:

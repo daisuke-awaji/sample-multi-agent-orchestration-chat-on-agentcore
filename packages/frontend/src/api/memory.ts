@@ -42,10 +42,12 @@ interface SearchMemoryResponse {
 
 /**
  * Fetch memory record list
+ * @param nextToken Pagination token for fetching the next page
  * @returns Memory record list
  */
-export async function fetchMemoryRecords(): Promise<MemoryRecordList> {
-  return backendClient.get<MemoryRecordList>('/memory/records');
+export async function fetchMemoryRecords(nextToken?: string): Promise<MemoryRecordList> {
+  const params = nextToken ? `?nextToken=${encodeURIComponent(nextToken)}` : '';
+  return backendClient.get<MemoryRecordList>(`/memory/records${params}`);
 }
 
 /**
