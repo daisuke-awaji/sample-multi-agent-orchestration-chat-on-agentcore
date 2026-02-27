@@ -5,6 +5,7 @@
 import { Request, Response } from 'express';
 import { createAgent } from '../agent.js';
 import { getContextMetadata, getCurrentContext } from '../context/request-context.js';
+import { ObservabilityContext } from '../context/observability-context.js';
 import { setupSession, getSessionStorage } from '../session/session-helper.js';
 import { initializeWorkspaceSync } from '../services/workspace-sync-helper.js';
 import { logger } from '../config/index.js';
@@ -132,95 +133,109 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
       mcpConfig,
     };
 
-    // Create Agent (register all hooks)
-    const hooks = [sessionResult?.hook, workspaceSyncResult?.hook].filter(
-      (hook) => hook !== null && hook !== undefined
-    );
-    const { agent, metadata } = await createAgent(hooks, agentOptions);
-
-    // Log Agent creation completion
-    logger.info('Agent creation completed:', {
-      requestId,
-      loadedMessages: metadata.loadedMessagesCount,
-      longTermMemories: metadata.longTermMemoriesCount,
-      tools: metadata.toolsCount,
+    // Create observability context for CloudWatch GenAI Observability
+    const otelCtx = new ObservabilityContext({
+      actorId,
+      sessionId,
+      sessionType,
+      agentId,
+      modelId,
+      isMachineUser: context?.isMachineUser,
+      memoryEnabled,
     });
 
-    // Set headers for streaming response
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    // Execute agent processing within a traced span that includes all observability attributes
+    await otelCtx.traceAsync('agent.invocation', async () => {
+      // Create Agent (register all hooks)
+      const hooks = [sessionResult?.hook, workspaceSyncResult?.hook].filter(
+        (hook) => hook !== null && hook !== undefined
+      );
+      const { agent, metadata } = await createAgent(hooks, agentOptions);
 
-    try {
-      logger.info('Agent streaming started:', { requestId });
-
-      // Build input content (text + images for multimodal)
-      const agentInput = buildInputContent(prompt, images);
-
-      // Send streaming events as NDJSON
-      // Message persistence and AppSync Events publishing are handled centrally
-      // by SessionPersistenceHook.onMessageAdded (for both stream and invoke modes)
-      for await (const event of agent.stream(agentInput)) {
-        // Serialize event avoiding circular references
-        const safeEvent = serializeStreamEvent(event);
-        res.write(`${JSON.stringify(safeEvent)}\n`);
-      }
-
-      logger.info('Agent streaming completed:', { requestId });
-
-      // Get metadata with duration for completion event
-      const contextMeta = getContextMetadata();
-
-      // Send completion metadata
-      const completionEvent = {
-        type: 'serverCompletionEvent',
-        metadata: {
-          requestId,
-          duration: contextMeta.duration,
-          sessionId: sessionId,
-          actorId: actorId,
-          conversationLength: agent.messages.length,
-          agentMetadata: metadata,
-        },
-      };
-      res.write(`${JSON.stringify(completionEvent)}\n`);
-
-      res.end();
-    } catch (streamError) {
-      logger.error('Agent streaming error:', {
+      // Log Agent creation completion
+      logger.info('Agent creation completed:', {
         requestId,
-        error: streamError,
+        loadedMessages: metadata.loadedMessagesCount,
+        longTermMemories: metadata.longTermMemoriesCount,
+        tools: metadata.toolsCount,
       });
 
-      // Save error message to session history (if session is configured)
-      if (sessionResult) {
-        try {
-          const errorMessage = createErrorMessage(streamError, requestId);
-          await sessionStorage.appendMessage(sessionResult.config, errorMessage);
-          logger.info('Error message saved to session history:', {
-            requestId,
-            sessionId: sessionResult.config.sessionId,
-          });
-        } catch (saveError) {
-          logger.error('Failed to save error message to session:', saveError);
-          // Continue even if save fails - still send error event to client
-        }
-      }
+      // Set headers for streaming response
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
-      // Send error event
-      const errorEvent = {
-        type: 'serverErrorEvent',
-        error: {
-          message: sanitizeErrorMessage(streamError),
+      try {
+        logger.info('Agent streaming started:', { requestId });
+
+        // Build input content (text + images for multimodal)
+        const agentInput = buildInputContent(prompt, images);
+
+        // Send streaming events as NDJSON
+        // Message persistence and AppSync Events publishing are handled centrally
+        // by SessionPersistenceHook.onMessageAdded (for both stream and invoke modes)
+        for await (const event of agent.stream(agentInput)) {
+          // Serialize event avoiding circular references
+          const safeEvent = serializeStreamEvent(event);
+          res.write(`${JSON.stringify(safeEvent)}\n`);
+        }
+
+        logger.info('Agent streaming completed:', { requestId });
+
+        // Get metadata with duration for completion event
+        const contextMeta = getContextMetadata();
+
+        // Send completion metadata
+        const completionEvent = {
+          type: 'serverCompletionEvent',
+          metadata: {
+            requestId,
+            duration: contextMeta.duration,
+            sessionId: sessionId,
+            actorId: actorId,
+            conversationLength: agent.messages.length,
+            agentMetadata: metadata,
+          },
+        };
+        res.write(`${JSON.stringify(completionEvent)}\n`);
+
+        res.end();
+      } catch (streamError) {
+        logger.error('Agent streaming error:', {
           requestId,
-          // Include flag to indicate this error was saved to history
-          savedToHistory: !!sessionResult,
-        },
-      };
-      res.write(`${JSON.stringify(errorEvent)}\n`);
-      res.end();
-    }
+          error: streamError,
+        });
+
+        // Save error message to session history (if session is configured)
+        if (sessionResult) {
+          try {
+            const errorMessage = createErrorMessage(streamError, requestId);
+            await sessionStorage.appendMessage(sessionResult.config, errorMessage);
+            logger.info('Error message saved to session history:', {
+              requestId,
+              sessionId: sessionResult.config.sessionId,
+            });
+          } catch (saveError) {
+            logger.error('Failed to save error message to session:', saveError);
+            // Continue even if save fails - still send error event to client
+          }
+        }
+
+        // Send error event
+        const errorEvent = {
+          type: 'serverErrorEvent',
+          error: {
+            message: sanitizeErrorMessage(streamError),
+            requestId,
+            // Include flag to indicate this error was saved to history
+            savedToHistory: !!sessionResult,
+          },
+        };
+        res.write(`${JSON.stringify(errorEvent)}\n`);
+        res.end();
+      }
+    });
   } catch (error) {
     const contextMeta = getContextMetadata();
     logger.error('Error processing request:', {

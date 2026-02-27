@@ -4,12 +4,12 @@ set -e
 echo "Starting AgentCore Runtime..."
 echo "AWS_REGION: ${AWS_REGION:-us-east-1}"
 
-# GitHub Token を Secrets Manager から取得して認証
+# Retrieve GitHub Token from Secrets Manager and authenticate
 if [ -n "$GITHUB_TOKEN_SECRET_NAME" ]; then
   echo "Retrieving GitHub token from Secrets Manager: $GITHUB_TOKEN_SECRET_NAME"
   echo "Using region: ${AWS_REGION:-us-east-1}"
   
-  # AWS CLIの確認
+  # Verify AWS CLI
   aws --version
   
   GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
@@ -33,7 +33,7 @@ else
   echo "GITHUB_TOKEN_SECRET_NAME not set, skipping GitHub CLI authentication"
 fi
 
-# GitLab Token を Secrets Manager から取得して環境変数に設定
+# Retrieve GitLab Token from Secrets Manager and set as environment variable
 if [ -n "$GITLAB_TOKEN_SECRET_NAME" ]; then
   echo "Retrieving GitLab token from Secrets Manager: $GITLAB_TOKEN_SECRET_NAME"
   echo "Using region: ${AWS_REGION:-us-east-1}"
@@ -73,6 +73,6 @@ else
   echo "GITLAB_TOKEN_SECRET_NAME not set, skipping GitLab authentication"
 fi
 
-# アプリケーション起動
-echo "Starting Node.js application..."
-exec npm start
+# Start application with AWS Distro for OpenTelemetry (ADOT) auto-instrumentation
+echo "Starting Node.js application with AWS ADOT auto-instrumentation..."
+exec node --require @aws/aws-distro-opentelemetry-node-autoinstrumentation/register dist/index.js

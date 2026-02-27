@@ -277,6 +277,12 @@ export class AgentCoreRuntime extends Construct {
       environmentVariables.APPSYNC_HTTP_ENDPOINT = props.appsyncHttpEndpoint;
     }
 
+    // AgentCore Observability (OpenTelemetry) configuration
+    // Note: OTEL environment variables (OTEL_RESOURCE_ATTRIBUTES, OTEL_EXPORTER_OTLP_LOGS_HEADERS, etc.)
+    // are automatically configured by AgentCore Runtime with the correct log group name and endpoints.
+    // Only AGENT_OBSERVABILITY_ENABLED needs to be set explicitly.
+    environmentVariables.AGENT_OBSERVABILITY_ENABLED = 'true';
+
     // Create AgentCore Runtime
     this.runtime = new agentcore.Runtime(this, 'Runtime', {
       runtimeName: props.runtimeName,
