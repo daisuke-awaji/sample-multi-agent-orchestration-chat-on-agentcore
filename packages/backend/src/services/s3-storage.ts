@@ -224,6 +224,7 @@ export async function generateUploadUrl(
   });
 
   const expiresIn = 3600; // 1 hour
+  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
 
   console.log(`✅ Upload URL generated (expires in ${expiresIn}s)`);
 
