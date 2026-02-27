@@ -1,5 +1,5 @@
 /**
- * Ping ツールのテスト
+ * Ping tool tests
  */
 
 import { pingTool } from './ping.js';
@@ -22,11 +22,11 @@ describe('Ping Tool', () => {
 
       expect(typeof result.timestamp).toBe('string');
       expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-      // 現在時刻との差が1秒以内であることを確認
+      // Verify that the difference from the current time is within 1 second
       const timestampDate = new Date(result.timestamp as string);
       const now = new Date();
       const diff = Math.abs(now.getTime() - timestampDate.getTime());
-      expect(diff).toBeLessThan(1000); // 1秒以内
+      expect(diff).toBeLessThan(1000); // within 1 second
     });
 
     test('uptimeが数値である', async () => {
@@ -44,7 +44,7 @@ describe('Ping Tool', () => {
       const result = await pingTool.handler(input);
 
       expect(typeof result.version).toBe('string');
-      expect(result.version).toMatch(/^v\d+\.\d+\.\d+/); // v18.17.0のような形式
+      expect(result.version).toMatch(/^v\d+\.\d+\.\d+/); // Format like v18.17.0
       expect(result.version).toBe(process.version);
     });
 
@@ -80,7 +80,7 @@ describe('Ping Tool', () => {
 
       const memory = result.memory as NodeJS.MemoryUsage;
 
-      // メモリ使用量の各項目が数値で、正の値であることを確認
+      // Verify that each memory usage value is a number and a positive value
       expect(typeof memory.rss).toBe('number');
       expect(memory.rss).toBeGreaterThan(0);
 
@@ -96,7 +96,7 @@ describe('Ping Tool', () => {
       expect(typeof memory.arrayBuffers).toBe('number');
       expect(memory.arrayBuffers).toBeGreaterThanOrEqual(0);
 
-      // heapUsed <= heapTotal の関係性を確認
+      // Verify the relationship heapUsed <= heapTotal
       expect(memory.heapUsed).toBeLessThanOrEqual(memory.heapTotal);
     });
   });
@@ -184,7 +184,7 @@ describe('Ping Tool', () => {
       await pingTool.handler(input);
 
       const executionTime = Date.now() - startTime;
-      // ping は軽量な処理なので100ms以内で完了することを期待
+      // ping is a lightweight operation, so expect completion within 100ms
       expect(executionTime).toBeLessThan(100);
     });
 
@@ -192,19 +192,19 @@ describe('Ping Tool', () => {
       const input: ToolInput = {};
       const executionTimes: number[] = [];
 
-      // 10回連続実行
+      // Run 10 times consecutively
       for (let i = 0; i < 10; i++) {
         const startTime = Date.now();
         await pingTool.handler(input);
         executionTimes.push(Date.now() - startTime);
       }
 
-      // 全ての実行が100ms以内で完了することを確認
+      // Verify that all executions complete within 100ms
       executionTimes.forEach((time) => {
         expect(time).toBeLessThan(100);
       });
 
-      // 平均実行時間が50ms以内であることを確認
+      // Verify that the average execution time is within 50ms
       const averageTime =
         executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
       expect(averageTime).toBeLessThan(50);

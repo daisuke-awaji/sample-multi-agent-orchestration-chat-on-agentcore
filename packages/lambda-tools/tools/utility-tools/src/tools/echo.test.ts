@@ -1,5 +1,5 @@
 /**
- * Echo ツールのテスト
+ * Echo tool tests
  */
 
 import { echoTool } from './echo.js';
@@ -47,7 +47,7 @@ describe('Echo Tool', () => {
 
       expect(result.echo).toBe('こんにちは世界');
       expect(result.length).toBe(7);
-      expect(result.uppercase).toBe('こんにちは世界'); // 日本語は大文字小文字変換されない
+      expect(result.uppercase).toBe('こんにちは世界'); // Japanese characters are not converted to uppercase/lowercase
       expect(result.lowercase).toBe('こんにちは世界');
     });
 
