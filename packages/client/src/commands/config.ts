@@ -1,6 +1,6 @@
 /**
  * Config Command
- * 設定表示・管理コマンド
+ * Command for displaying and managing configuration
  */
 
 import chalk from 'chalk';
@@ -16,10 +16,10 @@ export async function configCommand(options: {
 }): Promise<void> {
   const config = loadConfig();
 
-  // オプションで設定を上書き
+  // Override settings with options
   if (options.endpoint) {
     config.endpoint = options.endpoint;
-    // エンドポイントが変更されたら Runtime 判定を再実行
+    // Re-evaluate Runtime detection if endpoint has changed
     config.isAwsRuntime =
       config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
   }
@@ -41,7 +41,7 @@ export async function configCommand(options: {
     return;
   }
 
-  // 対話的表示
+  // Interactive display
   console.log(chalk.cyan('⚙️ AgentCore クライアント設定'));
   console.log('');
 
@@ -84,7 +84,7 @@ export async function configCommand(options: {
     console.log(`${chalk.blue('🌍')} Region: ${chalk.white(displayConfig.cognito.region)}`);
   }
 
-  // 設定の検証
+  // Configuration validation
   if (options.validate) {
     console.log('');
     console.log(chalk.bold('✅ 設定の検証:'));
@@ -100,13 +100,13 @@ export async function configCommand(options: {
     }
   }
 
-  // ランタイムの説明
+  // Runtime description
   console.log('');
   console.log(chalk.bold('📚 ランタイムについて:'));
   console.log(`${chalk.yellow('🏠')} ローカル環境: docker compose や開発サーバー`);
   console.log(`${chalk.yellow('☁️')} AWS AgentCore Runtime: Amazon Bedrock AgentCore`);
 
-  // 環境変数の説明
+  // Environment variable description
   console.log('');
   console.log(chalk.bold('🔨 設定方法:'));
   console.log(chalk.gray('以下の環境変数で設定を変更できます:'));
@@ -134,7 +134,7 @@ export async function configCommand(options: {
 }
 
 /**
- * JWT トークン情報表示
+ * JWT token information display
  */
 export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
   console.log(chalk.cyan('🎫 JWT トークン情報'));
@@ -147,7 +147,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
 
   try {
     if (config.authMode === 'machine' && config.machineUser) {
-      // マシンユーザートークン
+      // Machine user token
       const authResult = await getMachineUserToken(config.machineUser);
       const tokenInfo = getMachineTokenInfo(authResult.accessToken);
 
@@ -164,7 +164,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
         console.log(`${chalk.blue('📋')} Scope: ${chalk.white(tokenInfo.scope)}`);
       }
 
-      // 発行日時と有効期限の表示
+      // Display issuance time and expiration
       console.log(
         `${chalk.blue('🕐')} 発行日時: ${chalk.white(new Date(Number(tokenInfo.iat) * 1000).toLocaleString())}`
       );
@@ -172,7 +172,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
         `${chalk.blue('⏰')} 有効期限: ${chalk.white(new Date(Number(tokenInfo.exp) * 1000).toLocaleString())}`
       );
 
-      // 有効期限チェック
+      // Check expiration
       const expiresAt = new Date(Number(tokenInfo.exp) * 1000);
       const now = new Date();
       const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
@@ -194,7 +194,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
         console.log(chalk.red('❌ 期限切れ'));
       }
     } else {
-      // 通常のユーザートークン
+      // Regular user token
       const { getCachedJwtToken } = await import('../auth/cognito.js');
       const authResult = await getCachedJwtToken(config.cognito);
       const tokenInfo = getTokenInfo(authResult.accessToken);
@@ -210,7 +210,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
       console.log(`${chalk.blue('🏛️')} Issuer: ${chalk.white(tokenInfo.iss)}`);
       console.log(`${chalk.blue('🎯')} Audience: ${chalk.white(tokenInfo.aud)}`);
 
-      // 発行日時と有効期限の表示
+      // Display issuance time and expiration
       console.log(
         `${chalk.blue('🕐')} 発行日時: ${chalk.white(new Date(tokenInfo.iat).toLocaleString())}`
       );
@@ -218,7 +218,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
         `${chalk.blue('⏰')} 有効期限: ${chalk.white(new Date(tokenInfo.exp).toLocaleString())}`
       );
 
-      // 有効期限チェック
+      // Check expiration
       const expiresAt = new Date(tokenInfo.exp);
       const now = new Date();
       const remainingTime = Math.max(0, expiresAt.getTime() - now.getTime());
@@ -247,7 +247,7 @@ export async function tokenInfoCommand(config: ClientConfig): Promise<void> {
 }
 
 /**
- * 利用可能なランタイム一覧表示
+ * Display list of available runtimes
  */
 export function listProfilesCommand(): void {
   console.log(chalk.cyan('📋 利用可能なランタイム'));

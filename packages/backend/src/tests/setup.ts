@@ -1,12 +1,12 @@
 /**
- * Jest テストセットアップファイル
+ * Jest test setup file
  */
 
 import { config } from 'dotenv';
 import path from 'path';
 
-// テスト用の環境変数を読み込み
+// Load environment variables for testing
 config({ path: path.resolve('.env') });
 
-// テストタイムアウトを30秒に設定
+// Set test timeout to 30 seconds
 jest.setTimeout(30000);

@@ -1,5 +1,5 @@
 /**
- * MCP (Model Context Protocol) モジュールのエクスポート
+ * MCP (Model Context Protocol) module exports
  */
 
 export * from './types.js';

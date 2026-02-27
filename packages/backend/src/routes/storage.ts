@@ -1,6 +1,6 @@
 /**
  * Storage Routes
- * ユーザーファイルストレージのAPI
+ * API for user file storage
  */
 
 import { Router, Response } from 'express';
@@ -9,12 +9,12 @@ import * as storageService from '../services/s3-storage.js';
 
 const router = Router();
 
-// 全ルートにJWT認証を適用
+// Apply JWT authentication to all routes
 router.use(jwtAuthMiddleware);
 
 /**
  * GET /storage/list
- * ディレクトリ内のファイル・フォルダ一覧を取得
+ * Get list of files and folders in a directory
  */
 router.get('/list', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -39,7 +39,7 @@ router.get('/list', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * GET /storage/size
- * ディレクトリ内のすべてのファイルサイズを再帰的に計算
+ * Recursively calculate the total size of all files in a directory
  */
 router.get('/size', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -64,7 +64,7 @@ router.get('/size', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * POST /storage/upload
- * ファイルアップロード用の署名付きURLを生成
+ * Generate a pre-signed URL for file upload
  */
 router.post('/upload', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -93,7 +93,7 @@ router.post('/upload', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * POST /storage/directory
- * 新しいディレクトリを作成
+ * Create a new directory
  */
 router.post('/directory', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -122,7 +122,7 @@ router.post('/directory', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * DELETE /storage/file
- * ファイルを削除
+ * Delete a file
  */
 router.delete('/file', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -151,8 +151,8 @@ router.delete('/file', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * DELETE /storage/directory
- * ディレクトリを削除
- * クエリパラメータ force=true で、ディレクトリ内のすべてのファイルを含めて削除
+ * Delete a directory
+ * With query parameter force=true, deletes all files within the directory as well
  */
 router.delete('/directory', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -190,7 +190,7 @@ router.delete('/directory', async (req: AuthenticatedRequest, res: Response) => 
 
 /**
  * GET /storage/download
- * ファイルダウンロード用の署名付きURLを生成
+ * Generate a pre-signed URL for file download
  */
 router.get('/download', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -219,7 +219,7 @@ router.get('/download', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * GET /storage/tree
- * フォルダツリー構造を取得
+ * Get folder tree structure
  */
 router.get('/tree', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -242,7 +242,7 @@ router.get('/tree', async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * GET /storage/download-folder
- * フォルダ内のすべてのファイルの署名付きURLを取得（ZIP作成用）
+ * Get pre-signed URLs for all files in a folder (for ZIP creation)
  */
 router.get('/download-folder', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -259,7 +259,7 @@ router.get('/download-folder', async (req: AuthenticatedRequest, res: Response) 
 
     const downloadInfo = await storageService.getRecursiveDownloadUrls(userId, path);
 
-    // 1GB制限チェック
+    // Check 1GB limit
     const maxSize = 1024 * 1024 * 1024; // 1GB
     if (downloadInfo.totalSize > maxSize) {
       return res.status(400).json({

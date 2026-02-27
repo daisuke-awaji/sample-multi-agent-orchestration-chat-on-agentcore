@@ -1,6 +1,6 @@
 /**
- * Agent管理サービス
- * DynamoDBを使用してユーザーのAgentを管理
+ * Agent Management Service
+ * Manages user Agents using DynamoDB
  */
 
 import {
@@ -47,21 +47,21 @@ export interface Agent {
   createdAt: string;
   updatedAt: string;
 
-  // 共有関連
-  isShared: boolean; // 共有フラグ（組織全体に公開）
-  createdBy: string; // 作成者名（Cognito username）
+  // Sharing-related
+  isShared: boolean; // Sharing flag (visible to entire organization)
+  createdBy: string; // Creator name (Cognito username)
 }
 
 /**
- * DynamoDB 保存用の Agent 型
- * isShared を文字列型に変換（GSI キー制約対応）
+ * Agent type for DynamoDB storage
+ * Converts isShared to string type (to accommodate GSI key constraints)
  */
 interface DynamoAgent extends Omit<Agent, 'isShared'> {
   isShared: string; // 'true' | 'false'
 }
 
 /**
- * Agent を DynamoDB 保存用に変換
+ * Convert Agent to DynamoDB storage format
  */
 function toDynamoAgent(agent: Agent): DynamoAgent {
   return {
@@ -71,7 +71,7 @@ function toDynamoAgent(agent: Agent): DynamoAgent {
 }
 
 /**
- * DynamoDB から取得した Agent をアプリケーション用に変換
+ * Convert Agent retrieved from DynamoDB to application format
  */
 function fromDynamoAgent(dynamoAgent: DynamoAgent): Agent {
   return {
@@ -95,7 +95,7 @@ export interface UpdateAgentInput extends Partial<CreateAgentInput> {
 }
 
 /**
- * ページネーション結果の型定義
+ * Pagination result type definition
  */
 export interface PaginatedResult<T> {
   items: T[];
@@ -104,7 +104,7 @@ export interface PaginatedResult<T> {
 }
 
 /**
- * Agent管理サービスクラス
+ * Agent management service class
  */
 export class AgentsService {
   private dynamoClient: DynamoDBClient;
@@ -116,7 +116,7 @@ export class AgentsService {
   }
 
   /**
-   * ユーザーのAgent一覧を取得
+   * Get list of Agents for a user
    */
   async listAgents(userId: string): Promise<Agent[]> {
     try {
@@ -134,7 +134,7 @@ export class AgentsService {
         return [];
       }
 
-      // DynamoDB から取得したデータを Agent 型に変換
+      // Convert data retrieved from DynamoDB to Agent type
       return response.Items.map((item) => fromDynamoAgent(unmarshall(item) as DynamoAgent));
     } catch (error) {
       console.error('Error listing agents:', error);
@@ -143,7 +143,7 @@ export class AgentsService {
   }
 
   /**
-   * 特定のAgentを取得
+   * Get a specific Agent
    */
   async getAgent(userId: string, agentId: string): Promise<Agent | null> {
     try {
@@ -161,7 +161,7 @@ export class AgentsService {
         return null;
       }
 
-      // DynamoDB から取得したデータを Agent 型に変換
+      // Convert data retrieved from DynamoDB to Agent type
       return fromDynamoAgent(unmarshall(response.Item) as DynamoAgent);
     } catch (error) {
       console.error('Error getting agent:', error);
@@ -170,7 +170,7 @@ export class AgentsService {
   }
 
   /**
-   * 新しいAgentを作成
+   * Create a new Agent
    */
   async createAgent(userId: string, input: CreateAgentInput, username?: string): Promise<Agent> {
     try {
@@ -192,11 +192,11 @@ export class AgentsService {
         mcpConfig: input.mcpConfig,
         createdAt: now,
         updatedAt: now,
-        isShared: false, // デフォルトは非公開
-        createdBy: username || userId, // ユーザー名がなければuserIdを使用
+        isShared: false, // Default to private
+        createdBy: username || userId, // Use userId if username is not available
       };
 
-      // DynamoDB 保存用に変換（isShared を文字列化）
+      // Convert to DynamoDB storage format (stringify isShared)
       const dynamoAgent = toDynamoAgent(agent);
 
       const command = new PutItemCommand({
@@ -214,11 +214,11 @@ export class AgentsService {
   }
 
   /**
-   * Agentを更新
+   * Update an Agent
    */
   async updateAgent(userId: string, input: UpdateAgentInput): Promise<Agent> {
     try {
-      // 既存のAgentを取得
+      // Retrieve existing Agent
       const existingAgent = await this.getAgent(userId, input.agentId);
 
       if (!existingAgent) {
@@ -227,7 +227,7 @@ export class AgentsService {
 
       const now = new Date().toISOString();
 
-      // 更新する属性を構築
+      // Build the attributes to update
       const updateExpressions: string[] = [];
       const expressionAttributeNames: Record<string, string> = {};
       const expressionAttributeValues: Record<string, NativeAttributeValue> = {};
@@ -278,7 +278,7 @@ export class AgentsService {
         expressionAttributeValues[':mcpConfig'] = input.mcpConfig;
       }
 
-      // updatedAtは常に更新
+      // updatedAt is always updated
       updateExpressions.push('#updatedAt = :updatedAt');
       expressionAttributeNames['#updatedAt'] = 'updatedAt';
       expressionAttributeValues[':updatedAt'] = now;
@@ -303,7 +303,7 @@ export class AgentsService {
         throw new Error('Failed to update agent');
       }
 
-      // DynamoDB から取得したデータを Agent 型に変換
+      // Convert data retrieved from DynamoDB to Agent type
       return fromDynamoAgent(unmarshall(response.Attributes) as DynamoAgent);
     } catch (error) {
       console.error('Error updating agent:', error);
@@ -312,7 +312,7 @@ export class AgentsService {
   }
 
   /**
-   * Agentを削除
+   * Delete an Agent
    */
   async deleteAgent(userId: string, agentId: string): Promise<void> {
     try {
@@ -332,8 +332,8 @@ export class AgentsService {
   }
 
   /**
-   * デフォルトAgentを初期化
-   * ユーザーが初めてログインした際に呼び出される
+   * Initialize default Agents
+   * Called when a user logs in for the first time
    */
   async initializeDefaultAgents(
     userId: string,
@@ -356,7 +356,7 @@ export class AgentsService {
   }
 
   /**
-   * Agentの共有状態をトグル
+   * Toggle the sharing state of an Agent
    */
   async toggleShare(userId: string, agentId: string): Promise<Agent> {
     try {
@@ -368,7 +368,7 @@ export class AgentsService {
 
       const now = new Date().toISOString();
       const newIsShared = !existingAgent.isShared;
-      // DynamoDB GSI 用に文字列に変換
+      // Convert to string for DynamoDB GSI
       const newIsSharedStr = newIsShared ? 'true' : 'false';
 
       const command = new UpdateItemCommand({
@@ -395,7 +395,7 @@ export class AgentsService {
         throw new Error('Failed to toggle share');
       }
 
-      // DynamoDB から取得したデータを Agent 型に変換
+      // Convert data retrieved from DynamoDB to Agent type
       return fromDynamoAgent(unmarshall(response.Attributes) as DynamoAgent);
     } catch (error) {
       console.error('Error toggling share:', error);
@@ -404,7 +404,7 @@ export class AgentsService {
   }
 
   /**
-   * 共有されたAgent一覧を取得（ページネーション対応）
+   * Get list of shared Agents (with pagination support)
    */
   async listSharedAgents(
     limit: number = 20,
@@ -412,7 +412,7 @@ export class AgentsService {
     cursor?: string
   ): Promise<PaginatedResult<Agent>> {
     try {
-      // カーソルをデコード
+      // Decode cursor
       let exclusiveStartKey: Record<string, AttributeValue> | undefined;
       if (cursor) {
         try {
@@ -434,7 +434,7 @@ export class AgentsService {
         ExpressionAttributeValues: marshall({
           ':isShared': 'true',
         }),
-        ScanIndexForward: false, // 新しい順
+        ScanIndexForward: false, // Newest first
         Limit: limit,
         ExclusiveStartKey: exclusiveStartKey ? marshall(exclusiveStartKey) : undefined,
       });
@@ -448,16 +448,16 @@ export class AgentsService {
         };
       }
 
-      // DynamoDB から取得したデータを Agent 型に変換
+      // Convert data retrieved from DynamoDB to Agent type
       let agents = response.Items.map((item) => fromDynamoAgent(unmarshall(item) as DynamoAgent));
 
-      // 検索クエリがある場合は名前でフィルタリング
+      // Filter by name if search query is provided
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         agents = agents.filter((agent) => agent.name.toLowerCase().includes(query));
       }
 
-      // 次のカーソルをエンコード
+      // Encode next cursor
       let nextCursor: string | undefined;
       if (response.LastEvaluatedKey) {
         const unmarshalled = unmarshall(response.LastEvaluatedKey);
@@ -476,7 +476,7 @@ export class AgentsService {
   }
 
   /**
-   * 共有されたAgentを取得（任意のユーザーから）
+   * Get a shared Agent (from any user)
    */
   async getSharedAgent(userId: string, agentId: string): Promise<Agent | null> {
     try {
@@ -494,7 +494,7 @@ export class AgentsService {
   }
 
   /**
-   * 共有されたAgentを自分のコレクションにクローン
+   * Clone a shared Agent into your own collection
    */
   async cloneAgent(
     targetUserId: string,
@@ -503,14 +503,14 @@ export class AgentsService {
     targetUsername?: string
   ): Promise<Agent> {
     try {
-      // 元のAgentを取得
+      // Retrieve the original Agent
       const sourceAgent = await this.getSharedAgent(sourceUserId, sourceAgentId);
 
       if (!sourceAgent) {
         throw new Error('Shared agent not found');
       }
 
-      // 新しいAgentとして作成
+      // Create as a new Agent
       const input: CreateAgentInput = {
         name: sourceAgent.name,
         description: sourceAgent.description,
@@ -533,7 +533,7 @@ export class AgentsService {
 }
 
 /**
- * AgentsService インスタンスを作成
+ * Create an AgentsService instance
  */
 export function createAgentsService(): AgentsService {
   const tableName = config.agentsTableName;

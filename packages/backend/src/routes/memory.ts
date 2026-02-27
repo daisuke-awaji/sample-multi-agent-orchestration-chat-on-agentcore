@@ -1,6 +1,6 @@
 /**
- * Memory API ルート
- * AgentCore Memory の長期記憶管理用エンドポイント
+ * Memory API routes
+ * Endpoints for managing long-term memory in AgentCore Memory
  */
 
 import { Router, Response } from 'express';
@@ -10,11 +10,11 @@ import type { AuthenticatedRequest } from '../middleware/auth.js';
 const router = Router();
 
 /**
- * 長期記憶レコード一覧を取得
+ * Get list of long-term memory records
  * GET /api/memory/records
  *
  * Query Parameters:
- * - nextToken: ページネーション用トークン (オプション)
+ * - nextToken: Pagination token (optional)
  */
 router.get('/records', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -51,11 +51,11 @@ router.get('/records', async (req: AuthenticatedRequest, res: Response) => {
 });
 
 /**
- * 長期記憶レコードを削除
+ * Delete a long-term memory record
  * DELETE /api/memory/records/:recordId
  *
  * Parameters:
- * - recordId: 削除するレコードID
+ * - recordId: ID of the record to delete
  */
 router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -66,7 +66,7 @@ router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Respo
 
     const { recordId } = req.params;
 
-    // パラメータの検証
+    // Validate parameters
     if (!recordId) {
       return res.status(400).json({ error: 'recordId parameter is required' });
     }
@@ -92,13 +92,13 @@ router.delete('/records/:recordId', async (req: AuthenticatedRequest, res: Respo
 });
 
 /**
- * セマンティック検索で長期記憶レコードを取得
+ * Retrieve long-term memory records via semantic search
  * POST /api/memory/search
  *
  * Body:
- * - query: 検索クエリ
- * - topK: 取得件数 (オプション、デフォルト: 10)
- * - relevanceScore: 関連度スコアの閾値 (オプション、デフォルト: 0.2)
+ * - query: Search query
+ * - topK: Number of results to retrieve (optional, default: 10)
+ * - relevanceScore: Relevance score threshold (optional, default: 0.2)
  */
 router.post('/search', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -109,12 +109,12 @@ router.post('/search', async (req: AuthenticatedRequest, res: Response) => {
 
     const { query, topK = 10, relevanceScore = 0.2 } = req.body;
 
-    // パラメータの検証
+    // Validate parameters
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'query is required' });
     }
 
-    // 数値パラメータの検証
+    // Validate numeric parameters
     const topKNum = typeof topK === 'number' ? topK : parseInt(topK, 10);
     const relevanceScoreNum =
       typeof relevanceScore === 'number' ? relevanceScore : parseFloat(relevanceScore);

@@ -1,6 +1,6 @@
 /**
  * Configuration Management
- * 設定ファイルと環境変数の管理
+ * Manage configuration files and environment variables
  */
 
 import { config } from 'dotenv';
@@ -40,7 +40,7 @@ export interface ClientConfig {
 }
 
 /**
- * 設定表示用の型
+ * Type for display format of configuration
  */
 export interface ConfigDisplayFormat {
   endpoint: string;
@@ -63,8 +63,8 @@ export interface ConfigDisplayFormat {
 }
 
 /**
- * デフォルト設定
- * Note: password は環境変数から必ず設定する必要があります
+ * Default configuration
+ * Note: password must always be set via environment variable
  */
 const DEFAULT_COGNITO_CONFIG: CognitoConfig = {
   userPoolId: '',
@@ -75,7 +75,7 @@ const DEFAULT_COGNITO_CONFIG: CognitoConfig = {
 };
 
 /**
- * 認証モードを決定
+ * Determine authentication mode
  */
 function determineAuthMode(): AuthMode {
   const mode = process.env.AUTH_MODE?.toLowerCase();
@@ -86,13 +86,13 @@ function determineAuthMode(): AuthMode {
 }
 
 /**
- * エンドポイントを決定する優先順位:
- * 1. AGENTCORE_RUNTIME_ARN が設定されている場合 -> AWS AgentCore Runtime
- * 2. AGENTCORE_ENDPOINT が設定されている場合 -> カスタムエンドポイント
- * 3. どちらも設定されていない場合 -> デフォルト (localhost:8080)
+ * Priority order for determining endpoint:
+ * 1. If AGENTCORE_RUNTIME_ARN is set -> AWS AgentCore Runtime
+ * 2. If AGENTCORE_ENDPOINT is set -> Custom endpoint
+ * 3. If neither is set -> Default (localhost:8080)
  */
 function determineEndpoint(): string {
-  // 優先順位1: Runtime ARN が指定されている場合（AWS AgentCore Runtime）
+  // Priority 1: Runtime ARN is specified (AWS AgentCore Runtime)
   if (process.env.AGENTCORE_RUNTIME_ARN) {
     return buildAgentCoreEndpoint(
       process.env.AGENTCORE_RUNTIME_ARN,
@@ -100,24 +100,24 @@ function determineEndpoint(): string {
     );
   }
 
-  // 優先順位2: カスタムエンドポイント
+  // Priority 2: Custom endpoint
   if (process.env.AGENTCORE_ENDPOINT) {
     return process.env.AGENTCORE_ENDPOINT;
   }
 
-  // 優先順位3: デフォルト（localhost）
+  // Priority 3: Default (localhost)
   return 'http://localhost:8080';
 }
 
 /**
- * AWS Runtime かどうかを判定
+ * Determine whether running in AWS Runtime
  */
 function isAwsRuntime(endpoint: string): boolean {
   return endpoint.includes('bedrock-agentcore') && endpoint.includes('/invocations');
 }
 
 /**
- * 環境変数から設定を読み込み
+ * Load configuration from environment variables
  */
 export function loadConfig(): ClientConfig {
   const endpoint = determineEndpoint();
@@ -136,7 +136,7 @@ export function loadConfig(): ClientConfig {
     },
   };
 
-  // マシンユーザーモードの場合は追加設定を読み込み
+  // Load additional configuration for machine user mode
   if (authMode === 'machine') {
     config.machineUser = {
       cognitoDomain: process.env.COGNITO_DOMAIN || '',
@@ -151,8 +151,8 @@ export function loadConfig(): ClientConfig {
 }
 
 /**
- * Runtime ARN から AgentCore エンドポイントを構築
- * ARN を URL エンコードして正しいエンドポイント URL を生成
+ * Build AgentCore endpoint from Runtime ARN
+ * URL-encode the ARN to generate the correct endpoint URL
  */
 export function buildAgentCoreEndpoint(runtimeArn: string, region: string = 'us-east-1'): string {
   const encodedArn = encodeURIComponent(runtimeArn);
@@ -160,7 +160,7 @@ export function buildAgentCoreEndpoint(runtimeArn: string, region: string = 'us-
 }
 
 /**
- * 設定値の検証
+ * Validate configuration values
  */
 export function validateConfig(config: ClientConfig): string[] {
   const errors: string[] = [];
@@ -170,7 +170,7 @@ export function validateConfig(config: ClientConfig): string[] {
   }
 
   if (config.authMode === 'machine') {
-    // マシンユーザーモードの検証
+    // Validate machine user mode
     if (!config.machineUser?.cognitoDomain) {
       errors.push('COGNITO_DOMAIN が設定されていません');
     }
@@ -184,7 +184,7 @@ export function validateConfig(config: ClientConfig): string[] {
       errors.push('TARGET_USER_ID が設定されていません');
     }
   } else if (config.isAwsRuntime) {
-    // ユーザー認証モードの検証
+    // Validate user authentication mode
     if (!config.cognito.userPoolId) {
       errors.push('Cognito User Pool ID が設定されていません');
     }
@@ -203,7 +203,7 @@ export function validateConfig(config: ClientConfig): string[] {
 }
 
 /**
- * 設定の表示用フォーマット
+ * Display format for configuration
  */
 export function formatConfigForDisplay(config: ClientConfig): ConfigDisplayFormat {
   const display: ConfigDisplayFormat = {

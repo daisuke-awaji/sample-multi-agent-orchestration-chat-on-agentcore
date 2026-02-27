@@ -1,6 +1,6 @@
 /**
  * Cognito Authentication
- * Amazon Cognito を使用した JWT 認証
+ * JWT authentication using Amazon Cognito
  */
 
 import {
@@ -18,7 +18,7 @@ export interface AuthResult {
 }
 
 /**
- * JWT トークンのペイロード型
+ * JWT token payload type
  */
 export interface TokenPayload {
   sub: string;
@@ -31,7 +31,7 @@ export interface TokenPayload {
 }
 
 /**
- * Cognito から JWT トークンを取得
+ * Get JWT token from Cognito
  */
 export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
   const client = new CognitoIdentityProviderClient({
@@ -69,7 +69,7 @@ export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
 }
 
 /**
- * JWT トークンの有効期限をチェック
+ * Check JWT token expiration
  */
 export function isTokenExpired(token: string): boolean {
   try {
@@ -83,7 +83,7 @@ export function isTokenExpired(token: string): boolean {
 }
 
 /**
- * JWT トークンの情報を取得
+ * Get JWT token information
  */
 export function getTokenInfo(token: string): TokenPayload | null {
   try {
@@ -102,7 +102,7 @@ export function getTokenInfo(token: string): TokenPayload | null {
 }
 
 /**
- * トークンキャッシュ管理
+ * Token cache management
  */
 class TokenCache {
   private cache: Map<string, { token: AuthResult; timestamp: number }> = new Map();
@@ -118,9 +118,9 @@ class TokenCache {
     const cached = this.cache.get(key);
     if (!cached) return null;
 
-    // トークンの有効期限をチェック
+    // Check token expiration
     const expiresAt = cached.timestamp + cached.token.expiresIn * 1000;
-    const bufferTime = 300 * 1000; // 5分のバッファ
+    const bufferTime = 300 * 1000; // 5-minute buffer
 
     if (Date.now() + bufferTime > expiresAt) {
       this.cache.delete(key);
@@ -138,18 +138,18 @@ class TokenCache {
 export const tokenCache = new TokenCache();
 
 /**
- * キャッシュ付きトークン取得
+ * Get token with caching
  */
 export async function getCachedJwtToken(config: CognitoConfig): Promise<AuthResult> {
   const cacheKey = `${config.userPoolId}:${config.username}`;
 
-  // キャッシュから取得を試行
+  // Try to retrieve from cache
   const cached = tokenCache.get(cacheKey);
   if (cached) {
     return cached;
   }
 
-  // 新しいトークンを取得
+  // Fetch new token
   const token = await getJwtToken(config);
   tokenCache.set(cacheKey, token);
 

@@ -1,6 +1,6 @@
 /**
  * Ping Command
- * Agent のヘルスチェックコマンド
+ * Health check command for the Agent
  */
 
 import chalk from 'chalk';
@@ -65,7 +65,7 @@ export async function pingCommand(
     console.log(chalk.bold('⚡ パフォーマンス:'));
     console.log(`${chalk.yellow('⏱️')} 接続時間: ${chalk.bold(result.connectionTime)}ms`);
 
-    // エンドポイント情報
+    // Endpoint information
     if (result.serviceInfo.endpoints) {
       console.log('');
       console.log(chalk.bold('🔗 利用可能エンドポイント:'));

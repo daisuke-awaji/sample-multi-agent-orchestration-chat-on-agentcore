@@ -2,7 +2,7 @@
 
 /**
  * AgentCore Client CLI
- * メインエントリーポイント
+ * Main entry point
  */
 
 import { Command } from 'commander';
@@ -14,17 +14,17 @@ import { configCommand, tokenInfoCommand, listProfilesCommand } from './commands
 
 const program = new Command();
 
-// プログラム情報
+// Program information
 program.name('agentcore-client').description('CLI client for AgentCore Runtime').version('0.1.0');
 
-// グローバルオプション
+// Global options
 program
   .option('--endpoint <url>', 'エンドポイントURL')
   .option('--json', 'JSON形式で出力')
   .option('--machine-user', 'マシンユーザー認証を使用')
   .option('--target-user <userId>', '対象ユーザーID（マシンユーザーモード時）');
 
-// Ping コマンド
+// Ping command
 program
   .command('ping')
   .description('Agent のヘルスチェック')
@@ -34,10 +34,10 @@ program
       const globalOptions = program.opts();
       const config = loadConfig();
 
-      // オプションで設定を上書き
+      // Override settings with options
       if (globalOptions.endpoint) {
         config.endpoint = globalOptions.endpoint;
-        // エンドポイントが変更されたら Runtime 判定を再実行
+        // Re-evaluate Runtime detection if endpoint has changed
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
       }
@@ -53,7 +53,7 @@ program
     }
   });
 
-// Invoke コマンド
+// Invoke command
 program
   .command('invoke')
   .description('Agent にプロンプトを送信')
@@ -66,15 +66,15 @@ program
       const globalOptions = program.opts();
       const config = loadConfig();
 
-      // オプションで設定を上書き
+      // Override settings with options
       if (globalOptions.endpoint) {
         config.endpoint = globalOptions.endpoint;
-        // エンドポイントが変更されたら Runtime 判定を再実行
+        // Re-evaluate Runtime detection if endpoint has changed
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
       }
 
-      // マシンユーザーモードのオプション上書き
+      // Override options for machine user mode
       if (globalOptions.machineUser) {
         config.authMode = 'machine';
       }
@@ -82,7 +82,7 @@ program
         config.machineUser.targetUserId = globalOptions.targetUser;
       }
 
-      // セッションIDの決定: CLI > 環境変数
+      // Determine session ID: CLI > environment variable
       const sessionId = options.sessionId || process.env.SESSION_ID;
 
       await invokeCommand(prompt, config, {
@@ -97,7 +97,7 @@ program
     }
   });
 
-// Interactive コマンド
+// Interactive command
 program
   .command('interactive')
   .alias('i')
@@ -107,15 +107,15 @@ program
       const globalOptions = program.opts();
       const config = loadConfig();
 
-      // オプションで設定を上書き
+      // Override settings with options
       if (globalOptions.endpoint) {
         config.endpoint = globalOptions.endpoint;
-        // エンドポイントが変更されたら Runtime 判定を再実行
+        // Re-evaluate Runtime detection if endpoint has changed
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
       }
 
-      // マシンユーザーモードのオプション上書き
+      // Override options for machine user mode
       if (globalOptions.machineUser) {
         config.authMode = 'machine';
       }
@@ -132,7 +132,7 @@ program
     }
   });
 
-// Config コマンド
+// Config command
 program
   .command('config')
   .description('設定の表示・管理')
@@ -155,7 +155,7 @@ program
     }
   });
 
-// Token コマンド
+// Token command
 program
   .command('token')
   .description('JWT トークン情報の表示')
@@ -165,15 +165,15 @@ program
       const globalOptions = program.opts();
       const config = loadConfig();
 
-      // オプションで設定を上書き
+      // Override settings with options
       if (globalOptions.endpoint) {
         config.endpoint = globalOptions.endpoint;
-        // エンドポイントが変更されたら Runtime 判定を再実行
+        // Re-evaluate Runtime detection if endpoint has changed
         config.isAwsRuntime =
           config.endpoint.includes('bedrock-agentcore') && config.endpoint.includes('/invocations');
       }
 
-      // マシンユーザーモードのオプション上書き
+      // Override options for machine user mode
       if (options.machine || globalOptions.machineUser) {
         config.authMode = 'machine';
       }
@@ -187,10 +187,10 @@ program
     }
   });
 
-// Runtimes コマンド（旧 Profiles）
+// Runtimes command (formerly Profiles)
 program
   .command('runtimes')
-  .alias('profiles') // 後方互換性
+  .alias('profiles') // For backward compatibility
   .description('利用可能なランタイム一覧')
   .action(() => {
     try {
@@ -203,7 +203,7 @@ program
     }
   });
 
-// デフォルトアクション（引数なしの場合）
+// Default action (when no arguments are provided)
 program.action(() => {
   console.log(chalk.cyan('🤖 AgentCore Client'));
   console.log('');
@@ -241,18 +241,18 @@ program.action(() => {
   console.log('  agentcore-client <command> --help');
 });
 
-// エラーハンドリング
+// Error handling
 program.configureHelp({
   sortSubcommands: true,
 });
 
 program.showHelpAfterError();
 
-// プログラム実行
+// Execute program
 try {
   program.parse(process.argv);
 
-  // 引数が何も指定されていない場合はヘルプを表示
+  // Show help if no arguments are provided
   if (process.argv.length <= 2) {
     program.help();
   }

@@ -1,6 +1,6 @@
 /**
  * Invoke Command
- * Agent 呼び出しコマンド
+ * Command to invoke the Agent
  */
 
 import chalk from 'chalk';
@@ -52,7 +52,7 @@ export async function invokeCommand(
     return;
   }
 
-  // 対話的UI
+  // Interactive UI
   console.log(chalk.cyan('🤖 AgentCore 呼び出し'));
   console.log(chalk.gray(`エンドポイント: ${config.endpoint}`));
   console.log(
@@ -76,18 +76,18 @@ export async function invokeCommand(
     console.log(chalk.bold('💬 Agent の応答:'));
     console.log(chalk.white('─'.repeat(60)));
 
-    // ストリーミングレスポンスをリアルタイム処理
+    // Process streaming response in real time
     for await (const event of client.invokeStream(prompt, options.sessionId)) {
-      // Agent ループ開始
+      // Agent loop start
       if (event.type === 'beforeInvocationEvent') {
         spinner.text = 'Agent が考えています...';
       }
 
-      // テキスト生成
+      // Text generation
       if (event.type === 'modelContentBlockDeltaEvent') {
         const deltaEvent = event as ModelContentBlockDeltaEvent;
         if (deltaEvent.delta.type === 'textDelta') {
-          // 初回テキストの場合はスピナーを停止
+          // Stop spinner on first text output
           if (spinner.isSpinning) {
             spinner.stop();
           }
@@ -95,7 +95,7 @@ export async function invokeCommand(
         }
       }
 
-      // ツール使用開始
+      // Tool use start
       if (event.type === 'modelContentBlockStartEvent') {
         const startEvent = event as ModelContentBlockStartEvent;
         if (startEvent.start.type === 'toolUseStart') {
@@ -103,24 +103,24 @@ export async function invokeCommand(
           if (spinner.isSpinning) {
             spinner.stop();
           }
-          console.log(''); // 改行
+          console.log(''); // newline
           console.log(chalk.blue(`🔧 ツール実行中: ${currentToolName}`));
         }
       }
 
-      // ツール実行前
+      // Before tool execution
       if (event.type === 'beforeToolsEvent') {
         spinner = ora(`ツール "${currentToolName}" を実行中...`).start();
       }
 
-      // ツール実行後
+      // After tool execution
       if (event.type === 'afterToolsEvent') {
         if (spinner.isSpinning) {
           spinner.succeed(chalk.green(`ツール "${currentToolName}" 実行完了`));
         }
       }
 
-      // サーバー完了イベント
+      // Server completion event
       if (event.type === 'serverCompletionEvent') {
         const completionEvent = event as unknown as ServerCompletionEvent;
         metadata = completionEvent.metadata;
@@ -129,7 +129,7 @@ export async function invokeCommand(
         }
       }
 
-      // エラーイベント
+      // Error event
       if (event.type === 'serverErrorEvent') {
         if (spinner.isSpinning) {
           spinner.fail(chalk.red('Agent でエラーが発生しました'));
@@ -139,10 +139,10 @@ export async function invokeCommand(
       }
     }
 
-    console.log(''); // 改行
+    console.log(''); // newline
     console.log(chalk.white('─'.repeat(60)));
 
-    // メタデータ情報
+    // Metadata information
     console.log('');
     console.log(chalk.bold('📊 実行情報:'));
     console.log(`${chalk.blue('🆔')} リクエストID: ${chalk.gray(metadata.requestId || 'N/A')}`);
@@ -168,12 +168,12 @@ export async function invokeCommand(
 }
 
 /**
- * インタラクティブモード
+ * Interactive mode
  */
 export async function interactiveMode(config: ClientConfig): Promise<void> {
   const client = createClient(config);
 
-  // インタラクティブセッション用の固定セッションIDを生成
+  // Generate a fixed session ID for the interactive session
   const sessionId = `interactive-session-${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
   console.log(chalk.cyan('🔄 AgentCore インタラクティブモード'));
@@ -182,7 +182,7 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
   console.log(chalk.gray("終了するには 'exit' または Ctrl+C を入力してください"));
   console.log('');
 
-  // Node.js の readline を使用したインタラクティブモード
+  // Interactive mode using Node.js readline
   const readline = await import('readline');
 
   const rl = readline.createInterface({
@@ -196,47 +196,47 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
   rl.on('line', async (input) => {
     const trimmed = input.trim();
 
-    // 空の入力は無視してプロンプトを再表示
+    // Ignore empty input and re-display prompt
     if (trimmed === '') {
       rl.prompt();
       return;
     }
 
-    // exit/quit で終了
+    // Exit on exit/quit
     if (trimmed === 'exit' || trimmed === 'quit') {
       console.log(chalk.yellow('👋 セッションを終了します'));
       rl.close();
       return;
     }
 
-    // 非同期処理中は readline を一時停止
+    // Pause readline during async processing
     rl.pause();
 
     try {
       let spinner = ora('Agent が初期化中...').start();
       let currentToolName = '';
 
-      // ストリーミングレスポンスをリアルタイム処理
+      // Process streaming response in real time
       for await (const event of client.invokeStream(trimmed, sessionId)) {
-        // Agent ループ開始
+        // Agent loop start
         if (event.type === 'beforeInvocationEvent') {
           spinner.text = 'Agent が考えています...';
         }
 
-        // テキスト生成
+        // Text generation
         if (event.type === 'modelContentBlockDeltaEvent') {
           const deltaEvent = event as ModelContentBlockDeltaEvent;
           if (deltaEvent.delta.type === 'textDelta') {
-            // 初回テキストの場合はスピナーを停止
+            // Stop spinner on first text output
             if (spinner.isSpinning) {
               spinner.stop();
-              console.log(''); // 改行
+              console.log(''); // newline
             }
             process.stdout.write(chalk.white(deltaEvent.delta.text));
           }
         }
 
-        // ツール使用開始
+        // Tool use start
         if (event.type === 'modelContentBlockStartEvent') {
           const startEvent = event as ModelContentBlockStartEvent;
           if (startEvent.start.type === 'toolUseStart') {
@@ -244,31 +244,31 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
             if (spinner.isSpinning) {
               spinner.stop();
             }
-            console.log(''); // 改行
+            console.log(''); // newline
             console.log(chalk.blue(`🔧 ツール実行中: ${currentToolName}`));
           }
         }
 
-        // ツール実行前
+        // Before tool execution
         if (event.type === 'beforeToolsEvent') {
           spinner = ora(`ツール "${currentToolName}" を実行中...`).start();
         }
 
-        // ツール実行後
+        // After tool execution
         if (event.type === 'afterToolsEvent') {
           if (spinner.isSpinning) {
             spinner.succeed(chalk.green(`ツール "${currentToolName}" 実行完了`));
           }
         }
 
-        // サーバー完了イベント
+        // Server completion event
         if (event.type === 'serverCompletionEvent') {
           if (spinner.isSpinning) {
             spinner.succeed(chalk.green('応答完了'));
           }
         }
 
-        // エラーイベント
+        // Error event
         if (event.type === 'serverErrorEvent') {
           if (spinner.isSpinning) {
             spinner.fail(chalk.red('Agent でエラーが発生しました'));
@@ -283,7 +283,7 @@ export async function interactiveMode(config: ClientConfig): Promise<void> {
       console.log(chalk.red(`エラー: ${error instanceof Error ? error.message : '不明なエラー'}`));
       console.log('');
     } finally {
-      // 処理完了後に再開してプロンプト表示
+      // Resume and show prompt after processing completes
       rl.resume();
       rl.prompt();
     }

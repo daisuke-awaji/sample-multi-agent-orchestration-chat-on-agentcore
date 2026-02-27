@@ -506,7 +506,7 @@ export class AgentCoreMemoryService {
     try {
       console.log(`[AgentCoreMemoryService] Retrieving session events: sessionId=${sessionId}`);
 
-      // ページネーション対応：すべてのイベントを取得
+      // Pagination support: retrieve all events
       const allEvents = [];
       const paginator = paginateListEvents(
         { client: this.client },

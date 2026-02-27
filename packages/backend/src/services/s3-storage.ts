@@ -1,6 +1,6 @@
 /**
  * S3 Storage Service
- * ユーザーごとのファイルストレージを提供
+ * Provides per-user file storage
  */
 
 import {
@@ -39,46 +39,46 @@ export interface UploadUrlResponse {
 }
 
 /**
- * ユーザーのストレージパスプレフィックスを生成
+ * Generate storage path prefix for a user
  */
 function getUserStoragePrefix(userId: string): string {
   return `users/${userId}`;
 }
 
 /**
- * パスを正規化（先頭・末尾のスラッシュを削除、ローカルワークスペースパスを除去、二重エンコード対策）
- * 生成AIが出力するテキストはエンコードされている場合もあれば、そうでない場合もあるため二重エンコード対策を含めておく
+ * Normalize path (remove leading/trailing slashes, strip local workspace path prefix, guard against double-encoding)
+ * AI-generated text may or may not be URL-encoded, so double-encoding protection is included
  */
 function normalizePath(path: string): string {
   let normalized = path;
 
-  // 1. 二重エンコード対策（最大2回までデコード）
+  // 1. Guard against double-encoding (decode up to 2 times)
   for (let i = 0; i < 2; i++) {
     try {
       const decoded = decodeURIComponent(normalized);
       if (decoded === normalized) {
-        // これ以上デコードできない
+        // Cannot decode further
         break;
       }
       normalized = decoded;
     } catch {
-      // デコードに失敗した場合は現在の値を使用
+      // Use current value if decoding fails
       break;
     }
   }
 
-  // 2. 先頭・末尾のスラッシュを削除
+  // 2. Remove leading and trailing slashes
   normalized = normalized.replace(/^\/+|\/+$/g, '');
 
-  // 3. ローカルワークスペースパスのプレフィックスを除去（ハルシネーション対策）
-  // /tmp/ws/, tmp/ws/, /tmp/, tmp/ などを除去
+  // 3. Remove local workspace path prefix (to guard against hallucinations)
+  // Strip prefixes like /tmp/ws/, tmp/ws/, /tmp/, tmp/
   normalized = normalized.replace(/^(?:tmp\/ws|tmp)\//, '');
 
   return normalized;
 }
 
 /**
- * ディレクトリ一覧を取得
+ * List directory contents
  */
 export async function listStorageItems(
   userId: string,
@@ -105,7 +105,7 @@ export async function listStorageItems(
   const response = await s3Client.send(command);
   const items: StorageItem[] = [];
 
-  // ディレクトリを追加
+  // Add directories
   if (response.CommonPrefixes) {
     for (const commonPrefix of response.CommonPrefixes) {
       if (commonPrefix.Prefix) {
@@ -119,7 +119,7 @@ export async function listStorageItems(
     }
   }
 
-  // ファイルを追加
+  // Add files
   if (response.Contents) {
     for (const content of response.Contents) {
       if (content.Key && content.Key !== prefix) {
@@ -144,7 +144,7 @@ export async function listStorageItems(
 }
 
 /**
- * ディレクトリ内のすべてのファイルサイズを再帰的に計算
+ * Recursively calculate the total size of all files in a directory
  */
 export async function getDirectorySize(
   userId: string,
@@ -193,7 +193,7 @@ export async function getDirectorySize(
 }
 
 /**
- * ファイルアップロード用の署名付きURLを生成
+ * Generate a pre-signed URL for file upload
  */
 export async function generateUploadUrl(
   userId: string,
@@ -213,8 +213,8 @@ export async function generateUploadUrl(
 
   console.log(`📤 Generating upload URL for: ${key}`);
 
-  // Note: ファイルサイズ制限は5MB（Bedrock Converse API制限を考慮）
-  // 将来的にクライアント側またはサーバー側でバリデーションを追加する場合に参照
+  // Note: File size limit is 5MB (based on Bedrock Converse API constraint)
+  // Reference this if adding validation on client or server side in the future
   // const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
 
   const command = new PutObjectCommand({
@@ -223,8 +223,7 @@ export async function generateUploadUrl(
     ContentType: contentType || 'application/octet-stream',
   });
 
-  const expiresIn = 3600; // 1時間
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
+  const expiresIn = 3600; // 1 hour
 
   console.log(`✅ Upload URL generated (expires in ${expiresIn}s)`);
 
@@ -236,8 +235,8 @@ export async function generateUploadUrl(
 }
 
 /**
- * ディレクトリを作成
- * S3にはディレクトリという概念がないため、空のプレースホルダーオブジェクトを作成
+ * Create a directory
+ * Since S3 has no concept of directories, create an empty placeholder object
  */
 export async function createDirectory(userId: string, directoryName: string, path: string = '/') {
   const bucketName = config.userStorageBucketName;
@@ -269,7 +268,7 @@ export async function createDirectory(userId: string, directoryName: string, pat
 }
 
 /**
- * ファイルを削除
+ * Delete a file
  */
 export async function deleteFile(userId: string, filePath: string) {
   const bucketName = config.userStorageBucketName;
@@ -295,8 +294,8 @@ export async function deleteFile(userId: string, filePath: string) {
 }
 
 /**
- * ディレクトリを削除
- * @param force true の場合、ディレクトリ内のすべてのオブジェクトを再帰的に削除
+ * Delete a directory
+ * @param force If true, recursively delete all objects within the directory
  */
 export async function deleteDirectory(
   userId: string,
@@ -309,14 +308,14 @@ export async function deleteDirectory(
   }
 
   const normalizedPath = normalizePath(directoryPath);
-  // ルートフォルダの場合も正しくプレフィックスを構築
+  // Build prefix correctly even for root folder
   const prefix = normalizedPath
     ? `${getUserStoragePrefix(userId)}/${normalizedPath}/`
     : `${getUserStoragePrefix(userId)}/`;
 
   console.log(`🗑️  Deleting directory: ${prefix} (force: ${force})`);
 
-  // ディレクトリ内のオブジェクトを確認
+  // Check objects in directory
   const listCommand = new ListObjectsV2Command({
     Bucket: bucketName,
     Prefix: prefix,
@@ -328,7 +327,7 @@ export async function deleteDirectory(
     throw new Error('Directory not found');
   }
 
-  // プレースホルダーオブジェクトのみの場合は削除可能
+  // Directory can be deleted if it only contains the placeholder object
   if (listResponse.Contents.length === 1 && listResponse.Contents[0].Key === prefix) {
     const deleteCommand = new DeleteObjectCommand({
       Bucket: bucketName,
@@ -340,31 +339,31 @@ export async function deleteDirectory(
     return { deleted: true, count: 1 };
   }
 
-  // forceフラグがない場合は、空でないディレクトリは削除できない
+  // If force flag is not set, non-empty directories cannot be deleted
   if (!force) {
     throw new Error('Directory is not empty');
   }
 
-  // forceフラグがある場合は、すべてのオブジェクトを削除
+  // If force flag is set, delete all objects
   let deletedCount = 0;
   let continuationToken: string | undefined;
 
   do {
-    // オブジェクト一覧を取得（ページネーション対応）
+    // Get object list (with pagination support)
     const listCmd = new ListObjectsV2Command({
       Bucket: bucketName,
       Prefix: prefix,
       ContinuationToken: continuationToken,
-      MaxKeys: 1000, // S3 APIの最大値
+      MaxKeys: 1000, // Maximum value for S3 API
     });
 
     const response = await s3Client.send(listCmd);
 
     if (response.Contents && response.Contents.length > 0) {
-      // バッチ削除用のキーリストを作成
+      // Build key list for batch deletion
       const objectsToDelete = response.Contents.map((obj) => ({ Key: obj.Key! }));
 
-      // DeleteObjectsCommandを使用して一括削除
+      // Bulk delete using DeleteObjectsCommand
       const { DeleteObjectsCommand: BatchDeleteCommand } = await import('@aws-sdk/client-s3');
       const deleteCmd = new BatchDeleteCommand({
         Bucket: bucketName,
@@ -388,7 +387,7 @@ export async function deleteDirectory(
 }
 
 /**
- * ファイルのダウンロード用署名付きURLを生成
+ * Generate a pre-signed URL for file download
  */
 export async function generateDownloadUrl(userId: string, filePath: string): Promise<string> {
   const bucketName = config.userStorageBucketName;
@@ -406,7 +405,7 @@ export async function generateDownloadUrl(userId: string, filePath: string): Pro
     Key: key,
   });
 
-  const expiresIn = 3600; // 1時間
+  const expiresIn = 3600; // 1 hour
   const downloadUrl = await getSignedUrl(s3Client, command, { expiresIn });
 
   console.log(`✅ Download URL generated`);
@@ -415,7 +414,7 @@ export async function generateDownloadUrl(userId: string, filePath: string): Pro
 }
 
 /**
- * ファイルの存在確認
+ * Check if a file exists
  */
 export async function checkFileExists(userId: string, filePath: string): Promise<boolean> {
   const bucketName = config.userStorageBucketName;
@@ -440,12 +439,12 @@ export async function checkFileExists(userId: string, filePath: string): Promise
 }
 
 /**
- * フォルダダウンロード用のファイル情報
+ * File information for folder download
  */
 export interface DownloadFileInfo {
-  relativePath: string; // ZIP内の相対パス
-  downloadUrl: string; // S3署名付きURL
-  size: number; // ファイルサイズ
+  relativePath: string; // Relative path within the ZIP
+  downloadUrl: string; // S3 pre-signed URL
+  size: number; // File size
 }
 
 export interface FolderDownloadInfo {
@@ -455,7 +454,7 @@ export interface FolderDownloadInfo {
 }
 
 /**
- * フォルダツリー構造
+ * Folder tree structure
  */
 export interface FolderNode {
   path: string;
@@ -464,8 +463,8 @@ export interface FolderNode {
 }
 
 /**
- * フォルダツリーを取得
- * ルートからの全フォルダを階層構造で返す
+ * Get folder tree
+ * Returns all folders from root in hierarchical structure
  */
 export async function getFolderTree(userId: string): Promise<FolderNode[]> {
   const bucketName = config.userStorageBucketName;
@@ -476,7 +475,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
   const prefix = `${getUserStoragePrefix(userId)}/`;
   console.log(`📁 Building folder tree for user ${userId} (prefix: ${prefix})`);
 
-  // すべてのオブジェクトを取得（ディレクトリマーカー含む）
+  // Retrieve all objects (including directory markers)
   const allObjects: string[] = [];
   let continuationToken: string | undefined;
 
@@ -492,7 +491,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
     if (response.Contents) {
       for (const obj of response.Contents) {
         if (obj.Key && obj.Key !== prefix) {
-          // プレフィックスを除いた相対パスを取得
+          // Get relative path excluding prefix
           const relativePath = obj.Key.replace(prefix, '');
           allObjects.push(relativePath);
         }
@@ -502,7 +501,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
     continuationToken = response.NextContinuationToken;
   } while (continuationToken);
 
-  // ディレクトリパスを抽出（重複排除）
+  // Extract directory paths (deduplicate)
   const dirPaths = new Set<string>();
   for (const objPath of allObjects) {
     const parts = objPath.split('/');
@@ -539,7 +538,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
 
     pathMap.set(fullPath, node);
 
-    // 親ノードを見つけて追加
+    // Find parent node and add to it
     const parentPath = parts.length > 1 ? `/${parts.slice(0, -1).join('/')}` : '/';
     const parentNode = pathMap.get(parentPath);
     if (parentNode) {
@@ -553,7 +552,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
 }
 
 /**
- * フォルダ内のすべてのファイルの署名付きURLを取得（再帰的）
+ * Get pre-signed URLs for all files in a folder (recursively)
  */
 export async function getRecursiveDownloadUrls(
   userId: string,
@@ -587,12 +586,12 @@ export async function getRecursiveDownloadUrls(
 
     if (response.Contents) {
       for (const obj of response.Contents) {
-        // ディレクトリマーカー（末尾が/で終わるオブジェクト）はスキップ
+        // Skip directory markers (objects ending with /)
         if (obj.Key && !obj.Key.endsWith('/') && obj.Key !== prefix) {
           const relativePath = obj.Key.replace(prefix, '');
           const size = obj.Size || 0;
 
-          // 署名付きURLを生成
+          // Generate pre-signed URL
           const downloadCommand = new GetObjectCommand({
             Bucket: bucketName,
             Key: obj.Key,
