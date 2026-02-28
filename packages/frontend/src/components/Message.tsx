@@ -263,7 +263,13 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                         (c.toolUse.id === content.toolResult!.toolUseId ||
                           c.toolUse.originalToolUseId === content.toolResult!.toolUseId)
                     );
-                    if (correspondingToolUse?.toolUse?.name === 'generate_ui') {
+                    // Detect generate_ui by tool name or by content containing __moca_ui_spec
+                    // (content detection is needed for session history reload where toolUse name
+                    //  may not be available)
+                    const isGenerateUi =
+                      correspondingToolUse?.toolUse?.name === 'generate_ui' ||
+                      content.toolResult.content.includes('__moca_ui_spec');
+                    if (isGenerateUi) {
                       return (
                         <JsonRenderBlock
                           key={`json-render-${index}`}
