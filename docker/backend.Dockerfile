@@ -31,12 +31,15 @@ COPY packages/backend/package*.json ./packages/backend/
 COPY packages/backend/tsconfig.json ./packages/backend/
 COPY packages/libs/tool-definitions/package*.json ./packages/libs/tool-definitions/
 COPY packages/libs/tool-definitions/tsconfig.json ./packages/libs/tool-definitions/
+COPY packages/shared/generative-ui-catalog/package*.json ./packages/shared/generative-ui-catalog/
+COPY packages/shared/generative-ui-catalog/tsconfig.json ./packages/shared/generative-ui-catalog/
 
 # Install all dependencies (including workspace dependencies)
 RUN npm ci
 
 # Copy source code for all required packages
 COPY packages/libs/tool-definitions/src/ ./packages/libs/tool-definitions/src/
+COPY packages/shared/generative-ui-catalog/src/ ./packages/shared/generative-ui-catalog/src/
 COPY packages/backend/src/ ./packages/backend/src/
 
 # Build lib packages first
@@ -78,6 +81,7 @@ COPY --chown=node:node package*.json ./
 # Copy workspace package.json files
 COPY --chown=node:node packages/backend/package*.json ./packages/backend/
 COPY --chown=node:node packages/libs/tool-definitions/package*.json ./packages/libs/tool-definitions/
+COPY --chown=node:node packages/shared/generative-ui-catalog/package*.json ./packages/shared/generative-ui-catalog/
 
 # Install production dependencies only (skip scripts like husky)
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
@@ -85,6 +89,8 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 # Copy built files from builder stage
 COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/dist ./packages/libs/tool-definitions/dist
 COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/package.json ./packages/libs/tool-definitions/
+COPY --chown=node:node --from=builder /build/packages/shared/generative-ui-catalog/src ./packages/shared/generative-ui-catalog/src
+COPY --chown=node:node --from=builder /build/packages/shared/generative-ui-catalog/package.json ./packages/shared/generative-ui-catalog/
 COPY --chown=node:node --from=builder /build/packages/backend/dist ./packages/backend/dist
 
 # Set working directory to backend package
