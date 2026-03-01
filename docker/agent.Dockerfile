@@ -4,43 +4,23 @@
 # ========================================
 # Stage 1: Build
 # ========================================
-# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
 FROM public.ecr.aws/docker/library/node:22-slim AS builder
 
 WORKDIR /build
 
-# Copy workspace root package files
-COPY package*.json ./
-COPY tsconfig.base.json ./
+# Copy entire monorepo (.dockerignore controls what's excluded)
+COPY . .
 
-# Copy all workspace package.json files
-COPY packages/agent/package*.json ./packages/agent/
-COPY packages/agent/tsconfig.json ./packages/agent/
-COPY packages/libs/tool-definitions/package*.json ./packages/libs/tool-definitions/
-COPY packages/libs/tool-definitions/tsconfig.json ./packages/libs/tool-definitions/
-COPY packages/libs/s3-workspace-sync/package*.json ./packages/libs/s3-workspace-sync/
-COPY packages/libs/s3-workspace-sync/tsconfig.json ./packages/libs/s3-workspace-sync/
-
-# Install all dependencies (including workspace dependencies)
+# Install all dependencies and build
+# 1. tsc --build: builds shared libs with dependency resolution (generative-ui-catalog → tool-definitions → s3-workspace-sync)
+# 2. npm run build: builds agent package
 RUN npm ci
-
-# Copy source code for all required packages
-COPY packages/libs/tool-definitions/src/ ./packages/libs/tool-definitions/src/
-COPY packages/libs/s3-workspace-sync/src/ ./packages/libs/s3-workspace-sync/src/
-COPY packages/agent/src/ ./packages/agent/src/
-COPY packages/agent/scripts/ ./packages/agent/scripts/
-
-# Build lib packages first
-RUN cd packages/libs/tool-definitions && npm run build
-RUN cd packages/libs/s3-workspace-sync && npm run build
-
-# Build agent package
-RUN cd packages/agent && npm run build
+RUN npx tsc --build tsconfig.build.json --force
+RUN npm run build --workspace=@moca/agent
 
 # ========================================
 # Stage 2: Production
 # ========================================
-# Use ECR Public Gallery to avoid Docker Hub rate limits in CodeBuild
 FROM public.ecr.aws/docker/library/node:22-slim
 
 # Install required tools (Python, AWS CLI, GitHub CLI, GitLab CLI, uv)
@@ -81,24 +61,22 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 
 WORKDIR /app
 
-# Copy workspace root package files
+# Copy workspace root package files for npm workspace resolution
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node packages/agent/package.json ./packages/agent/
+COPY --chown=node:node packages/libs/tool-definitions/package.json ./packages/libs/tool-definitions/
+COPY --chown=node:node packages/libs/s3-workspace-sync/package.json ./packages/libs/s3-workspace-sync/
+COPY --chown=node:node packages/libs/generative-ui-catalog/package.json ./packages/libs/generative-ui-catalog/
 
-# Copy workspace package.json files
-COPY --chown=node:node packages/agent/package*.json ./packages/agent/
-COPY --chown=node:node packages/libs/tool-definitions/package*.json ./packages/libs/tool-definitions/
-COPY --chown=node:node packages/libs/s3-workspace-sync/package*.json ./packages/libs/s3-workspace-sync/
-
-# Install production dependencies only (skip scripts like husky)
+# Install production dependencies only
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-# Copy built files from builder stage
-COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/dist ./packages/libs/tool-definitions/dist
-COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/package.json ./packages/libs/tool-definitions/
-COPY --chown=node:node --from=builder /build/packages/libs/s3-workspace-sync/dist ./packages/libs/s3-workspace-sync/dist
-COPY --chown=node:node --from=builder /build/packages/libs/s3-workspace-sync/package.json ./packages/libs/s3-workspace-sync/
+# Copy built artifacts from builder stage
 COPY --chown=node:node --from=builder /build/packages/agent/dist ./packages/agent/dist
 COPY --chown=node:node --from=builder /build/packages/agent/scripts ./packages/agent/scripts
+COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/dist ./packages/libs/tool-definitions/dist
+COPY --chown=node:node --from=builder /build/packages/libs/s3-workspace-sync/dist ./packages/libs/s3-workspace-sync/dist
+COPY --chown=node:node --from=builder /build/packages/libs/generative-ui-catalog/dist ./packages/libs/generative-ui-catalog/dist
 
 # Set working directory to agent package
 WORKDIR /app/packages/agent

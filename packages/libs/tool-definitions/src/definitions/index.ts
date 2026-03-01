@@ -14,6 +14,7 @@ export * from './memory-search.js';
 export * from './browser.js';
 export * from './todo.js';
 export * from './think.js';
+export * from './generate-ui.js';
 
 import { executeCommandDefinition } from './execute-command.js';
 import { fileEditorDefinition } from './file-editor.js';
@@ -31,6 +32,7 @@ import { memorySearchDefinition } from './memory-search.js';
 import { browserDefinition } from './browser.js';
 import { todoDefinition } from './todo.js';
 import { thinkDefinition } from './think.js';
+import { generateUiDefinition } from './generate-ui.js';
 
 /**
  * All tool definitions array
@@ -52,6 +54,7 @@ export const allToolDefinitions = [
   browserDefinition,
   todoDefinition,
   thinkDefinition,
+  generateUiDefinition,
 ];
 
 /**

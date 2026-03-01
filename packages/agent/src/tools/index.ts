@@ -15,6 +15,7 @@ export { memorySearchTool } from './memory-search.js';
 export { browserTool } from './browser/index.js';
 export { todoTool } from './todo/index.js';
 export { thinkTool } from './think.js';
+export { generateUiTool } from './generate-ui/index.js';
 
 // Import local tool array
 import { executeCommandTool } from './execute-command.js';
@@ -33,6 +34,7 @@ import { memorySearchTool } from './memory-search.js';
 import { browserTool } from './browser/index.js';
 import { todoTool } from './todo/index.js';
 import { thinkTool } from './think.js';
+import { generateUiTool } from './generate-ui/index.js';
 
 /**
  * List of local tools built into the Agent
@@ -55,4 +57,5 @@ export const localTools = [
   browserTool,
   todoTool,
   thinkTool,
+  generateUiTool,
 ];

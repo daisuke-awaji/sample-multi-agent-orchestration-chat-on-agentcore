@@ -18,6 +18,7 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --passWithNoTests"
   },
   "dependencies": {
+    "@moca/generative-ui-catalog": "*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

@@ -774,6 +774,11 @@ triggers:
       '11': 11月
       '12': 12月
 
+# Generative UI
+generativeUi:
+  noChartData: チャートデータがありません
+  noData: データがありません
+
 # ホームページ
 home:
   title: AI エージェントを、つくろう。

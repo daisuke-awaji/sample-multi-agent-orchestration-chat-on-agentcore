@@ -31,7 +31,12 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   /**
    * Default environment
    */
-  default: {},
+  default: {
+    customDomain: {
+      domainName: 'geeawa.net',
+      hostName: 'moca',
+    },
+  },
 
   /**
    * Development environment

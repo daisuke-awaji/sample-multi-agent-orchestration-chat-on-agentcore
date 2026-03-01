@@ -229,14 +229,40 @@ export class Frontend extends Construct {
     }
 
     // Frontend Build and Deployment using deploy-time-build
+    // Uses multiple assets (include-list pattern) so that only workspace packages
+    // required for the frontend build are shipped to the CodeBuild environment.
+    // When adding a new workspace dependency for frontend, add a corresponding asset entry below.
     const frontendBuild = new NodejsBuild(this, 'FrontendBuild', {
       assets: [
         {
-          path: path.join(PROJECT_ROOT, 'packages/frontend'),
-          exclude: ['node_modules/**', '.git/**', 'dist/**', '.env'],
+          path: PROJECT_ROOT,
+          exclude: [
+            'node_modules/**',
+            '.git/**',
+            'dist/**',
+            '.env',
+            '.env.*',
+            'cdk.out/**',
+            'coverage/**',
+            'packages/agent/**',
+            'packages/backend/**',
+            'packages/cdk/**',
+            'packages/client/**',
+            'packages/lambda-tools/**',
+            'packages/trigger/**',
+            'packages/session-stream-handler/**',
+            'packages/libs/s3-workspace-sync/**',
+            'docker/**',
+            'docs/**',
+            'scripts/**',
+          ],
         },
       ],
-      buildCommands: ['npm install', 'npm run build'],
+      buildCommands: [
+        'npm ci --include-workspace-root -w packages/frontend -w packages/libs/generative-ui-catalog -w packages/libs/tool-definitions',
+        'npm run build -w packages/libs/generative-ui-catalog',
+        'npm run build -w packages/frontend',
+      ],
       buildEnvironment: {
         VITE_COGNITO_USER_POOL_ID: props.userPoolId,
         VITE_COGNITO_CLIENT_ID: props.userPoolClientId,
@@ -245,7 +271,7 @@ export class Frontend extends Construct {
         VITE_BACKEND_URL: props.backendApiUrl || '',
         VITE_APPSYNC_EVENTS_ENDPOINT: props.appsyncEventsEndpoint || '',
       },
-      outputSourceDirectory: 'dist',
+      outputSourceDirectory: 'packages/frontend/dist',
       destinationBucket: this.s3Bucket,
       distribution: this.cloudFrontDistribution,
       nodejsVersion: 22,

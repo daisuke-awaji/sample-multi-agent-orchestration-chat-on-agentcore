@@ -769,6 +769,11 @@ triggers:
       '11': November
       '12': December
 
+# Generative UI
+generativeUi:
+  noChartData: No chart data available
+  noData: No data available
+
 # Home Page
 home:
   title: Build your AI agents.

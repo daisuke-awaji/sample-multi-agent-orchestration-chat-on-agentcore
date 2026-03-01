@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/libs/generative-ui-catalog" },
+    { "path": "packages/libs/tool-definitions" },
+    { "path": "packages/libs/s3-workspace-sync" }
+  ]
+}

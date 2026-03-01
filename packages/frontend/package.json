@@ -12,6 +12,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@json-render/core": "^0.11.0",
+    "@json-render/react": "^0.11.0",
+    "@moca/generative-ui-catalog": "*",
     "@tanstack/react-virtual": "^3.13.13",
     "@types/react-router-dom": "^5.3.3",
     "@types/uuid": "^10.0.0",
@@ -36,6 +39,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.11.0",
     "react-syntax-highlighter": "^16.1.0",
+    "recharts": "^3.7.0",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",

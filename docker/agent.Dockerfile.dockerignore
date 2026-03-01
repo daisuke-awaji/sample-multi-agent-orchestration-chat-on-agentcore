@@ -1,10 +1,37 @@
+# Build artifacts
 node_modules/
 dist/
+*.tsbuildinfo
 cdk.out/
+coverage/
+
+# Version control
 .git/
 .github/
+.gitlab-ci.yml
+
+# Packages not needed for agent build
 packages/frontend/
-packages/backend/
 packages/cdk/
 packages/client/
 packages/lambda-tools/
+packages/shared/
+
+# Docker files (prevent recursive copy)
+docker/
+
+# Documentation and scripts
+docs/
+scripts/
+*.md
+!packages/*/README.md
+
+# Environment files
+.env
+.env.*
+*.local
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store

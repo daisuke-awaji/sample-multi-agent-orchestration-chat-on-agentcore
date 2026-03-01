@@ -794,6 +794,25 @@ print(result_file)
               status: isError ? 'error' : 'success',
               content: [{ text: content }],
             };
+          } else if (Array.isArray(content)) {
+            // CodeInterpreter returns content as array of {type, text} objects.
+            // Extract text values to avoid wrapping the spec in the response envelope.
+            const texts = content
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .filter((item: any) => item.type === 'text' && typeof item.text === 'string')
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .map((item: any) => item.text as string);
+            if (texts.length > 0) {
+              return {
+                status: isError ? 'error' : 'success',
+                content: [{ text: texts.join('\n') }],
+              };
+            }
+            // Fallback: stringify the array if no text items found
+            return {
+              status: isError ? 'error' : 'success',
+              content: [{ text: JSON.stringify(content) }],
+            };
           } else {
             return {
               status: isError ? 'error' : 'success',
