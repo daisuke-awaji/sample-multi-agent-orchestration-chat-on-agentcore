@@ -251,7 +251,6 @@ export class Frontend extends Construct {
             'packages/trigger/**',
             'packages/session-stream-handler/**',
             'packages/libs/s3-workspace-sync/**',
-            'packages/shared/tool-definitions/**',
             'docker/**',
             'docs/**',
             'scripts/**',
@@ -260,8 +259,8 @@ export class Frontend extends Construct {
       ],
       buildCommands: [
         'npm ci --include-workspace-root -w packages/frontend -w packages/libs/generative-ui-catalog -w packages/libs/tool-definitions',
-        'cd packages/libs/generative-ui-catalog && npm run build',
-        'cd packages/frontend && npm run build',
+        'npm run build -w packages/libs/generative-ui-catalog',
+        'npm run build -w packages/frontend',
       ],
       buildEnvironment: {
         VITE_COGNITO_USER_POOL_ID: props.userPoolId,

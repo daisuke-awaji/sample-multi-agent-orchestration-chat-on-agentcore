@@ -28,7 +28,7 @@ COPY . .
 # 1. tsc --build: builds shared libs with dependency resolution (generative-ui-catalog → tool-definitions)
 # 2. npm run build: builds backend package
 RUN npm ci
-RUN npx tsc --build tsconfig.build.json
+RUN npx tsc --build tsconfig.build.json --force
 RUN npm run build --workspace=@moca/backend
 
 # ========================================
@@ -61,7 +61,7 @@ WORKDIR /app
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node packages/backend/package.json ./packages/backend/
 COPY --chown=node:node packages/libs/tool-definitions/package.json ./packages/libs/tool-definitions/
-COPY --chown=node:node packages/libs/generative-ui-catalog/package.json ./packages/shared/generative-ui-catalog/
+COPY --chown=node:node packages/libs/generative-ui-catalog/package.json ./packages/libs/generative-ui-catalog/
 
 # Install production dependencies only
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
@@ -69,7 +69,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 # Copy built artifacts from builder stage
 COPY --chown=node:node --from=builder /build/packages/backend/dist ./packages/backend/dist
 COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/dist ./packages/libs/tool-definitions/dist
-COPY --chown=node:node --from=builder /build/packages/libs/generative-ui-catalog/dist ./packages/shared/generative-ui-catalog/dist
+COPY --chown=node:node --from=builder /build/packages/libs/generative-ui-catalog/dist ./packages/libs/generative-ui-catalog/dist
 
 # Set working directory to backend package
 WORKDIR /app/packages/backend

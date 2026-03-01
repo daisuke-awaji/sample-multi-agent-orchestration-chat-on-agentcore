@@ -1,6 +1,7 @@
 # Build artifacts
 node_modules/
 dist/
+*.tsbuildinfo
 cdk.out/
 coverage/
 
