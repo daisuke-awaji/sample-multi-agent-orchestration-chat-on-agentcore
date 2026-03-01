@@ -2,44 +2,37 @@
  * Generative UI catalog validation
  *
  * Validates that a UI spec only uses registered components
- * and sanitizes props for security.
+ * and strips unsupported event bindings from non-interactive components.
  */
 
 import type { UISpec, UIElement } from './types.js';
-import { UI_COMPONENT_TYPES, BLOCKED_PROPS } from './types.js';
+import { UI_COMPONENT_TYPES } from './types.js';
 
 /**
- * Sanitize props by removing blocked event handlers
+ * Components that support "on" event bindings (e.g., on.press).
+ * All other components are layout/display only and should not have "on".
  */
-function sanitizeProps(props: Record<string, unknown>): Record<string, unknown> {
-  const sanitized: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(props)) {
-    if (BLOCKED_PROPS.includes(key as (typeof BLOCKED_PROPS)[number])) {
-      continue;
-    }
-    // Block href/src with javascript: protocol
-    if ((key === 'href' || key === 'src') && typeof value === 'string') {
-      if (value.trim().toLowerCase().startsWith('javascript:')) {
-        continue;
-      }
-    }
-    sanitized[key] = value;
-  }
-  return sanitized;
-}
+const INTERACTIVE_COMPONENTS = ['MetricCard'];
 
 /**
  * Validate and sanitize a UI element
  */
-function validateElement(key: string, element: UIElement): { valid: boolean; errors: string[] } {
+function validateElement(
+  key: string,
+  element: UIElement & { on?: unknown }
+): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (!UI_COMPONENT_TYPES.includes(element.type as (typeof UI_COMPONENT_TYPES)[number])) {
     errors.push(`Unknown component type "${element.type}" in element "${key}"`);
   }
 
-  if (element.props) {
-    element.props = sanitizeProps(element.props);
+  // Strip "on" event bindings from non-interactive components
+  if (element.on && !INTERACTIVE_COMPONENTS.includes(element.type)) {
+    delete element.on;
+    errors.push(
+      `Stripped "on" from non-interactive component "${element.type}" in element "${key}"`
+    );
   }
 
   return { valid: errors.length === 0, errors };

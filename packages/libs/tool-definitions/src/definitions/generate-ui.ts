@@ -38,7 +38,11 @@ export const generateUiSchema = z.object({
  * catalog.prompt() generates a complete description of all available components,
  * their props, and usage guidelines — derived from the Zod schemas in the catalog.
  */
-const catalogPrompt = generateComponentPrompt();
+const catalogPrompt = generateComponentPrompt({
+  customRules: [
+    'Only MetricCard supports "on" event bindings (e.g., on.press for setState). Layout components (Stack, Grid) and display components (DataTable, BarChart, LineChart, PieChart) do NOT support "on" events — never attach "on" to them.',
+  ],
+});
 
 const toolDescription =
   'Generate rich UI components for display in the chat interface. ' +

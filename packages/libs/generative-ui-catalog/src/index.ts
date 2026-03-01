@@ -20,7 +20,8 @@ export const catalog = defineCatalog(schema, {
         gap: z.number().optional(),
       }),
       slots: ['default'],
-      description: 'Vertical layout container. Stacks children vertically with configurable gap.',
+      description:
+        'Vertical layout container. Stacks children vertically with configurable gap. Layout only — does NOT support "on" events.',
     },
     Grid: {
       props: z.object({
@@ -29,7 +30,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: ['default'],
       description:
-        'Responsive grid layout container. Arranges children in a grid with configurable column count and gap.',
+        'Responsive grid layout container. Arranges children in a grid with configurable column count and gap. Layout only — does NOT support "on" events.',
     },
 
     // --- Data Display ---
@@ -41,7 +42,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: [],
       description:
-        'Table display for tabular data. Columns are header strings, rows are arrays of cell strings.',
+        'Table display for tabular data. Columns are header strings, rows are arrays of cell strings. Display only — does NOT support "on" events.',
     },
     MetricCard: {
       props: z.object({
@@ -53,7 +54,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: [],
       description:
-        'KPI/metric display card with title, value, optional description, and change indicator with trend direction.',
+        'KPI/metric display card with title, value, optional description, and change indicator with trend direction. Supports "on.press" event for interactive use (e.g., tab switching with setState).',
     },
 
     // --- Charts ---
@@ -78,7 +79,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: [],
       description:
-        'Bar chart for comparing values across categories. Use "bars" array for multiple series or "yKey"+"color" shorthand for a single bar. Set stacked=true for stacked bars.',
+        'Bar chart for comparing values across categories. Use "bars" array for multiple series or "yKey"+"color" shorthand for a single bar. Set stacked=true for stacked bars. Display only — does NOT support "on" events.',
     },
     LineChart: {
       props: z.object({
@@ -101,7 +102,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: [],
       description:
-        'Line chart for trends over time. Use "lines" array for multiple series or "yKey"+"color" shorthand for a single line. Set dashed=true for dashed lines.',
+        'Line chart for trends over time. Use "lines" array for multiple series or "yKey"+"color" shorthand for a single line. Set dashed=true for dashed lines. Display only — does NOT support "on" events.',
     },
     PieChart: {
       props: z.object({
@@ -119,7 +120,7 @@ export const catalog = defineCatalog(schema, {
       }),
       slots: [],
       description:
-        'Pie/donut chart for showing proportions. Each data item has name and value. Set innerRadius > 0 for donut style.',
+        'Pie/donut chart for showing proportions. Each data item has name and value. Set innerRadius > 0 for donut style. Display only — does NOT support "on" events.',
     },
   },
   actions: {},

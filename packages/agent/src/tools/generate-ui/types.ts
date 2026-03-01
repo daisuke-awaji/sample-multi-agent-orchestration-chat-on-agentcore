@@ -16,21 +16,3 @@ export { isUISpec, isUISpecOutput } from '@moca/generative-ui-catalog';
  */
 export const UI_COMPONENT_TYPES = COMPONENT_NAMES;
 export type UIComponentType = (typeof UI_COMPONENT_TYPES)[number];
-
-/**
- * Blocked props for security
- */
-export const BLOCKED_PROPS = [
-  'onClick',
-  'onLoad',
-  'onError',
-  'onMouseOver',
-  'onMouseOut',
-  'onFocus',
-  'onBlur',
-  'onSubmit',
-  'onKeyDown',
-  'onKeyUp',
-  'onKeyPress',
-  'dangerouslySetInnerHTML',
-] as const;

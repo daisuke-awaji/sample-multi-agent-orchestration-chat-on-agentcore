@@ -16,13 +16,30 @@ const changeTypeConfig: Record<string, { className: string; Icon: React.FC<{ siz
   neutral: { className: 'text-fg-muted', Icon: Minus },
 };
 
-const MetricCard = ({ props }: BaseComponentProps<MetricCardProps>): React.ReactNode => {
+const MetricCard = ({ props, on }: BaseComponentProps<MetricCardProps>): React.ReactNode => {
   const { title, value, description, change, changeType = 'neutral' } = props;
   const config = changeTypeConfig[changeType] ?? changeTypeConfig.neutral;
   const { className: changeClass, Icon } = config;
+  const press = on('press');
+  const isClickable = press.bound;
 
   return (
-    <div className="bg-surface-primary border border-border rounded-lg p-4 flex flex-col gap-1.5">
+    <div
+      className={`bg-surface-primary border border-border rounded-lg p-4 flex flex-col gap-1.5${isClickable ? ' cursor-pointer hover:bg-surface-secondary active:bg-surface-tertiary transition-colors' : ''}`}
+      onClick={isClickable ? () => press.emit() : undefined}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={
+        isClickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                press.emit();
+              }
+            }
+          : undefined
+      }
+    >
       <span className="text-xs font-medium text-fg-muted uppercase tracking-wide">{title}</span>
       <span className="text-2xl font-bold text-fg-default leading-tight">{value}</span>
       {change && (
