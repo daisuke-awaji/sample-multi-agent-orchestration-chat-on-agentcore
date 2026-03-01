@@ -87,6 +87,9 @@ export function validateUISpec(spec: unknown): {
   const uiSpec: UISpec = {
     root: s.root,
     elements,
+    ...(s.state && typeof s.state === 'object'
+      ? { state: s.state as Record<string, unknown> }
+      : {}),
   };
 
   return { valid: errors.length === 0, spec: uiSpec, errors };

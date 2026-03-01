@@ -15,4 +15,3 @@ export { isUISpec, isUISpecOutput } from '@moca/generative-ui-catalog';
  * Supported component types in the UI catalog — derived from the shared catalog (SSoT).
  */
 export const UI_COMPONENT_TYPES = COMPONENT_NAMES;
-export type UIComponentType = (typeof UI_COMPONENT_TYPES)[number];

@@ -9,10 +9,7 @@ interface JsonRenderBlockProps {
 }
 
 export const JsonRenderBlock: React.FC<JsonRenderBlockProps> = ({ content }) => {
-  const spec = React.useMemo<Spec | null>(
-    () => extractUISpec(content) as Spec | null,
-    [content]
-  );
+  const spec = React.useMemo<Spec | null>(() => extractUISpec(content) as Spec | null, [content]);
 
   if (!spec) {
     return (
@@ -24,7 +21,7 @@ export const JsonRenderBlock: React.FC<JsonRenderBlockProps> = ({ content }) => 
 
   return (
     <div className="generative-ui-render p-3">
-      <JSONUIProvider registry={registry}>
+      <JSONUIProvider registry={registry} initialState={spec.state}>
         <Renderer spec={spec} registry={registry} />
       </JSONUIProvider>
     </div>

@@ -155,6 +155,7 @@ export interface UIElement {
 export interface UISpec {
   root: string;
   elements: Record<string, UIElement>;
+  state?: Record<string, unknown>;
 }
 
 export interface UISpecOutput {

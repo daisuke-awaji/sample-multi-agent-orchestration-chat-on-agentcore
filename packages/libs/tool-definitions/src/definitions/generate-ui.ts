@@ -37,10 +37,33 @@ export const generateUiSchema = z.object({
  * Build the tool description dynamically from the shared catalog.
  * catalog.prompt() generates a complete description of all available components,
  * their props, and usage guidelines — derived from the Zod schemas in the catalog.
+ *
+ * customRules constrain the AI's spec generation to avoid patterns that the
+ * current runtime cannot support:
+ *
+ * 1. "on" event restriction:
+ *    Only MetricCard implements emit("press") in its React component.
+ *    Other components (Stack, Grid, DataTable, charts) are pure display/layout
+ *    and ignore "on" bindings. Without this rule, the AI attaches on.press to
+ *    Grid/Stack for tab switching, which silently does nothing.
+ *    See: packages/agent/src/tools/generate-ui/catalog.ts (INTERACTIVE_COMPONENTS)
+ *
+ * 2. $state data reference restriction:
+ *    The streaming layer (Strands SDK → stream-serializer → NDJSON → frontend)
+ *    strips the spec.state field during transport. The tool output correctly
+ *    includes state (verified via agent logs), but by the time the toolResult
+ *    reaches the frontend, only root + elements survive. As a result, $state
+ *    references to data arrays (e.g., chart data) resolve to undefined.
+ *    Simple scalar $state values (e.g., activeTab) work because they are set
+ *    at runtime via setState actions, not read from initial state.
+ *    See: packages/agent/src/utils/stream-serializer.ts (afterToolsEvent drops content)
  */
 const catalogPrompt = generateComponentPrompt({
   customRules: [
+    // Rule 1: Prevent AI from attaching "on" events to non-interactive components
     'Only MetricCard supports "on" event bindings (e.g., on.press for setState). Layout components (Stack, Grid) and display components (DataTable, BarChart, LineChart, PieChart) do NOT support "on" events — never attach "on" to them.',
+    // Rule 2: Prevent AI from using $state for data arrays (lost during streaming)
+    'Do NOT use {"$state": "/path"} to reference data arrays in component props (e.g., chart data, table rows). Always embed data directly in props. The "state" field and $state expressions are ONLY reliable for simple scalar values used in $cond, visible, and setState (e.g., tracking the active tab name). For chart/table data, put the arrays directly in the "data"/"rows" prop.',
   ],
 });
 
