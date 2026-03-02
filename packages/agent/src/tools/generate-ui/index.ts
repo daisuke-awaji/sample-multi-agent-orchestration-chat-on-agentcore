@@ -3,4 +3,3 @@
  */
 
 export { generateUiTool } from './tool.js';
-export * from './types.js';

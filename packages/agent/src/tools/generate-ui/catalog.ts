@@ -5,8 +5,8 @@
  * and strips unsupported event bindings from non-interactive components.
  */
 
-import type { UISpec, UIElement } from './types.js';
-import { UI_COMPONENT_TYPES } from './types.js';
+import type { UISpec, UIElement } from '@moca/generative-ui-catalog';
+import { COMPONENT_NAMES } from '@moca/generative-ui-catalog';
 
 /**
  * Components that support "on" event bindings (e.g., on.press).
@@ -23,7 +23,7 @@ function validateElement(
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!UI_COMPONENT_TYPES.includes(element.type as (typeof UI_COMPONENT_TYPES)[number])) {
+  if (!COMPONENT_NAMES.includes(element.type as (typeof COMPONENT_NAMES)[number])) {
     errors.push(`Unknown component type "${element.type}" in element "${key}"`);
   }
 

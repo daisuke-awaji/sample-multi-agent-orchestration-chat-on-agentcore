@@ -13,8 +13,8 @@ import { AgentCoreCodeInterpreterClient } from '../code-interpreter/client.js';
 import { getCurrentStoragePath } from '../../context/request-context.js';
 import { generateUiDefinition } from '@moca/tool-definitions';
 import { validateUISpec } from './catalog.js';
-import { isUISpec } from './types.js';
-import type { UISpecOutput } from './types.js';
+import { isUISpec } from '@moca/generative-ui-catalog';
+import type { UISpecOutput } from '@moca/generative-ui-catalog';
 
 /**
  * Extract JSON spec from CodeInterpreter output.

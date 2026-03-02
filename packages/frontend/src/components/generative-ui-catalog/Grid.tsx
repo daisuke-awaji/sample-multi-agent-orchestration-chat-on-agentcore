@@ -42,13 +42,7 @@ const Grid = ({ props, children }: BaseComponentProps<GridProps>): React.ReactNo
   // For cols > 4 (rare), use inline style without responsive behavior
   // since > 4 columns rarely makes sense on smaller screens anyway
   return (
-    <div
-      className="grid grid-cols-1 sm:grid-cols-2"
-      style={{
-        gap: `${gap}px`,
-        gridTemplateColumns: undefined,
-      }}
-    >
+    <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: `${gap}px` }}>
       {children}
     </div>
   );

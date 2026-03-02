@@ -257,20 +257,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
 
                   case 'toolResult': {
                     if (!content.toolResult) return null;
-                    const correspondingToolUse = message.contents.find(
-                      (c) =>
-                        c.type === 'toolUse' &&
-                        c.toolUse &&
-                        (c.toolUse.id === content.toolResult!.toolUseId ||
-                          c.toolUse.originalToolUseId === content.toolResult!.toolUseId)
-                    );
-                    // Detect generate_ui by tool name or by content shape
-                    // (content detection is needed for session history reload where toolUse name
-                    //  may not be available)
-                    const isGenerateUi =
-                      correspondingToolUse?.toolUse?.name === 'generate_ui' ||
-                      extractUISpec(content.toolResult.content) !== null;
-                    if (isGenerateUi) {
+                    if (extractUISpec(content.toolResult.content) !== null) {
                       return (
                         <JsonRenderBlock
                           key={`json-render-${index}`}
