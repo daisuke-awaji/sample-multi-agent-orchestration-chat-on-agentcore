@@ -59,7 +59,7 @@ if [ -n "$GITLAB_TOKEN_SECRET_NAME" ]; then
     if command -v glab &> /dev/null; then
       echo "$GITLAB_TOKEN" | glab auth login --hostname "$GITLAB_HOST" --stdin
       echo "GitLab CLI (glab) authenticated successfully for $GITLAB_HOST"
-      glab auth status
+      glab auth status || true
     else
       echo "glab CLI not found, using GITLAB_TOKEN environment variable only"
     fi

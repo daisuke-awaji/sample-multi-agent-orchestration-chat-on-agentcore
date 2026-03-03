@@ -14,6 +14,14 @@ export const executeCommandSchema = z.object({
     .max(600000)
     .default(120000)
     .describe('Timeout in milliseconds (default: 120s, max: 600s)'),
+  maxOutputLength: z
+    .number()
+    .min(1000)
+    .max(1000000)
+    .default(100000)
+    .describe(
+      'Max output length in characters (default: 100000, min: 1000, max: 1000000). Increase to retrieve full output for long-running commands.'
+    ),
 });
 
 export const executeCommandDefinition: ToolDefinition<typeof executeCommandSchema> = {

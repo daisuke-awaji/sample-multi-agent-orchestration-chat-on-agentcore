@@ -88,7 +88,7 @@ export const executeCommandTool = tool({
   description: executeCommandDefinition.description,
   inputSchema: executeCommandDefinition.zodSchema,
   callback: async (input) => {
-    const { command, workingDirectory, timeout } = input;
+    const { command, workingDirectory, timeout, maxOutputLength } = input;
 
     logger.info(`🔧 Command execution started: ${command}`);
 
@@ -132,8 +132,8 @@ export const executeCommandTool = tool({
       const duration = Date.now() - startTime;
 
       // 4. Format result
-      const stdout = truncateOutput(result.stdout || '');
-      const stderr = truncateOutput(result.stderr || '');
+      const stdout = truncateOutput(result.stdout || '', maxOutputLength);
+      const stderr = truncateOutput(result.stderr || '', maxOutputLength);
 
       const output = `Execution Result:
 Command: ${command}
@@ -167,11 +167,11 @@ Working Directory: ${effectiveWorkingDirectory}
       }
 
       if (execError.stdout) {
-        errorOutput += `\nStandard Output:\n${truncateOutput(execError.stdout)}`;
+        errorOutput += `\nStandard Output:\n${truncateOutput(execError.stdout, maxOutputLength)}`;
       }
 
       if (execError.stderr) {
-        errorOutput += `\nStandard Error:\n${truncateOutput(execError.stderr)}`;
+        errorOutput += `\nStandard Error:\n${truncateOutput(execError.stderr, maxOutputLength)}`;
       }
 
       // Special handling for timeout errors
