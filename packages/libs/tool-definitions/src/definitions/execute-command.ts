@@ -20,7 +20,7 @@ export const executeCommandSchema = z.object({
     .max(1000000)
     .default(4000)
     .describe(
-      'Max output length in characters (default: 4000, max: 1000000). Increase to retrieve full output for long-running commands.'
+      'Max output length in characters (default: 4000, min: 1000, max: 1000000). Increase to retrieve full output for long-running commands.'
     ),
 });
 
