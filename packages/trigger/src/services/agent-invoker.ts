@@ -47,6 +47,14 @@ interface AgentInvocationResponse {
 }
 
 /**
+ * Prepared request for Agent API
+ */
+interface PreparedRequest {
+  request: AgentInvocationRequest;
+  sessionId: string;
+}
+
+/**
  * Service for invoking Agent /invocations API
  */
 export class AgentInvoker {
@@ -61,17 +69,12 @@ export class AgentInvoker {
   }
 
   /**
-   * Invoke Agent with Machine User authentication
-   * @param payload - Scheduler event payload
-   * @param authToken - Machine user authentication token
-   * @param eventContext - Optional event-driven context for building system prompt
+   * Build Agent invocation request from payload and agent configuration
    */
-  async invoke(
+  private async prepareRequest(
     payload: SchedulerEventPayload,
-    authToken: string,
     eventContext?: EventDrivenContext
-  ): Promise<AgentInvocationResponse> {
-    // Fetch Agent configuration from DynamoDB
+  ): Promise<PreparedRequest> {
     console.log('Fetching Agent configuration:', {
       userId: payload.userId,
       agentId: payload.agentId,
@@ -80,15 +83,7 @@ export class AgentInvoker {
     const agent = await this.agentsService.getAgent(payload.userId, payload.agentId);
 
     if (!agent) {
-      console.error('Agent not found:', {
-        userId: payload.userId,
-        agentId: payload.agentId,
-      });
-      return {
-        requestId: '',
-        success: false,
-        error: `Agent not found: ${payload.agentId}`,
-      };
+      throw new Error(`Agent not found: ${payload.agentId}`);
     }
 
     console.log('Agent configuration fetched:', {
@@ -98,7 +93,6 @@ export class AgentInvoker {
       hasMcpConfig: !!agent.mcpConfig,
     });
 
-    // Build system prompt with event context if provided
     const systemPrompt = eventContext
       ? buildEventDrivenSystemPrompt(agent.systemPrompt, eventContext)
       : agent.systemPrompt;
@@ -109,55 +103,76 @@ export class AgentInvoker {
       finalLength: systemPrompt.length,
     });
 
-    // Build request with Agent configuration
-    const request: AgentInvocationRequest = {
-      prompt: payload.prompt,
-      targetUserId: payload.userId,
-      sessionId: payload.sessionId,
-      modelId: payload.modelId, // Use modelId from trigger payload if specified
-      storagePath: payload.workingDirectory, // Use workingDirectory as storagePath
-      systemPrompt, // Use event-driven system prompt if context provided, otherwise original
-      enabledTools: agent.enabledTools, // Always use Agent's enabledTools
-      mcpConfig: agent.mcpConfig, // Include MCP configuration if available
-      agentId: payload.agentId, // Pass agentId for DynamoDB session metadata tracking
-    };
+    const sessionId = payload.sessionId || randomUUID();
 
-    console.log('Invoking Agent API:', {
-      url: this.agentApiUrl,
-      triggerId: payload.triggerId,
-      userId: payload.userId,
-      agentId: payload.agentId,
-      hasSystemPrompt: !!request.systemPrompt,
-      enabledToolsCount: request.enabledTools?.length || 0,
-      hasMcpConfig: !!request.mcpConfig,
+    return {
+      request: {
+        prompt: payload.prompt,
+        targetUserId: payload.userId,
+        sessionId,
+        modelId: payload.modelId,
+        storagePath: payload.workingDirectory,
+        systemPrompt,
+        enabledTools: agent.enabledTools,
+        mcpConfig: agent.mcpConfig,
+        agentId: payload.agentId,
+      },
+      sessionId,
+    };
+  }
+
+  /**
+   * Send HTTP request to Agent API
+   */
+  private async sendRequest(
+    request: AgentInvocationRequest,
+    sessionId: string,
+    authToken: string
+  ): Promise<Response> {
+    const response = await fetch(this.agentApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+        'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id': sessionId,
+        'X-Amzn-Bedrock-AgentCore-Runtime-Session-Type': 'event',
+        'X-Amzn-Trace-Id': `trigger-${Date.now()}`,
+      },
+      body: JSON.stringify(request),
     });
 
-    // Generate session ID if not provided
-    const actualSessionId = payload.sessionId || randomUUID();
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Agent API returned ${response.status}: ${errorText}`);
+    }
 
+    return response;
+  }
+
+  /**
+   * Invoke Agent synchronously (reads full NDJSON stream)
+   */
+  async invoke(
+    payload: SchedulerEventPayload,
+    authToken: string,
+    eventContext?: EventDrivenContext
+  ): Promise<AgentInvocationResponse> {
     try {
-      const response = await fetch(this.agentApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`,
-          'X-Amzn-Bedrock-AgentCore-Runtime-Session-Id': actualSessionId,
-          'X-Amzn-Bedrock-AgentCore-Runtime-Session-Type': 'event',
-          'X-Amzn-Trace-Id': `trigger-${Date.now()}`,
-        },
-        body: JSON.stringify(request),
+      const { request, sessionId } = await this.prepareRequest(payload, eventContext);
+
+      console.log('Invoking Agent API (sync):', {
+        url: this.agentApiUrl,
+        triggerId: payload.triggerId,
+        agentId: payload.agentId,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Agent API returned ${response.status}: ${errorText}`);
-      }
+      const response = await this.sendRequest(request, sessionId, authToken);
 
       // Parse NDJSON streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let requestId = '';
-      let sessionId = payload.sessionId;
+      let resultSessionId = sessionId;
 
       if (reader) {
         let buffer = '';
@@ -177,13 +192,11 @@ export class AgentInvoker {
             try {
               const event = JSON.parse(line);
 
-              // Extract metadata from completion event
               if (event.type === 'serverCompletionEvent') {
                 requestId = event.metadata?.requestId || '';
-                sessionId = event.metadata?.sessionId || sessionId;
+                resultSessionId = event.metadata?.sessionId || resultSessionId;
               }
 
-              // Check for errors
               if (event.type === 'serverErrorEvent') {
                 throw new Error(event.error?.message || 'Unknown error from Agent');
               }
@@ -194,13 +207,44 @@ export class AgentInvoker {
         }
       }
 
-      return {
-        requestId,
-        sessionId,
-        success: true,
-      };
+      return { requestId, sessionId: resultSessionId, success: true };
     } catch (error) {
       console.error('Failed to invoke Agent:', error);
+      return {
+        requestId: '',
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Invoke Agent asynchronously (fire-and-forget)
+   * Sends the request, verifies HTTP 200 acceptance, and returns immediately
+   * without reading the NDJSON stream. AgentCore continues processing server-side.
+   */
+  async invokeAsync(
+    payload: SchedulerEventPayload,
+    authToken: string,
+    eventContext?: EventDrivenContext
+  ): Promise<AgentInvocationResponse> {
+    try {
+      const { request, sessionId } = await this.prepareRequest(payload, eventContext);
+
+      console.log('Invoking Agent API (async fire-and-forget):', {
+        url: this.agentApiUrl,
+        triggerId: payload.triggerId,
+        agentId: payload.agentId,
+        sessionId,
+      });
+
+      await this.sendRequest(request, sessionId, authToken);
+
+      console.log('Agent API accepted invocation (HTTP 200). Returning without reading stream.');
+
+      return { requestId: '', sessionId, success: true };
+    } catch (error) {
+      console.error('Failed to invoke Agent (async):', error);
       return {
         requestId: '',
         success: false,

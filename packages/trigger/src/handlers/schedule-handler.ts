@@ -97,16 +97,16 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
       detailType: eventContext.eventBridge.detailType,
     });
 
-    // Step 3: Invoke Agent API with event context
-    console.log('Invoking Agent API...');
-    const invocationResponse = await agentInvoker.invoke(
+    // Step 3: Invoke Agent API with fire-and-forget (async)
+    // AgentCore continues processing server-side after HTTP 200 acceptance
+    console.log('Invoking Agent API (async fire-and-forget)...');
+    const invocationResponse = await agentInvoker.invokeAsync(
       payload,
       tokenResponse.accessToken,
       eventContext
     );
 
     if (!invocationResponse.success) {
-      // Record failure
       await executionRecorder.failExecution(
         triggerId,
         executionId,
@@ -123,21 +123,13 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
       };
     }
 
-    // Step 3: Record successful execution
-    await executionRecorder.completeExecution(
-      triggerId,
-      executionId,
-      invocationResponse.requestId,
-      invocationResponse.sessionId
-    );
-
     // Step 4: Update trigger's last execution timestamp
     await executionRecorder.updateTriggerLastExecution(userId, triggerId);
 
-    console.log('Trigger execution completed successfully:', {
+    console.log('Trigger invocation dispatched successfully (fire-and-forget):', {
       triggerId,
       executionId,
-      requestId: invocationResponse.requestId,
+      sessionId: invocationResponse.sessionId,
     });
 
     return {
@@ -146,7 +138,6 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
         success: true,
         triggerId,
         executionId,
-        requestId: invocationResponse.requestId,
         sessionId: invocationResponse.sessionId,
       }),
     };

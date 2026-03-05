@@ -119,11 +119,10 @@ async function invokeTrigger(
       enabledTools: trigger.enabledTools,
     };
 
-    // Invoke agent
-    const result = await agentInvoker.invoke(payload, tokenResponse.accessToken, context);
+    // Invoke agent (async fire-and-forget)
+    const result = await agentInvoker.invokeAsync(payload, tokenResponse.accessToken, context);
 
     if (!result.success) {
-      // Record failure
       await executionRecorder.failExecution(
         trigger.id,
         executionId,
@@ -132,18 +131,10 @@ async function invokeTrigger(
       return { success: false, error: result.error };
     }
 
-    // Record execution completion
-    await executionRecorder.completeExecution(
-      trigger.id,
-      executionId,
-      result.requestId,
-      result.sessionId
-    );
-
     // Update trigger's last execution timestamp
     await executionRecorder.updateTriggerLastExecution(trigger.userId, trigger.id);
 
-    console.log(`✅ Trigger invocation completed: ${trigger.name}`);
+    console.log(`✅ Trigger invocation dispatched (fire-and-forget): ${trigger.name}`);
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

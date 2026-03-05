@@ -99,6 +99,9 @@ export class SchedulerService {
         Target: {
           Arn: config.targetArn,
           RoleArn: config.roleArn,
+          RetryPolicy: {
+            MaximumRetryAttempts: 0,
+          },
           Input: JSON.stringify({
             version: '0',
             id: `trigger-${config.payload.triggerId}`,
@@ -171,6 +174,9 @@ export class SchedulerService {
           ? {
               Arn: config.targetArn || currentSchedule.Target!.Arn,
               RoleArn: config.roleArn || currentSchedule.Target!.RoleArn,
+              RetryPolicy: {
+                MaximumRetryAttempts: 0,
+              },
               Input: JSON.stringify({
                 version: '0',
                 id: `trigger-${triggerId}`,
@@ -182,7 +188,14 @@ export class SchedulerService {
                 detail: config.payload,
               }),
             }
-          : currentSchedule.Target,
+          : {
+              Arn: currentSchedule.Target!.Arn!,
+              RoleArn: currentSchedule.Target!.RoleArn!,
+              ...currentSchedule.Target,
+              RetryPolicy: {
+                MaximumRetryAttempts: 0,
+              },
+            },
       });
 
       await this.client.send(command);

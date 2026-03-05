@@ -11,7 +11,7 @@ export type TriggerType = 'schedule' | 'event';
 /**
  * Trigger execution status
  */
-export type TriggerExecutionStatus = 'running' | 'completed' | 'failed';
+export type TriggerExecutionStatus = 'running' | 'completed' | 'failed' | 'timeout';
 
 /**
  * Schedule configuration for schedule-type triggers
