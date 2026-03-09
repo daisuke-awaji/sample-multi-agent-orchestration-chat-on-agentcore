@@ -131,6 +131,13 @@ export interface AgentCoreRuntimeProps {
    * Used for real-time message delivery
    */
   readonly appsyncHttpEndpoint?: string;
+
+  /**
+   * Enable AWS ReadOnly + CloudFormation deploy permissions (optional)
+   * When true, attaches ReadOnlyAccess managed policy and CloudFormation deployment permissions.
+   * @default false
+   */
+  readonly enableAwsOpsPermissions?: boolean;
 }
 
 /**
@@ -500,6 +507,68 @@ export class AgentCoreRuntime extends Construct {
           effect: iam.Effect.ALLOW,
           actions: ['appsync:EventPublish'],
           resources: [`arn:aws:appsync:${region}:${account}:apis/*/channelNamespace/*`],
+        })
+      );
+    }
+
+    // AWS ReadOnly + CloudFormation deploy permissions (opt-in via enableAwsOpsPermissions)
+    if (props.enableAwsOpsPermissions) {
+      // AWS ReadOnly access via managed policy
+      (this.runtime.role as iam.Role).addManagedPolicy(
+        iam.ManagedPolicy.fromAwsManagedPolicyName('ReadOnlyAccess')
+      );
+
+      // CloudFormation deployment permissions (write operations for stack management)
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'CloudFormationDeployAccess',
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'cloudformation:CreateStack',
+            'cloudformation:UpdateStack',
+            'cloudformation:DeleteStack',
+            'cloudformation:CreateChangeSet',
+            'cloudformation:ExecuteChangeSet',
+            'cloudformation:DeleteChangeSet',
+            'cloudformation:ContinueUpdateRollback',
+            'cloudformation:RollbackStack',
+            'cloudformation:SignalResource',
+            'cloudformation:SetStackPolicy',
+            'cloudformation:TagResource',
+            'cloudformation:UntagResource',
+            'cloudformation:ValidateTemplate',
+          ],
+          resources: ['*'],
+        })
+      );
+
+      // IAM PassRole required for CloudFormation to assume execution roles
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'IamPassRoleForCloudFormation',
+          effect: iam.Effect.ALLOW,
+          actions: ['iam:PassRole'],
+          resources: ['*'],
+          conditions: {
+            StringEquals: {
+              'iam:PassedToService': 'cloudformation.amazonaws.com',
+            },
+          },
+        })
+      );
+
+      // S3 access for CDK/CloudFormation template staging buckets
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'S3CdkStagingAccess',
+          effect: iam.Effect.ALLOW,
+          actions: ['s3:CreateBucket', 's3:PutObject', 's3:GetObject', 's3:ListBucket'],
+          resources: [
+            'arn:aws:s3:::cdktoolkit-*',
+            'arn:aws:s3:::cdktoolkit-*/*',
+            'arn:aws:s3:::cdk-*',
+            'arn:aws:s3:::cdk-*/*',
+          ],
         })
       );
     }
