@@ -6,6 +6,7 @@ import { useSelectedAgent } from '../stores/agentStore';
 import { useSessionStore } from '../stores/sessionStore';
 import { Message } from './Message';
 import { MessageSkeleton } from './MessageSkeleton';
+import { TypingIndicator } from './TypingIndicator';
 import { translateIfKey } from '../utils/agent-translation';
 
 interface MessageListProps {
@@ -115,6 +116,27 @@ export const MessageList: React.FC<MessageListProps> = ({ onScenarioClick }) => 
         {/* Message list - hidden while loading */}
         {!isLoadingEvents &&
           messages.map((message) => <Message key={message.id} message={message} />)}
+
+        {/* Show TypingIndicator when agent is processing via AppSync Events (e.g., after page reload).
+            During normal HTTP streaming, TypingIndicator is shown inside Message.tsx via isStreaming flag.
+            After reload, isStreaming is lost but isLoading is restored by MESSAGE_ADDED handler.
+            Style matches Message.tsx hasToolContent=true layout (no message-bubble, w-full). */}
+        {!isLoadingEvents &&
+          sessionState?.isLoading &&
+          messages.length > 0 &&
+          !messages[messages.length - 1]?.isStreaming && (
+            <div className="flex mb-2 justify-start">
+              <div className="flex flex-row items-start w-full max-w-full">
+                <div className="relative w-full">
+                  <div className="prose prose-sm max-w-none">
+                    <div className="message-contents space-y-2">
+                      <TypingIndicator />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Reference element for auto-scrolling */}
         <div ref={messagesEndRef} />

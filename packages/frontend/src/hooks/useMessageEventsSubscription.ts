@@ -145,7 +145,7 @@ function convertContent(apiContent: unknown): MessageContent {
  * Without guards, the sender tab displays the same message twice:
  * once from HTTP stream, once from AppSync.
  *
- * Guard 1 (isLoading): Covers events arriving DURING streaming.
+ * Guard 1 (isStreaming): Covers events arriving DURING streaming.
  * Guard 2 (grace period): Covers events arriving AFTER streaming completes.
  *   publishMessageEvent() is fire-and-forget (.catch()) in the agent handler,
  *   so it often completes after serverCompletionEvent is sent via HTTP stream.
@@ -210,7 +210,15 @@ export function useMessageEventsSubscription(sessionId: string | null) {
           // Guard 1: Skip while HTTP streaming is active (sender tab).
           // During streaming, the sender tab already receives all messages
           // via HTTP stream — AppSync events would be duplicates.
-          if (sessionState.isLoading) {
+          // WHY isStreaming instead of isLoading: After page reload, we set
+          // isLoading=true upon receiving assistant MESSAGE_ADDED events to
+          // show TypingIndicator. If Guard 1 checked isLoading, subsequent
+          // MESSAGE_ADDED events would be blocked. isStreaming is only true
+          // on messages created by the HTTP stream handler (sender tab),
+          // so it precisely identifies "HTTP streaming in progress" without
+          // conflicting with the AppSync-driven isLoading state.
+          const hasStreamingMessage = sessionState.messages.some((msg) => msg.isStreaming);
+          if (hasStreamingMessage) {
             console.log('⚠️ Skipping message event (HTTP streaming active)');
             break;
           }
@@ -256,6 +264,15 @@ export function useMessageEventsSubscription(sessionId: string | null) {
               [event.sessionId]: {
                 ...currentState,
                 messages: [...currentState.messages, newMessage],
+                // WHY: Set isLoading=true when receiving assistant messages via AppSync.
+                // After page reload, HTTP streaming state is lost (isLoading/isStreaming
+                // are both false). When the agent is still running, AppSync Events
+                // continue to arrive. Setting isLoading=true here restores the
+                // "agent is processing" visual state (TypingIndicator + disabled input).
+                // AGENT_COMPLETE or AGENT_ERROR events will set isLoading back to false.
+                // This does NOT affect the sender tab because Guard 1/2 skip
+                // MESSAGE_ADDED events during and shortly after HTTP streaming.
+                isLoading: event.message.role === 'assistant' ? true : currentState.isLoading,
                 lastUpdated: new Date(),
               },
             },
