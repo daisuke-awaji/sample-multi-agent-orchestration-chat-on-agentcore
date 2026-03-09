@@ -1,95 +1,134 @@
 /**
  * Conversation Manager Integration Tests
  *
- * These tests verify that SlidingWindowConversationManager correctly manages
- * conversation history to prevent token overflow errors with actual Bedrock API calls.
+ * Verifies that SlidingWindowConversationManager prevents token overflow errors
+ * by automatically trimming conversation history when it exceeds the window size.
  *
- * Valid AWS credentials and Bedrock model access are required.
- *
- * Run with:
- *   cd packages/agent
- *   node --experimental-vm-modules ../../node_modules/.bin/jest \
- *     --config jest.integration.config.js --no-coverage conversation-manager
+ * Run: cd packages/agent && npm run test:integration -- conversation-manager
  */
 
 import { describe, it, expect } from '@jest/globals';
-import { Agent, Message, TextBlock, SlidingWindowConversationManager } from '@strands-agents/sdk';
+import {
+  Agent,
+  Message,
+  TextBlock,
+  SlidingWindowConversationManager,
+  NullConversationManager,
+} from '@strands-agents/sdk';
 import { createBedrockModel } from '../../models/bedrock.js';
 
-// Use the same default model as config (global.anthropic.claude-sonnet-4-6)
-// No need to set BEDROCK_MODEL_ID env var — it picks up from .env or config default.
-
 /**
- * Generate a large conversation history with user/assistant message pairs.
- * Each message contains enough text to consume significant tokens.
+ * Build a conversation history of user/assistant pairs.
+ * Each message is padded with filler text to consume a predictable number of tokens.
  */
-function generateLargeConversationHistory(pairCount: number, textLength: number = 800): Message[] {
+function buildHistory(pairs: number, charsPerMessage: number = 800): Message[] {
   const messages: Message[] = [];
-  for (let i = 0; i < pairCount; i++) {
-    const userText =
-      `Question ${i + 1}: Please explain topic number ${i + 1}. ` +
-      'Lorem ipsum dolor sit amet. '.repeat(Math.ceil(textLength / 28));
-    const assistantText =
-      `Answer ${i + 1}: Here is my explanation of topic ${i + 1}. ` +
-      'The quick brown fox jumps over the lazy dog. '.repeat(Math.ceil(textLength / 45));
-
+  for (let i = 0; i < pairs; i++) {
     messages.push(
       new Message({
         role: 'user',
-        content: [new TextBlock(userText)],
-      })
-    );
-    messages.push(
+        content: [
+          new TextBlock(
+            `Question ${i + 1}: ` +
+              'Lorem ipsum dolor sit amet. '.repeat(Math.ceil(charsPerMessage / 28))
+          ),
+        ],
+      }),
       new Message({
         role: 'assistant',
-        content: [new TextBlock(assistantText)],
+        content: [
+          new TextBlock(
+            `Answer ${i + 1}: ` +
+              'The quick brown fox jumps. '.repeat(Math.ceil(charsPerMessage / 27))
+          ),
+        ],
       })
     );
   }
   return messages;
 }
 
-describe('SlidingWindowConversationManager Integration', () => {
-  it('should handle long conversation history without token overflow', async () => {
-    // Generate 100 message pairs (~200 messages, each ~800 chars ~ 200 tokens)
-    const history = generateLargeConversationHistory(100, 800);
+describe('SlidingWindowConversationManager', () => {
+  describe('with large conversation history', () => {
+    it('trims messages and responds without token overflow', async () => {
+      // Arrange — 200 messages (~40K tokens), windowSize=40
+      const history = buildHistory(100, 800);
+      const agent = new Agent({
+        model: createBedrockModel(),
+        systemPrompt: 'You are a helpful assistant. Respond briefly.',
+        tools: [],
+        messages: history,
+        conversationManager: new SlidingWindowConversationManager({
+          windowSize: 40,
+          shouldTruncateResults: true,
+        }),
+      });
 
-    console.log(`Generated ${history.length} messages for conversation history`);
+      // Act
+      for await (const event of agent.stream('What is 2 + 2? Answer in one word.')) {
+        void event;
+      }
 
-    const model = createBedrockModel();
-
-    const conversationManager = new SlidingWindowConversationManager({
-      windowSize: 40,
-      shouldTruncateResults: true,
+      // Assert
+      const lastMessage = agent.messages[agent.messages.length - 1];
+      expect(lastMessage.role).toBe('assistant');
+      expect(agent.messages.length).toBeLessThanOrEqual(50);
     });
+  });
 
-    const agent = new Agent({
-      model,
-      systemPrompt: 'You are a helpful assistant. Respond briefly.',
-      tools: [],
-      messages: history,
-      conversationManager,
+  describe('with NullConversationManager (no trimming)', () => {
+    it('throws token overflow error when history exceeds model limit', async () => {
+      // Arrange — 1000 messages (~500K tokens), well over the 200K limit
+      const history = buildHistory(500, 2000);
+      const agent = new Agent({
+        model: createBedrockModel(),
+        systemPrompt: 'You are a helpful assistant.',
+        tools: [],
+        messages: history,
+        conversationManager: new NullConversationManager(),
+      });
+
+      // Act & Assert — expect an error from Bedrock
+      let caughtError: Error | undefined;
+      try {
+        for await (const event of agent.stream('What is 2 + 2?')) {
+          void event;
+        }
+      } catch (error) {
+        caughtError = error as Error;
+      }
+
+      expect(caughtError).toBeDefined();
+      expect(caughtError!.message).toMatch(
+        /prompt is too long|ValidationException|too many tokens|token/i
+      );
     });
+  });
 
-    console.log(`Agent initialized with ${agent.messages.length} messages`);
+  describe('windowSize configuration', () => {
+    it('limits messages to the configured windowSize', async () => {
+      // Arrange — 40 messages with a small windowSize=10
+      const history = buildHistory(20, 400);
+      const agent = new Agent({
+        model: createBedrockModel(),
+        systemPrompt: 'You are a helpful assistant. Respond briefly.',
+        tools: [],
+        messages: history,
+        conversationManager: new SlidingWindowConversationManager({
+          windowSize: 10,
+          shouldTruncateResults: true,
+        }),
+      });
 
-    // Send a new message using stream - this should NOT throw "prompt is too long"
-    for await (const event of agent.stream('What is 2 + 2? Answer in one word.')) {
-      // Consume stream events
-      void event;
-    }
+      // Act
+      for await (const event of agent.stream('Say hello.')) {
+        void event;
+      }
 
-    console.log(`Messages after response: ${agent.messages.length}`);
-
-    // Verify: agent responded successfully (messages array should have assistant response)
-    const lastMessage = agent.messages[agent.messages.length - 1];
-    expect(lastMessage).toBeDefined();
-    expect(lastMessage.role).toBe('assistant');
-
-    // Verify: messages were trimmed to around windowSize
-    // windowSize=40 + new user message + new assistant message = ~42 max
-    expect(agent.messages.length).toBeLessThanOrEqual(50);
-
-    console.log('Test passed: conversation manager prevented token overflow');
+      // Assert — windowSize=10 + new user/assistant ≈ 12 max
+      expect(agent.messages.length).toBeLessThanOrEqual(15);
+      expect(agent.messages.length).toBeGreaterThan(0);
+      expect(agent.messages[agent.messages.length - 1].role).toBe('assistant');
+    });
   });
 });
