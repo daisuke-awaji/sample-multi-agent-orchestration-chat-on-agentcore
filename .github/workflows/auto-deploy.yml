@@ -145,15 +145,17 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          STACK_NAME="AgentCoreAppPr${PR_NUMBER}"
-          echo "Checking if stack ${STACK_NAME} exists..."
+          CORE_STACK="MocaAgentCoreAppPr${PR_NUMBER}"
+          TARGETS_STACK="MocaAgentCoreAppPr${PR_NUMBER}Targets"
+          echo "Checking if stacks exist: ${CORE_STACK}, ${TARGETS_STACK}"
 
-          if aws cloudformation describe-stacks --stack-name ${STACK_NAME} --region ap-northeast-1 2>/dev/null; then
-            echo "Stack found. Destroying PR environment: pr-${PR_NUMBER}"
+          if aws cloudformation describe-stacks --stack-name ${CORE_STACK} --region ap-northeast-1 2>/dev/null || \
+             aws cloudformation describe-stacks --stack-name ${TARGETS_STACK} --region ap-northeast-1 2>/dev/null; then
+            echo "Stack(s) found. Destroying PR environment: pr-${PR_NUMBER}"
             npx cdk destroy --force --all -c env=pr-${PR_NUMBER}
-            echo "Stack destroyed successfully"
+            echo "Stacks destroyed successfully"
           else
-            echo "Stack not found. Nothing to clean up."
+            echo "No stacks found. Nothing to clean up."
           fi
 
       - name: Comment PR with cleanup info
