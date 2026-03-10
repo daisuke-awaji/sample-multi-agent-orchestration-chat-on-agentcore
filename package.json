@@ -29,8 +29,7 @@
     "build:lambda": "npm run build -w @moca/lambda-tools",
     "setup-env": "tsx scripts/setup-env.ts",
     "cdk": "npm run cdk -w @moca/cdk",
-    "synth": "npm run synth -w @moca/cdk",
-    "prepare": "tsc --build tsconfig.build.json"
+    "synth": "npm run synth -w @moca/cdk"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.716.0",
