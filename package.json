@@ -30,7 +30,7 @@
     "setup-env": "tsx scripts/setup-env.ts",
     "cdk": "npm run cdk -w @moca/cdk",
     "synth": "npm run synth -w @moca/cdk",
-    "prepare": "husky"
+    "prepare": "tsc --build tsconfig.build.json && husky"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.716.0",

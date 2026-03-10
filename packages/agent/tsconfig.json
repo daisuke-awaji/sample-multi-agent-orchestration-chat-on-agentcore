@@ -20,5 +20,10 @@
     "types": ["node", "jest"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [
+    { "path": "../libs/generative-ui-catalog" },
+    { "path": "../libs/s3-workspace-sync" },
+    { "path": "../libs/tool-definitions" }
+  ]
 }
