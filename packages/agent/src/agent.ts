@@ -8,13 +8,13 @@ import {
   HookProvider,
   Message,
   McpClient,
-  CachePointBlock,
   SlidingWindowConversationManager,
 } from '@strands-agents/sdk';
 import { logger, config } from './config/index.js';
 import { localTools, convertMCPToolsToStrands } from './tools/index.js';
 import { buildSystemPrompt } from './prompts/index.js';
-import { createBedrockModel } from './models/index.js';
+import { createBedrockModel, getPromptCachingSupport } from './models/index.js';
+import { CachePointAppender } from './session/cache-point-appender.js';
 import { MCPToolDefinition } from './schemas/types.js';
 import { mcpClient } from './mcp/client.js';
 import { getEnabledMCPServers, createMCPClients } from './mcp/index.js';
@@ -124,37 +124,6 @@ async function fetchLongTermMemories(options?: CreateAgentOptions): Promise<{
 }
 
 /**
- * Add cache point to session history
- * Adds CachePointBlock to the last message in history to reuse the cache in the next request
- *
- * @param messages Session history message array
- * @returns Message array with cache point added
- */
-function addCachePointToHistory(messages: Message[]): Message[] {
-  // Return as is if caching is disabled or history is empty
-  if (!config.ENABLE_PROMPT_CACHING || messages.length === 0) {
-    return messages;
-  }
-
-  // Get the last message
-  const lastMessage = messages[messages.length - 1];
-
-  // Add CachePointBlock to the last message's content
-  const updatedLastMessage = new Message({
-    role: lastMessage.role,
-    content: [...lastMessage.content, new CachePointBlock({ cacheType: 'default' })],
-  });
-
-  logger.debug('📦 Added CachePointBlock to session history', {
-    totalMessages: messages.length,
-    cacheType: config.CACHE_TYPE,
-  });
-
-  // Return updated message array
-  return [...messages.slice(0, -1), updatedLastMessage];
-}
-
-/**
  * Agent creation result
  */
 export interface CreateAgentResult {
@@ -208,19 +177,25 @@ export async function createAgent(
     const longTermMemories = longTermMemoriesResult.memories;
     const memoryConditions = longTermMemoriesResult.conditions;
 
-    // ★ Add cache point to history
-    const messagesWithCache = addCachePointToHistory(savedMessages);
+    // 3. Create Bedrock model (cache options auto-resolved based on model capability)
+    const modelId = options?.modelId || config.BEDROCK_MODEL_ID;
+    const model = createBedrockModel({ modelId: options?.modelId });
+    logger.info(`🤖 Using model: ${modelId}`);
+
+    // ★ Add cache point to history — delegated to CachePointAppender
+    const cachingSupport = getPromptCachingSupport(modelId);
+    const messagesWithCache = new CachePointAppender(cachingSupport).apply(savedMessages);
 
     logger.info(`📖 Session history restored: ${savedMessages.length} messages`);
     if (longTermMemories.length > 0) {
       logger.info(`🧠 Long-term memories retrieved: ${longTermMemories.length} items`);
     }
 
-    // 3. Convert Gateway MCP tools to Strands format
+    // 4. Convert Gateway MCP tools to Strands format
     const gatewayStrandsTools = convertMCPToolsToStrands(gatewayMCPTools as MCPToolDefinition[]);
 
-    // 4. Integrate all tools
-    // - Local Python tools etc. (filtered by enabledTools)
+    // 5. Integrate all tools
+    // - Local tools (filtered by enabledTools)
     // - Tools via AgentCore Gateway (filtered by enabledTools)
     // - User-defined MCP servers (from request, always all enabled)
     const filteredTools = filterTools(
@@ -233,11 +208,7 @@ export async function createAgent(
       `✅ Prepared total of ${allTools.length} tools (Local: ${localTools.length}, Gateway: ${gatewayStrandsTools.length}, User MCP: ${userMCPClients.length})`
     );
 
-    // 3. Create Bedrock model
-    const model = createBedrockModel({ modelId: options?.modelId });
-    logger.info(`🤖 Using model: ${options?.modelId || 'default'}`);
-
-    // 5. Generate system prompt (including storage path info and long-term memories)
+    // 6. Generate system prompt (including storage path info and long-term memories)
     const storagePath = getCurrentStoragePath();
     const systemPrompt = buildSystemPrompt({
       customPrompt: options?.systemPrompt,
@@ -247,47 +218,29 @@ export async function createAgent(
       longTermMemories,
     });
 
-    if (options?.systemPrompt) {
-      logger.info('📝 Using custom system prompt');
-    } else {
-      logger.info('📝 Generated default system prompt');
-    }
-    logger.info('📝 Generated system prompt with default context');
+    logger.info(`📝 System prompt: ${options?.systemPrompt ? 'custom' : 'default'}`);
+    logger.debug({ systemPrompt });
 
-    logger.info({ systemPrompt });
-
-    // 6. Create conversation manager for context window management
+    // 7. Create conversation manager for context window management
     const conversationManager = new SlidingWindowConversationManager({
       windowSize: config.CONVERSATION_WINDOW_SIZE,
       shouldTruncateResults: true,
     });
 
-    logger.info('📏 Conversation manager configured:', {
-      windowSize: config.CONVERSATION_WINDOW_SIZE,
-      shouldTruncateResults: true,
-    });
-
-    // 7. Create Agent (use messages with cache point)
-
+    // 8. Create Agent (use messages with cache point)
     const agent = new Agent({
       model,
       systemPrompt,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       tools: allTools as any,
-      messages: messagesWithCache, // ★ Use messages with cache point
+      messages: messagesWithCache,
       hooks,
-      conversationManager, // ★ Manage conversation history to prevent context overflow
+      conversationManager,
     });
 
     // Set storagePath in agent state for sub-agent inheritance
     if (storagePath) {
       agent.state.set('storagePath', storagePath);
-      logger.info('📂 Set storagePath in agent state:', { storagePath });
-    }
-
-    // 7. Log output
-    if (hooks && hooks.length > 0) {
-      logger.info(`✅ Registered ${hooks.length} hooks`);
     }
 
     logger.info('✅ Strands Agent initialization completed');
