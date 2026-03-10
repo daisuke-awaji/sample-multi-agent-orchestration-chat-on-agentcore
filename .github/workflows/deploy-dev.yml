@@ -35,19 +35,24 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::891376971424:role/GitHubActionsRole
+          role-to-assume: arn:aws:iam::988417841316:role/GitHubActionsRole
           aws-region: ap-northeast-1
           role-session-name: github-actions-deploy-dev-${{ github.run_id }}
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Lambda packages
+        run: npm run build:lambda
+
       - name: Bootstrap CDK (if needed)
+        working-directory: packages/cdk
         run: |
           echo "Checking CDK bootstrap status..."
           npx cdk bootstrap || echo "Bootstrap already completed or failed"
 
       - name: Deploy to production
+        working-directory: packages/cdk
         run: |
           echo "Deploying to production environment..."
           npx cdk deploy --require-approval never --all -c env=dev

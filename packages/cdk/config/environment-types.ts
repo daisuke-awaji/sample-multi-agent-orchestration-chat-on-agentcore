@@ -166,6 +166,14 @@ export interface EnvironmentConfig {
   microsoftGraphOAuthSecretArn?: string;
 
   /**
+   * Enable AWS ReadOnly + CloudFormation deploy permissions for runtime (optional)
+   * When true, attaches ReadOnlyAccess managed policy and CloudFormation deployment permissions.
+   * Useful for development environments where the agent needs to inspect and deploy AWS resources.
+   * @default false
+   */
+  enableAwsOpsPermissions?: boolean;
+
+  /**
    * Event rules configuration (optional)
    * Predefined EventBridge rules that users can subscribe to for triggers
    */

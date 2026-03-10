@@ -393,6 +393,7 @@ export class AgentCoreStack extends cdk.Stack {
       sessionsTableName: this.sessionsTable.tableName, // Pass Sessions Table name
       backendApiUrl: this.backendApi.apiUrl, // Pass Backend API URL for call_agent tool
       appsyncHttpEndpoint: appsyncEvents.httpEndpoint, // Pass AppSync Events HTTP endpoint for real-time messages
+      enableAwsOpsPermissions: envConfig.enableAwsOpsPermissions, // Pass AWS ops permissions flag
     });
 
     // Grant Memory access permissions to Runtime

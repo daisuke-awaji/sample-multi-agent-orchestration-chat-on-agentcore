@@ -39,19 +39,24 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::891376971424:role/GitHubActionsRole
+          role-to-assume: arn:aws:iam::988417841316:role/GitHubActionsRole
           aws-region: ap-northeast-1
           role-session-name: github-actions-pr-${{ github.event.pull_request.number }}
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Lambda packages
+        run: npm run build:lambda
+
       - name: Bootstrap CDK (if needed)
+        working-directory: packages/cdk
         run: |
           echo "Checking CDK bootstrap status..."
           npx cdk bootstrap || echo "Bootstrap already completed or failed"
 
       - name: Deploy PR environment
+        working-directory: packages/cdk
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
@@ -170,14 +175,18 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::891376971424:role/GitHubActionsRole
+          role-to-assume: arn:aws:iam::988417841316:role/GitHubActionsRole
           aws-region: ap-northeast-1
           role-session-name: github-actions-pr-${{ github.event.pull_request.number }}-cleanup
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Lambda packages
+        run: npm run build:lambda
+
       - name: Destroy PR environment
+        working-directory: packages/cdk
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
