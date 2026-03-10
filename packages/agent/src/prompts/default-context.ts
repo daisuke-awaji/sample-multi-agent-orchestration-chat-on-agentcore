@@ -1,14 +1,10 @@
-import { MCPToolDefinition } from '../schemas/types.js';
-
 const WORKSPACE_DIR = '/tmp/ws';
 /**
  * Generate default context
  * @param tools List of enabled tools
- * @param _mcpTools List of MCP tool definitions
  */
 export function generateDefaultContext(
-  tools: Array<{ name: string; description?: string }>,
-  _mcpTools: MCPToolDefinition[]
+  tools: Array<{ name: string; description?: string }>
 ): string {
   // Get current time up to the hour (excluding minutes/seconds for prompt cache optimization)
   const now = new Date();

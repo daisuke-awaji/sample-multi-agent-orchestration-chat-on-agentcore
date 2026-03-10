@@ -5,7 +5,7 @@
  * into a unified tool set for the agent.
  */
 
-import type { McpClient } from '@strands-agents/sdk';
+import type { McpClient, Tool } from '@strands-agents/sdk';
 import { logger } from '../config/index.js';
 import { localTools, convertMCPToolsToStrands } from '../tools/index.js';
 import { mcpClient } from '../mcp/client.js';
@@ -38,12 +38,13 @@ export function selectEnabledTools<T extends { name: string }>(
  * Result of building the complete tool set
  */
 export interface ToolSetResult {
-  /** All tools ready for Agent consumption */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  allTools: any[];
+  /** Resolved tools (local + Gateway MCP converted to Strands format) */
+  tools: Tool[];
+  /** User-defined MCP clients (lazy-resolved by SDK Agent at initialize time) */
+  mcpClients: McpClient[];
   /** Raw Gateway MCP tool definitions (used for prompt generation) */
   gatewayMCPTools: MCPToolDefinition[];
-  /** Total tool count breakdown for logging */
+  /** Tool count breakdown for logging */
   counts: {
     local: number;
     gateway: number;
@@ -71,19 +72,16 @@ export async function buildToolSet(
   // Filter local + gateway tools by enabledTools list
   const filteredTools = selectEnabledTools([...localTools, ...gatewayStrandsTools], enabledTools);
 
-  // Combine: filtered tools + user MCP clients (always all enabled)
-  const allTools = [...filteredTools, ...userMCPClients];
-
   const counts = {
     local: localTools.length,
     gateway: gatewayStrandsTools.length,
     userMCP: userMCPClients.length,
-    total: allTools.length,
+    total: filteredTools.length + userMCPClients.length,
   };
 
   logger.info(
     `✅ Prepared total of ${counts.total} tools (Local: ${counts.local}, Gateway: ${counts.gateway}, User MCP: ${counts.userMCP})`
   );
 
-  return { allTools, gatewayMCPTools, counts };
+  return { tools: filteredTools, mcpClients: userMCPClients, gatewayMCPTools, counts };
 }

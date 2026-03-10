@@ -1,12 +1,10 @@
 import path from 'path';
-import { MCPToolDefinition } from '../schemas/types.js';
 import { generateDefaultContext } from './default-context.js';
 import { WORKSPACE_DIRECTORY } from '../config/index.js';
 
 export interface SystemPromptOptions {
   customPrompt?: string;
   tools: Array<{ name: string; description?: string }>;
-  mcpTools: MCPToolDefinition[];
   storagePath?: string;
   longTermMemories?: string[]; // Array of long-term memories
 }
@@ -21,7 +19,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
     basePrompt = options.customPrompt;
   } else {
     // Default prompt generation logic
-    basePrompt = generateDefaultSystemPrompt(options.tools, options.mcpTools);
+    basePrompt = generateDefaultSystemPrompt();
   }
 
   // Add long-term memory information (if long-term memories exist)
@@ -343,16 +341,13 @@ plt.rcParams['font.family'] = 'Droid Sans Fallback'
   }
 
   // Add default context
-  return basePrompt + generateDefaultContext(options.tools, options.mcpTools);
+  return basePrompt + generateDefaultContext(options.tools);
 }
 
 /**
  * Generate default system prompt
  */
-function generateDefaultSystemPrompt(
-  _tools: Array<{ name: string; description?: string }>,
-  _mcpTools: MCPToolDefinition[]
-): string {
+function generateDefaultSystemPrompt(): string {
   return `You are an AI assistant running on AgentCore Runtime.
 
 Please respond to user questions politely and call appropriate tools as needed.

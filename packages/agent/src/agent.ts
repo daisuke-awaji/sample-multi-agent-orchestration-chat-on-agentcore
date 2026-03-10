@@ -17,7 +17,6 @@ import { buildSystemPrompt } from './prompts/index.js';
 import { createBedrockModel, getPromptCachingSupport } from './models/index.js';
 import { CachePointAppender } from './session/cache-point-appender.js';
 import { getCurrentStoragePath } from './context/request-context.js';
-import type { MCPToolDefinition } from './schemas/types.js';
 
 // Agent building blocks
 import { buildUserMCPClients } from './agent/mcp-clients-builder.js';
@@ -61,8 +60,7 @@ export async function createAgent(options?: CreateAgentOptions): Promise<CreateA
   const storagePath = getCurrentStoragePath();
   const systemPrompt = buildSystemPrompt({
     customPrompt: options?.systemPrompt,
-    tools: toolSet.allTools as Array<{ name: string; description?: string }>,
-    mcpTools: toolSet.gatewayMCPTools as MCPToolDefinition[],
+    tools: toolSet.tools,
     storagePath,
     longTermMemories: memoryResult.memories,
   });
@@ -76,8 +74,7 @@ export async function createAgent(options?: CreateAgentOptions): Promise<CreateA
   const agent = new Agent({
     model,
     systemPrompt,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tools: toolSet.allTools as any,
+    tools: [...toolSet.tools, ...toolSet.mcpClients],
     messages: messagesWithCache,
     hooks: options?.hooks,
     conversationManager,
