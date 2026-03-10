@@ -5,12 +5,23 @@
  * Set ENABLE_NOVA_REEL_INTEGRATION_TESTS=true to run.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { novaReelTool } from '../tool.js';
+
+// Helper to invoke the tool's callback and parse the JSON result
+async function executeNovaReel(input: Record<string, unknown>): Promise<Record<string, unknown>> {
+  // The tool's callback returns a JSON string; parse it back to an object
+  const raw = await (
+    novaReelTool as unknown as { callback: (input: Record<string, unknown>) => Promise<string> }
+  ).callback(input);
+  return JSON.parse(raw) as Record<string, unknown>;
+}
 
 const ENABLE_TESTS = process.env.ENABLE_NOVA_REEL_INTEGRATION_TESTS === 'true';
 
-describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
+const describeOrSkip = ENABLE_TESTS ? describe : describe.skip;
+
+describeOrSkip('Nova Reel Tool Integration Tests', () => {
   let testInvocationArn: string | undefined;
 
   beforeAll(() => {
@@ -26,7 +37,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
 
   describe('start action', () => {
     it('should start a video generation job', async () => {
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'start',
         prompt: 'A beautiful sunset over the ocean with waves gently rolling onto the beach',
         duration: 6,
@@ -40,12 +51,12 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
 
       // Save for later tests
       if ('invocationArn' in result && result.invocationArn) {
-        testInvocationArn = result.invocationArn;
+        testInvocationArn = result.invocationArn as string;
       }
     }, 30000);
 
     it('should return error when prompt is missing', async () => {
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'start',
       });
 
@@ -61,7 +72,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
         return;
       }
 
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'status',
         invocationArn: testInvocationArn,
       });
@@ -72,7 +83,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
     }, 10000);
 
     it('should return error when invocationArn is missing', async () => {
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'status',
       });
 
@@ -83,7 +94,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
 
   describe('list action', () => {
     it('should list video generation jobs', async () => {
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'list',
         maxResults: 5,
       });
@@ -94,7 +105,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
     }, 10000);
 
     it('should filter jobs by status', async () => {
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'list',
         statusFilter: 'Completed',
         maxResults: 5,
@@ -111,7 +122,7 @@ describe.skipIf(!ENABLE_TESTS)('Nova Reel Tool Integration Tests', () => {
   describe('waitForCompletion', () => {
     it.skip('should wait for job completion (long running test)', async () => {
       // This test takes ~90 seconds for a 6-second video
-      const result = await novaReelTool.execute({
+      const result = await executeNovaReel({
         action: 'start',
         prompt: 'A cat playing with a ball of yarn',
         duration: 6,

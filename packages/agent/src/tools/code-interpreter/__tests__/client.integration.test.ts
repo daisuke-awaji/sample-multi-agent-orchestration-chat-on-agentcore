@@ -591,8 +591,10 @@ describe('AgentCoreCodeInterpreterClient - Cleanup', () => {
     });
 
     // Create a session (automatically created since autoCreate is true)
+    const cleanupSessionName = `cleanup-test-${Date.now()}`;
     const action: ExecuteCodeAction = {
       action: 'executeCode',
+      sessionName: cleanupSessionName,
       language: 'python',
       code: 'print("test")',
     };
