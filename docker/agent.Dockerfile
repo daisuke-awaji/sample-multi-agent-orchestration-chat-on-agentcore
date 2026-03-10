@@ -14,7 +14,7 @@ COPY . .
 # Install all dependencies and build
 # 1. tsc --build: builds shared libs with dependency resolution (generative-ui-catalog → tool-definitions → s3-workspace-sync)
 # 2. npm run build: builds agent package
-RUN npm ci
+RUN npm ci --ignore-scripts
 RUN npx tsc --build tsconfig.build.json --force
 RUN npm run build --workspace=@moca/agent
 
