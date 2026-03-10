@@ -8,7 +8,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { RuntimeAuthorizerConfiguration } from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
-import { ContainerImageBuild } from 'deploy-time-build';
+import { ContainerImageBuild } from '@cdklabs/deploy-time-build';
 import { Construct } from 'constructs';
 import { CognitoAuth } from '../auth';
 import { AgentCoreGateway } from './agentcore-gateway';

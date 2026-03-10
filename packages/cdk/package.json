@@ -33,10 +33,10 @@
     "ts-jest": "^29.4.6"
   },
   "dependencies": {
-    "@aws-cdk/aws-bedrock-agentcore-alpha": "^2.232.2-alpha.0",
-    "@aws-cdk/aws-bedrock-alpha": "2.232.2-alpha.0",
-    "aws-cdk-lib": "2.232.2",
+    "@aws-cdk/aws-bedrock-agentcore-alpha": "^2.241.0-alpha.0",
+    "@aws-cdk/aws-bedrock-alpha": "2.241.0-alpha.0",
+    "aws-cdk-lib": "2.241.0",
     "constructs": "^10.0.0",
-    "deploy-time-build": "^0.4.5"
+    "@cdklabs/deploy-time-build": "^0.1.0"
   }
 }

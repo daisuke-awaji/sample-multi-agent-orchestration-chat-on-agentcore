@@ -6,7 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import { NodejsBuild } from 'deploy-time-build';
+import { NodejsBuild } from '@cdklabs/deploy-time-build';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
