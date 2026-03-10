@@ -57,34 +57,12 @@ jobs:
           echo "Deploying to production environment..."
           npx cdk deploy --require-approval never --all -c env=dev
 
-      - name: Get deployment outputs
-        id: outputs
+      - name: Post deployment summary
         run: |
-          STACK_NAME="MocaAgentCoreAppDev"
-
-          FRONTEND_URL=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`FrontendUrl`].OutputValue' \
-            --output text \
-            --region ap-northeast-1 || echo "N/A")
-
-          BACKEND_URL=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`BackendApiUrl`].OutputValue' \
-            --output text \
-            --region ap-northeast-1 || echo "N/A")
-
-          RUNTIME_URL=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`RuntimeInvocationEndpoint`].OutputValue' \
-            --output text \
-            --region ap-northeast-1 || echo "N/A")
-
-          echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Dev Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Stack:** \`${STACK_NAME}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Endpoints" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend:** ${FRONTEND_URL}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend API:** ${BACKEND_URL}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Runtime:** ${RUNTIME_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "To retrieve endpoint details, run:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "aws cloudformation describe-stacks --stack-name MocaAgentCoreAppDev \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --query 'Stacks[0].Outputs' --output table" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
