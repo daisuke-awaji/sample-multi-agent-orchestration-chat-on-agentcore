@@ -27,7 +27,7 @@ COPY . .
 # Install all dependencies and build
 # 1. tsc --build: builds shared libs with dependency resolution (generative-ui-catalog → tool-definitions)
 # 2. npm run build: builds backend package
-RUN npm ci
+RUN npm ci --ignore-scripts
 RUN npx tsc --build tsconfig.build.json --force
 RUN npm run build --workspace=@moca/backend
 
