@@ -13,7 +13,7 @@ jest.mock('../../config/index.js', () => ({
   config: {},
 }));
 
-// Mock utils
+// Mock utils — use inline factory only (no external variable references)
 jest.mock('../../utils/index.js', () => ({
   createErrorMessage: jest.fn().mockReturnValue({ role: 'assistant', content: 'error' }),
   sanitizeErrorMessage: jest.fn().mockReturnValue('Sanitized error'),
@@ -21,22 +21,15 @@ jest.mock('../../utils/index.js', () => ({
   buildInputContent: jest.fn((prompt: string) => prompt),
 }));
 
-// Mock request context
-const mockContext = {
-  requestId: 'test-request-id',
-  userId: 'test-user',
-  sessionId: 'test-session',
-};
+// Mock request context — use jest.fn() only, set return values in beforeEach
 jest.mock('../../context/request-context.js', () => ({
-  getCurrentContext: jest.fn().mockReturnValue(mockContext),
-  getContextMetadata: jest.fn().mockReturnValue({
-    requestId: 'test-request-id',
-    duration: 100,
-  }),
+  getCurrentContext: jest.fn(),
+  getContextMetadata: jest.fn(),
 }));
 
 import { streamAgentResponse } from '../stream-handler.js';
 import type { StreamOptions } from '../stream-handler.js';
+import { getCurrentContext, getContextMetadata } from '../../context/request-context.js';
 
 /** Create a mock Express Response */
 function createMockResponse() {
@@ -89,6 +82,17 @@ describe('streamAgentResponse', () => {
         toolsCount: 3,
       },
     };
+
+    // Set mock return values in beforeEach to avoid hoisting issues
+    (getCurrentContext as jest.Mock).mockReturnValue({
+      requestId: 'test-request-id',
+      userId: 'test-user',
+      sessionId: 'test-session',
+    });
+    (getContextMetadata as jest.Mock).mockReturnValue({
+      requestId: 'test-request-id',
+      duration: 100,
+    });
   });
 
   describe('streaming headers', () => {

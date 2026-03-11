@@ -27,16 +27,9 @@ jest.mock('../auth-resolver.js', () => ({
   resolveEffectiveUserId: (...args: any[]) => mockResolveEffectiveUserId(...args),
 }));
 
-// Mock request context
-const mockContext: any = {
-  requestId: 'test-request-id',
-  sessionId: 'test-session-id',
-  sessionType: 'user',
-  startTime: new Date(),
-  isMachineUser: false,
-};
+// Mock request context — use jest.fn() only, set return values in beforeEach
 jest.mock('../../context/request-context.js', () => ({
-  getCurrentContext: jest.fn().mockReturnValue(mockContext),
+  getCurrentContext: jest.fn(),
 }));
 
 // Mock workspace sync
@@ -81,6 +74,7 @@ jest.mock('../stream-handler.js', () => ({
 }));
 
 import { handleInvocation } from '../invocations.js';
+import { getCurrentContext } from '../../context/request-context.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -109,19 +103,27 @@ function createMockResponse() {
 describe('handleInvocation', () => {
   let req: any;
   let res: any;
+  // Mutable context object — getCurrentContext returns a reference to this
+  let mockContext: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     req = createMockRequest();
     res = createMockResponse();
 
-    // Reset context
-    mockContext.requestId = 'test-request-id';
-    mockContext.sessionId = 'test-session-id';
-    mockContext.sessionType = 'user';
-    mockContext.userId = undefined;
-    mockContext.storagePath = undefined;
-    mockContext.isMachineUser = false;
+    // Create fresh mutable context for each test
+    mockContext = {
+      requestId: 'test-request-id',
+      sessionId: 'test-session-id',
+      sessionType: 'user',
+      startTime: new Date(),
+      isMachineUser: false,
+      userId: undefined,
+      storagePath: undefined,
+    };
+
+    // Set mock return values in beforeEach to avoid hoisting issues
+    (getCurrentContext as jest.Mock).mockReturnValue(mockContext);
 
     mockValidateImageData.mockReturnValue({ valid: true });
     mockResolveEffectiveUserId.mockReturnValue({ userId: 'test-user-id' });
