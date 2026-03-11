@@ -3,37 +3,21 @@
  *
  * Tests for createAgent() which orchestrates all sub-modules to build
  * the Strands Agent instance. All dependencies are mocked.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// ── Mocks ──────────────────────────────────────────────────────────────
+// ── Mock definitions ───────────────────────────────────────────────────
 
-// Config & logger
-jest.mock('../../config/index.js', () => ({
-  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
-  config: {
-    BEDROCK_MODEL_ID: 'default-model-id',
-    CONVERSATION_WINDOW_SIZE: 20,
-  },
-}));
-
-// Sub-module mocks — use jest.fn<any>() to allow flexible mock return types
 const mockBuildUserMCPClients = jest.fn<any>().mockReturnValue([]);
-jest.mock('../mcp-clients-builder.js', () => ({
-  buildUserMCPClients: (...args: any[]) => mockBuildUserMCPClients(...args),
-}));
-
 const mockBuildToolSet = jest.fn<any>().mockResolvedValue({
   tools: [{ name: 'mock-tool' }],
   mcpClients: [],
   gatewayMCPTools: [],
   counts: { local: 1, gateway: 0, userMCP: 0, total: 1 },
 });
-jest.mock('../tools-builder.js', () => ({
-  buildToolSet: (...args: any[]) => mockBuildToolSet(...args),
-}));
-
 const mockExtractMemoryParams = jest.fn<any>().mockReturnValue({ enabled: false });
 const mockFetchLongTermMemories = jest.fn<any>().mockResolvedValue({
   memories: [],
@@ -44,45 +28,12 @@ const mockFetchLongTermMemories = jest.fn<any>().mockResolvedValue({
     hasMemoryId: false,
   },
 });
-jest.mock('../memory-fetcher.js', () => ({
-  extractMemoryParams: (...args: any[]) => mockExtractMemoryParams(...args),
-  fetchLongTermMemories: (...args: any[]) => mockFetchLongTermMemories(...args),
-}));
-
 const mockLoadSessionHistory = jest.fn<any>().mockResolvedValue([]);
-jest.mock('../session-loader.js', () => ({
-  loadSessionHistory: (...args: any[]) => mockLoadSessionHistory(...args),
-}));
-
-// Model mocks
 const mockModel = { id: 'mock-model' };
 const mockCreateBedrockModel = jest.fn<any>().mockReturnValue(mockModel);
 const mockGetPromptCachingSupport = jest.fn<any>().mockReturnValue('none');
-jest.mock('../../models/index.js', () => ({
-  createBedrockModel: (...args: any[]) => mockCreateBedrockModel(...args),
-  getPromptCachingSupport: (...args: any[]) => mockGetPromptCachingSupport(...args),
-}));
-
-// CachePointAppender mock
-jest.mock('../../session/cache-point-appender.js', () => ({
-  CachePointAppender: jest.fn().mockImplementation(() => ({
-    apply: jest.fn((messages: unknown[]) => messages),
-  })),
-}));
-
-// System prompt mock
 const mockBuildSystemPrompt = jest.fn<any>().mockReturnValue('mock system prompt');
-jest.mock('../../prompts/index.js', () => ({
-  buildSystemPrompt: (...args: any[]) => mockBuildSystemPrompt(...args),
-}));
-
-// Request context mock
 const mockGetCurrentStoragePath = jest.fn<any>().mockReturnValue('/');
-jest.mock('../../context/request-context.js', () => ({
-  getCurrentStoragePath: () => mockGetCurrentStoragePath(),
-}));
-
-// Strands SDK mock — Agent and SlidingWindowConversationManager
 const mockAgentInstance = {
   state: new Map(),
   messages: [],
@@ -90,7 +41,53 @@ const mockAgentInstance = {
 const mockAgentConstructor = jest.fn<any>().mockReturnValue(mockAgentInstance);
 const mockConversationManagerConstructor = jest.fn<any>().mockReturnValue({});
 
-jest.mock('@strands-agents/sdk', () => ({
+// ── Register ESM mocks ─────────────────────────────────────────────────
+
+jest.unstable_mockModule('../../config/index.js', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+  config: {
+    BEDROCK_MODEL_ID: 'default-model-id',
+    CONVERSATION_WINDOW_SIZE: 20,
+  },
+}));
+
+jest.unstable_mockModule('../mcp-clients-builder.js', () => ({
+  buildUserMCPClients: mockBuildUserMCPClients,
+}));
+
+jest.unstable_mockModule('../tools-builder.js', () => ({
+  buildToolSet: mockBuildToolSet,
+}));
+
+jest.unstable_mockModule('../memory-fetcher.js', () => ({
+  extractMemoryParams: mockExtractMemoryParams,
+  fetchLongTermMemories: mockFetchLongTermMemories,
+}));
+
+jest.unstable_mockModule('../session-loader.js', () => ({
+  loadSessionHistory: mockLoadSessionHistory,
+}));
+
+jest.unstable_mockModule('../../models/index.js', () => ({
+  createBedrockModel: mockCreateBedrockModel,
+  getPromptCachingSupport: mockGetPromptCachingSupport,
+}));
+
+jest.unstable_mockModule('../../session/cache-point-appender.js', () => ({
+  CachePointAppender: jest.fn().mockImplementation(() => ({
+    apply: jest.fn((messages: unknown[]) => messages),
+  })),
+}));
+
+jest.unstable_mockModule('../../prompts/index.js', () => ({
+  buildSystemPrompt: mockBuildSystemPrompt,
+}));
+
+jest.unstable_mockModule('../../context/request-context.js', () => ({
+  getCurrentStoragePath: mockGetCurrentStoragePath,
+}));
+
+jest.unstable_mockModule('@strands-agents/sdk', () => ({
   Agent: function (...args: any[]) {
     return mockAgentConstructor(...args);
   },
@@ -99,7 +96,9 @@ jest.mock('@strands-agents/sdk', () => ({
   },
 }));
 
-import { createAgent } from '../../agent.js';
+// ── Dynamic imports ────────────────────────────────────────────────────
+
+const { createAgent } = await import('../../agent.js');
 
 // ── Tests ──────────────────────────────────────────────────────────────
 

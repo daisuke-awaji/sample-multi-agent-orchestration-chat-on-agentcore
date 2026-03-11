@@ -3,56 +3,20 @@
  *
  * Tests for handleInvocation() which orchestrates request validation,
  * agent creation, and streaming response.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// ── Mocks ──────────────────────────────────────────────────────────────
+// ── Mock definitions ───────────────────────────────────────────────────
 
-// Config & logger
-jest.mock('../../config/index.js', () => ({
-  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
-  config: {},
-}));
-
-// Mock validation
 const mockValidateImageData = jest.fn<any>().mockReturnValue({ valid: true });
-jest.mock('../../validation/index.js', () => ({
-  validateImageData: (...args: any[]) => mockValidateImageData(...args),
-}));
-
-// Mock auth resolver
 const mockResolveEffectiveUserId = jest.fn<any>().mockReturnValue({ userId: 'test-user-id' });
-jest.mock('../auth-resolver.js', () => ({
-  resolveEffectiveUserId: (...args: any[]) => mockResolveEffectiveUserId(...args),
-}));
-
-// Mock request context — use jest.fn() only, set return values in beforeEach
-jest.mock('../../context/request-context.js', () => ({
-  getCurrentContext: jest.fn(),
-}));
-
-// Mock workspace sync
-jest.mock('../../services/workspace-sync-helper.js', () => ({
-  initializeWorkspaceSync: jest.fn().mockReturnValue(null),
-}));
-
-// Mock session helper
+const mockGetCurrentContext = jest.fn<any>();
+const mockInitializeWorkspaceSync = jest.fn<any>().mockReturnValue(null);
 const mockSetupSession = jest.fn<any>().mockReturnValue(null);
 const mockGetSessionStorage = jest.fn<any>().mockReturnValue(null);
-jest.mock('../../session/session-helper.js', () => ({
-  setupSession: (...args: any[]) => mockSetupSession(...args),
-  getSessionStorage: () => mockGetSessionStorage(),
-}));
-
-// Mock observability context
-jest.mock('../../context/observability-context.js', () => ({
-  ObservabilityContext: jest.fn().mockImplementation(() => ({
-    traceAsync: jest.fn(async (_name: string, fn: () => Promise<void>) => fn()),
-  })),
-}));
-
-// Mock createAgent
 const mockAgent = { messages: [], state: new Map() };
 const mockMetadata = {
   loadedMessagesCount: 0,
@@ -63,18 +27,53 @@ const mockCreateAgent = jest.fn<any>().mockResolvedValue({
   agent: mockAgent,
   metadata: mockMetadata,
 });
-jest.mock('../../agent.js', () => ({
-  createAgent: (...args: any[]) => mockCreateAgent(...args),
-}));
-
-// Mock stream handler
 const mockStreamAgentResponse = jest.fn<any>().mockResolvedValue(undefined);
-jest.mock('../stream-handler.js', () => ({
-  streamAgentResponse: (...args: any[]) => mockStreamAgentResponse(...args),
+
+// ── Register ESM mocks ─────────────────────────────────────────────────
+
+jest.unstable_mockModule('../../config/index.js', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
+  config: {},
 }));
 
-import { handleInvocation } from '../invocations.js';
-import { getCurrentContext } from '../../context/request-context.js';
+jest.unstable_mockModule('../../validation/index.js', () => ({
+  validateImageData: mockValidateImageData,
+}));
+
+jest.unstable_mockModule('../auth-resolver.js', () => ({
+  resolveEffectiveUserId: mockResolveEffectiveUserId,
+}));
+
+jest.unstable_mockModule('../../context/request-context.js', () => ({
+  getCurrentContext: mockGetCurrentContext,
+}));
+
+jest.unstable_mockModule('../../services/workspace-sync-helper.js', () => ({
+  initializeWorkspaceSync: mockInitializeWorkspaceSync,
+}));
+
+jest.unstable_mockModule('../../session/session-helper.js', () => ({
+  setupSession: mockSetupSession,
+  getSessionStorage: mockGetSessionStorage,
+}));
+
+jest.unstable_mockModule('../../context/observability-context.js', () => ({
+  ObservabilityContext: jest.fn().mockImplementation(() => ({
+    traceAsync: jest.fn(async (_name: string, fn: () => Promise<void>) => fn()),
+  })),
+}));
+
+jest.unstable_mockModule('../../agent.js', () => ({
+  createAgent: mockCreateAgent,
+}));
+
+jest.unstable_mockModule('../stream-handler.js', () => ({
+  streamAgentResponse: mockStreamAgentResponse,
+}));
+
+// ── Dynamic imports (after mock registration) ──────────────────────────
+
+const { handleInvocation } = await import('../invocations.js');
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -123,7 +122,7 @@ describe('handleInvocation', () => {
     };
 
     // Set mock return values in beforeEach to avoid hoisting issues
-    (getCurrentContext as jest.Mock).mockReturnValue(mockContext);
+    mockGetCurrentContext.mockReturnValue(mockContext);
 
     mockValidateImageData.mockReturnValue({ valid: true });
     mockResolveEffectiveUserId.mockReturnValue({ userId: 'test-user-id' });

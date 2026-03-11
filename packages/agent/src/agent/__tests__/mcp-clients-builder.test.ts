@@ -3,12 +3,20 @@
  *
  * Tests for buildUserMCPClients() which builds MCP clients
  * from user-provided mcp.json configuration.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock logger — define inline to avoid hoisting issues in CI
-jest.mock('../../config/index.js', () => ({
+// ── Mock definitions ───────────────────────────────────────────────────
+
+const mockGetEnabledMCPServers = jest.fn<any>().mockReturnValue([]);
+const mockCreateMCPClients = jest.fn<any>().mockReturnValue([]);
+
+// ── Register ESM mocks ─────────────────────────────────────────────────
+
+jest.unstable_mockModule('../../config/index.js', () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),
@@ -18,16 +26,14 @@ jest.mock('../../config/index.js', () => ({
   config: {},
 }));
 
-// Mock MCP modules — use jest.fn<any>() for flexibility
-const mockGetEnabledMCPServers = jest.fn<any>().mockReturnValue([]);
-const mockCreateMCPClients = jest.fn<any>().mockReturnValue([]);
-
-jest.mock('../../mcp/index.js', () => ({
-  getEnabledMCPServers: (...args: any[]) => mockGetEnabledMCPServers(...args),
-  createMCPClients: (...args: any[]) => mockCreateMCPClients(...args),
+jest.unstable_mockModule('../../mcp/index.js', () => ({
+  getEnabledMCPServers: mockGetEnabledMCPServers,
+  createMCPClients: mockCreateMCPClients,
 }));
 
-import { buildUserMCPClients } from '../mcp-clients-builder.js';
+// ── Dynamic imports ────────────────────────────────────────────────────
+
+const { buildUserMCPClients } = await import('../mcp-clients-builder.js');
 
 describe('buildUserMCPClients', () => {
   beforeEach(() => {

@@ -3,25 +3,14 @@
  *
  * Tests for extractMemoryParams() and fetchLongTermMemories()
  * which handle long-term memory retrieval from AgentCore Memory.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock config and logger — define config inline to avoid hoisting issues
-jest.mock('../../config/index.js', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-  config: {
-    AGENTCORE_MEMORY_ID: 'test-memory-id',
-    BEDROCK_REGION: 'us-east-1',
-  },
-}));
+// ── Mock definitions ───────────────────────────────────────────────────
 
-// Mock memory retriever
 const mockRetrieveLongTermMemory = jest
   .fn<
     (
@@ -33,19 +22,31 @@ const mockRetrieveLongTermMemory = jest
     ) => Promise<string[]>
   >()
   .mockResolvedValue([]);
-jest.mock('../../session/memory-retriever.js', () => ({
-  retrieveLongTermMemory: (
-    memoryId: string,
-    actorId: string,
-    context: string,
-    topK: number,
-    region: string
-  ) => mockRetrieveLongTermMemory(memoryId, actorId, context, topK, region),
+
+// ── Register ESM mocks ─────────────────────────────────────────────────
+
+const mockConfig = {
+  AGENTCORE_MEMORY_ID: 'test-memory-id',
+  BEDROCK_REGION: 'us-east-1',
+};
+
+jest.unstable_mockModule('../../config/index.js', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+  config: mockConfig,
 }));
 
-import { extractMemoryParams, fetchLongTermMemories } from '../memory-fetcher.js';
-// Import the mocked config to mutate it in tests
-import { config } from '../../config/index.js';
+jest.unstable_mockModule('../../session/memory-retriever.js', () => ({
+  retrieveLongTermMemory: mockRetrieveLongTermMemory,
+}));
+
+// ── Dynamic imports ────────────────────────────────────────────────────
+
+const { extractMemoryParams, fetchLongTermMemories } = await import('../memory-fetcher.js');
 
 describe('extractMemoryParams', () => {
   it('should return defaults when options is undefined', () => {
@@ -98,8 +99,8 @@ describe('fetchLongTermMemories', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset config to default values
-    (config as any).AGENTCORE_MEMORY_ID = 'test-memory-id';
-    (config as any).BEDROCK_REGION = 'us-east-1';
+    mockConfig.AGENTCORE_MEMORY_ID = 'test-memory-id';
+    mockConfig.BEDROCK_REGION = 'us-east-1';
   });
 
   it('should return empty memories when disabled', async () => {
@@ -115,7 +116,7 @@ describe('fetchLongTermMemories', () => {
   });
 
   it('should return empty memories when AGENTCORE_MEMORY_ID is not configured', async () => {
-    (config as any).AGENTCORE_MEMORY_ID = '';
+    mockConfig.AGENTCORE_MEMORY_ID = '';
 
     const result = await fetchLongTermMemories({
       enabled: true,

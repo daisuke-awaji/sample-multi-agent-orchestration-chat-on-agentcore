@@ -3,22 +3,14 @@
  *
  * Tests for selectEnabledTools() and buildToolSet()
  * which integrate local tools, Gateway MCP tools, and user-defined MCP clients.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock logger
-jest.mock('../../config/index.js', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-  },
-  config: {},
-}));
+// ── Mock definitions ───────────────────────────────────────────────────
 
-// Mock local tools and converter
 const mockLocalTools = [
   { name: 'tool_a', description: 'Tool A' },
   { name: 'tool_b', description: 'Tool B' },
@@ -35,20 +27,34 @@ const mockGatewayStrandsTools = [
   { name: 'gateway_tool_2', description: 'Gateway Tool 2 (Strands)' },
 ];
 
-jest.mock('../../tools/index.js', () => ({
+const mockListTools = jest.fn<() => Promise<unknown[]>>().mockResolvedValue(mockGatewayMCPTools);
+
+// ── Register ESM mocks ─────────────────────────────────────────────────
+
+jest.unstable_mockModule('../../config/index.js', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  },
+  config: {},
+}));
+
+jest.unstable_mockModule('../../tools/index.js', () => ({
   localTools: mockLocalTools,
   convertMCPToolsToStrands: () => mockGatewayStrandsTools,
 }));
 
-// Mock MCP client
-const mockListTools = jest.fn<() => Promise<unknown[]>>().mockResolvedValue(mockGatewayMCPTools);
-jest.mock('../../mcp/client.js', () => ({
+jest.unstable_mockModule('../../mcp/client.js', () => ({
   mcpClient: {
-    listTools: () => mockListTools(),
+    listTools: mockListTools,
   },
 }));
 
-import { selectEnabledTools, buildToolSet } from '../tools-builder.js';
+// ── Dynamic imports ────────────────────────────────────────────────────
+
+const { selectEnabledTools, buildToolSet } = await import('../tools-builder.js');
 
 describe('selectEnabledTools', () => {
   const tools = [

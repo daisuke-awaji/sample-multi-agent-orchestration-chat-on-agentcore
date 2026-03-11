@@ -3,33 +3,44 @@
  *
  * Tests for streamAgentResponse() which manages the streaming lifecycle:
  * headers, event loop, completion, and error handling.
+ *
+ * Uses jest.unstable_mockModule + dynamic import for ESM compatibility.
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock config & logger
-jest.mock('../../config/index.js', () => ({
+// ── Mock definitions (must be before jest.unstable_mockModule) ──────
+
+const mockGetCurrentContext = jest.fn<any>();
+const mockGetContextMetadata = jest.fn<any>();
+const mockCreateErrorMessage = jest.fn<any>().mockReturnValue({ role: 'assistant', content: 'error' });
+const mockSanitizeErrorMessage = jest.fn<any>().mockReturnValue('Sanitized error');
+const mockSerializeStreamEvent = jest.fn<any>().mockImplementation((event: any) => event);
+const mockBuildInputContent = jest.fn<any>().mockImplementation((prompt: string) => prompt);
+
+// ── Register ESM mocks ─────────────────────────────────────────────
+
+jest.unstable_mockModule('../../config/index.js', () => ({
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
   config: {},
 }));
 
-// Mock utils — use inline factory only (no external variable references)
-jest.mock('../../utils/index.js', () => ({
-  createErrorMessage: jest.fn().mockReturnValue({ role: 'assistant', content: 'error' }),
-  sanitizeErrorMessage: jest.fn().mockReturnValue('Sanitized error'),
-  serializeStreamEvent: jest.fn((event: any) => event),
-  buildInputContent: jest.fn((prompt: string) => prompt),
+jest.unstable_mockModule('../../utils/index.js', () => ({
+  createErrorMessage: mockCreateErrorMessage,
+  sanitizeErrorMessage: mockSanitizeErrorMessage,
+  serializeStreamEvent: mockSerializeStreamEvent,
+  buildInputContent: mockBuildInputContent,
 }));
 
-// Mock request context — use jest.fn() only, set return values in beforeEach
-jest.mock('../../context/request-context.js', () => ({
-  getCurrentContext: jest.fn(),
-  getContextMetadata: jest.fn(),
+jest.unstable_mockModule('../../context/request-context.js', () => ({
+  getCurrentContext: mockGetCurrentContext,
+  getContextMetadata: mockGetContextMetadata,
 }));
 
-import { streamAgentResponse } from '../stream-handler.js';
+// ── Dynamic imports (after mock registration) ──────────────────────
+
+const { streamAgentResponse } = await import('../stream-handler.js');
 import type { StreamOptions } from '../stream-handler.js';
-import { getCurrentContext, getContextMetadata } from '../../context/request-context.js';
 
 /** Create a mock Express Response */
 function createMockResponse() {
@@ -84,12 +95,12 @@ describe('streamAgentResponse', () => {
     };
 
     // Set mock return values in beforeEach to avoid hoisting issues
-    (getCurrentContext as jest.Mock).mockReturnValue({
+    mockGetCurrentContext.mockReturnValue({
       requestId: 'test-request-id',
       userId: 'test-user',
       sessionId: 'test-session',
     });
-    (getContextMetadata as jest.Mock).mockReturnValue({
+    mockGetContextMetadata.mockReturnValue({
       requestId: 'test-request-id',
       duration: 100,
     });
