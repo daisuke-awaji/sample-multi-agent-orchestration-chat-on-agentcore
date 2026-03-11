@@ -66,6 +66,11 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
   public readonly athenaToolsTarget: AgentCoreLambdaTarget;
 
   /**
+   * Nova Canvas Tools Lambda Target
+   */
+  public readonly novaCanvasToolsTarget: AgentCoreLambdaTarget;
+
+  /**
    * S3 bucket for Athena query results
    */
   public readonly athenaOutputBucket: s3.Bucket;
@@ -196,6 +201,62 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'AthenaOutputBucketName', {
       value: this.athenaOutputBucket.bucketName,
       description: 'S3 Bucket for Athena query results',
+    });
+
+    // ── Nova Canvas Tools Target ──
+
+    // Resolve User Storage bucket name from core stack
+    const userStorageBucketName = props.coreStackName
+      ? cdk.Fn.importValue(`${props.coreStackName}-UserStorageBucketName`)
+      : '';
+
+    this.novaCanvasToolsTarget = new AgentCoreLambdaTarget(this, 'NovaCanvasToolsTarget', {
+      resourcePrefix,
+      targetName: 'nova-canvas-tools',
+      description: 'Lambda function providing Nova Canvas image generation tools',
+      lambdaCodePath: 'packages/lambda-tools/tools/nova-canvas-tools',
+      toolSchemaPath: 'packages/lambda-tools/tools/nova-canvas-tools/tool-schema.json',
+      timeout: 120,
+      memorySize: 512,
+      environment: {
+        LOG_LEVEL: 'INFO',
+        NOVA_CANVAS_REGION: 'us-east-1',
+        USER_STORAGE_BUCKET_NAME: userStorageBucketName,
+      },
+    });
+    this.novaCanvasToolsTarget.addToImportedGateway(
+      importedGateway,
+      'NovaCanvasToolsGatewayTarget'
+    );
+
+    // Bedrock InvokeModel permission for Nova Canvas
+    this.novaCanvasToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel'],
+        resources: [
+          `arn:aws:bedrock:*:${this.account}:inference-profile/*`,
+          'arn:aws:bedrock:*::foundation-model/amazon.nova-canvas-v1:0',
+        ],
+      })
+    );
+
+    // S3 write permission for user storage
+    this.novaCanvasToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['s3:PutObject'],
+        resources: [`arn:aws:s3:::${userStorageBucketName}/*`],
+      })
+    );
+
+    // Nova Canvas Tools outputs
+    new cdk.CfnOutput(this, 'NovaCanvasToolsLambdaArn', {
+      value: this.novaCanvasToolsTarget.lambdaFunction.functionArn,
+      description: 'Nova Canvas Tools Lambda Function ARN',
+    });
+
+    new cdk.CfnOutput(this, 'NovaCanvasToolsLambdaName', {
+      value: this.novaCanvasToolsTarget.lambdaFunction.functionName,
+      description: 'Nova Canvas Tools Lambda Function Name',
     });
 
     // ── OneDrive (Microsoft Graph) OpenAPI Target ──

@@ -113,13 +113,6 @@ export interface AgentCoreRuntimeProps {
   readonly sessionsTableName?: string;
 
   /**
-   * Nova Canvas region (optional)
-   * Region of Amazon Nova Canvas model used for image generation
-   * @default us-east-1
-   */
-  readonly novaCanvasRegion?: string;
-
-  /**
    * Backend API URL (optional)
    * Required for retrieving agent information with call_agent tool
    * Example: https://api.example.com
@@ -267,11 +260,6 @@ export class AgentCoreRuntime extends Construct {
     // Set Sessions Table name
     if (props.sessionsTableName) {
       environmentVariables.SESSIONS_TABLE_NAME = props.sessionsTableName;
-    }
-
-    // Set Nova Canvas region
-    if (props.novaCanvasRegion) {
-      environmentVariables.NOVA_CANVAS_REGION = props.novaCanvasRegion;
     }
 
     // Set Backend API URL

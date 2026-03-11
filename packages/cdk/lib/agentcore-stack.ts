@@ -176,6 +176,7 @@ export class AgentCoreStack extends cdk.Stack {
       authType: props?.authType || 'cognito',
       cognitoAuth: this.cognitoAuth,
       jwtConfig: props?.jwtConfig,
+      enableInterceptor: true, // Enable JWT context injection for Lambda tools
       mcpConfig: {
         instructions:
           'Use this Gateway to integrate AgentCore tools with external services. Utility tools (Echo/Ping, etc.) are available.',
