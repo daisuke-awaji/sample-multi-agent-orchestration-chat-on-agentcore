@@ -7,12 +7,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock config and logger
-const mockConfig = {
-  AGENTCORE_MEMORY_ID: 'test-memory-id',
-  BEDROCK_REGION: 'us-east-1',
-};
-
+// Mock config and logger — define config inline to avoid hoisting issues
 jest.mock('../../config/index.js', () => ({
   logger: {
     info: jest.fn(),
@@ -20,7 +15,10 @@ jest.mock('../../config/index.js', () => ({
     error: jest.fn(),
     debug: jest.fn(),
   },
-  config: mockConfig,
+  config: {
+    AGENTCORE_MEMORY_ID: 'test-memory-id',
+    BEDROCK_REGION: 'us-east-1',
+  },
 }));
 
 // Mock memory retriever
@@ -46,6 +44,8 @@ jest.mock('../../session/memory-retriever.js', () => ({
 }));
 
 import { extractMemoryParams, fetchLongTermMemories } from '../memory-fetcher.js';
+// Import the mocked config to mutate it in tests
+import { config } from '../../config/index.js';
 
 describe('extractMemoryParams', () => {
   it('should return defaults when options is undefined', () => {
@@ -97,8 +97,9 @@ describe('extractMemoryParams', () => {
 describe('fetchLongTermMemories', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset config to default
-    mockConfig.AGENTCORE_MEMORY_ID = 'test-memory-id';
+    // Reset config to default values
+    (config as any).AGENTCORE_MEMORY_ID = 'test-memory-id';
+    (config as any).BEDROCK_REGION = 'us-east-1';
   });
 
   it('should return empty memories when disabled', async () => {
@@ -114,7 +115,7 @@ describe('fetchLongTermMemories', () => {
   });
 
   it('should return empty memories when AGENTCORE_MEMORY_ID is not configured', async () => {
-    mockConfig.AGENTCORE_MEMORY_ID = '';
+    (config as any).AGENTCORE_MEMORY_ID = '';
 
     const result = await fetchLongTermMemories({
       enabled: true,

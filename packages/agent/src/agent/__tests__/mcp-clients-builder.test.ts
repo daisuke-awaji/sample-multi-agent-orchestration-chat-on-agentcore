@@ -7,7 +7,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-// Mock logger
+// Mock logger — define inline to avoid hoisting issues in CI
 jest.mock('../../config/index.js', () => ({
   logger: {
     info: jest.fn(),
@@ -18,13 +18,13 @@ jest.mock('../../config/index.js', () => ({
   config: {},
 }));
 
-// Mock MCP modules
-const mockGetEnabledMCPServers = jest.fn<(config: unknown) => unknown[]>().mockReturnValue([]);
-const mockCreateMCPClients = jest.fn<(servers: unknown[]) => unknown[]>().mockReturnValue([]);
+// Mock MCP modules — use jest.fn<any>() for flexibility
+const mockGetEnabledMCPServers = jest.fn<any>().mockReturnValue([]);
+const mockCreateMCPClients = jest.fn<any>().mockReturnValue([]);
 
 jest.mock('../../mcp/index.js', () => ({
-  getEnabledMCPServers: (config: unknown) => mockGetEnabledMCPServers(config),
-  createMCPClients: (servers: unknown[]) => mockCreateMCPClients(servers),
+  getEnabledMCPServers: (...args: any[]) => mockGetEnabledMCPServers(...args),
+  createMCPClients: (...args: any[]) => mockCreateMCPClients(...args),
 }));
 
 import { buildUserMCPClients } from '../mcp-clients-builder.js';
@@ -32,6 +32,8 @@ import { buildUserMCPClients } from '../mcp-clients-builder.js';
 describe('buildUserMCPClients', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetEnabledMCPServers.mockReturnValue([]);
+    mockCreateMCPClients.mockReturnValue([]);
   });
 
   it('should return empty array when mcpConfig is undefined', () => {
