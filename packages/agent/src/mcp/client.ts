@@ -2,7 +2,7 @@
 // import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/http.js";
 // import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { config, logger } from '../config/index.js';
-import { getCurrentAuthHeader } from '../context/request-context.js';
+import { getCurrentAuthHeader, getCurrentStoragePath } from '../context/request-context.js';
 import { MCPToolDefinition } from '../schemas/types.js';
 
 /**
@@ -339,8 +339,10 @@ export class AgentCoreMCPClient {
 
       // JWT authentication required for tool calls
       const authHeader = this.getAuthorizationHeader(true);
+      const storagePath = getCurrentStoragePath();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'x-storage-path': storagePath,
       };
 
       if (authHeader) {

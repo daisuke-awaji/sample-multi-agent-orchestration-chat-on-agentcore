@@ -90,6 +90,19 @@ function extractUserId(jwtPayload: JwtPayload): string | null {
 }
 
 /**
+ * Extract storage path from x-storage-path header (case-insensitive).
+ * Falls back to '/' if the header is missing or empty.
+ */
+function extractStoragePath(headers: Record<string, string>): string {
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === 'x-storage-path' && value) {
+      return value;
+    }
+  }
+  return '/';
+}
+
+/**
  * Extract raw JWT token from Authorization header (case-insensitive).
  */
 function extractJwtFromHeaders(headers: Record<string, string>): string | null {
@@ -144,7 +157,7 @@ export const handler = async (event: InterceptorEvent): Promise<InterceptorRespo
           const args = params.arguments ?? {};
           args._context = {
             userId,
-            storagePath: '/',
+            storagePath: extractStoragePath(headers),
           };
           params.arguments = args;
           requestBody.params = params;

@@ -69,7 +69,7 @@ async function saveImageToS3(
     return '';
   }
 
-  const basePath = `users/${userId}/${storagePath}/images`.replace(/\/+/g, '/');
+  const basePath = `users/${userId}/${storagePath}`.replace(/\/+/g, '/');
   const s3Key = `${basePath}/${filename}`.replace(/\/+/g, '/');
   const imageBuffer = Buffer.from(imageBase64, 'base64');
 
@@ -100,11 +100,7 @@ async function handleNovaCanvas(input: ToolInput): Promise<ToolResult> {
   }
 
   if (novaInput.prompt.length > 1024) {
-    throw new ToolValidationError(
-      'Prompt must be 1024 characters or less',
-      TOOL_NAME,
-      'prompt'
-    );
+    throw new ToolValidationError('Prompt must be 1024 characters or less', TOOL_NAME, 'prompt');
   }
 
   // Extract user context (injected by Gateway Interceptor)
@@ -172,7 +168,7 @@ async function handleNovaCanvas(input: ToolInput): Promise<ToolResult> {
   );
 
   const responseBody = JSON.parse(
-    await response.body!.transformToString('utf-8')
+    response.body!.transformToString('utf-8')
   ) as NovaCanvasApiResponse;
   const duration = Date.now() - startTime;
 
@@ -192,12 +188,7 @@ async function handleNovaCanvas(input: ToolInput): Promise<ToolResult> {
           : generateFilename(seed + i);
 
     try {
-      const s3Path = await saveImageToS3(
-        responseBody.images[i],
-        userId,
-        storagePath,
-        filename
-      );
+      const s3Path = await saveImageToS3(responseBody.images[i], userId, storagePath, filename);
       if (s3Path) s3Paths.push(s3Path);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
