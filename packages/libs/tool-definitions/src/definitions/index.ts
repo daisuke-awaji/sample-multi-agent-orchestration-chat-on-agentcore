@@ -5,7 +5,6 @@ export * from './tavily-extract.js';
 export * from './tavily-crawl.js';
 export * from './s3-list-files.js';
 export * from './code-interpreter.js';
-export * from './nova-canvas.js';
 export * from './image-to-text.js';
 export * from './call-agent.js';
 export * from './nova-reel.js';
@@ -23,7 +22,6 @@ import { tavilyExtractDefinition } from './tavily-extract.js';
 import { tavilyCrawlDefinition } from './tavily-crawl.js';
 import { s3ListFilesDefinition } from './s3-list-files.js';
 import { codeInterpreterDefinition } from './code-interpreter.js';
-import { novaCanvasDefinition } from './nova-canvas.js';
 import { imageToTextDefinition } from './image-to-text.js';
 import { callAgentDefinition } from './call-agent.js';
 import { novaReelDefinition } from './nova-reel.js';
@@ -45,7 +43,6 @@ export const allToolDefinitions = [
   tavilyCrawlDefinition,
   s3ListFilesDefinition,
   codeInterpreterDefinition,
-  novaCanvasDefinition,
   imageToTextDefinition,
   callAgentDefinition,
   novaReelDefinition,
