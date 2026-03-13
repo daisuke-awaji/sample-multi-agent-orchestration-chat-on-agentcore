@@ -10,7 +10,25 @@ import { Message, TextBlock } from '@strands-agents/sdk';
  * @returns Sanitized error message safe for storage and display
  */
 export function sanitizeErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
+  let rawMessage: unknown;
+  if (error instanceof Error) {
+    rawMessage = error.message;
+  } else {
+    rawMessage = error;
+  }
+
+  // AWS SDK v3 streaming errors (e.g. ModelStreamErrorException) may have a
+  // non-string `message` property.  Safely convert to a printable string.
+  const message: string =
+    typeof rawMessage === 'string'
+      ? rawMessage
+      : (() => {
+          try {
+            return JSON.stringify(rawMessage);
+          } catch {
+            return String(rawMessage);
+          }
+        })();
 
   // Remove sensitive information patterns
   return (

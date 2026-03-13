@@ -2,6 +2,46 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ToolResult } from '../types/index';
 
+/**
+ * Recursively walk a parsed JSON value and attempt to parse any string
+ * values that look like JSON.  This handles the common pattern where
+ * Lambda tools return `{ text: JSON.stringify({...}) }` — the inner
+ * JSON string is expanded into a real object so it can be pretty-printed.
+ */
+function deepParseJsonStrings(value: unknown): unknown {
+  if (typeof value === 'string') {
+    // Only attempt to parse strings that look like JSON objects or arrays
+    const trimmed = value.trim();
+    if (
+      (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    ) {
+      try {
+        const inner = JSON.parse(trimmed);
+        // Recurse in case of nested stringified JSON
+        return deepParseJsonStrings(inner);
+      } catch {
+        // Not valid JSON — return as-is
+      }
+    }
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(deepParseJsonStrings);
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      result[k] = deepParseJsonStrings(v);
+    }
+    return result;
+  }
+
+  return value;
+}
+
 interface ToolResultBlockProps {
   toolResult: ToolResult;
 }
@@ -47,13 +87,15 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ toolResult }) 
   const resultStyles = getResultStyles();
 
   // Format result content
+  // Recursively parse JSON string values so nested JSON (e.g. text blocks
+  // containing serialised tool output) is displayed as structured objects.
   const formattedContent = (() => {
     try {
-      // Check if JSON
       const parsed = JSON.parse(toolResult.content);
+      const expanded = deepParseJsonStrings(parsed);
       return {
         isJson: true,
-        content: JSON.stringify(parsed, null, 2),
+        content: JSON.stringify(expanded, null, 2),
       };
     } catch {
       return {

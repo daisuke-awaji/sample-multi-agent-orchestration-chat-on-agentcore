@@ -78,6 +78,35 @@ describe('sanitizeErrorMessage', () => {
     expect(result).toContain('[EMAIL]');
     expect(result).toContain('/home/[USER]');
   });
+
+  it('should handle Error with non-string message (AWS SDK v3 streaming errors)', () => {
+    // AWS SDK v3 ModelStreamErrorException can have object-typed message
+    const error = new Error('placeholder');
+    // Force message to be an object (simulating AWS SDK behavior)
+    (error as unknown as { message: object }).message = {
+      __type: 'ModelStreamErrorException',
+      message: 'The model returned an error',
+    };
+    const result = sanitizeErrorMessage(error);
+    expect(result).not.toBe('[object Object]');
+    expect(result).toContain('ModelStreamErrorException');
+  });
+
+  it('should handle plain object passed as error', () => {
+    const error = { code: 'TIMEOUT', detail: 'Request timed out' };
+    const result = sanitizeErrorMessage(error);
+    expect(result).not.toBe('[object Object]');
+    expect(result).toContain('TIMEOUT');
+  });
+
+  it('should handle non-serializable error gracefully', () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const result = sanitizeErrorMessage(circular);
+    // Should not throw, should return some string
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
 });
 
 describe('createErrorMessage', () => {
