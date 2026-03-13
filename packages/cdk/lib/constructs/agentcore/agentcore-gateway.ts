@@ -1,7 +1,12 @@
 import { Construct } from 'constructs';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
+import * as bedrockagentcore from 'aws-cdk-lib/aws-bedrockagentcore';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Aws } from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { Aws, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import * as path from 'path';
 import { CognitoAuth } from '../auth';
 
 export interface AgentCoreGatewayProps {
@@ -47,6 +52,14 @@ export interface AgentCoreGatewayProps {
     readonly searchType?: agentcore.McpGatewaySearchType;
     readonly supportedVersions?: agentcore.MCPProtocolVersion[];
   };
+
+  /**
+   * Whether to enable the Gateway Request Interceptor (optional)
+   * When enabled, a Lambda interceptor is created that injects user context
+   * (_context with userId and storagePath) into tools/call request bodies.
+   * @default false
+   */
+  readonly enableInterceptor?: boolean;
 }
 
 /**
@@ -79,6 +92,11 @@ export class AgentCoreGateway extends Construct {
    * IAM role for Gateway
    */
   public readonly gatewayRole: iam.Role;
+
+  /**
+   * Interceptor Lambda function (if enabled)
+   */
+  public readonly interceptorLambda?: nodejs.NodejsFunction;
 
   constructor(scope: Construct, id: string, props: AgentCoreGatewayProps) {
     super(scope, id);
@@ -189,6 +207,68 @@ export class AgentCoreGateway extends Construct {
 
     // Expose the role created by L2 Construct
     this.gatewayRole = gatewayRole;
+
+    // Configure Gateway Interceptor (if enabled)
+    if (props.enableInterceptor) {
+      // Create Interceptor Lambda function
+      const interceptorLogGroup = new logs.LogGroup(this, 'InterceptorLogGroup', {
+        logGroupName: `/aws/lambda/${props.gatewayName}-gateway-interceptor`,
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: RemovalPolicy.DESTROY,
+      });
+
+      this.interceptorLambda = new nodejs.NodejsFunction(this, 'InterceptorFunction', {
+        functionName: `${props.gatewayName}-gateway-interceptor`,
+        runtime: lambda.Runtime.NODEJS_22_X,
+        entry: path.join(__dirname, '..', '..', '..', 'lambda', 'gateway-interceptor', 'index.ts'),
+        handler: 'handler',
+        timeout: Duration.seconds(10),
+        memorySize: 128,
+        logGroup: interceptorLogGroup,
+        environment: {
+          LOG_LEVEL: 'INFO',
+        },
+        bundling: {
+          minify: true,
+          sourceMap: true,
+          target: 'es2022',
+        },
+      });
+
+      // Allow Gateway service to invoke the interceptor Lambda
+      this.interceptorLambda.addPermission('AllowGatewayInvoke', {
+        principal: new iam.ServicePrincipal('bedrock-agentcore.amazonaws.com'),
+        action: 'lambda:InvokeFunction',
+      });
+
+      // Grant Gateway role permission to invoke the interceptor Lambda
+      gatewayRole.addToPolicy(
+        new iam.PolicyStatement({
+          sid: 'InvokeInterceptorLambda',
+          effect: iam.Effect.ALLOW,
+          actions: ['lambda:InvokeFunction'],
+          resources: [this.interceptorLambda.functionArn],
+        })
+      );
+
+      // Use CfnGateway escape hatch to configure interceptor
+      // The L2 construct does not expose interceptor configuration directly
+      const cfnGateway = this.gateway.node
+        .defaultChild as bedrockagentcore.CfnGateway;
+      cfnGateway.interceptorConfigurations = [
+        {
+          interceptor: {
+            lambda: {
+              arn: this.interceptorLambda.functionArn,
+            },
+          },
+          interceptionPoints: ['REQUEST'],
+          inputConfiguration: {
+            passRequestHeaders: true,
+          },
+        },
+      ];
+    }
 
     this.gatewayArn = this.gateway.gatewayArn;
     this.gatewayId = this.gateway.gatewayId;

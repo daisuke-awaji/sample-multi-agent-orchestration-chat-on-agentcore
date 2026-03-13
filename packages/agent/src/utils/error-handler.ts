@@ -5,12 +5,43 @@
 import { Message, TextBlock } from '@strands-agents/sdk';
 
 /**
+ * Convert an unknown value to a safe, printable string.
+ *
+ * - Strings pass through as-is.
+ * - Objects are JSON-serialized so the output is human-readable.
+ * - `undefined` and circular references fall back to `String()`.
+ */
+function toSafeString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  try {
+    // JSON.stringify returns `undefined` for the JS value `undefined`,
+    // so we need the nullish coalescing fallback.
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
  * Sanitize error message to remove sensitive information
  * @param error Error object or unknown value
  * @returns Sanitized error message safe for storage and display
  */
 export function sanitizeErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
+  let rawMessage: unknown;
+  if (error instanceof Error) {
+    rawMessage = error.message;
+  } else {
+    rawMessage = error;
+  }
+
+  // AWS SDK v3 streaming errors (e.g. ModelStreamErrorException) may have a
+  // non-string `message` property.  Safely convert to a printable string.
+  // Note: JSON.stringify returns `undefined` (not a string) for `undefined` input,
+  // so we must fall back to String() in that case.
+  const message: string = toSafeString(rawMessage);
 
   // Remove sensitive information patterns
   return (
