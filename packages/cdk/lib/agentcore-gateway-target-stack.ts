@@ -71,6 +71,11 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
   public readonly novaCanvasToolsTarget: AgentCoreLambdaTarget;
 
   /**
+   * Nova Reel Tools Lambda Target
+   */
+  public readonly novaReelToolsTarget: AgentCoreLambdaTarget;
+
+  /**
    * S3 bucket for Athena query results
    */
   public readonly athenaOutputBucket: s3.Bucket;
@@ -257,6 +262,55 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'NovaCanvasToolsLambdaName', {
       value: this.novaCanvasToolsTarget.lambdaFunction.functionName,
       description: 'Nova Canvas Tools Lambda Function Name',
+    });
+
+    // ── Nova Reel Tools Target ──
+
+    this.novaReelToolsTarget = new AgentCoreLambdaTarget(this, 'NovaReelToolsTarget', {
+      resourcePrefix,
+      targetName: 'nova-reel-tools',
+      description: 'Lambda function providing Nova Reel video generation tools',
+      lambdaCodePath: 'packages/lambda-tools/tools/nova-reel-tools',
+      toolSchemaPath: 'packages/lambda-tools/tools/nova-reel-tools/tool-schema.json',
+      timeout: 900,
+      memorySize: 512,
+      environment: {
+        LOG_LEVEL: 'INFO',
+        NOVA_REEL_REGION: 'us-east-1',
+        USER_STORAGE_BUCKET_NAME: userStorageBucketName,
+      },
+    });
+    this.novaReelToolsTarget.addToImportedGateway(importedGateway, 'NovaReelToolsGatewayTarget');
+
+    // Bedrock async invocation permissions for Nova Reel
+    this.novaReelToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel', 'bedrock:GetAsyncInvoke', 'bedrock:ListAsyncInvokes'],
+        resources: [
+          `arn:aws:bedrock:*:${this.account}:inference-profile/*`,
+          'arn:aws:bedrock:*::foundation-model/amazon.nova-reel-v1:1',
+          `arn:aws:bedrock:*:${this.account}:async-invoke/*`,
+        ],
+      })
+    );
+
+    // S3 permissions for Nova Reel (temp output + user storage copy)
+    this.novaReelToolsTarget.lambdaFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['s3:PutObject', 's3:GetObject', 's3:CopyObject', 's3:HeadObject'],
+        resources: [`arn:aws:s3:::${userStorageBucketName}/*`],
+      })
+    );
+
+    // Nova Reel Tools outputs
+    new cdk.CfnOutput(this, 'NovaReelToolsLambdaArn', {
+      value: this.novaReelToolsTarget.lambdaFunction.functionArn,
+      description: 'Nova Reel Tools Lambda Function ARN',
+    });
+
+    new cdk.CfnOutput(this, 'NovaReelToolsLambdaName', {
+      value: this.novaReelToolsTarget.lambdaFunction.functionName,
+      description: 'Nova Reel Tools Lambda Function Name',
     });
 
     // ── OneDrive (Microsoft Graph) OpenAPI Target ──

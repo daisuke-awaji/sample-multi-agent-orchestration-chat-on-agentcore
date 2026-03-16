@@ -18,9 +18,9 @@ export const novaReelSchema = z.object({
   imageBase64: z.string().optional().describe('Base64-encoded image for Image-to-Video (optional)'),
   duration: z.number().optional().describe('Video duration in seconds: 6 (default) or 120'),
   dimension: z
-    .enum(['1280x720', '720x1280', '1280x1280'])
+    .enum(['1280x720'])
     .optional()
-    .describe('Video resolution: 1280x720 (landscape), 720x1280 (portrait), 1280x1280 (square)'),
+    .describe('Video resolution. Currently only 1280x720 (landscape, 16:9) is supported.'),
   fps: z.number().optional().describe('Frame rate (default: 24)'),
   seed: z.number().optional().describe('Random seed (0-2147483646)'),
   outputPath: z.string().optional().describe('Output filename (auto-generated if omitted)'),
@@ -55,7 +55,7 @@ Actions:
 Features:
 - 6-second video: Generated in approximately 90 seconds
 - 2-minute video: Generated in approximately 14-17 minutes
-- Resolution: 1280x720 (landscape), 720x1280 (portrait), 1280x1280 (square)
+- Resolution: 1280x720 (landscape, 16:9) — currently the only supported dimension
 - Image-to-Video generation is also supported
 
 Examples:

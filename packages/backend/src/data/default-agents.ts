@@ -775,9 +775,9 @@ When working with code, I'll ensure:
 - **Reproducibility**: Use seed values for consistent results
 - **Auto-Save**: Images automatically saved to S3 storage
 
-[How to Use nova_canvas Tool]
+[How to Use nova-canvas-tools___nova_canvas Tool]
 
-The nova_canvas tool accepts the following parameters:
+The nova-canvas-tools___nova_canvas tool accepts the following parameters:
 - **prompt** (required): Detailed text description of the image (max 1024 characters)
 - **width** (optional): Image width in pixels (512, 768, or 1024, default: 512)
 - **height** (optional): Image height in pixels (512, 768, or 1024, default: 512)
@@ -818,7 +818,7 @@ The nova_canvas tool accepts the following parameters:
 1. **Understand the Request**: Clarify the user's vision and intended use case
 2. **Craft the Prompt**: Create a detailed, specific description
 3. **Select Parameters**: Choose appropriate size and number of images
-4. **Generate Images**: Use the nova_canvas tool
+4. **Generate Images**: Use the nova-canvas-tools___nova_canvas tool
 5. **Review Results**: The tool will provide S3 paths to generated images
 6. **Iterate if Needed**: Refine prompts based on results
 
@@ -845,9 +845,9 @@ When users need inspiration, offer:
 - Multiple prompt variations for experimentation
 
 [Available Tools]
-- nova_canvas: Primary tool for image generation
+- nova-canvas-tools___nova_canvas: Primary tool for image generation
 - s3_list_files: Browse generated images in storage`,
-    enabledTools: ['nova_canvas', 's3_list_files'],
+    enabledTools: ['nova-canvas-tools___nova_canvas', 's3_list_files'],
     scenarios: [
       {
         title: 'defaultAgents.imageCreator.scenarios.basicImage.title',
@@ -1820,7 +1820,7 @@ Proceed with this plan? (Yes/No)
 1. **Folder Setup**: Create organized folder structure (kamishibai_[title]_[date])
 2. **Story Planning**: Design 8-scene story structure with clear beginning, middle, and end
 3. **Script Writing**: Create scene descriptions and dialogue for each of 8 scenes
-4. **Image Generation**: Generate images using nova_canvas (1024x1024 square format, 8 images)
+4. **Image Generation**: Generate images using nova-canvas-tools___nova_canvas (1024x1024 square format, 8 images)
 5. **HTML Creation**: Build interactive carousel-style HTML viewer
 6. **Final Review**: Ensure completeness and quality
 
@@ -1876,11 +1876,16 @@ Proceed with this plan? (Yes/No)
 - [ ] Overall message is positive and appropriate
 
 [Available Tools]
-- nova_canvas: Generate illustrations (1024x1024 square format)
+- nova-canvas-tools___nova_canvas: Generate illustrations (1024x1024 square format)
 - file_editor: Create HTML, scripts, and story files
 - s3_list_files: Manage project folders and files
 - tavily_search: Research reference materials and educational content when needed`,
-    enabledTools: ['nova_canvas', 'file_editor', 's3_list_files', 'tavily_search'],
+    enabledTools: [
+      'nova-canvas-tools___nova_canvas',
+      'file_editor',
+      's3_list_files',
+      'tavily_search',
+    ],
     scenarios: [
       {
         title: 'defaultAgents.kamishibaiMaster.scenarios.original.title',
@@ -1959,7 +1964,7 @@ Start by understanding what the user wants to achieve:
 | File Operations | file_editor, s3_list_files | Document creation, file management |
 | Web Research | tavily_search, tavily_extract, tavily_crawl | Information gathering |
 | Code & Execution | execute_command, code_interpreter | Development, automation |
-| Media Generation | nova_canvas, nova_reel, image_to_text | Visual content creation |
+| Media Generation | nova-canvas-tools___nova_canvas, nova-reel-tools___nova_reel, image_to_text | Visual content creation |
 | Agent Orchestration | call_agent, manage_agent | Multi-agent workflows |
 | Enterprise Tools | x_amz_bedrock_agentcore_* | AgentCore Gateway integrations |
 

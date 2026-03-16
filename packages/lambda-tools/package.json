@@ -3,20 +3,9 @@
   "version": "0.1.0",
   "description": "AgentCore Gateway Lambda Tools Collection",
   "scripts": {
-    "build": "npm run build:shared && npm run build:utility-tools && npm run build:athena-tools && npm run build:nova-canvas-tools",
-    "build:shared": "cd shared && npm install && npm run build",
-    "build:utility-tools": "cd tools/utility-tools && npm install && npm run build",
-    "build:athena-tools": "cd tools/athena-tools && npm install && npm run build",
-    "build:nova-canvas-tools": "cd tools/nova-canvas-tools && npm install && npm run build",
-    "clean": "npm run clean:shared && npm run clean:utility-tools && npm run clean:athena-tools && npm run clean:nova-canvas-tools",
-    "clean:shared": "cd shared && npm run clean",
-    "clean:utility-tools": "cd tools/utility-tools && npm run clean",
-    "clean:athena-tools": "cd tools/athena-tools && npm run clean",
-    "clean:nova-canvas-tools": "cd tools/nova-canvas-tools && npm run clean",
-    "test": "npm run build:shared && npm run test:utility-tools && npm run test:athena-tools && npm run test:nova-canvas-tools",
-    "test:utility-tools": "cd tools/utility-tools && npm install && npm run test",
-    "test:athena-tools": "cd tools/athena-tools && npm install && npm run test",
-    "test:nova-canvas-tools": "cd tools/nova-canvas-tools && npm install && npm run test"
+    "build": "node scripts/run-all.mjs build",
+    "clean": "node scripts/run-all.mjs clean",
+    "test": "node scripts/run-all.mjs test"
   },
   "keywords": [
     "lambda",
