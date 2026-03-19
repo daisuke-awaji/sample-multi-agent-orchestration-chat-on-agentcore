@@ -97,7 +97,7 @@ function formatExtractResults(
 
     results.forEach((result, index) => {
       output += `${index + 1}. **${result.url}**\n`;
-      output += `Content:\n${truncateContent(result.raw_content, maxContentLength)}\n`;
+      output += `Content:\n${truncateContent(result.raw_content ?? '', maxContentLength)}\n`;
 
       // If images exist
       if (result.images && result.images.length > 0) {

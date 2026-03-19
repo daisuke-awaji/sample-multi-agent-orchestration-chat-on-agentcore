@@ -58,6 +58,7 @@ export const tavilyCrawlSchema = z.object({
   timeout: z.number().min(10).max(150).default(150).describe('Timeout in seconds (10-150)'),
   maxContentLength: z
     .number()
+    .int()
     .min(1000)
     .max(100000)
     .default(10000)

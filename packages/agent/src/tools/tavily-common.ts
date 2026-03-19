@@ -9,6 +9,10 @@ import { logger } from '../config/index.js';
  * Shared across all Tavily tools to avoid duplication.
  */
 export function truncateContent(content: string, maxLength: number): string {
+  if (maxLength <= 0) {
+    throw new RangeError(`maxLength must be > 0, got ${maxLength}`);
+  }
+
   if (content.length <= maxLength) {
     return content;
   }

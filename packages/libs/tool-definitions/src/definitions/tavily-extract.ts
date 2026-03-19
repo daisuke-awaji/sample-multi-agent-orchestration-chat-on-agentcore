@@ -28,6 +28,7 @@ export const tavilyExtractSchema = z.object({
   timeout: z.number().min(1).max(60).default(30).describe('Timeout in seconds (1-60)'),
   maxContentLength: z
     .number()
+    .int()
     .min(1000)
     .max(100000)
     .default(20000)

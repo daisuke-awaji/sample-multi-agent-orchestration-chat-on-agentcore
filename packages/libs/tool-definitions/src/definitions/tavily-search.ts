@@ -32,6 +32,7 @@ export const tavilySearchSchema = z.object({
     .describe('Prioritize results from specific country (e.g., japan, united states)'),
   maxContentLength: z
     .number()
+    .int()
     .min(500)
     .max(50000)
     .default(5000)
