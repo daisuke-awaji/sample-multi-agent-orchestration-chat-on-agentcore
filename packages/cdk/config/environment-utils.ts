@@ -22,6 +22,7 @@ const DEFAULT_CONFIG = {
   tavilyApiKeySecretName: 'agentcore/default/tavily-api-key',
   githubTokenSecretName: 'agentcore/default/github-token',
   gitlabTokenSecretName: 'agentcore/default/gitlab-token',
+  githubWebhookSecretName: 'agentcore/default/github-webhook-secret',
 };
 
 /**
@@ -63,6 +64,8 @@ function resolveConfig(env: Environment, input: EnvironmentConfigInput): Environ
     tavilyApiKeySecretName: input.tavilyApiKeySecretName ?? DEFAULT_CONFIG.tavilyApiKeySecretName,
     githubTokenSecretName: input.githubTokenSecretName ?? DEFAULT_CONFIG.githubTokenSecretName,
     gitlabTokenSecretName: input.gitlabTokenSecretName ?? DEFAULT_CONFIG.gitlabTokenSecretName,
+    githubWebhookSecretName:
+      input.githubWebhookSecretName ?? DEFAULT_CONFIG.githubWebhookSecretName,
   };
 }
 

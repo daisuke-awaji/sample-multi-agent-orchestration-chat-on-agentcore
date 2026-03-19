@@ -119,6 +119,17 @@ aws secretsmanager create-secret \
 
 You can generate a token from [GitHub Settings](https://github.com/settings/tokens).
 
+**GitHub Webhook Secret** (for receiving GitHub webhook events)
+
+```bash
+aws secretsmanager create-secret \
+  --name "agentcore/default/github-webhook-secret" \
+  --secret-string "$(uuidgen)" \
+  --region ap-northeast-1
+```
+
+This secret is used to verify HMAC-SHA256 signatures on incoming GitHub webhooks. See [GitHub Webhook Setup](docs/deployment-options.md#github-webhook-setup) for full configuration instructions.
+
 For local development, you can also set these as environment variables in `packages/agent/.env`.
 
 #### 3. Bootstrap CDK (first time only)

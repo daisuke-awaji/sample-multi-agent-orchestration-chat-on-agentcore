@@ -41,6 +41,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
 | `logRetentionDays` | number | `7` | Lambda log retention period (days) |
 | `tavilyApiKeySecretName` | string | `'agentcore/default/tavily-api-key'` | Secrets Manager secret name for Tavily API key |
 | `githubTokenSecretName` | string | `'agentcore/default/github-token'` | Secrets Manager secret name for GitHub token |
+| `githubWebhookSecretName` | string | `'agentcore/default/github-webhook-secret'` | Secrets Manager secret name for GitHub webhook HMAC secret |
 | `allowedSignUpEmailDomains` | string[] | - | Allowed email domains for sign-up |
 | `customDomain` | object | - | Custom domain configuration |
 | `testUser` | object | - | Test user auto-creation (dev only) |
@@ -166,6 +167,39 @@ npm run deploy:dev
 # Deploy production environment
 npm run deploy:prd
 ```
+
+## GitHub Webhook Setup
+
+To receive GitHub events (Issues, Pull Requests) and trigger agents automatically:
+
+### 1. Create Webhook Secret in Secrets Manager
+
+```bash
+# Generate a random secret
+WEBHOOK_SECRET=$(uuidgen)
+
+# Store in Secrets Manager
+aws secretsmanager create-secret \
+  --name "agentcore/dev/github-webhook-secret" \
+  --secret-string "$WEBHOOK_SECRET" \
+  --region ap-northeast-1
+
+echo "Save this secret for GitHub configuration: $WEBHOOK_SECRET"
+```
+
+### 2. Configure GitHub Repository Webhook
+
+1. Go to your GitHub repository → **Settings** → **Webhooks** → **Add webhook**
+2. Set the following:
+   - **Payload URL**: `<Backend API URL>/webhooks/github` (find in CloudFormation outputs)
+   - **Content type**: `application/json`
+   - **Secret**: The `$WEBHOOK_SECRET` value from step 1
+   - **Events**: Select "Let me select individual events" → check **Issues** and **Pull requests**
+3. Click **Add webhook**
+
+### 3. Create Event Triggers
+
+In the Moca UI, create triggers that subscribe to the `github-issue-created` or `github-pr` event sources. When a matching GitHub event occurs, the subscribed agent will be automatically invoked with the event context.
 
 ## Related Documentation
 

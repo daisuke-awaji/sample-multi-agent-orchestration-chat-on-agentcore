@@ -26,6 +26,7 @@ export const BASE_PREFIX = 'moca';
  *   - tavilyApiKeySecretName: 'agentcore/default/tavily-api-key'
  *   - githubTokenSecretName: 'agentcore/default/github-token'
  *   - gitlabTokenSecretName: 'agentcore/default/gitlab-token'
+ *   - githubWebhookSecretName: 'agentcore/default/github-webhook-secret'
  */
 export const environments: Record<Environment, EnvironmentConfigInput> = {
   /**
@@ -40,6 +41,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
     githubTokenSecretName: 'agentcore/dev/github-token',
     gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
+    githubWebhookSecretName: 'agentcore/dev/github-webhook-secret',
     eventRules: [
       {
         id: 's3-upload',
@@ -71,6 +73,17 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
         icon: 'github', // https://lucide.dev/icons/github
         enabled: true,
       },
+      {
+        id: 'github-pr',
+        name: 'GitHub Pull Request',
+        description: 'Triggered when a pull request event occurs in the GitHub repository',
+        eventPattern: {
+          source: ['github.com'],
+          detailType: ['pull_request'],
+        },
+        icon: 'git-pull-request', // https://lucide.dev/icons/git-pull-request
+        enabled: true,
+      },
     ],
   },
 
@@ -86,6 +99,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     tavilyApiKeySecretName: 'agentcore/stg/tavily-api-key',
     githubTokenSecretName: 'agentcore/stg/github-token',
     gitlabTokenSecretName: 'agentcore/stg/gitlab-token',
+    githubWebhookSecretName: 'agentcore/stg/github-webhook-secret',
   },
 
   /**
@@ -102,5 +116,6 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     tavilyApiKeySecretName: 'agentcore/prd/tavily-api-key',
     githubTokenSecretName: 'agentcore/prd/github-token',
     gitlabTokenSecretName: 'agentcore/prd/gitlab-token',
+    githubWebhookSecretName: 'agentcore/prd/github-webhook-secret',
   },
 };

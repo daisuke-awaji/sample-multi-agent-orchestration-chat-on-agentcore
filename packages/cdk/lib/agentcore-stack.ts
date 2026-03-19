@@ -373,6 +373,34 @@ export class AgentCoreStack extends cdk.Stack {
       });
     }
 
+    // Add GitHub Webhook Secret Name and permissions for webhook endpoint
+    if (envConfig.githubWebhookSecretName) {
+      this.backendApi.lambdaFunction.addEnvironment(
+        'GITHUB_WEBHOOK_SECRET_NAME',
+        envConfig.githubWebhookSecretName
+      );
+
+      // Grant Secrets Manager read access for webhook secret
+      this.backendApi.lambdaFunction.addToRolePolicy(
+        new cdk.aws_iam.PolicyStatement({
+          actions: ['secretsmanager:GetSecretValue'],
+          resources: [
+            `arn:aws:secretsmanager:${this.region}:${this.account}:secret:${envConfig.githubWebhookSecretName}*`,
+          ],
+        })
+      );
+
+      // Grant EventBridge PutEvents for forwarding webhook events
+      this.backendApi.lambdaFunction.addToRolePolicy(
+        new cdk.aws_iam.PolicyStatement({
+          actions: ['events:PutEvents'],
+          resources: [
+            `arn:aws:events:${this.region}:${this.account}:event-bus/default`,
+          ],
+        })
+      );
+    }
+
     // 8. Create AgentCore Runtime
     this.agentRuntime = new AgentCoreRuntime(this, 'AgentCoreRuntime', {
       runtimeName: resourcePrefix,

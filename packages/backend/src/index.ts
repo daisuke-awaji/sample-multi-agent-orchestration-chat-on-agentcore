@@ -15,6 +15,7 @@ import memoryRouter from './routes/memory.js';
 import storageRouter from './routes/storage.js';
 import triggersRouter from './routes/triggers.js';
 import eventsRouter from './routes/events.js';
+import webhooksRouter from './routes/webhooks.js';
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/memory', jwtAuthMiddleware, memoryRouter);
 app.use('/storage', storageRouter);
 app.use('/triggers', triggersRouter);
 app.use('/events', eventsRouter);
+app.use('/webhooks', webhooksRouter);
 
 /**
  * Health check endpoint (no authentication required)

@@ -174,6 +174,14 @@ export interface EnvironmentConfig {
   enableAwsOpsPermissions?: boolean;
 
   /**
+   * GitHub Webhook Secret Name (Secrets Manager)
+   * Used for verifying GitHub webhook HMAC-SHA256 signatures
+   * NOTE: This is a secret NAME/ID reference, not the actual secret value
+   * pragma: allowlist secret
+   */
+  githubWebhookSecretName?: string;
+
+  /**
    * Event rules configuration (optional)
    * Predefined EventBridge rules that users can subscribe to for triggers
    */
