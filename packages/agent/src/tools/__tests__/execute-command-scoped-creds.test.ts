@@ -20,8 +20,8 @@ const { ScopedCredentialsService } = await import('../../services/scoped-credent
 describe('execute-command scoped credentials integration', () => {
   const mockScopedCredentials: ScopedCredentials = {
     accessKeyId: 'ASIA_SCOPED_KEY',
-    secretAccessKey: 'scoped-secret',
-    sessionToken: 'scoped-session-token',
+    secretAccessKey: 'scoped-secret', // pragma: allowlist secret
+    sessionToken: 'scoped-session-token', // pragma: allowlist secret
     expiration: new Date(Date.now() + 3600 * 1000),
   };
 
@@ -31,8 +31,8 @@ describe('execute-command scoped credentials integration', () => {
 
       expect(envVars).toEqual({
         AWS_ACCESS_KEY_ID: 'ASIA_SCOPED_KEY',
-        AWS_SECRET_ACCESS_KEY: 'scoped-secret',
-        AWS_SESSION_TOKEN: 'scoped-session-token',
+        AWS_SECRET_ACCESS_KEY: 'scoped-secret', // pragma: allowlist secret
+        AWS_SESSION_TOKEN: 'scoped-session-token', // pragma: allowlist secret
       });
     });
   });
@@ -43,7 +43,7 @@ describe('execute-command scoped credentials integration', () => {
         PATH: '/usr/bin',
         HOME: '/home/user',
         AWS_ACCESS_KEY_ID: 'ORIGINAL_RUNTIME_KEY',
-        AWS_SECRET_ACCESS_KEY: 'ORIGINAL_SECRET',
+        AWS_SECRET_ACCESS_KEY: 'ORIGINAL_SECRET', // pragma: allowlist secret
         AWS_SESSION_TOKEN: 'ORIGINAL_TOKEN',
         AWS_REGION: 'us-east-1',
       };
@@ -57,7 +57,7 @@ describe('execute-command scoped credentials integration', () => {
 
       // Scoped credentials should override the originals
       expect(mergedEnv.AWS_ACCESS_KEY_ID).toBe('ASIA_SCOPED_KEY');
-      expect(mergedEnv.AWS_SECRET_ACCESS_KEY).toBe('scoped-secret');
+      expect(mergedEnv.AWS_SECRET_ACCESS_KEY).toBe('scoped-secret'); // pragma: allowlist secret
       expect(mergedEnv.AWS_SESSION_TOKEN).toBe('scoped-session-token');
 
       // Non-credential env vars should be preserved
@@ -81,7 +81,7 @@ describe('execute-command scoped credentials integration', () => {
       };
 
       expect(mergedEnv.AWS_ACCESS_KEY_ID).toBe('ASIA_SCOPED_KEY');
-      expect(mergedEnv.AWS_SECRET_ACCESS_KEY).toBe('scoped-secret');
+      expect(mergedEnv.AWS_SECRET_ACCESS_KEY).toBe('scoped-secret'); // pragma: allowlist secret
       expect(mergedEnv.AWS_SESSION_TOKEN).toBe('scoped-session-token');
     });
 

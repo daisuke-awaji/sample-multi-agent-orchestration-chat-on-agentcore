@@ -33,8 +33,8 @@ describe('ScopedCredentialsService', () => {
   const mockCredentials = {
     Credentials: {
       AccessKeyId: 'ASIA_TEST_KEY',
-      SecretAccessKey: 'test-secret-key',
-      SessionToken: 'test-session-token',
+      SecretAccessKey: 'test-secret-key', // pragma: allowlist secret
+      SessionToken: 'test-session-token', // pragma: allowlist secret
       Expiration: new Date(Date.now() + 3600 * 1000),
     },
   };
@@ -102,8 +102,8 @@ describe('ScopedCredentialsService', () => {
 
       expect(result).toEqual({
         accessKeyId: 'ASIA_TEST_KEY',
-        secretAccessKey: 'test-secret-key',
-        sessionToken: 'test-session-token',
+        secretAccessKey: 'test-secret-key', // pragma: allowlist secret
+        sessionToken: 'test-session-token', // pragma: allowlist secret
         expiration: mockCredentials.Credentials.Expiration,
       });
     });
@@ -234,8 +234,8 @@ describe('ScopedCredentialsService', () => {
 
       expect(envVars).toEqual({
         AWS_ACCESS_KEY_ID: 'ASIA_TEST_KEY',
-        AWS_SECRET_ACCESS_KEY: 'test-secret-key',
-        AWS_SESSION_TOKEN: 'test-session-token',
+        AWS_SECRET_ACCESS_KEY: 'test-secret-key', // pragma: allowlist secret
+        AWS_SESSION_TOKEN: 'test-session-token', // pragma: allowlist secret
       });
     });
   });

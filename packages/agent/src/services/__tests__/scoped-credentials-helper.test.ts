@@ -27,8 +27,8 @@ describe('scoped-credentials-helper', () => {
 
   const mockCredentials = {
     accessKeyId: 'ASIA_TEST',
-    secretAccessKey: 'secret',
-    sessionToken: 'token',
+    secretAccessKey: 'secret', // pragma: allowlist secret
+    sessionToken: 'token', // pragma: allowlist secret
     expiration: new Date(Date.now() + 3600 * 1000),
   };
 
