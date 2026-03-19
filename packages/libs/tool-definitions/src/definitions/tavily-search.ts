@@ -37,7 +37,7 @@ export const tavilySearchSchema = z.object({
     .max(50000)
     .default(5000)
     .describe(
-      'Maximum character length per search result content (default: 5000, min: 500, max: 50000). Increase to retrieve more detailed content from each result.'
+      'Maximum character length per search result content (default: 5000, min: 500, max: 50000). Increase to retrieve more detailed content from each result. Note: The AI summary answer uses a separate limit of max(1500, maxContentLength * 0.5), so it may exceed this value when maxContentLength is below 3000.'
     ),
 });
 

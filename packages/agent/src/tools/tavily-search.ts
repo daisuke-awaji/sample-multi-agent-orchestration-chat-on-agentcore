@@ -108,7 +108,7 @@ function formatSearchResults(response: TavilySearchResponse, maxContentLength: n
     output += `${index + 1}. **${result.title}**\n`;
     output += `   URL: ${result.url}\n`;
     output += `   Relevance: ${(result.score * 100).toFixed(1)}%\n`;
-    output += `   Content: ${truncateContent(result.content, maxContentLength)}\n\n`;
+    output += `   Content: ${truncateContent(result.content ?? '', maxContentLength)}\n\n`;
   });
 
   // If image results exist
