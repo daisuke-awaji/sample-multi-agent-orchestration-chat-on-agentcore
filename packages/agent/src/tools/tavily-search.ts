@@ -5,7 +5,7 @@
 import { tool } from '@strands-agents/sdk';
 import { tavilySearchDefinition } from '@moca/tool-definitions';
 import { logger } from '../config/index.js';
-import { getTavilyApiKey } from './tavily-common.js';
+import { getTavilyApiKey, truncateContent } from './tavily-common.js';
 import { z } from 'zod';
 
 /**
@@ -47,18 +47,6 @@ interface TavilyError {
 }
 
 /**
- * Safe size limit for search results
- */
-function truncateContent(content: string, maxLength: number = 2000): string {
-  if (content.length <= maxLength) {
-    return content;
-  }
-
-  const truncated = content.substring(0, maxLength);
-  return `${truncated}... (Content truncated due to length. Original length: ${content.length} characters)`;
-}
-
-/**
  * Call Tavily API
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,7 +82,7 @@ async function callTavilyAPI(params: Record<string, any>): Promise<TavilySearchR
 /**
  * Format search results
  */
-function formatSearchResults(response: TavilySearchResponse): string {
+function formatSearchResults(response: TavilySearchResponse, maxContentLength: number): string {
   const { query, answer, results, response_time, usage } = response;
 
   let output = `🔍 Tavily Search Results\n`;
@@ -109,7 +97,8 @@ function formatSearchResults(response: TavilySearchResponse): string {
 
   // If LLM-generated answer exists
   if (answer) {
-    output += `📝 AI Summary Answer:\n${truncateContent(answer, 1500)}\n\n`;
+    const summaryLimit = Math.max(1500, Math.floor(maxContentLength * 0.5));
+    output += `📝 AI Summary Answer:\n${truncateContent(answer, summaryLimit)}\n\n`;
   }
 
   // Search results
@@ -119,7 +108,7 @@ function formatSearchResults(response: TavilySearchResponse): string {
     output += `${index + 1}. **${result.title}**\n`;
     output += `   URL: ${result.url}\n`;
     output += `   Relevance: ${(result.score * 100).toFixed(1)}%\n`;
-    output += `   Content: ${truncateContent(result.content, 800)}\n\n`;
+    output += `   Content: ${truncateContent(result.content, maxContentLength)}\n\n`;
   });
 
   // If image results exist
@@ -156,6 +145,7 @@ export const tavilySearchTool = tool({
       excludeDomains,
       includeImages,
       country,
+      maxContentLength,
     } = input;
 
     logger.info(`🔍 Tavily search started: ${query}`);
@@ -197,7 +187,7 @@ export const tavilySearchTool = tool({
       const duration = Date.now() - startTime;
 
       // Format results
-      const formattedResult = formatSearchResults(response);
+      const formattedResult = formatSearchResults(response, maxContentLength);
 
       logger.info(
         `✅ Tavily search completed: ${query} (${duration}ms, ${response.results.length} results)`

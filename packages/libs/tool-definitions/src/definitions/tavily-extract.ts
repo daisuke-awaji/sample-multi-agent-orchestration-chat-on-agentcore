@@ -26,6 +26,14 @@ export const tavilyExtractSchema = z.object({
     .describe('Number of chunks per source (1-5, only effective when query is specified)'),
   includeImages: z.boolean().default(false).describe('Whether to include image information'),
   timeout: z.number().min(1).max(60).default(30).describe('Timeout in seconds (1-60)'),
+  maxContentLength: z
+    .number()
+    .min(1000)
+    .max(100000)
+    .default(20000)
+    .describe(
+      'Maximum character length per extracted content (default: 20000, min: 1000, max: 100000). Increase to retrieve full page content.'
+    ),
 });
 
 export const tavilyExtractDefinition: ToolDefinition<typeof tavilyExtractSchema> = {

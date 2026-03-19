@@ -30,6 +30,14 @@ export const tavilySearchSchema = z.object({
     .string()
     .optional()
     .describe('Prioritize results from specific country (e.g., japan, united states)'),
+  maxContentLength: z
+    .number()
+    .min(500)
+    .max(50000)
+    .default(5000)
+    .describe(
+      'Maximum character length per search result content (default: 5000, min: 500, max: 50000). Increase to retrieve more detailed content from each result.'
+    ),
 });
 
 export const tavilySearchDefinition: ToolDefinition<typeof tavilySearchSchema> = {

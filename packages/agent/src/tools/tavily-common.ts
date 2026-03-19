@@ -4,6 +4,19 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { logger } from '../config/index.js';
 
+/**
+ * Truncate content to a safe size limit.
+ * Shared across all Tavily tools to avoid duplication.
+ */
+export function truncateContent(content: string, maxLength: number): string {
+  if (content.length <= maxLength) {
+    return content;
+  }
+
+  const truncated = content.substring(0, maxLength);
+  return `${truncated}... (Content truncated due to length. Original length: ${content.length} characters)`;
+}
+
 let cachedApiKey: string | null = null;
 
 /**

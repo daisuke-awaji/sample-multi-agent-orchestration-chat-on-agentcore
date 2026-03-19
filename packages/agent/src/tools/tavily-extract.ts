@@ -5,7 +5,7 @@
 import { tool } from '@strands-agents/sdk';
 import { tavilyExtractDefinition } from '@moca/tool-definitions';
 import { logger } from '../config/index.js';
-import { getTavilyApiKey } from './tavily-common.js';
+import { getTavilyApiKey, truncateContent } from './tavily-common.js';
 
 /**
  * Tavily Extract API response type
@@ -38,18 +38,6 @@ interface TavilyError {
   error: string;
   message: string;
   status?: number;
-}
-
-/**
- * Truncate content to safe size
- */
-function truncateContent(content: string, maxLength: number = 3000): string {
-  if (content.length <= maxLength) {
-    return content;
-  }
-
-  const truncated = content.substring(0, maxLength);
-  return `${truncated}... (Content truncated due to length. Original length: ${content.length} characters)`;
 }
 
 /**
@@ -88,7 +76,10 @@ async function callTavilyExtractAPI(params: Record<string, any>): Promise<Tavily
 /**
  * Format extraction results
  */
-function formatExtractResults(response: TavilyExtractResponse): string {
+function formatExtractResults(
+  response: TavilyExtractResponse,
+  maxContentLength: number
+): string {
   const { results, failed_results, response_time, usage } = response;
 
   let output = `🔍 Tavily Extract Results\n`;
@@ -106,7 +97,7 @@ function formatExtractResults(response: TavilyExtractResponse): string {
 
     results.forEach((result, index) => {
       output += `${index + 1}. **${result.url}**\n`;
-      output += `Content:\n${truncateContent(result.raw_content, 2000)}\n`;
+      output += `Content:\n${truncateContent(result.raw_content, maxContentLength)}\n`;
 
       // If images exist
       if (result.images && result.images.length > 0) {
@@ -145,7 +136,7 @@ export const tavilyExtractTool = tool({
   description: tavilyExtractDefinition.description,
   inputSchema: tavilyExtractDefinition.zodSchema,
   callback: async (input) => {
-    const { urls, query, extractDepth, format, chunksPerSource, includeImages, timeout } = input;
+    const { urls, query, extractDepth, format, chunksPerSource, includeImages, timeout, maxContentLength } = input;
 
     // Convert URLs to array
     const urlArray = Array.isArray(urls) ? urls : [urls];
@@ -175,7 +166,7 @@ export const tavilyExtractTool = tool({
       const duration = Date.now() - startTime;
 
       // Format results
-      const formattedResult = formatExtractResults(response);
+      const formattedResult = formatExtractResults(response, maxContentLength);
 
       logger.info(
         `✅ Tavily extraction completed: ${response.results.length} succeeded, ${response.failed_results.length} failed (${duration}ms)`
