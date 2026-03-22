@@ -56,6 +56,15 @@ export const tavilyCrawlSchema = z.object({
     .default(3)
     .describe('Number of chunks per source (1-5, only effective when instructions is specified)'),
   timeout: z.number().min(10).max(150).default(150).describe('Timeout in seconds (10-150)'),
+  maxContentLength: z
+    .number()
+    .int()
+    .min(1000)
+    .max(100000)
+    .default(10000)
+    .describe(
+      'Maximum character length per crawled page content (default: 10000, min: 1000, max: 100000). Increase to retrieve more detailed content from each page.'
+    ),
 });
 
 export const tavilyCrawlDefinition: ToolDefinition<typeof tavilyCrawlSchema> = {

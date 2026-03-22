@@ -5,7 +5,7 @@
 import { tool } from '@strands-agents/sdk';
 import { tavilyCrawlDefinition } from '@moca/tool-definitions';
 import { logger } from '../config/index.js';
-import { getTavilyApiKey } from './tavily-common.js';
+import { getTavilyApiKey, truncateContent } from './tavily-common.js';
 
 /**
  * Tavily Crawl API response type
@@ -35,18 +35,6 @@ interface TavilyError {
   error: string;
   message: string;
   status?: number;
-}
-
-/**
- * Truncate content to safe size
- */
-function truncateContent(content: string, maxLength: number = 2500): string {
-  if (content.length <= maxLength) {
-    return content;
-  }
-
-  const truncated = content.substring(0, maxLength);
-  return `${truncated}... (Content truncated due to length. Original length: ${content.length} characters)`;
 }
 
 /**
@@ -85,7 +73,7 @@ async function callTavilyCrawlAPI(params: Record<string, any>): Promise<TavilyCr
 /**
  * Format crawl results
  */
-function formatCrawlResults(response: TavilyCrawlResponse): string {
+function formatCrawlResults(response: TavilyCrawlResponse, maxContentLength: number): string {
   const { base_url, results, response_time, usage } = response;
 
   let output = `🕷️ Tavily Crawl Results\n`;
@@ -105,7 +93,7 @@ function formatCrawlResults(response: TavilyCrawlResponse): string {
 
     results.forEach((result, index) => {
       output += `${index + 1}. **${result.url}**\n`;
-      output += `Content:\n${truncateContent(result.raw_content, 1500)}\n`;
+      output += `Content:\n${truncateContent(result.raw_content ?? '', maxContentLength)}\n`;
 
       // If images exist
       if (result.images && result.images.length > 0) {
@@ -150,6 +138,7 @@ export const tavilyCrawlTool = tool({
       includeImages,
       chunksPerSource,
       timeout,
+      maxContentLength,
     } = input;
 
     logger.info(`🕷️ Tavily crawl started: ${url}`);
@@ -197,7 +186,7 @@ export const tavilyCrawlTool = tool({
       const duration = Date.now() - startTime;
 
       // Format results
-      const formattedResult = formatCrawlResults(response);
+      const formattedResult = formatCrawlResults(response, maxContentLength);
 
       logger.info(
         `✅ Tavily crawl completed: ${response.results.length} pages discovered (${duration}ms)`
