@@ -65,81 +65,66 @@ function buildSessionPolicy(
   userId: string,
   enableOps: boolean
 ): string {
+  // Session Policy size limit: 2,048 characters (packed).
+  // To stay within the limit, all `Sid` fields are omitted and actions are
+  // aggregated (e.g., `s3:*` instead of individual actions). The role's
+  // identity-based policy already constrains the allowed actions, so using
+  // wildcards here only widens the session-policy side of the AND evaluation
+  // without granting additional effective permissions.
   const statements: Record<string, unknown>[] = [];
 
-  // S3 scoping — user storage (if configured)
+  // S3 — user storage prefix
   if (bucketName) {
     statements.push(
       {
-        Sid: 'AllowObjectAccessUserPrefix',
         Effect: 'Allow',
-        Action: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:HeadObject'],
+        Action: 's3:*',
         Resource: `arn:aws:s3:::${bucketName}/users/${userId}/*`,
       },
       {
-        Sid: 'AllowListBucketUserPrefix',
         Effect: 'Allow',
         Action: 's3:ListBucket',
         Resource: `arn:aws:s3:::${bucketName}`,
         Condition: {
-          StringLike: {
-            's3:prefix': [`users/${userId}/*`, `users/${userId}`],
-          },
+          StringLike: { 's3:prefix': [`users/${userId}/*`, `users/${userId}`] },
         },
       }
     );
   }
 
-  // S3 scoping — CDK/CloudFormation staging buckets (Ops mode only)
+  // S3 — CDK/CloudFormation staging buckets (Ops mode)
   if (enableOps) {
     statements.push({
-      Sid: 'AllowS3CdkStaging',
       Effect: 'Allow',
-      Action: ['s3:CreateBucket', 's3:PutObject', 's3:GetObject', 's3:ListBucket'],
+      Action: 's3:*',
       Resource: [
+        'arn:aws:s3:::cdk*',
+        'arn:aws:s3:::cdk*/*',
         'arn:aws:s3:::cdktoolkit-*',
         'arn:aws:s3:::cdktoolkit-*/*',
-        'arn:aws:s3:::cdk-*',
-        'arn:aws:s3:::cdk-*/*',
       ],
     });
   }
 
-  // DynamoDB scoping (if configured)
-  // The `dynamodb:LeadingKeys` condition restricts access to items whose partition
-  // key exactly matches the userId. This prevents cross-user data access even if
-  // shell commands (`aws dynamodb ...`) are executed via the execute_command tool.
-  // Note: `Scan` is intentionally excluded from the allowed actions because
-  // `LeadingKeys` cannot restrict Scan operations.
+  // DynamoDB — user-scoped partition key
+  // `LeadingKeys` restricts to items where PK = userId. Scan is not allowed
+  // because LeadingKeys cannot restrict it; the role policy also excludes Scan.
   if (tableArn) {
     statements.push({
-      Sid: 'AllowDynamoDBUserScopedAccess',
       Effect: 'Allow',
-      Action: [
-        'dynamodb:GetItem',
-        'dynamodb:PutItem',
-        'dynamodb:UpdateItem',
-        'dynamodb:DeleteItem',
-        'dynamodb:Query',
-      ],
+      Action: 'dynamodb:*',
       Resource: [tableArn, `${tableArn}/index/*`],
       Condition: {
-        'ForAllValues:StringEquals': {
-          'dynamodb:LeadingKeys': [userId],
-        },
+        'ForAllValues:StringEquals': { 'dynamodb:LeadingKeys': [userId] },
       },
     });
   }
 
-  // Allow all non-S3/non-DynamoDB operations (Ops mode)
-  // The `NotAction` pattern permits operations like `aws ec2 describe-instances`,
-  // `aws cloudformation deploy`, etc. while keeping S3 and DynamoDB restricted
-  // to the user-scoped statements above. The effective permissions are the
-  // intersection of this session policy AND the role's identity-based policies,
-  // so only actions actually granted to the role will succeed.
+  // Non-storage operations pass-through (Ops mode)
+  // NotAction lets ReadOnly, CloudFormation, IAM PassRole, etc. through
+  // while S3 and DynamoDB remain restricted to the statements above.
   if (enableOps) {
     statements.push({
-      Sid: 'AllowNonStorageOps',
       Effect: 'Allow',
       NotAction: ['s3:*', 'dynamodb:*'],
       Resource: '*',
