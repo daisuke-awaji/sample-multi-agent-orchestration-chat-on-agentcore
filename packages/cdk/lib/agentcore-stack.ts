@@ -327,8 +327,44 @@ export class AgentCoreStack extends cdk.Stack {
       logRetention: envConfig.logRetentionDays,
     });
 
-    // Grant User Storage full access to Backend API
-    this.userStorage.grantFullAccess(this.backendApi.lambdaFunction);
+    // Backend API user-scoped S3 access via STS AssumeRole with Session Policy
+    const backendUserScopedS3Role = new cdk.aws_iam.Role(this, 'BackendUserScopedS3Role', {
+      assumedBy: new cdk.aws_iam.ArnPrincipal(this.backendApi.lambdaFunction.role!.roleArn),
+      description: 'Role assumed by Backend API with per-user session policies to scope S3 access',
+      maxSessionDuration: cdk.Duration.hours(1),
+    });
+
+    backendUserScopedS3Role.addToPolicy(
+      new cdk.aws_iam.PolicyStatement({
+        sid: 'S3UserStorageAccess',
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: [
+          's3:GetObject',
+          's3:PutObject',
+          's3:DeleteObject',
+          's3:ListBucket',
+          's3:HeadObject',
+        ],
+        resources: [
+          `arn:aws:s3:::${this.userStorage.bucketName}`,
+          `arn:aws:s3:::${this.userStorage.bucketName}/*`,
+        ],
+      })
+    );
+
+    this.backendApi.lambdaFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        sid: 'AssumeUserScopedS3Role',
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['sts:AssumeRole'],
+        resources: [backendUserScopedS3Role.roleArn],
+      })
+    );
+
+    this.backendApi.addEnvironmentVariable(
+      'USER_SCOPED_S3_ROLE_ARN',
+      backendUserScopedS3Role.roleArn
+    );
 
     // Grant Agents Table read/write access to Backend API
     this.agentsTable.grantReadWrite(this.backendApi.lambdaFunction);
@@ -394,9 +430,7 @@ export class AgentCoreStack extends cdk.Stack {
       this.backendApi.lambdaFunction.addToRolePolicy(
         new cdk.aws_iam.PolicyStatement({
           actions: ['events:PutEvents'],
-          resources: [
-            `arn:aws:events:${this.region}:${this.account}:event-bus/default`,
-          ],
+          resources: [`arn:aws:events:${this.region}:${this.account}:event-bus/default`],
         })
       );
     }
@@ -427,9 +461,6 @@ export class AgentCoreStack extends cdk.Stack {
 
     // Grant Memory access permissions to Runtime
     this.memory.grantAgentCoreAccess(this.agentRuntime.runtime);
-
-    // Grant User Storage full access to Runtime
-    this.userStorage.grantFullAccess(this.agentRuntime.runtime);
 
     // Grant Sessions Table read/write access to Runtime
     this.sessionsTable.grantReadWrite(this.agentRuntime.runtime);

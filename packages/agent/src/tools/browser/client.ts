@@ -20,6 +20,7 @@ import {
   GetBrowserSessionCommand,
 } from '@aws-sdk/client-bedrock-agentcore';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { createUserScopedS3Client } from '../../utils/scoped-s3-credentials.js';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
@@ -68,6 +69,7 @@ export class AgentCoreBrowserClient {
     this.storagePath = options.storagePath || '';
     this.defaultSessionName = `browser-${crypto.randomUUID().slice(0, 12)}`;
     this.client = new BedrockAgentCoreClient({ region: this.region });
+    // S3 client will be lazily initialized with user-scoped credentials when needed
     this.s3Client = new S3Client({ region: this.region });
 
     logger.info(
@@ -829,6 +831,12 @@ export class AgentCoreBrowserClient {
       const userId = context?.userId || 'anonymous';
       const storagePath = getCurrentStoragePath();
 
+      // Use user-scoped S3 client when configured
+      let client = this.s3Client;
+      if (process.env.USER_SCOPED_S3_ROLE_ARN && userId !== 'anonymous') {
+        client = await createUserScopedS3Client(userId);
+      }
+
       // Generate filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
       const filename = `screenshot-${timestamp}.png`;
@@ -849,7 +857,7 @@ export class AgentCoreBrowserClient {
         },
       });
 
-      await this.s3Client.send(command);
+      await client.send(command);
 
       // Return user-facing path
       const userPath = `/${storagePath}/browser-screenshots/${filename}`.replace(/\/+/g, '/');

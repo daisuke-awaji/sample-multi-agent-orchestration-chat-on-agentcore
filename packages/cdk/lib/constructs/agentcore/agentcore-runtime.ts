@@ -466,9 +466,20 @@ export class AgentCoreRuntime extends Construct {
       );
     }
 
-    // S3 access permissions (for User Storage & Nova Reel output)
+    // User-scoped S3 access via STS AssumeRole with Session Policy
+    // Instead of granting broad S3 access to the Runtime role, we create a
+    // dedicated role that can be assumed with a per-user session policy to
+    // restrict access to `users/{userId}/` prefixes only.
     if (props.userStorageBucketName) {
-      this.runtime.addToRolePolicy(
+      const userScopedS3Role = new iam.Role(this, 'UserScopedS3Role', {
+        roleName: `${props.runtimeName}-user-scoped-s3`,
+        assumedBy: new iam.ArnPrincipal(this.runtime.role.roleArn),
+        description:
+          'Role assumed by AgentCore Runtime with per-user session policies to scope S3 access',
+        maxSessionDuration: cdk.Duration.hours(1),
+      });
+
+      userScopedS3Role.addToPolicy(
         new iam.PolicyStatement({
           sid: 'S3UserStorageAccess',
           effect: iam.Effect.ALLOW,
@@ -485,6 +496,19 @@ export class AgentCoreRuntime extends Construct {
           ],
         })
       );
+
+      // Allow Runtime to assume the user-scoped S3 role
+      this.runtime.addToRolePolicy(
+        new iam.PolicyStatement({
+          sid: 'AssumeUserScopedS3Role',
+          effect: iam.Effect.ALLOW,
+          actions: ['sts:AssumeRole'],
+          resources: [userScopedS3Role.roleArn],
+        })
+      );
+
+      // Pass the role ARN as environment variable for the agent to use
+      environmentVariables.USER_SCOPED_S3_ROLE_ARN = userScopedS3Role.roleArn;
     }
 
     // AppSync Events permissions (for real-time message delivery)

@@ -12,6 +12,7 @@ import path from 'path';
 import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
 import type { SyncResult } from '@moca/s3-workspace-sync';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
+import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
 
 export type { SyncResult };
 
@@ -24,13 +25,16 @@ export type { SyncResult };
  * from any local path yields a valid S3 display path.
  */
 export class WorkspaceSync {
-  private readonly inner: S3WorkspaceSync;
+  private inner: S3WorkspaceSync;
   private readonly activeWorkingDirectory: string;
+  private readonly prefix: string;
+
+  private initPromise: Promise<void>;
 
   constructor(userId: string, storagePath: string) {
     const bucketName = process.env.USER_STORAGE_BUCKET_NAME || '';
     const normalizedPath = storagePath.replace(/^\/+|\/+$/g, '');
-    const prefix = normalizedPath ? `users/${userId}/${normalizedPath}/` : `users/${userId}/`;
+    this.prefix = normalizedPath ? `users/${userId}/${normalizedPath}/` : `users/${userId}/`;
 
     const workspaceDir = normalizedPath
       ? path.join(WORKSPACE_DIRECTORY, normalizedPath)
@@ -38,26 +42,53 @@ export class WorkspaceSync {
 
     this.activeWorkingDirectory = workspaceDir;
 
+    // Initialize S3WorkspaceSync – when USER_SCOPED_S3_ROLE_ARN is set,
+    // use a user-scoped S3 client to restrict access to the user's prefix.
     this.inner = new S3WorkspaceSync({
       bucket: bucketName,
-      prefix,
+      prefix: this.prefix,
       workspaceDir,
       region: process.env.AWS_REGION,
       logger,
     });
+
+    // Asynchronously replace the S3 client with a user-scoped one
+    this.initPromise = this.initScopedClient(userId);
+  }
+
+  /**
+   * Replace the default S3 client with a user-scoped client if configured.
+   */
+  private async initScopedClient(userId: string): Promise<void> {
+    if (!process.env.USER_SCOPED_S3_ROLE_ARN) return;
+    const scopedClient = await createUserScopedS3Client(userId);
+
+    this.inner = new S3WorkspaceSync({
+      bucket: process.env.USER_STORAGE_BUCKET_NAME || '',
+      prefix: this.prefix,
+      workspaceDir: this.activeWorkingDirectory,
+      region: process.env.AWS_REGION,
+      s3Client: scopedClient,
+      logger,
+    });
+    logger.info(`[WORKSPACE_SYNC] Using user-scoped S3 client for user=${userId}`);
   }
 
   /**
    * Start initial sync in the background (non-blocking).
+   * Waits for scoped client initialization first.
    */
   startInitialSync(): void {
-    this.inner.startBackgroundPull();
+    this.initPromise.then(() => {
+      this.inner.startBackgroundPull();
+    });
   }
 
   /**
    * Wait for the initial sync to complete.
    */
   async waitForInitialSync(): Promise<void> {
+    await this.initPromise;
     await this.inner.waitForPull();
   }
 
@@ -65,6 +96,7 @@ export class WorkspaceSync {
    * Upload local changes to S3 (diff-based).
    */
   async syncToS3(): Promise<SyncResult> {
+    await this.initPromise;
     return this.inner.push();
   }
 

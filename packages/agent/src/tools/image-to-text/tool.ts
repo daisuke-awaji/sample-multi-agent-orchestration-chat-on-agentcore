@@ -13,14 +13,22 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { readFile } from 'fs/promises';
 import { config, logger } from '../../config/index.js';
 import { getCurrentContext } from '../../context/request-context.js';
+import { createUserScopedS3Client } from '../../utils/scoped-s3-credentials.js';
 import type { ImageToTextResult, ImageFormat, ImageSource } from './types.js';
 import { imageToTextDefinition } from '@moca/tool-definitions';
 
 // Create Bedrock Runtime client
 const bedrockClient = new BedrockRuntimeClient({ region: config.BEDROCK_REGION });
 
-// Create S3 client
-const s3Client = new S3Client({ region: process.env.AWS_REGION });
+/**
+ * Get an S3 client scoped to the current user, or fall back to default.
+ */
+async function getS3Client(userId: string): Promise<S3Client> {
+  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+    return createUserScopedS3Client(userId);
+  }
+  return new S3Client({ region: process.env.AWS_REGION });
+}
 
 /**
  * Parse S3 URI to bucket and key
@@ -54,7 +62,7 @@ function detectImageFormat(buffer: Buffer): ImageFormat | null {
 /**
  * Fetch image from S3
  */
-async function fetchImageFromS3(s3Uri: string): Promise<ImageSource> {
+async function fetchImageFromS3(s3Uri: string, userId: string): Promise<ImageSource> {
   const parsed = parseS3Uri(s3Uri);
   if (!parsed) {
     throw new Error(`Invalid S3 URI format: ${s3Uri}`);
@@ -63,6 +71,7 @@ async function fetchImageFromS3(s3Uri: string): Promise<ImageSource> {
   logger.debug(`[IMAGE_TO_TEXT] Fetching image from S3: ${s3Uri}`);
 
   try {
+    const s3Client = await getS3Client(userId);
     const command = new GetObjectCommand({
       Bucket: parsed.bucket,
       Key: parsed.key,
@@ -139,9 +148,9 @@ async function processLocalFile(filePath: string): Promise<ImageSource> {
 /**
  * Get image source from path
  */
-async function getImageSource(imagePath: string): Promise<ImageSource> {
+async function getImageSource(imagePath: string, userId: string): Promise<ImageSource> {
   if (imagePath.startsWith('s3://')) {
-    return fetchImageFromS3(imagePath);
+    return fetchImageFromS3(imagePath, userId);
   } else {
     return processLocalFile(imagePath);
   }
@@ -256,8 +265,8 @@ export const imageToTextTool = tool({
     }
 
     try {
-      // Get image source
-      const imageSource = await getImageSource(imagePath);
+      // Get image source (with user-scoped S3 access)
+      const imageSource = await getImageSource(imagePath, context.userId);
 
       // Analyze image
       const description = await analyzeImage(imageSource, prompt, modelId);

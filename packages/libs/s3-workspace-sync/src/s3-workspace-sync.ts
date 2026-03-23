@@ -3,6 +3,7 @@ import {
   ListObjectsV2Command,
   GetObjectCommand,
   PutObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -251,6 +252,7 @@ export class S3WorkspaceSync extends EventEmitter {
   async push(): Promise<SyncResult> {
     const startTime = Date.now();
     let uploadedFiles = 0;
+    let deletedFiles = 0;
     const errors: string[] = [];
 
     try {
@@ -285,54 +287,102 @@ export class S3WorkspaceSync extends EventEmitter {
         }
       }
 
-      if (uploadTasks.length === 0) {
-        this.logger.info('No files to upload');
-        return { success: true, uploadedFiles: 0, duration: Date.now() - startTime };
+      // Detect locally deleted files (in snapshot but not in current workspace)
+      const deleteTasks: Array<{ relativePath: string; s3Key: string }> = [];
+      for (const relativePath of this.fileSnapshot.keys()) {
+        if (!currentFiles.has(relativePath)) {
+          deleteTasks.push({
+            relativePath,
+            s3Key: `${this.prefix}${relativePath}`,
+          });
+        }
       }
 
-      this.logger.info(
-        `Uploading ${uploadTasks.length} files (concurrency: ${this.uploadConcurrency})`
-      );
+      if (uploadTasks.length === 0 && deleteTasks.length === 0) {
+        this.logger.info('No changes to push');
+        return {
+          success: true,
+          uploadedFiles: 0,
+          deletedFiles: 0,
+          duration: Date.now() - startTime,
+        };
+      }
 
-      const limit = pLimit(this.uploadConcurrency);
-      let completedCount = 0;
-      const progressInterval = Math.max(1, Math.floor(uploadTasks.length / 20));
+      // Phase 1: Upload new/modified files
+      if (uploadTasks.length > 0) {
+        this.logger.info(
+          `Uploading ${uploadTasks.length} files (concurrency: ${this.uploadConcurrency})`
+        );
 
-      const uploadPromises = uploadTasks.map((task) =>
-        limit(async () => {
-          try {
-            await this.uploadFile(task.localPath, task.s3Key);
+        const limit = pLimit(this.uploadConcurrency);
+        let completedCount = 0;
+        const progressInterval = Math.max(1, Math.floor(uploadTasks.length / 20));
 
-            this.fileSnapshot.set(task.relativePath, task.currentInfo);
-            uploadedFiles++;
-            completedCount++;
+        const uploadPromises = uploadTasks.map((task) =>
+          limit(async () => {
+            try {
+              await this.uploadFile(task.localPath, task.s3Key);
 
-            if (uploadTasks.length > 20 && completedCount % progressInterval === 0) {
-              const percentage = Math.round((completedCount / uploadTasks.length) * 100);
-              this.logger.info(
-                `Upload progress: ${completedCount}/${uploadTasks.length} (${percentage}%)`
-              );
-              this.emitProgress('upload', completedCount, uploadTasks.length, task.relativePath);
-            } else {
-              this.logger.debug(`Uploaded: ${task.relativePath}`);
+              this.fileSnapshot.set(task.relativePath, task.currentInfo);
+              uploadedFiles++;
+              completedCount++;
+
+              if (uploadTasks.length > 20 && completedCount % progressInterval === 0) {
+                const percentage = Math.round((completedCount / uploadTasks.length) * 100);
+                this.logger.info(
+                  `Upload progress: ${completedCount}/${uploadTasks.length} (${percentage}%)`
+                );
+                this.emitProgress('upload', completedCount, uploadTasks.length, task.relativePath);
+              } else {
+                this.logger.debug(`Uploaded: ${task.relativePath}`);
+              }
+            } catch (error) {
+              const errorMsg = `Failed to upload ${task.relativePath}: ${error}`;
+              this.logger.error(errorMsg);
+              errors.push(errorMsg);
+              completedCount++;
             }
-          } catch (error) {
-            const errorMsg = `Failed to upload ${task.relativePath}: ${error}`;
-            this.logger.error(errorMsg);
-            errors.push(errorMsg);
-            completedCount++;
-          }
-        })
-      );
+          })
+        );
 
-      await Promise.all(uploadPromises);
+        await Promise.all(uploadPromises);
+      }
+
+      // Phase 2: Delete S3 objects for locally removed files
+      if (deleteTasks.length > 0) {
+        this.logger.info(`Deleting ${deleteTasks.length} removed files from S3`);
+
+        const limit = pLimit(this.uploadConcurrency);
+
+        const deletePromises = deleteTasks.map((task) =>
+          limit(async () => {
+            try {
+              await this.s3Client.send(
+                new DeleteObjectCommand({ Bucket: this.bucket, Key: task.s3Key })
+              );
+              this.fileSnapshot.delete(task.relativePath);
+              deletedFiles++;
+              this.logger.debug(`Deleted from S3: ${task.relativePath}`);
+            } catch (error) {
+              const errorMsg = `Failed to delete ${task.relativePath}: ${error}`;
+              this.logger.error(errorMsg);
+              errors.push(errorMsg);
+            }
+          })
+        );
+
+        await Promise.all(deletePromises);
+      }
 
       const duration = Date.now() - startTime;
-      this.logger.info(`Push complete: ${uploadedFiles} files in ${duration}ms`);
+      this.logger.info(
+        `Push complete: ${uploadedFiles} uploaded, ${deletedFiles} deleted in ${duration}ms`
+      );
 
       return {
         success: errors.length === 0,
         uploadedFiles,
+        deletedFiles,
         errors: errors.length > 0 ? errors : undefined,
         duration,
       };

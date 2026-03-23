@@ -8,8 +8,17 @@ import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/clien
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';
 import { logger } from '../config/index.js';
+import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION });
+/**
+ * Get an S3 client scoped to the current user, or fall back to default.
+ */
+async function getS3Client(userId: string): Promise<S3Client> {
+  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+    return createUserScopedS3Client(userId);
+  }
+  return new S3Client({ region: process.env.AWS_REGION });
+}
 
 /**
  * Generate user storage path prefix
@@ -75,6 +84,7 @@ function formatRelativeTime(date: Date): string {
  * Generate presigned URL for S3 object
  */
 async function generatePresignedUrl(
+  client: S3Client,
   bucketName: string,
   key: string,
   expiresIn: number
@@ -84,7 +94,7 @@ async function generatePresignedUrl(
       Bucket: bucketName,
       Key: key,
     });
-    const url = await getSignedUrl(s3Client, command, { expiresIn });
+    const url = await getSignedUrl(client, command, { expiresIn });
     return url;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -162,6 +172,16 @@ export const s3ListFilesTool = tool({
     logger.info(
       `[S3_LIST] File list retrieval: user=${userId}, path=${path}, allowedPath=${allowedStoragePath}, recursive=${recursive}`
     );
+
+    // Create user-scoped S3 client
+    let s3Client: S3Client;
+    try {
+      s3Client = await getS3Client(userId);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`[S3_LIST] Failed to create scoped S3 client: ${errorMessage}`);
+      return `Error: Failed to initialize storage client: ${errorMessage}`;
+    }
 
     try {
       const items: Array<{
@@ -265,6 +285,7 @@ export const s3ListFilesTool = tool({
           if (item.type === 'file' && item.s3Key) {
             try {
               item.presignedUrl = await generatePresignedUrl(
+                s3Client,
                 bucketName,
                 item.s3Key,
                 presignedUrlExpiry

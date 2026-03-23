@@ -13,8 +13,19 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config/index.js';
+import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION });
+const defaultS3Client = new S3Client({ region: process.env.AWS_REGION });
+
+/**
+ * Get an S3 client scoped to the given user, or fall back to default when scoping is not configured.
+ */
+async function getS3Client(userId: string): Promise<S3Client> {
+  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+    return createUserScopedS3Client(userId);
+  }
+  return defaultS3Client;
+}
 
 export interface StorageItem {
   name: string;
@@ -96,6 +107,7 @@ export async function listStorageItems(
 
   console.log(`📁 Listing storage items for user ${userId} at path: ${path} (prefix: ${prefix})`);
 
+  const s3Client = await getS3Client(userId);
   const command = new ListObjectsV2Command({
     Bucket: bucketName,
     Prefix: prefix,
@@ -162,6 +174,7 @@ export async function getDirectorySize(
 
   console.log(`📊 Calculating directory size for: ${prefix}`);
 
+  const s3Client = await getS3Client(userId);
   let totalSize = 0;
   let fileCount = 0;
   let continuationToken: string | undefined;
@@ -217,6 +230,7 @@ export async function generateUploadUrl(
   // Reference this if adding validation on client or server side in the future
   // const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
 
+  const s3Client = await getS3Client(userId);
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -252,6 +266,7 @@ export async function createDirectory(userId: string, directoryName: string, pat
 
   console.log(`📁 Creating directory: ${key}`);
 
+  const s3Client = await getS3Client(userId);
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -282,6 +297,7 @@ export async function deleteFile(userId: string, filePath: string) {
 
   console.log(`🗑️  Deleting file: ${key}`);
 
+  const s3Client = await getS3Client(userId);
   const command = new DeleteObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -315,6 +331,8 @@ export async function deleteDirectory(
     : `${getUserStoragePrefix(userId)}/`;
 
   console.log(`🗑️  Deleting directory: ${prefix} (force: ${force})`);
+
+  const s3Client = await getS3Client(userId);
 
   // Check objects in directory
   const listCommand = new ListObjectsV2Command({
@@ -401,6 +419,7 @@ export async function generateDownloadUrl(userId: string, filePath: string): Pro
 
   console.log(`📥 Generating download URL for: ${key}`);
 
+  const s3Client = await getS3Client(userId);
   const command = new GetObjectCommand({
     Bucket: bucketName,
     Key: key,
@@ -427,6 +446,7 @@ export async function checkFileExists(userId: string, filePath: string): Promise
   const key = `${getUserStoragePrefix(userId)}/${normalizedPath}`;
 
   try {
+    const s3Client = await getS3Client(userId);
     const command = new HeadObjectCommand({
       Bucket: bucketName,
       Key: key,
@@ -475,6 +495,8 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
 
   const prefix = `${getUserStoragePrefix(userId)}/`;
   console.log(`📁 Building folder tree for user ${userId} (prefix: ${prefix})`);
+
+  const s3Client = await getS3Client(userId);
 
   // Retrieve all objects (including directory markers)
   const allObjects: string[] = [];
@@ -571,6 +593,7 @@ export async function getRecursiveDownloadUrls(
 
   console.log(`📦 Getting recursive download URLs for folder: ${prefix}`);
 
+  const s3Client = await getS3Client(userId);
   const files: DownloadFileInfo[] = [];
   let totalSize = 0;
   let continuationToken: string | undefined;
