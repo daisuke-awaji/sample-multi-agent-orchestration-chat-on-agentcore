@@ -113,6 +113,12 @@ export interface AgentCoreRuntimeProps {
   readonly sessionsTableName?: string;
 
   /**
+   * Sessions Table ARN (optional)
+   * Required for user-scoped DynamoDB access via STS AssumeRole with Session Policy
+   */
+  readonly sessionsTableArn?: string;
+
+  /**
    * Backend API URL (optional)
    * Required for retrieving agent information with call_agent tool
    * Example: https://api.example.com
@@ -466,49 +472,79 @@ export class AgentCoreRuntime extends Construct {
       );
     }
 
-    // User-scoped S3 access via STS AssumeRole with Session Policy
-    // Instead of granting broad S3 access to the Runtime role, we create a
-    // dedicated role that can be assumed with a per-user session policy to
-    // restrict access to `users/{userId}/` prefixes only.
-    if (props.userStorageBucketName) {
-      const userScopedS3Role = new iam.Role(this, 'UserScopedS3Role', {
-        roleName: `${props.runtimeName}-user-scoped-s3`,
+    // User-scoped access via STS AssumeRole with Session Policy
+    // Instead of granting broad S3/DynamoDB access to the Runtime role, we create a
+    // dedicated role that can be assumed with a per-user session policy to restrict:
+    // - S3 access to `users/{userId}/` prefixes only
+    // - DynamoDB access to items where partition key matches `userId`
+    if (props.userStorageBucketName || props.sessionsTableArn) {
+      const userScopedRole = new iam.Role(this, 'UserScopedRole', {
+        roleName: `${props.runtimeName}-user-scoped`,
         assumedBy: new iam.ArnPrincipal(this.runtime.role.roleArn),
         description:
-          'Role assumed by AgentCore Runtime with per-user session policies to scope S3 access',
+          'Role assumed by AgentCore Runtime with per-user session policies to scope S3 and DynamoDB access',
         maxSessionDuration: cdk.Duration.hours(1),
       });
 
-      userScopedS3Role.addToPolicy(
-        new iam.PolicyStatement({
-          sid: 'S3UserStorageAccess',
-          effect: iam.Effect.ALLOW,
-          actions: [
-            's3:GetObject',
-            's3:PutObject',
-            's3:DeleteObject',
-            's3:ListBucket',
-            's3:HeadObject',
-          ],
-          resources: [
-            `arn:aws:s3:::${props.userStorageBucketName}`,
-            `arn:aws:s3:::${props.userStorageBucketName}/*`,
-          ],
-        })
-      );
+      // S3 permissions (if configured)
+      if (props.userStorageBucketName) {
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'S3UserStorageAccess',
+            effect: iam.Effect.ALLOW,
+            actions: [
+              's3:GetObject',
+              's3:PutObject',
+              's3:DeleteObject',
+              's3:ListBucket',
+              's3:HeadObject',
+            ],
+            resources: [
+              `arn:aws:s3:::${props.userStorageBucketName}`,
+              `arn:aws:s3:::${props.userStorageBucketName}/*`,
+            ],
+          })
+        );
+      }
 
-      // Allow Runtime to assume the user-scoped S3 role
+      // DynamoDB Sessions table permissions (if configured)
+      // Actual user-scoping is enforced via session policy's `dynamodb:LeadingKeys`
+      // condition at AssumeRole time, restricting access to the authenticated user's
+      // partition key only.
+      if (props.sessionsTableArn) {
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'DynamoDBSessionsAccess',
+            effect: iam.Effect.ALLOW,
+            actions: [
+              'dynamodb:GetItem',
+              'dynamodb:PutItem',
+              'dynamodb:UpdateItem',
+              'dynamodb:DeleteItem',
+              'dynamodb:Query',
+            ],
+            resources: [props.sessionsTableArn, `${props.sessionsTableArn}/index/*`],
+          })
+        );
+      }
+
+      // Allow Runtime to assume the user-scoped role
       this.runtime.addToRolePolicy(
         new iam.PolicyStatement({
-          sid: 'AssumeUserScopedS3Role',
+          sid: 'AssumeUserScopedRole',
           effect: iam.Effect.ALLOW,
           actions: ['sts:AssumeRole'],
-          resources: [userScopedS3Role.roleArn],
+          resources: [userScopedRole.roleArn],
         })
       );
 
       // Pass the role ARN as environment variable for the agent to use
-      environmentVariables.USER_SCOPED_S3_ROLE_ARN = userScopedS3Role.roleArn;
+      environmentVariables.USER_SCOPED_ROLE_ARN = userScopedRole.roleArn;
+
+      // Pass the sessions table ARN for building session policies
+      if (props.sessionsTableArn) {
+        environmentVariables.SESSIONS_TABLE_ARN = props.sessionsTableArn;
+      }
     }
 
     // AppSync Events permissions (for real-time message delivery)

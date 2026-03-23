@@ -12,7 +12,7 @@ import path from 'path';
 import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
 import type { SyncResult } from '@moca/s3-workspace-sync';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
-import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
+import { createUserScopedS3Client } from '../utils/scoped-credentials.js';
 
 export type { SyncResult };
 
@@ -42,7 +42,7 @@ export class WorkspaceSync {
 
     this.activeWorkingDirectory = workspaceDir;
 
-    // Initialize S3WorkspaceSync – when USER_SCOPED_S3_ROLE_ARN is set,
+    // Initialize S3WorkspaceSync – when USER_SCOPED_ROLE_ARN is set,
     // use a user-scoped S3 client to restrict access to the user's prefix.
     this.inner = new S3WorkspaceSync({
       bucket: bucketName,
@@ -60,7 +60,7 @@ export class WorkspaceSync {
    * Replace the default S3 client with a user-scoped client if configured.
    */
   private async initScopedClient(userId: string): Promise<void> {
-    if (!process.env.USER_SCOPED_S3_ROLE_ARN) return;
+    if (!process.env.USER_SCOPED_ROLE_ARN) return;
     const scopedClient = await createUserScopedS3Client(userId);
 
     this.inner = new S3WorkspaceSync({

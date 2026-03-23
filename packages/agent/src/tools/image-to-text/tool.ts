@@ -13,7 +13,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { readFile } from 'fs/promises';
 import { config, logger } from '../../config/index.js';
 import { getCurrentContext } from '../../context/request-context.js';
-import { createUserScopedS3Client } from '../../utils/scoped-s3-credentials.js';
+import { createUserScopedS3Client } from '../../utils/scoped-credentials.js';
 import type { ImageToTextResult, ImageFormat, ImageSource } from './types.js';
 import { imageToTextDefinition } from '@moca/tool-definitions';
 
@@ -24,7 +24,7 @@ const bedrockClient = new BedrockRuntimeClient({ region: config.BEDROCK_REGION }
  * Get an S3 client scoped to the current user, or fall back to default.
  */
 async function getS3Client(userId: string): Promise<S3Client> {
-  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+  if (process.env.USER_SCOPED_ROLE_ARN) {
     return createUserScopedS3Client(userId);
   }
   return new S3Client({ region: process.env.AWS_REGION });

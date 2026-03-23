@@ -20,7 +20,7 @@ import {
   GetBrowserSessionCommand,
 } from '@aws-sdk/client-bedrock-agentcore';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { createUserScopedS3Client } from '../../utils/scoped-s3-credentials.js';
+import { createUserScopedS3Client } from '../../utils/scoped-credentials.js';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
@@ -833,7 +833,7 @@ export class AgentCoreBrowserClient {
 
       // Use user-scoped S3 client when configured
       let client = this.s3Client;
-      if (process.env.USER_SCOPED_S3_ROLE_ARN && userId !== 'anonymous') {
+      if (process.env.USER_SCOPED_ROLE_ARN && userId !== 'anonymous') {
         client = await createUserScopedS3Client(userId);
       }
 
