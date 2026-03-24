@@ -9,6 +9,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { logger } from '../config/index.js';
+import { createUserScopedDynamoDBClient } from '../utils/scoped-credentials.js';
 
 /**
  * Session type
@@ -45,17 +46,38 @@ export interface CreateSessionOptions {
  * Sessions Service for DynamoDB operations
  */
 export class SessionsService {
-  private client: DynamoDBClient;
+  private defaultClient: DynamoDBClient;
   private tableName: string;
 
   constructor(tableName?: string, region?: string) {
     const actualRegion = region || process.env.AWS_REGION || 'us-east-1';
-    this.client = new DynamoDBClient({ region: actualRegion });
+    this.defaultClient = new DynamoDBClient({ region: actualRegion });
     this.tableName = tableName || process.env.SESSIONS_TABLE_NAME || '';
 
     if (!this.tableName) {
       logger.warn('[SessionsService] SESSIONS_TABLE_NAME not configured');
     }
+  }
+
+  /**
+   * Get a DynamoDB client scoped to the given user.
+   * When USER_SCOPED_ROLE_ARN is configured, assumes a role with a session policy
+   * that restricts access to items where the partition key matches the userId.
+   * Falls back to the default client for local development or when scoping is not configured.
+   */
+  private async getClient(userId: string): Promise<DynamoDBClient> {
+    if (process.env.USER_SCOPED_ROLE_ARN) {
+      try {
+        return await createUserScopedDynamoDBClient(userId);
+      } catch (error) {
+        logger.warn(
+          '[SessionsService] Failed to create user-scoped client, falling back to default:',
+          { error }
+        );
+        return this.defaultClient;
+      }
+    }
+    return this.defaultClient;
   }
 
   /**
@@ -74,7 +96,8 @@ export class SessionsService {
     }
 
     try {
-      const result = await this.client.send(
+      const client = await this.getClient(userId);
+      const result = await client.send(
         new GetItemCommand({
           TableName: this.tableName,
           Key: marshall({ userId, sessionId }),
@@ -109,7 +132,8 @@ export class SessionsService {
     };
 
     try {
-      await this.client.send(
+      const client = await this.getClient(options.userId);
+      await client.send(
         new PutItemCommand({
           TableName: this.tableName,
           Item: marshall(item, { removeUndefinedValues: true }),
@@ -154,7 +178,8 @@ export class SessionsService {
     const now = new Date().toISOString();
 
     try {
-      await this.client.send(
+      const client = await this.getClient(userId);
+      await client.send(
         new UpdateItemCommand({
           TableName: this.tableName,
           Key: marshall({ userId, sessionId }),
@@ -192,7 +217,8 @@ export class SessionsService {
     }
 
     try {
-      const result = await this.client.send(
+      const client = await this.getClient(userId);
+      const result = await client.send(
         new GetItemCommand({
           TableName: this.tableName,
           Key: marshall({ userId, sessionId }),
@@ -242,7 +268,8 @@ export class SessionsService {
     }
 
     try {
-      await this.client.send(
+      const client = await this.getClient(userId);
+      await client.send(
         new UpdateItemCommand({
           TableName: this.tableName,
           Key: marshall({ userId, sessionId }),
@@ -284,7 +311,8 @@ export class SessionsService {
     const now = new Date().toISOString();
 
     try {
-      await this.client.send(
+      const client = await this.getClient(userId);
+      await client.send(
         new UpdateItemCommand({
           TableName: this.tableName,
           Key: marshall({ userId, sessionId }),

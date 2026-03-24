@@ -113,6 +113,12 @@ export interface AgentCoreRuntimeProps {
   readonly sessionsTableName?: string;
 
   /**
+   * Sessions Table ARN (optional)
+   * Required for user-scoped DynamoDB access via STS AssumeRole with Session Policy
+   */
+  readonly sessionsTableArn?: string;
+
+  /**
    * Backend API URL (optional)
    * Required for retrieving agent information with call_agent tool
    * Example: https://api.example.com
@@ -466,49 +472,133 @@ export class AgentCoreRuntime extends Construct {
       );
     }
 
-    // User-scoped S3 access via STS AssumeRole with Session Policy
-    // Instead of granting broad S3 access to the Runtime role, we create a
-    // dedicated role that can be assumed with a per-user session policy to
-    // restrict access to `users/{userId}/` prefixes only.
-    if (props.userStorageBucketName) {
-      const userScopedS3Role = new iam.Role(this, 'UserScopedS3Role', {
-        roleName: `${props.runtimeName}-user-scoped-s3`,
+    // User-scoped access via STS AssumeRole with Session Policy
+    // Instead of granting broad S3/DynamoDB access to the Runtime role, we create a
+    // dedicated role that can be assumed with a per-user session policy to restrict:
+    // - S3 access to `users/{userId}/` prefixes only
+    // - DynamoDB access to items where partition key matches `userId`
+    if (props.userStorageBucketName || props.sessionsTableArn) {
+      const userScopedRole = new iam.Role(this, 'UserScopedRole', {
+        roleName: `${props.runtimeName}-user-scoped`,
         assumedBy: new iam.ArnPrincipal(this.runtime.role.roleArn),
         description:
-          'Role assumed by AgentCore Runtime with per-user session policies to scope S3 access',
+          'Role assumed by AgentCore Runtime with per-user session policies to scope S3 and DynamoDB access',
         maxSessionDuration: cdk.Duration.hours(1),
       });
 
-      userScopedS3Role.addToPolicy(
-        new iam.PolicyStatement({
-          sid: 'S3UserStorageAccess',
-          effect: iam.Effect.ALLOW,
-          actions: [
-            's3:GetObject',
-            's3:PutObject',
-            's3:DeleteObject',
-            's3:ListBucket',
-            's3:HeadObject',
-          ],
-          resources: [
-            `arn:aws:s3:::${props.userStorageBucketName}`,
-            `arn:aws:s3:::${props.userStorageBucketName}/*`,
-          ],
-        })
-      );
+      // S3 permissions (if configured)
+      if (props.userStorageBucketName) {
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'S3UserStorageAccess',
+            effect: iam.Effect.ALLOW,
+            actions: [
+              's3:GetObject',
+              's3:PutObject',
+              's3:DeleteObject',
+              's3:ListBucket',
+              's3:HeadObject',
+            ],
+            resources: [
+              `arn:aws:s3:::${props.userStorageBucketName}`,
+              `arn:aws:s3:::${props.userStorageBucketName}/*`,
+            ],
+          })
+        );
+      }
 
-      // Allow Runtime to assume the user-scoped S3 role
+      // DynamoDB Sessions table permissions (if configured)
+      // Actual user-scoping is enforced via session policy's `dynamodb:LeadingKeys`
+      // condition at AssumeRole time, restricting access to the authenticated user's
+      // partition key only.
+      if (props.sessionsTableArn) {
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'DynamoDBSessionsAccess',
+            effect: iam.Effect.ALLOW,
+            actions: [
+              'dynamodb:GetItem',
+              'dynamodb:PutItem',
+              'dynamodb:UpdateItem',
+              'dynamodb:DeleteItem',
+              'dynamodb:Query',
+            ],
+            resources: [props.sessionsTableArn, `${props.sessionsTableArn}/index/*`],
+          })
+        );
+      }
+
+      // AWS Ops permissions integrated into the user-scoped role (opt-in)
+      // When enabled, the role gets ReadOnly + CloudFormation + IAM PassRole permissions.
+      // The Session Policy uses `NotAction: [s3:*, dynamodb:*]` to allow these operations
+      // while still restricting S3/DynamoDB to the authenticated user only.
+      if (props.enableAwsOpsPermissions) {
+        // AWS ReadOnly access via managed policy
+        userScopedRole.addManagedPolicy(
+          iam.ManagedPolicy.fromAwsManagedPolicyName('ReadOnlyAccess')
+        );
+
+        // CloudFormation deployment permissions
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'CloudFormationDeployAccess',
+            effect: iam.Effect.ALLOW,
+            actions: ['cloudformation:*'],
+            resources: ['*'],
+          })
+        );
+
+        // IAM PassRole required for CloudFormation to assume execution roles
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'IamPassRoleForCloudFormation',
+            effect: iam.Effect.ALLOW,
+            actions: ['iam:PassRole'],
+            resources: ['*'],
+            conditions: {
+              StringEquals: {
+                'iam:PassedToService': 'cloudformation.amazonaws.com',
+              },
+            },
+          })
+        );
+
+        // S3 access for CDK/CloudFormation template staging buckets
+        // (Role-level policy; Session Policy also explicitly allows these prefixes)
+        userScopedRole.addToPolicy(
+          new iam.PolicyStatement({
+            sid: 'S3CdkStagingAccess',
+            effect: iam.Effect.ALLOW,
+            actions: ['s3:CreateBucket', 's3:PutObject', 's3:GetObject', 's3:ListBucket'],
+            resources: [
+              'arn:aws:s3:::cdktoolkit-*',
+              'arn:aws:s3:::cdktoolkit-*/*',
+              'arn:aws:s3:::cdk-*',
+              'arn:aws:s3:::cdk-*/*',
+            ],
+          })
+        );
+
+        environmentVariables.ENABLE_AWS_OPS_PERMISSIONS = 'true';
+      }
+
+      // Allow Runtime to assume the user-scoped role
       this.runtime.addToRolePolicy(
         new iam.PolicyStatement({
-          sid: 'AssumeUserScopedS3Role',
+          sid: 'AssumeUserScopedRole',
           effect: iam.Effect.ALLOW,
           actions: ['sts:AssumeRole'],
-          resources: [userScopedS3Role.roleArn],
+          resources: [userScopedRole.roleArn],
         })
       );
 
       // Pass the role ARN as environment variable for the agent to use
-      environmentVariables.USER_SCOPED_S3_ROLE_ARN = userScopedS3Role.roleArn;
+      environmentVariables.USER_SCOPED_ROLE_ARN = userScopedRole.roleArn;
+
+      // Pass the sessions table ARN for building session policies
+      if (props.sessionsTableArn) {
+        environmentVariables.SESSIONS_TABLE_ARN = props.sessionsTableArn;
+      }
     }
 
     // AppSync Events permissions (for real-time message delivery)
@@ -523,67 +613,10 @@ export class AgentCoreRuntime extends Construct {
       );
     }
 
-    // AWS ReadOnly + CloudFormation deploy permissions (opt-in via enableAwsOpsPermissions)
-    if (props.enableAwsOpsPermissions) {
-      // AWS ReadOnly access via managed policy
-      (this.runtime.role as iam.Role).addManagedPolicy(
-        iam.ManagedPolicy.fromAwsManagedPolicyName('ReadOnlyAccess')
-      );
-
-      // CloudFormation deployment permissions (write operations for stack management)
-      this.runtime.addToRolePolicy(
-        new iam.PolicyStatement({
-          sid: 'CloudFormationDeployAccess',
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'cloudformation:CreateStack',
-            'cloudformation:UpdateStack',
-            'cloudformation:DeleteStack',
-            'cloudformation:CreateChangeSet',
-            'cloudformation:ExecuteChangeSet',
-            'cloudformation:DeleteChangeSet',
-            'cloudformation:ContinueUpdateRollback',
-            'cloudformation:RollbackStack',
-            'cloudformation:SignalResource',
-            'cloudformation:SetStackPolicy',
-            'cloudformation:TagResource',
-            'cloudformation:UntagResource',
-            'cloudformation:ValidateTemplate',
-          ],
-          resources: ['*'],
-        })
-      );
-
-      // IAM PassRole required for CloudFormation to assume execution roles
-      this.runtime.addToRolePolicy(
-        new iam.PolicyStatement({
-          sid: 'IamPassRoleForCloudFormation',
-          effect: iam.Effect.ALLOW,
-          actions: ['iam:PassRole'],
-          resources: ['*'],
-          conditions: {
-            StringEquals: {
-              'iam:PassedToService': 'cloudformation.amazonaws.com',
-            },
-          },
-        })
-      );
-
-      // S3 access for CDK/CloudFormation template staging buckets
-      this.runtime.addToRolePolicy(
-        new iam.PolicyStatement({
-          sid: 'S3CdkStagingAccess',
-          effect: iam.Effect.ALLOW,
-          actions: ['s3:CreateBucket', 's3:PutObject', 's3:GetObject', 's3:ListBucket'],
-          resources: [
-            'arn:aws:s3:::cdktoolkit-*',
-            'arn:aws:s3:::cdktoolkit-*/*',
-            'arn:aws:s3:::cdk-*',
-            'arn:aws:s3:::cdk-*/*',
-          ],
-        })
-      );
-    }
+    // Note: AWS Ops permissions (ReadOnly, CloudFormation, IAM PassRole) are now integrated
+    // into the UserScopedRole above (when enableAwsOpsPermissions is true).
+    // This ensures that `execute_command` always uses scoped credentials while still
+    // having access to Ops permissions via the `NotAction` session policy pattern.
 
     // Set properties
     this.runtimeArn = this.runtime.agentRuntimeArn;

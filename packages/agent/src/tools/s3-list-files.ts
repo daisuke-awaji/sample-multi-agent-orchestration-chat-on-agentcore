@@ -8,13 +8,13 @@ import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/clien
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getCurrentContext, getCurrentStoragePath } from '../context/request-context.js';
 import { logger } from '../config/index.js';
-import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
+import { createUserScopedS3Client } from '../utils/scoped-credentials.js';
 
 /**
  * Get an S3 client scoped to the current user, or fall back to default.
  */
 async function getS3Client(userId: string): Promise<S3Client> {
-  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+  if (process.env.USER_SCOPED_ROLE_ARN) {
     return createUserScopedS3Client(userId);
   }
   return new S3Client({ region: process.env.AWS_REGION });

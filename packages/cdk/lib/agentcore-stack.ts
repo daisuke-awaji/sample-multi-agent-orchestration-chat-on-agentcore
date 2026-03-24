@@ -361,10 +361,7 @@ export class AgentCoreStack extends cdk.Stack {
       })
     );
 
-    this.backendApi.addEnvironmentVariable(
-      'USER_SCOPED_S3_ROLE_ARN',
-      backendUserScopedS3Role.roleArn
-    );
+    this.backendApi.addEnvironmentVariable('USER_SCOPED_ROLE_ARN', backendUserScopedS3Role.roleArn);
 
     // Grant Agents Table read/write access to Backend API
     this.agentsTable.grantReadWrite(this.backendApi.lambdaFunction);
@@ -454,6 +451,7 @@ export class AgentCoreStack extends cdk.Stack {
       gitlabHost: props?.gitlabHost || envConfig.gitlabHost, // Pass GitLab Host
       userStorageBucketName: this.userStorage.bucketName, // Pass User Storage bucket name
       sessionsTableName: this.sessionsTable.tableName, // Pass Sessions Table name
+      sessionsTableArn: this.sessionsTable.tableArn, // Pass Sessions Table ARN for user-scoped access
       backendApiUrl: this.backendApi.apiUrl, // Pass Backend API URL for call_agent tool
       appsyncHttpEndpoint: appsyncEvents.httpEndpoint, // Pass AppSync Events HTTP endpoint for real-time messages
       enableAwsOpsPermissions: envConfig.enableAwsOpsPermissions, // Pass AWS ops permissions flag
@@ -462,8 +460,9 @@ export class AgentCoreStack extends cdk.Stack {
     // Grant Memory access permissions to Runtime
     this.memory.grantAgentCoreAccess(this.agentRuntime.runtime);
 
-    // Grant Sessions Table read/write access to Runtime
-    this.sessionsTable.grantReadWrite(this.agentRuntime.runtime);
+    // Sessions Table access is now handled via user-scoped STS AssumeRole with Session Policy
+    // (defined in AgentCoreRuntime construct) to ensure per-user data isolation.
+    // Direct grantReadWrite is no longer used to prevent cross-user data access.
 
     // Update Trigger Lambda with Agent API URL (now available from Runtime)
     triggerLambda.lambdaFunction.addEnvironment(

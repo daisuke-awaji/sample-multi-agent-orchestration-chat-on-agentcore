@@ -8,7 +8,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
 import { getCurrentContext } from '../context/request-context.js';
-import { getUserScopedEnvVars } from '../utils/scoped-s3-credentials.js';
+import { getUserScopedEnvVars } from '../utils/scoped-credentials.js';
 
 const execAsync = promisify(exec);
 
@@ -121,12 +121,12 @@ export const executeCommandTool = tool({
       }
 
       // 3. Build scoped environment variables for the child process
-      // When USER_SCOPED_S3_ROLE_ARN is configured, assume a role with a session
-      // policy that restricts S3 access to `users/{userId}/*` only.
+      // When USER_SCOPED_ROLE_ARN is configured, assume a role with a session
+      // policy that restricts S3 and DynamoDB access to the authenticated user only.
       let scopedEnv: Record<string, string> | undefined;
-      if (process.env.USER_SCOPED_S3_ROLE_ARN && context?.userId) {
+      if (process.env.USER_SCOPED_ROLE_ARN && context?.userId) {
         scopedEnv = await getUserScopedEnvVars(context.userId);
-        logger.debug(`[EXEC] Using user-scoped S3 credentials for user=${context.userId}`);
+        logger.debug(`[EXEC] Using user-scoped credentials for user=${context.userId}`);
       }
 
       // 4. Execute command

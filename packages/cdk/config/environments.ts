@@ -42,6 +42,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
     githubTokenSecretName: 'agentcore/dev/github-token',
     gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
     githubWebhookSecretName: 'agentcore/dev/github-webhook-secret',
+    enableAwsOpsPermissions: true,
     eventRules: [
       {
         id: 's3-upload',
