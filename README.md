@@ -67,7 +67,7 @@ This application uses a fully serverless architecture built on Amazon Bedrock Ag
 | Agent | AgentCore Runtime + Gateway + Memory + CodeInterpreter + Browser|
 | Storage | DynamoDB + S3 |
 | Real-time | AppSync Events (WebSocket) |
-| Events | EventBridge Scheduler |
+| Events | EventBridge Scheduler + Rules |
 
 The backend API is responsible for agent management, session persistence, and file operations. AgentCore Runtime executes agents using the Strands Agents SDK (TypeScript), with short-term memory (session history) for conversational context and long-term memory (persistent memory) enabled. Real-time streaming is achieved via AppSync Events, allowing agents to be automatically executed by schedule triggers.
 
@@ -155,31 +155,17 @@ For advanced configuration options such as custom domains, environment-specific 
 
 ## Documentation
 
-### User Guides
-- [User Guide (English)](docs/USER_GUIDE.md) - Feature introduction and end-user guide
-- [User Guide (Japanese)](docs/USER_GUIDE-ja.md) - Feature introduction and end-user guide
-
 ### Technical Documentation
 - [Deployment Options](docs/deployment-options.md) - Environment configuration and customization
 - [Local Development Setup](docs/local-development-setup.md) - Explains environment setup automation
-- [JWT Authentication System](docs/jwt-authentication.md) - Explains the authentication mechanism
-- [Architecture Diagram](docs/moca-architecture.drawio.png)
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Contributing
 
 Contributions are welcome. Please feel free to submit a Pull Request.
 
-## Related Resources
-
-- [Amazon Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
-- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
-- [Strands Agents SDK](https://strandsagents.com/)
-- [AgentCore Gateway & M365 Integration Guide](https://github.com/akadesilva/agentcore-gateway-demos/blob/main/guides/sharepoint-quickstart.md)
-
 ---
 
-This repository is an experimental sample application and may be updated without considering backward compatibility. For official AgentCore sample code published by AWS, please refer to [fullstack-solution-template-for-agentcore](https://github.com/awslabs/fullstack-solution-template-for-agentcore) or [sample-amazon-bedrock-agentcore-fullstack-webapp](https://github.com/aws-samples/sample-amazon-bedrock-agentcore-fullstack-webapp).
+# Security
+Note: this asset represents a proof-of-value for the services included and is not intended as a production-ready solution. You must determine how the AWS Shared Responsibility applies to their specific use case and implement the needed controls to achieve their desired security outcomes. AWS offers a broad set of security tools and configurations to enable our customers. This repository is an experimental sample application and may be updated without considering backward compatibility. 
+
+Ultimately it is your responsibility as the developer of a full stack application to ensure all of its aspects are secure. We provide security best practices in repository documentation and provide a secure baseline but Amazon holds no responsibility for the security of applications built from this tool.

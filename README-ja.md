@@ -140,36 +140,20 @@ npm run deploy
 
 デプロイが完了すると、CloudFormationスタックの出力からフロントエンドURLを確認できます。
 
-カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[Deployment Options](docs/deployment-options.md) を参照してください。
+カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[デプロイオプション](docs/deployment-options-ja.md) を参照してください。
 
 
 ## ドキュメント
 
-### ユーザーガイド
-- [ユーザーガイド（日本語）](docs/USER_GUIDE-ja.md) - 機能紹介とエンドユーザー向けガイド
-- [User Guide (English)](docs/USER_GUIDE.md) - Feature introduction and end-user guide
-
 ### 技術ドキュメント
-- [Deployment Options](docs/deployment-options.md) - 環境設定とカスタマイズオプション
+- [デプロイオプション](docs/deployment-options-ja.md) - 環境設定とカスタマイズオプション
 - [ローカル開発環境のセットアップ](docs/local-development-setup.md) - 環境セットアップの自動化について説明しています
-- [JWT認証システム](docs/jwt-authentication.md) - 認証の仕組みについて説明しています
-- [アーキテクチャ図](docs/moca-architecture.drawio.png)
-
-## ライセンス
-
-このプロジェクトはMITライセンスの下でライセンスされています。詳細はLICENSEファイルを参照してください。
 
 ## コントリビューション
 
 コントリビューションを歓迎します。プルリクエストをお気軽に送信してください。
 
-## 関連リソース
+# セキュリティ
+注意: このアセットは、含まれるサービスの概念実証（Proof of Value）を目的としたものであり、本番環境向けのソリューションとして意図されたものではありません。お客様は、AWS 責任共有モデルがご自身のユースケースにどのように適用されるかを判断し、望ましいセキュリティ成果を達成するために必要なコントロールを実装する必要があります。AWS はお客様を支援するために、幅広いセキュリティツールと構成オプションを提供しています。このリポジトリは実験的なサンプルアプリケーションであり、後方互換性を考慮せずに更新される場合があります。
 
-- [Amazon Bedrockドキュメント](https://docs.aws.amazon.com/bedrock/)
-- [AWS CDKドキュメント](https://docs.aws.amazon.com/cdk/)
-- [Strands Agents SDK](https://strandsagents.com/)
-- [AgentCore Gateway & M365統合ガイド](https://github.com/akadesilva/agentcore-gateway-demos/blob/main/guides/sharepoint-quickstart.md)
-
----
-
-このリポジトリは実験的なサンプルアプリケーションであり、後方互換性を考慮せず更新される可能性があります。AWS が公式で公開している AgentCore のサンプルコードは [fullstack-solution-template-for-agentcore](https://github.com/awslabs/fullstack-solution-template-for-agentcore) や [sample-amazon-bedrock-agentcore-fullstack-webapp](https://github.com/aws-samples/sample-amazon-bedrock-agentcore-fullstack-webapp) をご覧ください。
+フルスタックアプリケーションの開発者として、アプリケーションのあらゆる側面のセキュリティを確保することは、最終的にはお客様の責任です。リポジトリのドキュメントではセキュリティのベストプラクティスを提供し、安全なベースラインを提供していますが、このツールから構築されたアプリケーションのセキュリティについて Amazon は一切の責任を負いません。

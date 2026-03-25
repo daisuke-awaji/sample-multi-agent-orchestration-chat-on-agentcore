@@ -18,7 +18,13 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   dev: {
     // Development environment
     tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
+    gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
     allowedSignUpEmailDomains: ['example.com'],
+  },
+  stg: {
+    // Staging environment
+    corsAllowedOrigins: ['https://stg.example.com'],
+    memoryExpirationDays: 60,
   },
   prd: {
     // Production environment with stricter settings
@@ -46,6 +52,13 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
 | `customDomain` | object | - | Custom domain configuration |
 | `testUser` | object | - | Test user auto-creation (dev only) |
 | `eventRules` | array | - | EventBridge rule configurations |
+| `gitlabTokenSecretName` | string | `'agentcore/default/gitlab-token'` | Secrets Manager secret name for GitLab token |
+| `gitlabHost` | string | `'gitlab.com'` | GitLab instance hostname |
+| `microsoftGraphOAuthProviderArn` | string | - | Microsoft Graph OAuth2 credential provider ARN |
+| `microsoftGraphOAuthSecretArn` | string | - | Microsoft Graph OAuth2 secret ARN |
+| `enableAwsOpsPermissions` | boolean | `false` | Enable AWS ReadOnly + CloudFormation deploy permissions |
+| `awsAccount` | string | - | AWS Account ID (uses CDK_DEFAULT_ACCOUNT if not specified) |
+| `resourcePrefix` | string | auto-generated | Resource name prefix (e.g., 'moca', 'mocadev') |
 
 ## Environment Examples
 
@@ -58,6 +71,10 @@ dev: {
   // API integrations
   tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
   githubTokenSecretName: 'agentcore/dev/github-token',
+  gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
+  
+  // Enable AWS resource inspection for development
+  enableAwsOpsPermissions: true,
   
   // Restrict sign-up to specific domains
   allowedSignUpEmailDomains: ['your-company.com'],
@@ -151,6 +168,17 @@ dev: {
         icon: 'github', // https://lucide.dev/icons/github
         enabled: true,
     },
+    {
+        id: 'github-pr',
+        name: 'GitHub Pull Request',
+        description: 'Triggered when a pull request event occurs in the GitHub repository',
+        eventPattern: {
+          source: ['github.com'],
+          detailType: ['pull_request'],
+        },
+        icon: 'git-pull-request', // https://lucide.dev/icons/git-pull-request
+        enabled: true,
+    },
   ],
 },
 ```
@@ -164,9 +192,57 @@ npm run deploy
 # Deploy development environment
 npm run deploy:dev
 
+# Deploy staging environment
+npm run deploy:stg
+
 # Deploy production environment
 npm run deploy:prd
 ```
+
+
+## Microsoft Graph (OneDrive) Integration
+
+Enable OneDrive file operations and Excel workbook manipulation through Microsoft Graph API. When configured, agents can list, upload, download, search, and manage files in OneDrive, as well as read and write Excel worksheets, cells, and ranges.
+
+### Prerequisites
+
+1. **Azure AD App Registration** — Register an application in [Microsoft Entra admin center](https://entra.microsoft.com/)
+2. **API Permissions** — Add Microsoft Graph Application permission `Files.ReadWrite.All` and grant admin consent
+3. **Client Secret** — Create a client secret for the registered application
+
+### 1. Create OAuth2 Credential Provider
+
+Create an OAuth2 credential provider in the AgentCore Identity management console:
+
+1. Open the **AgentCore console** → **Identity** → **Token Vault**
+2. Create a new **OAuth2 Credential Provider** with:
+   - **Authorization URL**: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize`
+   - **Token URL**: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token`
+   - **Client ID**: Your Azure AD application (client) ID
+   - **Client Secret**: Your Azure AD client secret
+   - **Scope**: `https://graph.microsoft.com/.default`
+3. Note the **Credential Provider ARN** and the auto-generated **Secret ARN** from the output
+
+### 2. Configure Environment
+
+Add the ARNs to your environment configuration in `packages/cdk/config/environments.ts`:
+
+```typescript
+dev: {
+  microsoftGraphOAuthProviderArn:
+    'arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/tv-xxx/oauth2credentialprovider/microsoft-graph',
+  microsoftGraphOAuthSecretArn:
+    'arn:aws:secretsmanager:us-east-1:123456789012:secret:AgentCoreTokenVault-xxx',
+},
+```
+
+### 3. Deploy
+
+```bash
+npm run deploy
+```
+
+After deployment, the OneDrive OpenAPI gateway target is automatically created. Agents can then use OneDrive tools for file and Excel operations.
 
 ## GitHub Webhook Setup
 
@@ -204,4 +280,3 @@ In the Moca UI, create triggers that subscribe to the `github-issue-created` or 
 ## Related Documentation
 
 - [Local Development Setup](./local-development-setup.md)
-- [JWT Authentication System](./jwt-authentication.md)
