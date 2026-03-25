@@ -11,7 +11,8 @@
     "code",
     "use_aws",
     "web_search",
-    "web_fetch"
+    "web_fetch",
+    "subagent"
   ],
   "allowedTools": [
     "fs_read",
@@ -22,22 +23,13 @@
     "code",
     "use_aws",
     "web_search",
-    "web_fetch"
+    "web_fetch",
+    "subagent"
   ],
   "toolsSettings": {
     "fs_write": {
-      "allowedPaths": [
-        "packages/**",
-        "scripts/**",
-        "docs/**",
-        ".kiro/**"
-      ],
-      "deniedPaths": [
-        "**/node_modules/**",
-        "**/dist/**",
-        "**/cdk.out/**",
-        "**/.env"
-      ]
+      "allowedPaths": ["packages/**", "scripts/**", "docs/**", ".kiro/**"],
+      "deniedPaths": ["**/node_modules/**", "**/dist/**", "**/cdk.out/**"]
     },
     "execute_bash": {
       "autoAllowReadonly": true

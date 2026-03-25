@@ -37,7 +37,7 @@ export function createApp(): Express {
   app.post('/invocations', asyncHandler(handleInvocation));
 
   // 404 handler
-  app.use('*', handleNotFound);
+  app.use(handleNotFound);
 
   // Global error handler — catches errors from asyncHandler and any middleware
   app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
