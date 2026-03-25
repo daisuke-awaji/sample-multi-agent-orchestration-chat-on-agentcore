@@ -199,6 +199,51 @@ npm run deploy:stg
 npm run deploy:prd
 ```
 
+
+## Microsoft Graph (OneDrive) Integration
+
+Enable OneDrive file operations and Excel workbook manipulation through Microsoft Graph API. When configured, agents can list, upload, download, search, and manage files in OneDrive, as well as read and write Excel worksheets, cells, and ranges.
+
+### Prerequisites
+
+1. **Azure AD App Registration** — Register an application in [Microsoft Entra admin center](https://entra.microsoft.com/)
+2. **API Permissions** — Add Microsoft Graph Application permission `Files.ReadWrite.All` and grant admin consent
+3. **Client Secret** — Create a client secret for the registered application
+
+### 1. Create OAuth2 Credential Provider
+
+Create an OAuth2 credential provider in the AgentCore Identity management console:
+
+1. Open the **AgentCore console** → **Identity** → **Token Vault**
+2. Create a new **OAuth2 Credential Provider** with:
+   - **Authorization URL**: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize`
+   - **Token URL**: `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token`
+   - **Client ID**: Your Azure AD application (client) ID
+   - **Client Secret**: Your Azure AD client secret
+   - **Scope**: `https://graph.microsoft.com/.default`
+3. Note the **Credential Provider ARN** and the auto-generated **Secret ARN** from the output
+
+### 2. Configure Environment
+
+Add the ARNs to your environment configuration in `packages/cdk/config/environments.ts`:
+
+```typescript
+dev: {
+  microsoftGraphOAuthProviderArn:
+    'arn:aws:bedrock-agentcore:us-east-1:123456789012:token-vault/tv-xxx/oauth2credentialprovider/microsoft-graph',
+  microsoftGraphOAuthSecretArn:
+    'arn:aws:secretsmanager:us-east-1:123456789012:secret:AgentCoreTokenVault-xxx',
+},
+```
+
+### 3. Deploy
+
+```bash
+npm run deploy
+```
+
+After deployment, the OneDrive OpenAPI gateway target is automatically created. Agents can then use OneDrive tools for file and Excel operations.
+
 ## GitHub Webhook Setup
 
 To receive GitHub events (Issues, Pull Requests) and trigger agents automatically:

@@ -67,7 +67,7 @@ This application uses a fully serverless architecture built on Amazon Bedrock Ag
 | Agent | AgentCore Runtime + Gateway + Memory + CodeInterpreter + Browser|
 | Storage | DynamoDB + S3 |
 | Real-time | AppSync Events (WebSocket) |
-| Events | EventBridge Scheduler |
+| Events | EventBridge Scheduler + Rules |
 
 The backend API is responsible for agent management, session persistence, and file operations. AgentCore Runtime executes agents using the Strands Agents SDK (TypeScript), with short-term memory (session history) for conversational context and long-term memory (persistent memory) enabled. Real-time streaming is achieved via AppSync Events, allowing agents to be automatically executed by schedule triggers.
 
@@ -159,20 +159,9 @@ For advanced configuration options such as custom domains, environment-specific 
 - [Deployment Options](docs/deployment-options.md) - Environment configuration and customization
 - [Local Development Setup](docs/local-development-setup.md) - Explains environment setup automation
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
 ## Contributing
 
 Contributions are welcome. Please feel free to submit a Pull Request.
-
-## Related Resources
-
-- [Amazon Bedrock Documentation](https://docs.aws.amazon.com/bedrock/)
-- [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
-- [Strands Agents SDK](https://strandsagents.com/)
-- [AgentCore Gateway & M365 Integration Guide](https://github.com/akadesilva/agentcore-gateway-demos/blob/main/guides/sharepoint-quickstart.md)
 
 ---
 

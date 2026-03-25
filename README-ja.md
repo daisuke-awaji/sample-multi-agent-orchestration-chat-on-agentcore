@@ -140,29 +140,18 @@ npm run deploy
 
 デプロイが完了すると、CloudFormationスタックの出力からフロントエンドURLを確認できます。
 
-カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[Deployment Options](docs/deployment-options.md) を参照してください。
+カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[デプロイオプション](docs/deployment-options-ja.md) を参照してください。
 
 
 ## ドキュメント
 
 ### 技術ドキュメント
-- [Deployment Options](docs/deployment-options.md) - 環境設定とカスタマイズオプション
+- [デプロイオプション](docs/deployment-options-ja.md) - 環境設定とカスタマイズオプション
 - [ローカル開発環境のセットアップ](docs/local-development-setup.md) - 環境セットアップの自動化について説明しています
-
-## ライセンス
-
-このプロジェクトはMITライセンスの下でライセンスされています。詳細はLICENSEファイルを参照してください。
 
 ## コントリビューション
 
 コントリビューションを歓迎します。プルリクエストをお気軽に送信してください。
-
-## 関連リソース
-
-- [Amazon Bedrockドキュメント](https://docs.aws.amazon.com/bedrock/)
-- [AWS CDKドキュメント](https://docs.aws.amazon.com/cdk/)
-- [Strands Agents SDK](https://strandsagents.com/)
-- [AgentCore Gateway & M365統合ガイド](https://github.com/akadesilva/agentcore-gateway-demos/blob/main/guides/sharepoint-quickstart.md)
 
 # セキュリティ
 注意: このアセットは、含まれるサービスの概念実証（Proof of Value）を目的としたものであり、本番環境向けのソリューションとして意図されたものではありません。お客様は、AWS 責任共有モデルがご自身のユースケースにどのように適用されるかを判断し、望ましいセキュリティ成果を達成するために必要なコントロールを実装する必要があります。AWS はお客様を支援するために、幅広いセキュリティツールと構成オプションを提供しています。このリポジトリは実験的なサンプルアプリケーションであり、後方互換性を考慮せずに更新される場合があります。

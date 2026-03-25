@@ -118,7 +118,7 @@ cp .env.example .env
 
 ```bash
 # From root (recommended)
-npm run backend:dev
+npm run dev:backend
 
 # Or directly from backend directory
 cd packages/backend
@@ -193,9 +193,13 @@ npm run docker:test        # Health check
 | `CORS_ALLOWED_ORIGINS` | ❌ | `*` | CORS allowed origins |
 | `COGNITO_USER_POOL_ID` | ⚠️ | - | Cognito User Pool ID |
 | `COGNITO_REGION` | ⚠️ | - | AWS Region |
-| `JWKS_URI` | ⚠️ | - | JWKS endpoint URL |
-| `JWT_ISSUER` | ❌ | - | JWT Issuer (optional) |
-| `JWT_AUDIENCE` | ❌ | - | JWT Audience (optional) |
+| `COGNITO_CLIENT_ID` | ❌ | - | Cognito Client ID |
+| `AWS_REGION` | ❌ | `us-east-1` | AWS region |
+| `AGENTCORE_MEMORY_ID` | ❌ | - | AgentCore Memory ID |
+| `AGENTCORE_GATEWAY_ENDPOINT` | ❌ | - | AgentCore Gateway endpoint |
+| `USER_STORAGE_BUCKET_NAME` | ❌ | - | S3 bucket for user storage |
+| `AGENTS_TABLE_NAME` | ❌ | - | DynamoDB agents table name |
+| `SESSIONS_TABLE_NAME` | ❌ | - | DynamoDB sessions table name |
 
 ⚠️ = Required in production environment
 

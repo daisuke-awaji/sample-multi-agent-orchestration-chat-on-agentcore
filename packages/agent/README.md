@@ -13,7 +13,7 @@ A package for running TypeScript-based Strands Agent on Amazon Bedrock AgentCore
 
 ### Prerequisites
 
-- Node.js 18 or later
+- Node.js 22.12.0+
 - Docker & Docker Compose
 - AWS CLI configured (`aws configure` or SSO)
 
@@ -414,6 +414,19 @@ EOF
 | `AWS_REGION` | us-east-1 | AWS region |
 | `NODE_ENV` | development | Node.js environment |
 | `LOG_LEVEL` | info | Log level |
+| `AGENTCORE_GATEWAY_ENDPOINT` | - | AgentCore Gateway MCP endpoint (required) |
+| `AGENTCORE_MEMORY_ID` | - | AgentCore Memory ID |
+| `BEDROCK_MODEL_ID` | global.anthropic.claude-sonnet-4-6 | Bedrock model ID |
+| `BEDROCK_REGION` | us-east-1 | Bedrock API region |
+| `TAVILY_API_KEY_SECRET_NAME` | - | Secrets Manager name for Tavily API key |
+| `GITHUB_TOKEN_SECRET_NAME` | - | Secrets Manager name for GitHub token |
+| `GITLAB_TOKEN_SECRET_NAME` | - | Secrets Manager name for GitLab token |
+| `GITLAB_HOST` | gitlab.com | GitLab instance hostname |
+| `CONVERSATION_WINDOW_SIZE` | 40 | Conversation window size (even number ≥ 2) |
+| `ENABLE_PROMPT_CACHING` | true | Enable prompt caching |
+| `DEBUG_MCP` | false | Enable MCP debug logging |
+| `AWS_PROFILE` | - | AWS profile name |
+| `CACHE_TYPE` | default | Prompt cache type (default or ephemeral) |
 
 ## Deployment
 
