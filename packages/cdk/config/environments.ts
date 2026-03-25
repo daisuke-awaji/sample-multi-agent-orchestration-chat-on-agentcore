@@ -37,56 +37,7 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
   /**
    * Development environment
    */
-  dev: {
-    tavilyApiKeySecretName: 'agentcore/dev/tavily-api-key',
-    githubTokenSecretName: 'agentcore/dev/github-token',
-    gitlabTokenSecretName: 'agentcore/dev/gitlab-token',
-    githubWebhookSecretName: 'agentcore/dev/github-webhook-secret',
-    enableAwsOpsPermissions: true,
-    eventRules: [
-      {
-        id: 's3-upload',
-        name: 'S3 File Upload',
-        description: 'Triggered when a file is uploaded to S3',
-        eventPattern: {
-          source: ['aws.s3'],
-          detailType: ['Object Created'],
-          detail: {
-            bucket: {
-              name: [{ prefix: 'moca-user-storage-' }],
-            },
-          },
-        },
-        icon: 'cloud-upload', // https://lucide.dev/icons/cloud-upload
-        enabled: true,
-      },
-      {
-        id: 'github-issue-created',
-        name: 'GitHub Issue created',
-        description: 'Triggered when a new issue is opened in the GitHub repository',
-        eventPattern: {
-          source: ['github.com'],
-          detailType: ['issues'],
-          detail: {
-            action: ['opened'],
-          },
-        },
-        icon: 'github', // https://lucide.dev/icons/github
-        enabled: true,
-      },
-      {
-        id: 'github-pr',
-        name: 'GitHub Pull Request',
-        description: 'Triggered when a pull request event occurs in the GitHub repository',
-        eventPattern: {
-          source: ['github.com'],
-          detailType: ['pull_request'],
-        },
-        icon: 'git-pull-request', // https://lucide.dev/icons/git-pull-request
-        enabled: true,
-      },
-    ],
-  },
+  dev: {},
 
   /**
    * Staging environment

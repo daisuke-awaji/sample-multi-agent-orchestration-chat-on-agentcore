@@ -155,15 +155,9 @@ For advanced configuration options such as custom domains, environment-specific 
 
 ## Documentation
 
-### User Guides
-- [User Guide (English)](docs/USER_GUIDE.md) - Feature introduction and end-user guide
-- [User Guide (Japanese)](docs/USER_GUIDE-ja.md) - Feature introduction and end-user guide
-
 ### Technical Documentation
 - [Deployment Options](docs/deployment-options.md) - Environment configuration and customization
 - [Local Development Setup](docs/local-development-setup.md) - Explains environment setup automation
-- [JWT Authentication System](docs/jwt-authentication.md) - Explains the authentication mechanism
-- [Architecture Diagram](docs/moca-architecture.drawio.png)
 
 ## License
 
@@ -182,4 +176,7 @@ Contributions are welcome. Please feel free to submit a Pull Request.
 
 ---
 
-This repository is an experimental sample application and may be updated without considering backward compatibility. For official AgentCore sample code published by AWS, please refer to [fullstack-solution-template-for-agentcore](https://github.com/awslabs/fullstack-solution-template-for-agentcore) or [sample-amazon-bedrock-agentcore-fullstack-webapp](https://github.com/aws-samples/sample-amazon-bedrock-agentcore-fullstack-webapp).
+# Security
+Note: this asset represents a proof-of-value for the services included and is not intended as a production-ready solution. You must determine how the AWS Shared Responsibility applies to their specific use case and implement the needed controls to achieve their desired security outcomes. AWS offers a broad set of security tools and configurations to enable our customers. This repository is an experimental sample application and may be updated without considering backward compatibility. 
+
+Ultimately it is your responsibility as the developer of a full stack application to ensure all of its aspects are secure. We provide security best practices in repository documentation and provide a secure baseline but Amazon holds no responsibility for the security of applications built from this tool.

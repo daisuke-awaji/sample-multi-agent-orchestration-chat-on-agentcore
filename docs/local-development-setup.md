@@ -24,12 +24,14 @@ This project implements a mechanism to automatically retrieve environment variab
               │  - Cognito (Authentication)     │
               │  - AgentCore Gateway/Memory     │
               │  - S3 (User Storage)            │
+              │  - DynamoDB (Agents/Sessions)   │
+              │  - AppSync Events (Real-time)   │
               └─────────────────────────────────┘
 ```
 
 **Features:**
 - Frontend connects to `localhost:3000` (Backend) and `localhost:8080` (Agent)
-- Backend/Agent connect to AWS resources (Cognito, Memory, Gateway, S3)
+- Backend/Agent connect to AWS resources (Cognito, Memory, Gateway, S3, DynamoDB, AppSync)
 - Hot reload enabled for fast development cycle
 - Easy debugging and no Lambda invocation costs
 
@@ -53,6 +55,8 @@ This command:
   - `packages/frontend/.env`
   - `packages/backend/.env`
   - `packages/agent/.env`
+  - `packages/trigger/.env` (if trigger feature is enabled)
+  - `scripts/test-machine-user.env` (if Machine User is configured)
 
 ### 3. Start All Services
 
@@ -73,7 +77,7 @@ npm run dev:agent      # Agent only
 ### Execution
 
 ```bash
-# Default (AgentCoreStack)
+# Default (MocaAgentCoreApp)
 npm run setup-env
 
 # Specify custom stack name
@@ -95,6 +99,10 @@ VITE_BACKEND_URL=http://localhost:3000
 
 # Agent API Configuration (Local Development Mode)
 VITE_AGENT_ENDPOINT=http://localhost:8080/invocations
+
+# AppSync Events Configuration (for real-time session updates)
+VITE_APPSYNC_EVENTS_ENDPOINT=wss://xxx.appsync-realtime-api.us-east-1.amazonaws.com
+VITE_APPSYNC_EVENTS_HTTP_ENDPOINT=https://xxx.appsync-api.us-east-1.amazonaws.com
 ```
 
 #### Backend (packages/backend/.env)
@@ -117,6 +125,24 @@ AGENTCORE_GATEWAY_ENDPOINT=https://xxx.gateway.bedrock-agentcore.us-east-1.amazo
 
 # User Storage Configuration
 USER_STORAGE_BUCKET_NAME=bucket-name
+
+# Agents Table
+AGENTS_TABLE_NAME=agents-table-name
+
+# Sessions Table
+SESSIONS_TABLE_NAME=sessions-table-name
+
+# AWS Region
+AWS_REGION=us-east-1
+
+# Event-Driven Triggers
+TRIGGERS_TABLE_NAME=triggers-table-name
+TRIGGER_LAMBDA_ARN=arn:aws:lambda:us-east-1:123456789012:function:trigger-function
+SCHEDULER_ROLE_ARN=arn:aws:iam::123456789012:role/scheduler-role
+SCHEDULE_GROUP_NAME=default
+
+# Event Sources Configuration (JSON)
+EVENT_SOURCES_CONFIG=[]
 ```
 
 #### Agent (packages/agent/.env)
@@ -124,6 +150,12 @@ USER_STORAGE_BUCKET_NAME=bucket-name
 ```bash
 # AWS Region
 AWS_REGION=us-east-1
+
+# Bedrock Model Region
+BEDROCK_REGION=us-east-1
+
+# Nova Canvas Region (for image generation)
+NOVA_CANVAS_REGION=us-east-1
 
 # AgentCore Memory
 AGENTCORE_MEMORY_ID=memory-id
@@ -134,9 +166,51 @@ AGENTCORE_GATEWAY_ENDPOINT=https://xxx.gateway.bedrock-agentcore.us-east-1.amazo
 # User Storage
 USER_STORAGE_BUCKET_NAME=bucket-name
 
+# Sessions Table
+SESSIONS_TABLE_NAME=sessions-table-name
+
+# AppSync Events (for real-time message sync)
+APPSYNC_HTTP_ENDPOINT=https://xxx.appsync-api.us-east-1.amazonaws.com
+
 # Server Configuration
 PORT=8080
 NODE_ENV=development
+```
+
+#### Trigger (packages/trigger/.env) — generated when trigger feature is enabled
+
+```bash
+# AWS Region
+AWS_REGION=us-east-1
+
+# Cognito Machine User Authentication
+COGNITO_USER_POOL_ID=us-east-1_xxxxxxxxx
+COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxx
+COGNITO_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Agent API Configuration
+AGENT_API_URL=https://bedrock-agentcore.us-east-1.amazonaws.com/runtimes/.../invocations
+
+# DynamoDB Configuration
+TRIGGERS_TABLE_NAME=triggers-table-name
+```
+
+#### Machine User Test Script (scripts/test-machine-user.env) — generated when Machine User is configured
+
+```bash
+# AWS Region
+AWS_REGION=us-east-1
+
+# Cognito OAuth Configuration
+COGNITO_DOMAIN=xxx.auth.us-east-1.amazoncognito.com
+COGNITO_CLIENT_ID=xxxxxxxxxxxxxxxxxxxx
+COGNITO_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Agent API Endpoint (Local Development)
+AGENT_ENDPOINT=http://localhost:8080/invocations
+
+# Test Configuration
+TARGET_USER_ID=YOUR_USER_ID_HERE
 ```
 
 ### How the Script Works
@@ -144,17 +218,21 @@ NODE_ENV=development
 `scripts/setup-env.ts` performs the following:
 
 1. **Determine Stack Name**
-   - Uses environment variable `STACK_NAME` or default value `AgentCoreStack`
+   - Uses environment variable `STACK_NAME` or default value `MocaAgentCoreApp`
 
 2. **Retrieve CloudFormation Outputs**
    - Calls `DescribeStacks` API using AWS SDK
    - Extracts required Output values
 
 3. **Generate `.env` Files**
-   - Creates environment variables for each package
+   - Creates environment variables for Frontend, Backend, and Agent packages
    - Writes to files
 
-4. **Error Handling**
+4. **Retrieve Machine User Credentials**
+   - If `MachineUserClientId` is available, retrieves the Client Secret from Cognito
+   - Generates `.env` for Trigger package and test script
+
+5. **Error Handling**
    - Error message when stack is not found
    - Detects AWS authentication errors and shows resolution steps
    - Warns when required Outputs are missing
@@ -164,7 +242,7 @@ NODE_ENV=development
 ### Error: Stack Not Found
 
 ```bash
-❌ Failed to retrieve stack outputs: Stack with id AgentCoreStack does not exist
+❌ Failed to retrieve stack outputs: Stack with id MocaAgentCoreApp does not exist
 ```
 
 **Resolution:**
@@ -226,8 +304,19 @@ The following CloudFormation Outputs are used by `setup-env`:
 | `MemoryId` | AgentCore Memory ID | ✅ |
 | `GatewayMcpEndpoint` | AgentCore Gateway Endpoint | ✅ |
 | `UserStorageBucketName` | S3 Bucket Name | ✅ |
+| `AgentsTableName` | Agents DynamoDB Table Name | ✅ |
+| `SessionsTableName` | Sessions DynamoDB Table Name | ✅ |
 | `BackendApiUrl` | Backend API URL | ❌ |
 | `RuntimeInvocationEndpoint` | Runtime Endpoint | ❌ |
+| `AppSyncEventsRealtimeEndpoint` | AppSync Events WebSocket Endpoint | ❌ |
+| `AppSyncEventsHttpEndpoint` | AppSync Events HTTP Endpoint | ❌ |
+| `TriggersTableName` | Triggers DynamoDB Table Name | ❌ |
+| `TriggerLambdaArn` | Trigger Lambda Function ARN | ❌ |
+| `SchedulerRoleArn` | EventBridge Scheduler Role ARN | ❌ |
+| `EventSourcesConfig` | Event Sources Configuration (JSON) | ❌ |
+| `MachineUserClientId` | Cognito Machine User Client ID | ❌ |
+| `TokenEndpoint` | Cognito Token Endpoint | ❌ |
+| `DomainPrefix` | Cognito Domain Prefix | ❌ |
 
 ## 🎨 Customization
 
@@ -250,7 +339,23 @@ Edit `scripts/setup-env.ts` to add new environment variables:
 interface StackOutputs {
   Region?: string;
   UserPoolId?: string;
-  // ... existing definitions
+  UserPoolClientId?: string;
+  MachineUserClientId?: string;
+  TokenEndpoint?: string;
+  DomainPrefix?: string;
+  BackendApiUrl?: string;
+  RuntimeInvocationEndpoint?: string;
+  MemoryId?: string;
+  GatewayMcpEndpoint?: string;
+  UserStorageBucketName?: string;
+  AgentsTableName?: string;
+  SessionsTableName?: string;
+  TriggersTableName?: string;
+  TriggerLambdaArn?: string;
+  SchedulerRoleArn?: string;
+  EventSourcesConfig?: string;
+  AppSyncEventsRealtimeEndpoint?: string;
+  AppSyncEventsHttpEndpoint?: string;
   YourNewOutput?: string;  // Add new Output
 }
 
@@ -268,7 +373,7 @@ VITE_YOUR_NEW_VAR=${outputs.YourNewOutput || ''}
 ## 🔗 Related Documentation
 
 - [README.md](../README.md) - Project Overview
-- [jwt-authentication.md](./jwt-authentication.md) - JWT Authentication System
+- [Deployment Options](./deployment-options.md) - Environment configuration and customization
 - [packages/agent/README.md](../packages/agent/README.md) - Agent Implementation Details
 - [packages/backend/README.md](../packages/backend/README.md) - Backend API Details
 - [packages/frontend/README.md](../packages/frontend/README.md) - Frontend Implementation Details
