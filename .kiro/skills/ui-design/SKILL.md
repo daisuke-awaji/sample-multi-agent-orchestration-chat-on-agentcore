@@ -1,3 +1,8 @@
+---
+name: ui-design
+description: UI/UX design rules, Atomic Design placement, design tokens, component conventions, and responsive patterns for the Moca frontend. Use when creating or modifying React components, styling, or layout.
+---
+
 # UI Design Guide
 
 UI/UX design rules and conventions for the Moca frontend. Built with React, Tailwind CSS, and Atomic Design methodology.

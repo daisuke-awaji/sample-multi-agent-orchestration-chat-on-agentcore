@@ -1,0 +1,70 @@
+{
+  "name": "moca-dev",
+  "description": "Moca full-stack development agent — supports all packages: agent/backend/frontend/CDK",
+  "prompt": "file://../prompts/moca-dev.md",
+  "tools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "grep",
+    "glob",
+    "code",
+    "use_aws",
+    "web_search",
+    "web_fetch"
+  ],
+  "allowedTools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "grep",
+    "glob",
+    "code",
+    "use_aws",
+    "web_search",
+    "web_fetch"
+  ],
+  "toolsSettings": {
+    "fs_write": {
+      "allowedPaths": [
+        "packages/**",
+        "scripts/**",
+        "docs/**",
+        ".kiro/**"
+      ],
+      "deniedPaths": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/cdk.out/**",
+        "**/.env"
+      ]
+    },
+    "execute_bash": {
+      "autoAllowReadonly": true
+    }
+  },
+  "resources": [
+    "file://README.md",
+    "file://package.json",
+    "file://docs/deployment-options.md",
+    "file://docs/local-development-setup.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "hooks": {
+    "agentSpawn": [
+      {
+        "command": "node -v && echo 'packages:' && ls packages/",
+        "description": "Show Node.js version and package list"
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "fs_write",
+        "command": "bash scripts/check-doc-drift.sh",
+        "description": "Check for documentation drift after file writes"
+      }
+    ]
+  },
+  "keyboardShortcut": "ctrl+shift+m",
+  "welcomeMessage": "Moca development agent ready. I support all packages — agent, backend, frontend, and CDK. What would you like to build?"
+}
