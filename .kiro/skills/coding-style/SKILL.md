@@ -1,283 +1,82 @@
 ---
 name: coding-style
-description: Code style guidelines and conventions for the Moca project
+description: Design decisions, implicit rules, and anti-patterns for the Moca project. Covers coding conventions, project structure rationale, and testing guidelines.
 ---
 
-# Coding Style Guide
+# Coding Style — Design Decisions & Implicit Rules
 
-This document defines the code style and conventions for the Moca project.
+This document captures decisions that **cannot be inferred from code or config files alone**. For formatting rules, see `.prettierrc` and `eslint.config.mjs`. For project structure, explore the `packages/` directory.
 
-## Language
+## Implicit Rules
 
-!IMPORTANT RULE: Unless explicitly specified, please implement documentation and code in English even if requested in Japanese.
+### Language Policy
 
+All code, comments, commit messages, and documentation MUST be written in English — even when the user communicates in Japanese.
 
-## TypeScript Configuration
+- **WHY (agent/backend):** ESLint `no-restricted-syntax` detects Japanese characters in string literals. Backend code is never user-facing; Japanese would block future internationalization.
+- **WHY (frontend):** User-visible strings go through `react-i18next` (`t()` function). The `i18next/no-literal-string` ESLint rule catches hardcoded JSX text. Raw Japanese in components bypasses the translation pipeline.
 
-### Strict Mode
-All packages use TypeScript strict mode:
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true
-  }
-}
-```
+### Do NOT Run `npm run dev` Unless Told To
 
-### Type Safety
-- Always provide explicit types for function parameters and return values
-- Avoid using `any` type - use `unknown` or proper types instead
-- Use type guards for runtime type checking
+Developers typically already have `npm run dev` running with hot-reload. Starting a second instance causes port conflicts. Only run it when the user explicitly asks.
 
-**Good:**
-```typescript
-function processUser(user: User): string {
-  return user.name;
-}
-```
+### Comments Explain WHY, Not WHAT
 
-**Bad:**
-```typescript
-function processUser(user: any) {
-  return user.name;
-}
-```
+The codebase uses `// WHY:` prefixed comments for non-obvious decisions (see `useMessageEventsSubscription.ts`, `chatStore.ts`). Write comments only when the reason behind the code is not self-evident. Never comment what the code literally does.
 
-## Naming Conventions
+## Design Decisions
 
-### Variables and Functions
-- Use `camelCase` for variables and functions
-- Use descriptive names that indicate purpose
+### ID Generation: nanoid vs uuid
 
-```typescript
-const userProfile = getUserProfile();
-const isAuthenticated = checkAuth();
-```
+| Context | Library | Reason |
+|---------|---------|--------|
+| New IDs (sessions, triggers, frontend) | `nanoid` / `customAlphabet` | Shorter, URL-safe, no hyphens |
+| Cognito `sub` (external) | UUID | Comes from AWS, cannot change format |
+| `agents-service.ts` | `uuid` (v4) | Historical — predates nanoid adoption. Do not migrate without reason. |
 
-### Classes and Interfaces
-- Use `PascalCase` for classes, interfaces, and types
-- Prefix interfaces with `I` only when it adds clarity
+**sessionId specifically** uses `customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 33)` because AgentCore requires `[a-zA-Z0-9][a-zA-Z0-9-_]*`. Hyphens and underscores are excluded to avoid edge-case issues with the first-character constraint.
 
-```typescript
-class UserService {}
-interface User {}
-type RequestOptions = {};
-```
+### CONVERSATION_WINDOW_SIZE Must Be Even
 
-### Constants
-- Use `UPPER_SNAKE_CASE` for true constants
-- Use `camelCase` for configuration objects
+The `SlidingWindowConversationManager` truncates from the oldest messages. An odd window size can break the required user→assistant→user→assistant alternation pattern, causing Bedrock API errors. The Zod schema enforces `val % 2 === 0`.
 
-```typescript
-const MAX_RETRY_COUNT = 3;
-const config = {
-  apiUrl: 'https://api.example.com',
-  timeout: 5000
-};
-```
+### Agent Package: ESM with .js Extensions
 
-### Files and Directories
-- Use `kebab-case` for file names: `user-service.ts`
-- Use `camelCase` for variable files: `userService.ts` (when exporting single entity)
-- Test files: `user-service.test.ts` or `user-service.spec.ts`
+`packages/agent` runs as ESM. TypeScript compiles `.ts` → `.js`, but Node.js ESM resolution requires explicit `.js` extensions in import paths. ESLint `import/extensions` rule enforces this. Other packages (backend, frontend) do not have this constraint.
 
-## Import Organization
+### Zustand: One Store Per Domain
 
-Organize imports in the following order:
-1. Node.js built-in modules
-2. External packages
-3. Internal packages/modules
-4. Relative imports
+The frontend has ~12 Zustand stores in `stores/` (auth, agent, session, chat, ui, etc.). Each store owns one domain.
 
-```typescript
-// 1. Node.js built-in
-import { readFile } from 'fs/promises';
+- **WHY:** Zustand re-renders subscribers when any state in the store changes. Mixing domains (e.g., auth + chat) would cause unnecessary re-renders across unrelated components.
+- **Pattern:** Use selectors — `useAgentStore((state) => state.agents)` — to subscribe to only the needed slice.
 
-// 2. External packages
-import express from 'express';
-import { z } from 'zod';
+### Frontend i18n: No Hardcoded Strings in JSX
 
-// 3. Internal packages
-import { config } from '@/config';
+`eslint-plugin-i18next` with `no-literal-string` (jsx-text-only mode) catches raw text in JSX and key attributes (`title`, `aria-label`, `alt`, `placeholder`). All user-visible text must use `t('key')`. Agent names/descriptions use `translateIfKey()` utility for dynamic content that may or may not have translation keys.
 
-// 4. Relative imports
-import { User } from './types';
-import { userService } from './user-service';
-```
+## Testing Guidelines
 
-## Code Formatting
+### Test Behavior, Not Implementation
 
-### ESLint
-- Automatically enforced via pre-commit hooks
-- Run `npm run lint:fix` to auto-fix issues
+Tests should verify observable outcomes, not internal method calls. Use the AAA pattern (Arrange-Act-Assert). See existing tests in `__tests__/` directories for conventions.
 
-### Prettier
-- Runs automatically on save (if configured in editor)
-- Configuration in `.prettierrc`:
-  - Single quotes: `true`
-  - Trailing comma: `es5`
-  - Tab width: `2`
-  - Semi: `true`
+### Coverage Priority
 
-### Line Length
-- Maximum line length: 120 characters
-- Break long lines logically
+Focus testing effort in this order:
+1. **High:** Business logic, data transformations, error handling
+2. **Medium:** Utilities, validators
+3. **Low:** Simple getters, configuration wiring
 
-## Function Guidelines
+### Test Files Location
 
-### Function Length
-- Keep functions short and focused (< 50 lines preferred)
-- Extract complex logic into separate functions
+- Unit tests: co-located in `__tests__/` or `*.test.ts` next to source
+- Integration tests: `tests/` directory with `*.integration.test.ts` suffix
 
-### Parameters
-- Maximum 3-4 parameters
-- Use object parameters for multiple values
+## Anti-patterns
 
-**Good:**
-```typescript
-function createUser({ name, email, role }: CreateUserParams) {
-  // ...
-}
-```
-
-**Bad:**
-```typescript
-function createUser(name: string, email: string, role: string, active: boolean) {
-  // ...
-}
-```
-
-### Return Values
-- Be explicit about return types
-- Return early to reduce nesting
-
-```typescript
-function getUser(id: string): User | null {
-  if (!id) return null;
-  
-  const user = findUserById(id);
-  if (!user) return null;
-  
-  return user;
-}
-```
-
-## Error Handling
-
-### Use Specific Errors
-```typescript
-class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-```
-
-### Async Error Handling
-```typescript
-try {
-  const result = await fetchData();
-  return result;
-} catch (error) {
-  if (error instanceof ValidationError) {
-    // Handle validation error
-  }
-  throw error;
-}
-```
-
-## Comments and Documentation
-
-### JSDoc Comments
-Use JSDoc for public APIs:
-```typescript
-/**
- * Fetches user data from the database
- * @param userId - The unique user identifier
- * @returns User object or null if not found
- * @throws {DatabaseError} When database connection fails
- */
-async function getUser(userId: string): Promise<User | null> {
-  // ...
-}
-```
-
-### Inline Comments
-- !IMPORTANT: Use comments to explain "WHY" and "WHY NOT", not "WHAT"
-- Avoid obvious comments
-- Keep comments up-to-date with code
-
-**Good:**
-```typescript
-// Retry with exponential backoff to handle rate limiting
-const result = await retryWithBackoff(() => apiCall());
-```
-
-**Bad:**
-```typescript
-// Call API
-const result = await apiCall();
-```
-
-## Best Practices
-
-### Avoid Magic Numbers
-```typescript
-// Good
-const MAX_RETRIES = 3;
-if (retryCount > MAX_RETRIES) { }
-
-// Bad
-if (retryCount > 3) { }
-```
-
-### Use Const Assertions
-```typescript
-const ROLES = ['admin', 'user', 'guest'] as const;
-type Role = typeof ROLES[number]; // 'admin' | 'user' | 'guest'
-```
-
-### Destructuring
-```typescript
-// Prefer destructuring
-const { name, email } = user;
-
-// Over property access
-const name = user.name;
-const email = user.email;
-```
-
-### Optional Chaining
-```typescript
-// Use optional chaining
-const city = user?.address?.city;
-
-// Over nested if checks
-const city = user && user.address && user.address.city;
-```
-
-## React/Frontend Specific
-
-### Component Naming
-- Use PascalCase: `UserProfile.tsx`
-- One component per file (except small utility components)
-
-### Hooks
-- Custom hooks start with `use`: `useAuth`, `useUserData`
-- Keep hooks focused and reusable
-
-### Props
-```typescript
-interface UserCardProps {
-  user: User;
-  onEdit?: (user: User) => void;
-}
-
-export const UserCard: React.FC<UserCardProps> = ({ user, onEdit }) => {
-  // ...
-};
-```
+- **Do NOT duplicate ESLint/Prettier rules in code reviews** — they are enforced automatically via `eslint.config.mjs` and `.prettierrc`
+- **Do NOT use `any`** — use `unknown` or proper types. ESLint warns on `@typescript-eslint/no-explicit-any`
+- **Do NOT create new uuid usage** — use `nanoid` for new IDs. Existing `uuid` usage in `agents-service.ts` is grandfathered
+- **Do NOT hardcode Japanese in agent/backend** — ESLint detects it. Use English only
+- **Do NOT add `npm run dev` to automated scripts** — it is a long-running process meant for interactive use
