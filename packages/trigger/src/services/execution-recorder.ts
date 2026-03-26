@@ -1,11 +1,32 @@
 /**
  * Service for recording trigger execution history in DynamoDB
+ * Simplified: records execution facts only (no status management)
  */
 
 import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { nanoid } from 'nanoid';
-import { TriggerExecution, TriggerExecutionStatus } from '../types/index.js';
+import { TriggerExecution } from '../types/index.js';
+
+/** Maximum size for eventPayload field (~10KB) */
+const MAX_EVENT_PAYLOAD_SIZE = 10 * 1024;
+
+/**
+ * Truncate a JSON-serializable value to fit within maxBytes.
+ * If the serialized JSON exceeds maxBytes, it is cut and suffixed with "[truncated]".
+ */
+function truncateJson(value: unknown, maxBytes: number): string {
+  try {
+    const json = JSON.stringify(value, null, 2);
+    if (json.length <= maxBytes) {
+      return json;
+    }
+    const suffix = '\n... [truncated]';
+    return json.slice(0, maxBytes - suffix.length) + suffix;
+  } catch {
+    return JSON.stringify({ error: 'Failed to serialize event payload' });
+  }
+}
 
 /**
  * Service for managing trigger execution records
@@ -16,7 +37,6 @@ export class ExecutionRecorder {
 
   constructor(tableName: string, region?: string) {
     this.tableName = tableName;
-    // Explicitly prioritize provided region over environment
     const clientRegion =
       region || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'ap-northeast-1';
     console.log(`Initializing DynamoDB client with region: ${clientRegion}`);
@@ -26,23 +46,30 @@ export class ExecutionRecorder {
   }
 
   /**
-   * Start a new execution record
+   * Record a trigger execution
+   * Single PutItem call — no subsequent status updates needed
    */
-  async startExecution(triggerId: string, userId: string): Promise<string> {
+  async recordExecution(
+    triggerId: string,
+    sessionId: string | undefined,
+    event: unknown
+  ): Promise<string> {
     const executionId = nanoid();
     const now = new Date().toISOString();
 
     // TTL: 30 days from now
     const ttl = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
 
+    const eventPayload = truncateJson(event, MAX_EVENT_PAYLOAD_SIZE);
+
     const execution: TriggerExecution = {
       PK: `TRIGGER#${triggerId}`,
       SK: `EXECUTION#${executionId}`,
       triggerId,
       executionId,
-      userId,
-      startedAt: now,
-      status: 'running',
+      executedAt: now,
+      sessionId,
+      eventPayload,
       ttl,
     };
 
@@ -53,89 +80,14 @@ export class ExecutionRecorder {
       })
     );
 
-    console.log('Execution record created:', {
+    console.log('Execution recorded:', {
       triggerId,
       executionId,
-      userId,
+      sessionId,
+      eventPayloadSize: eventPayload.length,
     });
 
     return executionId;
-  }
-
-  /**
-   * Complete an execution record with success
-   */
-  async completeExecution(
-    triggerId: string,
-    executionId: string,
-    requestId: string,
-    sessionId?: string
-  ): Promise<void> {
-    const now = new Date().toISOString();
-
-    await this.dynamoClient.send(
-      new UpdateItemCommand({
-        TableName: this.tableName,
-        Key: marshall({
-          PK: `TRIGGER#${triggerId}`,
-          SK: `EXECUTION#${executionId}`,
-        }),
-        UpdateExpression:
-          'SET #status = :status, completedAt = :completedAt, requestId = :requestId, sessionId = :sessionId',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-        },
-        ExpressionAttributeValues: marshall(
-          {
-            ':status': 'completed' as TriggerExecutionStatus,
-            ':completedAt': now,
-            ':requestId': requestId,
-            ':sessionId': sessionId || null,
-          },
-          { removeUndefinedValues: true }
-        ),
-      })
-    );
-
-    console.log('Execution completed:', {
-      triggerId,
-      executionId,
-      requestId,
-      sessionId,
-    });
-  }
-
-  /**
-   * Fail an execution record with error
-   */
-  async failExecution(triggerId: string, executionId: string, error: string): Promise<void> {
-    const now = new Date().toISOString();
-
-    await this.dynamoClient.send(
-      new UpdateItemCommand({
-        TableName: this.tableName,
-        Key: marshall({
-          PK: `TRIGGER#${triggerId}`,
-          SK: `EXECUTION#${executionId}`,
-        }),
-        UpdateExpression: 'SET #status = :status, completedAt = :completedAt, #error = :error',
-        ExpressionAttributeNames: {
-          '#status': 'status',
-          '#error': 'error',
-        },
-        ExpressionAttributeValues: marshall({
-          ':status': 'failed' as TriggerExecutionStatus,
-          ':completedAt': now,
-          ':error': error,
-        }),
-      })
-    );
-
-    console.error('Execution failed:', {
-      triggerId,
-      executionId,
-      error,
-    });
   }
 
   /**

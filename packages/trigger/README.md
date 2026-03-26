@@ -1,30 +1,110 @@
 # @moca/trigger
 
-Event-driven trigger Lambda for invoking AgentCore agents on schedule or events.
+Event-driven trigger Lambda for invoking AgentCore agents on schedule or custom events.
 
 ## Overview
 
-This Lambda function handles EventBridge Scheduler events to automatically invoke Agent API endpoints. It supports:
+This Lambda function handles EventBridge events to automatically invoke Agent API endpoints. It routes incoming events to the appropriate handler based on event type:
 
 - **Schedule Triggers**: Cron or rate-based schedules via EventBridge Scheduler
-- **Event Triggers**: (Future) EventBridge Bus events from S3, Slack, etc.
+- **Custom Event Triggers**: EventBridge Rules from S3, GitHub, Slack, etc.
+
+When invoked, the Lambda automatically prepends event context information to the user's prompt, allowing agents to understand they are running in an automated, event-driven mode. The agent's system prompt remains unchanged.
 
 ## Architecture
 
 ```
-EventBridge Scheduler → Trigger Lambda → Agent API (/invocations)
-                            ↓
-                     DynamoDB (execution history)
+EventBridge Scheduler ─┐
+                       ├→ Trigger Lambda → Agent API (/invocations)
+EventBridge Rules ─────┘       ↓
+                        DynamoDB (execution history)
 ```
+
+### Components
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Entry Point** | `src/index.ts` | Routes events to schedule or custom event handler |
+| **Schedule Handler** | `src/handlers/schedule-handler.ts` | Handles EventBridge Scheduler events |
+| **Custom Event Handler** | `src/handlers/custom-event-handler.ts` | Handles EventBridge Rule events, fan-out to subscribed triggers |
+| **Prompt Builder** | `src/services/prompt-builder.ts` | Prepends event context to user prompt |
+| **Agent Invoker** | `src/services/agent-invoker.ts` | HTTP POST to AgentCore Runtime (fire-and-forget) |
+| **Auth Service** | `src/services/auth-service.ts` | Machine User authentication via Cognito |
+| **Execution Recorder** | `src/services/execution-recorder.ts` | Records execution history in DynamoDB |
 
 ## Features
 
-- ✅ EventBridge Scheduler integration
+- ✅ EventBridge Scheduler integration (cron/rate)
+- ✅ Custom EventBridge Rule integration (fan-out to subscribed triggers)
+- ✅ Event context injection into user prompt
 - ✅ Machine User authentication (Client Credentials flow)
-- ✅ Agent API invocation with streaming support
-- ✅ Execution history tracking in DynamoDB
-- ✅ Comprehensive error handling and logging
-- 🔜 Event-based triggers (S3, custom events)
+- ✅ Fire-and-forget agent invocation (AgentCore processes server-side)
+- ✅ Execution history tracking in DynamoDB (30-day TTL)
+
+## Event-Driven Prompt
+
+When an agent is invoked via event, the **user prompt** is automatically enhanced with event context:
+
+```
+┌─────────────────────────────────────┐
+│  Event Context (auto-prepended)     │
+│  - Execution metadata               │
+│  - EventBridge fields               │
+│  - Event payload (JSON)             │
+│  - Execution guidelines             │
+├─────────────────────────────────────┤
+│  ---                                │
+├─────────────────────────────────────┤
+│  Original user prompt               │
+└─────────────────────────────────────┘
+```
+
+The agent's **system prompt** is passed through from DynamoDB unchanged, keeping a clean separation between agent personality/role and event context.
+
+### Example Prompt Output
+
+For a schedule event, the agent receives:
+
+```markdown
+## Event-Driven Execution Context
+
+This agent is being invoked automatically in response to an event.
+No human user is waiting in real-time.
+
+### Execution Information
+
+| Field | Value |
+|-------|-------|
+| Trigger | Daily Report Generator |
+| Execution Time | 2026-01-17T00:00:00Z |
+| Event Source | aws.scheduler |
+| Event Type | Scheduled Event |
+| Region | ap-northeast-1 |
+| Event ID | event-abc-123 |
+
+### Event Payload
+
+```json
+{
+  "triggerId": "epB5aPbTjrFGymD3ws9q3",
+  "userId": "47547a38-...",
+  "agentId": "43a0a96c-...",
+  "prompt": "Generate today's sales report"
+}
+```
+
+### Guidelines for Event-Driven Execution
+
+- Complete the assigned task thoroughly
+- Document results and findings clearly
+- Handle errors gracefully with explicit logging
+- Do not ask clarifying questions - make reasonable assumptions and proceed
+- Focus on reliability over speed
+
+---
+
+Generate today's sales report
+```
 
 ## Environment Variables
 
@@ -49,7 +129,7 @@ EventBridge Scheduler → Trigger Lambda → Agent API (/invocations)
   "source": "aws.scheduler",
   "account": "123456789012",
   "time": "2024-01-15T00:00:00Z",
-  "region": "us-east-1",
+  "region": "ap-northeast-1",
   "resources": ["arn:aws:scheduler:..."],
   "detail": {
     "triggerId": "trigger-123",
@@ -57,7 +137,7 @@ EventBridge Scheduler → Trigger Lambda → Agent API (/invocations)
     "agentId": "agent-789",
     "prompt": "Execute daily task",
     "sessionId": "session-abc",
-    "modelId": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "modelId": "anthropic.claude-sonnet-4-20250514-v1:0",
     "enabledTools": ["s3-list-files", "execute-command"]
   }
 }
@@ -65,85 +145,30 @@ EventBridge Scheduler → Trigger Lambda → Agent API (/invocations)
 
 ## Development
 
-### Install Dependencies
-
 ```bash
-npm install
+npm install   # Install dependencies
+npm run build # Build
+npm test      # Run tests
+npm run dev   # Local development
 ```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Run Tests
-
-```bash
-npm test
-```
-
-### Local Development
-
-```bash
-npm run dev
-```
-
-## Deployment
 
 This package is deployed as an AWS Lambda function via CDK. See `packages/cdk` for infrastructure configuration.
 
-## Service Components
-
-### AuthService
-
-Handles Machine User authentication with Cognito.
-
-```typescript
-import { AuthService } from './services/auth-service.js';
-
-const authService = AuthService.fromEnvironment();
-const token = await authService.getMachineUserToken();
-```
-
-### AgentInvoker
-
-Invokes Agent API with authentication.
-
-```typescript
-import { AgentInvoker } from './services/agent-invoker.js';
-
-const invoker = AgentInvoker.fromEnvironment();
-const response = await invoker.invoke(payload, authToken);
-```
-
-### ExecutionRecorder
-
-Records execution history in DynamoDB.
-
-```typescript
-import { ExecutionRecorder } from './services/execution-recorder.js';
-
-const recorder = ExecutionRecorder.fromEnvironment();
-const executionId = await recorder.startExecution(triggerId, userId);
-await recorder.completeExecution(triggerId, executionId, requestId);
-```
-
 ## Error Handling
 
-The Lambda function handles errors at multiple levels:
+Errors are handled at multiple levels:
 
-1. **Service Initialization Errors**: Fails fast if environment variables are missing
-2. **Execution Record Errors**: Returns 500 if unable to create execution record
-3. **Authentication Errors**: Logged and recorded in execution history
-4. **Agent API Errors**: Captured from streaming response and recorded
+1. **Service Initialization**: Fails fast if environment variables are missing
+2. **Execution Recording**: Returns 500 if unable to create execution record
+3. **Authentication**: Logged and recorded in execution history
+4. **Agent API**: Captured and recorded in execution history
 5. **Unexpected Errors**: Caught and recorded with full error details
 
 All errors are logged to CloudWatch Logs and recorded in DynamoDB execution history.
 
 ## Execution History
 
-Execution records are stored in DynamoDB with the following structure:
+Execution records are stored in DynamoDB with 30-day TTL auto-cleanup:
 
 ```typescript
 {
@@ -158,19 +183,7 @@ Execution records are stored in DynamoDB with the following structure:
   requestId?: string,
   sessionId?: string,
   error?: string,
-  ttl: number  // Auto-cleanup after 30 days
+  ttl: number
 }
 ```
 
-## Future Enhancements
-
-- [ ] Event-based triggers (EventBridge Bus)
-- [ ] Retry logic with exponential backoff
-- [ ] Dead letter queue for failed invocations
-- [ ] CloudWatch metrics and alarms
-- [ ] SNS notifications for failures
-- [ ] Batch execution support
-
-## License
-
-MIT

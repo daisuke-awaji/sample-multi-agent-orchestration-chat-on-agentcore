@@ -5,7 +5,7 @@
 import { randomUUID } from 'crypto';
 import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
 import { AgentsService, MCPConfig } from './agents-service.js';
-import { buildEventDrivenSystemPrompt } from './prompt-builder.js';
+import { buildEventDrivenPrompt } from './prompt-builder.js';
 
 /**
  * Encode ARN in Agent URL for AgentCore Runtime
@@ -93,26 +93,26 @@ export class AgentInvoker {
       hasMcpConfig: !!agent.mcpConfig,
     });
 
-    const systemPrompt = eventContext
-      ? buildEventDrivenSystemPrompt(agent.systemPrompt, eventContext)
-      : agent.systemPrompt;
+    const prompt = eventContext
+      ? buildEventDrivenPrompt(payload.prompt, eventContext)
+      : payload.prompt;
 
-    console.log('System prompt preparation:', {
+    console.log('Prompt preparation:', {
       hasEventContext: !!eventContext,
-      originalLength: agent.systemPrompt.length,
-      finalLength: systemPrompt.length,
+      originalLength: payload.prompt.length,
+      finalLength: prompt.length,
     });
 
     const sessionId = payload.sessionId || randomUUID();
 
     return {
       request: {
-        prompt: payload.prompt,
+        prompt,
         targetUserId: payload.userId,
         sessionId,
         modelId: payload.modelId,
         storagePath: payload.workingDirectory,
-        systemPrompt,
+        systemPrompt: agent.systemPrompt,
         enabledTools: agent.enabledTools,
         mcpConfig: agent.mcpConfig,
         agentId: payload.agentId,

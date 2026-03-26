@@ -1,11 +1,12 @@
 /**
  * ExecutionList Component
  *
- * Table list of execution records
+ * Table list of execution records (simplified: no status tracking)
  */
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { LoadingIndicator } from '../../ui/LoadingIndicator';
 import type { ExecutionRecord } from '../../../types/trigger';
 
@@ -18,13 +19,7 @@ export interface ExecutionListProps {
 
 export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: ExecutionListProps) {
   const { t, i18n } = useTranslation();
-
-  // Format duration
-  const formatDuration = (ms?: number): string => {
-    if (!ms) return '-';
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(2)}s`;
-  };
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Format date with i18n locale
   const formatDate = (dateStr: string): string => {
@@ -39,34 +34,8 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
     });
   };
 
-  // Status icon and label
-  const getStatusDisplay = (status: ExecutionRecord['status']) => {
-    switch (status) {
-      case 'success':
-        return {
-          icon: <CheckCircle className="w-5 h-5 text-green-600" />,
-          label: t('triggers.history.success'),
-          textColor: 'text-green-700',
-        };
-      case 'failure':
-        return {
-          icon: <XCircle className="w-5 h-5 text-feedback-error" />,
-          label: t('triggers.history.failure'),
-          textColor: 'text-feedback-error',
-        };
-      case 'in_progress':
-        return {
-          icon: <Clock className="w-5 h-5 text-action-primary animate-spin" />,
-          label: t('triggers.history.inProgress'),
-          textColor: 'text-action-primary',
-        };
-      default:
-        return {
-          icon: <Clock className="w-5 h-5 text-fg-secondary" />,
-          label: status || 'Unknown',
-          textColor: 'text-fg-secondary',
-        };
-    }
+  const toggleExpand = (executionId: string) => {
+    setExpandedId((prev) => (prev === executionId ? null : executionId));
   };
 
   if (isLoading && executions.length === 0) {
@@ -93,60 +62,86 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
           <thead className="bg-surface-secondary border-b border-border">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
-                {t('triggers.history.status')}
+                {t('triggers.history.executedAt', 'Executed At')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
-                {t('triggers.history.startedAt')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
-                {t('triggers.history.completedAt')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
-                {t('triggers.history.duration')}
+                {t('triggers.history.sessionId', 'Session')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                 {t('triggers.history.executionId')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider w-10">
+                {/* expand toggle */}
               </th>
             </tr>
           </thead>
           <tbody className="bg-surface-primary divide-y divide-gray-200">
             {executions.map((execution) => {
-              const statusDisplay = getStatusDisplay(execution.status);
-              const duration =
-                execution.endTime && execution.startTime
-                  ? new Date(execution.endTime).getTime() - new Date(execution.startTime).getTime()
-                  : execution.duration;
+              const isExpanded = expandedId === execution.executionId;
 
               return (
-                <tr
-                  key={execution.executionId}
-                  className="hover:bg-surface-secondary transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {statusDisplay.icon}
-                      <span className={`text-sm font-medium ${statusDisplay.textColor}`}>
-                        {statusDisplay.label}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-fg-default">{formatDate(execution.startTime)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-fg-muted">
-                      {execution.endTime ? formatDate(execution.endTime) : '-'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-fg-muted">{formatDuration(duration)}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-xs text-fg-muted font-mono truncate max-w-xs">
-                      {execution.executionId}
-                    </div>
-                  </td>
-                </tr>
+                <>
+                  <tr
+                    key={execution.executionId}
+                    className="hover:bg-surface-secondary transition-colors cursor-pointer"
+                    onClick={() => execution.eventPayload && toggleExpand(execution.executionId)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-fg-default">
+                        {formatDate(execution.executedAt)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {execution.sessionId ? (
+                        <a
+                          href={`/chat/${execution.sessionId}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-xs text-action-primary hover:underline font-mono"
+                        >
+                          {execution.sessionId.slice(0, 12)}...
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="text-xs text-fg-muted">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-fg-muted font-mono truncate max-w-xs">
+                        {execution.executionId}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {execution.eventPayload && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpand(execution.executionId);
+                          }}
+                          className="text-fg-muted hover:text-fg-default"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                  {isExpanded && execution.eventPayload && (
+                    <tr key={`${execution.executionId}-detail`}>
+                      <td colSpan={4} className="px-6 py-4 bg-surface-secondary">
+                        <div className="text-xs font-medium text-fg-muted mb-2">
+                          {t('triggers.history.eventPayload', 'Event Payload')}
+                        </div>
+                        <pre className="text-xs text-fg-default whitespace-pre-wrap font-mono bg-surface-primary p-3 rounded-md border border-border max-h-64 overflow-auto">
+                          {execution.eventPayload}
+                        </pre>
+                      </td>
+                    </tr>
+                  )}
+                </>
               );
             })}
           </tbody>

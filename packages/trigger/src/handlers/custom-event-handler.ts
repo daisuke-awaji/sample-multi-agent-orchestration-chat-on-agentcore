@@ -79,13 +79,8 @@ async function invokeTrigger(
   agentInvoker: AgentInvoker,
   executionRecorder: ExecutionRecorder
 ): Promise<{ success: boolean; error?: string }> {
-  let executionId: string | undefined;
-
   try {
     console.log(`🚀 Invoking trigger: ${trigger.name} (${trigger.id})`);
-
-    // Start execution record
-    executionId = await executionRecorder.startExecution(trigger.id, trigger.userId);
 
     // Get authentication token
     const tokenResponse = await authService.getMachineUserToken();
@@ -123,13 +118,11 @@ async function invokeTrigger(
     const result = await agentInvoker.invokeAsync(payload, tokenResponse.accessToken, context);
 
     if (!result.success) {
-      await executionRecorder.failExecution(
-        trigger.id,
-        executionId,
-        result.error || 'Unknown error'
-      );
       return { success: false, error: result.error };
     }
+
+    // Record execution (single PutItem — no status tracking)
+    await executionRecorder.recordExecution(trigger.id, result.sessionId, event);
 
     // Update trigger's last execution timestamp
     await executionRecorder.updateTriggerLastExecution(trigger.userId, trigger.id);
@@ -139,16 +132,6 @@ async function invokeTrigger(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('❌ Trigger invocation failed: %s', trigger.name, error);
-
-    // Record failure if executionId was created
-    try {
-      if (executionId) {
-        await executionRecorder.failExecution(trigger.id, executionId, errorMessage);
-      }
-    } catch (recordError) {
-      console.error('Failed to record execution failure:', recordError);
-    }
-
     return { success: false, error: errorMessage };
   }
 }

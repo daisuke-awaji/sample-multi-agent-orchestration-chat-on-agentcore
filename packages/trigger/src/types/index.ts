@@ -9,11 +9,6 @@
 export type TriggerType = 'schedule' | 'event';
 
 /**
- * Trigger execution status
- */
-export type TriggerExecutionStatus = 'running' | 'completed' | 'failed' | 'timeout';
-
-/**
  * Schedule configuration for schedule-type triggers
  */
 export interface ScheduleTriggerConfig {
@@ -104,6 +99,7 @@ export interface Trigger {
 
 /**
  * Trigger execution history record
+ * Simplified to track execution facts only (no status management)
  */
 export interface TriggerExecution {
   // DynamoDB Keys
@@ -112,16 +108,15 @@ export interface TriggerExecution {
 
   triggerId: string;
   executionId: string;
-  userId: string;
 
-  startedAt: string;
-  completedAt?: string;
-  status: TriggerExecutionStatus;
+  /** Execution timestamp (ISO 8601) */
+  executedAt: string;
 
-  // Execution results
-  requestId?: string;
+  /** Agent session ID for linking to session details */
   sessionId?: string;
-  error?: string;
+
+  /** EventBridge event payload (JSON string, truncated to ~10KB) */
+  eventPayload?: string;
 
   // TTL for auto-cleanup (30 days)
   ttl: number;
@@ -180,13 +175,9 @@ export interface TriggerResponse {
 export interface TriggerExecutionResponse {
   triggerId: string;
   executionId: string;
-  userId: string;
-  startedAt: string;
-  completedAt?: string;
-  status: TriggerExecutionStatus;
-  requestId?: string;
+  executedAt: string;
   sessionId?: string;
-  error?: string;
+  eventPayload?: string;
 }
 
 /**

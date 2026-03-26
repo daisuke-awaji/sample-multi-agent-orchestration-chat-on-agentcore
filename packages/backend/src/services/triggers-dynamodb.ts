@@ -64,13 +64,9 @@ export interface TriggerExecution {
   SK: string;
   triggerId: string;
   executionId: string;
-  userId: string;
-  startedAt: string;
-  completedAt?: string;
-  status: 'running' | 'completed' | 'failed';
-  requestId?: string;
+  executedAt: string;
   sessionId?: string;
-  error?: string;
+  eventPayload?: string;
   ttl: number;
 }
 

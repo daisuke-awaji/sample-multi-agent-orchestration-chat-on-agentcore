@@ -94,7 +94,7 @@ router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId;
-    const { id: triggerId } = req.params;
+    const triggerId = req.params.id as string;
 
     if (!userId) {
       return res.status(400).json({
@@ -345,7 +345,7 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId;
-    const { id: triggerId } = req.params;
+    const triggerId = req.params.id as string;
 
     if (!userId) {
       return res.status(400).json({
@@ -555,7 +555,7 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId;
-    const { id: triggerId } = req.params;
+    const triggerId = req.params.id as string;
 
     if (!userId) {
       return res.status(400).json({
@@ -639,7 +639,7 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId;
-    const { id: triggerId } = req.params;
+    const triggerId = req.params.id as string;
 
     if (!userId) {
       return res.status(400).json({
@@ -739,7 +739,7 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId;
-    const { id: triggerId } = req.params;
+    const triggerId = req.params.id as string;
 
     if (!userId) {
       return res.status(400).json({
@@ -842,7 +842,7 @@ router.get(
     try {
       const auth = getCurrentAuth(req);
       const userId = auth.userId;
-      const { id: triggerId } = req.params;
+      const triggerId = req.params.id as string;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const nextToken = req.query.nextToken as string | undefined;
 
@@ -910,12 +910,13 @@ router.get(
         executions: result.executions.map((execution) => ({
           executionId: execution.executionId,
           triggerId: execution.triggerId,
-          startTime: execution.startedAt,
-          endTime: execution.completedAt,
-          status: execution.status,
-          requestId: execution.requestId,
+          // Backward compatibility: old records have startedAt instead of executedAt
+          executedAt:
+            execution.executedAt ||
+            (execution as unknown as Record<string, unknown>).startedAt ||
+            new Date().toISOString(),
           sessionId: execution.sessionId,
-          error: execution.error,
+          eventPayload: execution.eventPayload,
         })),
         nextToken: responseNextToken,
         metadata: {

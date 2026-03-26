@@ -3,10 +3,10 @@
  */
 
 import { describe, test, expect } from '@jest/globals';
-import { buildEventDrivenSystemPrompt } from '../services/prompt-builder.js';
+import { buildEventDrivenPrompt } from '../services/prompt-builder.js';
 import { EventDrivenContext } from '../types/index.js';
 
-describe('buildEventDrivenSystemPrompt', () => {
+describe('buildEventDrivenPrompt', () => {
   const mockContext: EventDrivenContext = {
     triggerId: 'test-trigger-123',
     triggerName: 'Daily Report Generator',
@@ -27,29 +27,30 @@ describe('buildEventDrivenSystemPrompt', () => {
     },
   };
 
-  const originalSystemPrompt = 'You are a helpful assistant. Follow these instructions carefully.';
+  const userPrompt = 'Generate a comprehensive daily report for today.';
 
-  test('should prepend event context to original system prompt', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+  test('should prepend event context to user prompt', () => {
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
-    // Check that original prompt is included
-    expect(result).toContain(originalSystemPrompt);
+    // Check that user prompt is included
+    expect(result).toContain(userPrompt);
 
     // Check that event context section is included
     expect(result).toContain('## Event-Driven Execution Context');
-    expect(result).toContain('## Agent Instructions');
+
+    // Should NOT contain "Agent Instructions" section (system prompt is no longer embedded)
+    expect(result).not.toContain('## Agent Instructions');
   });
 
   test('should include trigger information in context', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
     expect(result).toContain('Daily Report Generator');
     expect(result).toContain('2026-01-17T00:00:00Z');
-    // Note: trigger ID is not shown separately when trigger name is present
   });
 
   test('should include EventBridge metadata', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
     expect(result).toContain('aws.scheduler');
     expect(result).toContain('Scheduled Event');
@@ -58,7 +59,7 @@ describe('buildEventDrivenSystemPrompt', () => {
   });
 
   test('should include event detail as JSON', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
     expect(result).toContain('```json');
     expect(result).toContain('"userId": "user-123"');
@@ -67,7 +68,7 @@ describe('buildEventDrivenSystemPrompt', () => {
   });
 
   test('should include execution guidelines', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
     expect(result).toContain('Guidelines for Event-Driven Execution');
     expect(result).toContain('Complete the assigned task thoroughly');
@@ -80,7 +81,7 @@ describe('buildEventDrivenSystemPrompt', () => {
       triggerName: undefined,
     };
 
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, contextWithoutName);
+    const result = buildEventDrivenPrompt(userPrompt, contextWithoutName);
 
     expect(result).toContain('test-trigger-123');
   });
@@ -100,21 +101,22 @@ describe('buildEventDrivenSystemPrompt', () => {
       },
     };
 
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, complexContext);
+    const result = buildEventDrivenPrompt(userPrompt, complexContext);
 
     expect(result).toContain('"nested"');
     expect(result).toContain('"array"');
-    // Pretty-printed JSON splits array across multiple lines
     expect(result).toContain('1');
     expect(result).toContain('2');
     expect(result).toContain('3');
   });
 
-  test('should properly separate sections with markdown', () => {
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, mockContext);
+  test('should properly separate event context from user prompt with markdown divider', () => {
+    const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
-    // Check for proper section separation
-    expect(result).toMatch(/---\s+## Agent Instructions/);
+    // Check for proper section separation: event context, then divider, then user prompt
+    expect(result).toMatch(
+      /Guidelines for Event-Driven Execution[\s\S]*---\s+Generate a comprehensive daily report/
+    );
   });
 
   test('should handle empty event detail', () => {
@@ -123,7 +125,7 @@ describe('buildEventDrivenSystemPrompt', () => {
       eventDetail: {},
     };
 
-    const result = buildEventDrivenSystemPrompt(originalSystemPrompt, contextWithEmptyDetail);
+    const result = buildEventDrivenPrompt(userPrompt, contextWithEmptyDetail);
 
     expect(result).toContain('```json');
     expect(result).toContain('{}');

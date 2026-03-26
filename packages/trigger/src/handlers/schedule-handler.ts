@@ -55,21 +55,6 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
     };
   }
 
-  // Start execution record
-  let executionId: string;
-  try {
-    executionId = await executionRecorder.startExecution(triggerId, userId);
-  } catch (error) {
-    console.error('Failed to create execution record:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: 'Failed to create execution record',
-        message: error instanceof Error ? error.message : String(error),
-      }),
-    };
-  }
-
   try {
     // Step 1: Get Machine User authentication token
     console.log('Obtaining Machine User token...');
@@ -98,7 +83,6 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
     });
 
     // Step 3: Invoke Agent API with fire-and-forget (async)
-    // AgentCore continues processing server-side after HTTP 200 acceptance
     console.log('Invoking Agent API (async fire-and-forget)...');
     const invocationResponse = await agentInvoker.invokeAsync(
       payload,
@@ -107,23 +91,23 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
     );
 
     if (!invocationResponse.success) {
-      await executionRecorder.failExecution(
-        triggerId,
-        executionId,
-        invocationResponse.error || 'Unknown error'
-      );
-
       return {
         statusCode: 500,
         body: JSON.stringify({
           error: 'Agent invocation failed',
           message: invocationResponse.error,
-          executionId,
         }),
       };
     }
 
-    // Step 4: Update trigger's last execution timestamp
+    // Step 4: Record execution (single PutItem — no status tracking)
+    const executionId = await executionRecorder.recordExecution(
+      triggerId,
+      invocationResponse.sessionId,
+      event
+    );
+
+    // Step 5: Update trigger's last execution timestamp
     await executionRecorder.updateTriggerLastExecution(userId, triggerId);
 
     console.log('Trigger invocation dispatched successfully (fire-and-forget):', {
@@ -144,23 +128,11 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
   } catch (error) {
     console.error('Unexpected error during trigger execution:', error);
 
-    // Record failure
-    try {
-      await executionRecorder.failExecution(
-        triggerId,
-        executionId,
-        error instanceof Error ? error.message : String(error)
-      );
-    } catch (recordError) {
-      console.error('Failed to record execution failure:', recordError);
-    }
-
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: 'Unexpected error',
         message: error instanceof Error ? error.message : String(error),
-        executionId,
       }),
     };
   }

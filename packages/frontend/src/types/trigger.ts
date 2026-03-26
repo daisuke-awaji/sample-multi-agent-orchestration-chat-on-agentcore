@@ -41,13 +41,9 @@ export interface EventConfig {
 export interface ExecutionRecord {
   executionId: string;
   triggerId: string;
-  status: 'success' | 'failure' | 'in_progress';
-  startTime: string;
-  endTime?: string;
-  duration?: number;
-  input?: string;
-  output?: string;
-  error?: string;
+  executedAt: string;
+  sessionId?: string;
+  eventPayload?: string;
 }
 
 export interface CreateTriggerRequest {

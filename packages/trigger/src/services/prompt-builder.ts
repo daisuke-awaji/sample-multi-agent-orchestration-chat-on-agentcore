@@ -1,22 +1,19 @@
 /**
- * Service for building event-driven system prompts
- * Prepends event context information to agent's original system prompt
+ * Service for building event-driven prompts
+ * Prepends event context information to user's prompt
  */
 
 import { EventDrivenContext } from '../types/index.js';
 
 /**
- * Build event-driven system prompt by combining event context with agent's instructions
- * @param agentSystemPrompt - Original system prompt from agent configuration
+ * Build event-driven prompt by combining event context with user's prompt
+ * @param userPrompt - Original prompt configured by the user for this trigger
  * @param context - Event-driven context information
- * @returns Combined system prompt with event context prepended
+ * @returns Combined prompt with event context prepended
  */
-export function buildEventDrivenSystemPrompt(
-  agentSystemPrompt: string,
-  context: EventDrivenContext
-): string {
+export function buildEventDrivenPrompt(userPrompt: string, context: EventDrivenContext): string {
   const eventContextSection = formatEventContext(context);
-  return `${eventContextSection}\n\n---\n\n## Agent Instructions\n\n${agentSystemPrompt}`;
+  return `${userPrompt}\n\n---\n\n${eventContextSection}`;
 }
 
 /**
