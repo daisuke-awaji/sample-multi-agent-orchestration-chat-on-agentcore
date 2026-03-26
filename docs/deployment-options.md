@@ -186,7 +186,7 @@ dev: {
 
 ## Bedrock Model Selection
 
-You can configure which Bedrock models are available in the frontend model selector per environment. Each model ID should include the [cross-region inference profile](https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html) prefix (e.g., `global.`, `us.`, `eu.`, `apac.`).
+You can configure which Bedrock models are available in the frontend model selector per environment. Each model ID should include the [cross-region inference profile](https://docs.aws.amazon.com/bedrock/latest/userguide/cross-region-inference.html) prefix (e.g., `global.`, `us.`, `eu.`, `apac.`, `jp.`).
 
 ```typescript
 dev: {
