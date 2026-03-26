@@ -17,12 +17,27 @@ const FALLBACK_MODELS: readonly BedrockModel[] = [
   { id: 'global.amazon.nova-2-lite-v1:0', name: 'Nova Lite 2', provider: 'Amazon' },
 ];
 
+function isValidModel(m: unknown): m is BedrockModel {
+  return (
+    typeof m === 'object' &&
+    m !== null &&
+    typeof (m as Record<string, unknown>).id === 'string' &&
+    ((m as Record<string, unknown>).id as string).length > 0 &&
+    typeof (m as Record<string, unknown>).name === 'string' &&
+    ((m as Record<string, unknown>).name as string).length > 0 &&
+    ((m as Record<string, unknown>).provider === 'Anthropic' ||
+      (m as Record<string, unknown>).provider === 'Amazon')
+  );
+}
+
 function loadModels(): readonly BedrockModel[] {
   try {
     const raw = import.meta.env.VITE_BEDROCK_MODELS;
     if (!raw) return FALLBACK_MODELS;
-    const parsed = JSON.parse(raw) as BedrockModel[];
-    return parsed.length > 0 ? parsed : FALLBACK_MODELS;
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return FALLBACK_MODELS;
+    const valid = parsed.filter(isValidModel);
+    return valid.length > 0 ? valid : FALLBACK_MODELS;
   } catch {
     return FALLBACK_MODELS;
   }

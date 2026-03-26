@@ -4,7 +4,12 @@
  */
 
 import * as cdk from 'aws-cdk-lib';
-import type { Environment, EnvironmentConfig, EnvironmentConfigInput } from './environment-types';
+import type {
+  BedrockModelConfig,
+  Environment,
+  EnvironmentConfig,
+  EnvironmentConfigInput,
+} from './environment-types';
 import { BASE_PREFIX, environments } from './environments';
 
 /**
@@ -24,11 +29,50 @@ const DEFAULT_CONFIG = {
   gitlabTokenSecretName: 'agentcore/default/gitlab-token',
   githubWebhookSecretName: 'agentcore/default/github-webhook-secret',
   bedrockModels: [
-    { id: 'global.anthropic.claude-opus-4-6-v1', name: 'Claude Opus 4.6', provider: 'Anthropic' as const },
-    { id: 'global.anthropic.claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Anthropic' as const },
+    {
+      id: 'global.anthropic.claude-opus-4-6-v1',
+      name: 'Claude Opus 4.6',
+      provider: 'Anthropic' as const,
+    },
+    {
+      id: 'global.anthropic.claude-sonnet-4-6',
+      name: 'Claude Sonnet 4.6',
+      provider: 'Anthropic' as const,
+    },
     { id: 'global.amazon.nova-2-lite-v1:0', name: 'Nova Lite 2', provider: 'Amazon' as const },
   ],
 };
+
+const VALID_PROVIDERS: readonly string[] = ['Anthropic', 'Amazon'];
+const INFERENCE_PROFILE_PREFIX = /^(global|us|eu|apac)\./;
+
+/**
+ * Validate bedrockModels configuration
+ * Called during resolveConfig so errors surface at cdk synth / deploy time.
+ */
+function validateBedrockModels(models: BedrockModelConfig[], env: Environment): void {
+  if (models.length === 0) {
+    throw new Error(`[${env}] bedrockModels must contain at least one model`);
+  }
+  for (const model of models) {
+    if (!model.id || typeof model.id !== 'string') {
+      throw new Error(`[${env}] bedrockModels: invalid model id: ${JSON.stringify(model)}`);
+    }
+    if (!INFERENCE_PROFILE_PREFIX.test(model.id)) {
+      throw new Error(
+        `[${env}] bedrockModels: model id "${model.id}" must start with inference profile prefix (global., us., eu., apac.)`
+      );
+    }
+    if (!model.name || typeof model.name !== 'string') {
+      throw new Error(`[${env}] bedrockModels: missing name for model "${model.id}"`);
+    }
+    if (!VALID_PROVIDERS.includes(model.provider)) {
+      throw new Error(
+        `[${env}] bedrockModels: invalid provider "${model.provider}" for model "${model.id}". Must be one of: ${VALID_PROVIDERS.join(', ')}`
+      );
+    }
+  }
+}
 
 /**
  * Generate default resource prefix from environment name
@@ -50,6 +94,9 @@ function getDefaultResourcePrefix(env: Environment): string {
  * @returns Full configuration with all defaults applied
  */
 function resolveConfig(env: Environment, input: EnvironmentConfigInput): EnvironmentConfig {
+  const bedrockModels = input.bedrockModels ?? DEFAULT_CONFIG.bedrockModels;
+  validateBedrockModels(bedrockModels, env);
+
   return {
     // Spread input first so optional properties are automatically passed through.
     // Adding a new optional property to EnvironmentConfig no longer requires
@@ -71,7 +118,7 @@ function resolveConfig(env: Environment, input: EnvironmentConfigInput): Environ
     gitlabTokenSecretName: input.gitlabTokenSecretName ?? DEFAULT_CONFIG.gitlabTokenSecretName,
     githubWebhookSecretName:
       input.githubWebhookSecretName ?? DEFAULT_CONFIG.githubWebhookSecretName,
-    bedrockModels: input.bedrockModels ?? DEFAULT_CONFIG.bedrockModels,
+    bedrockModels,
   };
 }
 
