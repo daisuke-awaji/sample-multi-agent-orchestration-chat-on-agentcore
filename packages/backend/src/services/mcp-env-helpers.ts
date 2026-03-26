@@ -28,7 +28,7 @@ export function extractEnvFromMcpConfig(mcpConfig: MCPConfig): {
       envMap[serverName] = { ...server.env };
       hasEnv = true;
 
-      const { env, ...rest } = server;
+      const { env: _, ...rest } = server;
       cleanedServers[serverName] = rest;
     } else {
       cleanedServers[serverName] = { ...server };
