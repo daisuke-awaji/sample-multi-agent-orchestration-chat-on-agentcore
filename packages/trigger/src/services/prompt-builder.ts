@@ -1,15 +1,15 @@
 /**
  * Service for building event-driven prompts
- * Prepends event context information to user's prompt
+ * Appends event context information after user's prompt
  */
 
 import { EventDrivenContext } from '../types/index.js';
 
 /**
- * Build event-driven prompt by combining event context with user's prompt
+ * Build event-driven prompt by combining user's prompt with event context
  * @param userPrompt - Original prompt configured by the user for this trigger
  * @param context - Event-driven context information
- * @returns Combined prompt with event context prepended
+ * @returns Combined prompt with event context appended
  */
 export function buildEventDrivenPrompt(userPrompt: string, context: EventDrivenContext): string {
   const eventContextSection = formatEventContext(context);

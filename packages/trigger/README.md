@@ -9,7 +9,7 @@ This Lambda function handles EventBridge events to automatically invoke Agent AP
 - **Schedule Triggers**: Cron or rate-based schedules via EventBridge Scheduler
 - **Custom Event Triggers**: EventBridge Rules from S3, GitHub, Slack, etc.
 
-When invoked, the Lambda automatically prepends event context information to the user's prompt, allowing agents to understand they are running in an automated, event-driven mode. The agent's system prompt remains unchanged.
+When invoked, the Lambda automatically appends event context information after the user's prompt, allowing agents to understand they are running in an automated, event-driven mode. The agent's system prompt remains unchanged.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ EventBridge Rules ─────┘       ↓
 | **Entry Point** | `src/index.ts` | Routes events to schedule or custom event handler |
 | **Schedule Handler** | `src/handlers/schedule-handler.ts` | Handles EventBridge Scheduler events |
 | **Custom Event Handler** | `src/handlers/custom-event-handler.ts` | Handles EventBridge Rule events, fan-out to subscribed triggers |
-| **Prompt Builder** | `src/services/prompt-builder.ts` | Prepends event context to user prompt |
+| **Prompt Builder** | `src/services/prompt-builder.ts` | Appends event context to user prompt |
 | **Agent Invoker** | `src/services/agent-invoker.ts` | HTTP POST to AgentCore Runtime (fire-and-forget) |
 | **Auth Service** | `src/services/auth-service.ts` | Machine User authentication via Cognito |
 | **Execution Recorder** | `src/services/execution-recorder.ts` | Records execution history in DynamoDB |
@@ -36,7 +36,7 @@ EventBridge Rules ─────┘       ↓
 
 - ✅ EventBridge Scheduler integration (cron/rate)
 - ✅ Custom EventBridge Rule integration (fan-out to subscribed triggers)
-- ✅ Event context injection into user prompt
+- ✅ Event context injection into user prompt (appended after user prompt)
 - ✅ Machine User authentication (Client Credentials flow)
 - ✅ Fire-and-forget agent invocation (AgentCore processes server-side)
 - ✅ Execution history tracking in DynamoDB (30-day TTL)
@@ -47,15 +47,15 @@ When an agent is invoked via event, the **user prompt** is automatically enhance
 
 ```
 ┌─────────────────────────────────────┐
-│  Event Context (auto-prepended)     │
+│  Original user prompt               │
+├─────────────────────────────────────┤
+│  ---                                │
+├─────────────────────────────────────┤
+│  Event Context (auto-appended)      │
 │  - Execution metadata               │
 │  - EventBridge fields               │
 │  - Event payload (JSON)             │
 │  - Execution guidelines             │
-├─────────────────────────────────────┤
-│  ---                                │
-├─────────────────────────────────────┤
-│  Original user prompt               │
 └─────────────────────────────────────┘
 ```
 
@@ -66,6 +66,10 @@ The agent's **system prompt** is passed through from DynamoDB unchanged, keeping
 For a schedule event, the agent receives:
 
 ```markdown
+Generate today's sales report
+
+---
+
 ## Event-Driven Execution Context
 
 This agent is being invoked automatically in response to an event.
@@ -100,10 +104,6 @@ No human user is waiting in real-time.
 - Handle errors gracefully with explicit logging
 - Do not ask clarifying questions - make reasonable assumptions and proceed
 - Focus on reliability over speed
-
----
-
-Generate today's sales report
 ```
 
 ## Environment Variables

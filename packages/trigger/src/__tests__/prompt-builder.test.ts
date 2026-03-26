@@ -110,12 +110,12 @@ describe('buildEventDrivenPrompt', () => {
     expect(result).toContain('3');
   });
 
-  test('should properly separate event context from user prompt with markdown divider', () => {
+  test('should properly separate user prompt from event context with markdown divider', () => {
     const result = buildEventDrivenPrompt(userPrompt, mockContext);
 
-    // Check for proper section separation: event context, then divider, then user prompt
+    // Check for proper section separation: user prompt, then divider, then event context
     expect(result).toMatch(
-      /Guidelines for Event-Driven Execution[\s\S]*---\s+Generate a comprehensive daily report/
+      /Generate a comprehensive daily report[\s\S]*---[\s\S]*Event-Driven Execution Context/
     );
   });
 
