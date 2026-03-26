@@ -123,13 +123,3 @@ export const logger = {
     console.error('[ERROR]', new Date().toISOString(), ...formattedArgs);
   },
 };
-
-/**
- * Validate and display configuration values
- */
-export function validateConfig(): void {
-  logger.info('Configuration validation started');
-
-  logger.debug('Configuration values:', config);
-  logger.info('Configuration validation completed');
-}

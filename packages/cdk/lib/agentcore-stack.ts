@@ -363,6 +363,24 @@ export class AgentCoreStack extends cdk.Stack {
 
     this.backendApi.addEnvironmentVariable('USER_SCOPED_ROLE_ARN', backendUserScopedS3Role.roleArn);
 
+    // SSM Parameter Store prefix for MCP env values
+    const ssmParameterPrefix = `/agentcore/${resourcePrefix}`;
+
+    // Add SSM_PARAMETER_PREFIX environment variable to Backend API
+    this.backendApi.addEnvironmentVariable('SSM_PARAMETER_PREFIX', ssmParameterPrefix);
+
+    // Grant Backend API SSM read/write access for MCP env values
+    this.backendApi.lambdaFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        sid: 'SsmMcpEnvReadWrite',
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['ssm:PutParameter', 'ssm:GetParameter', 'ssm:DeleteParameter'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${ssmParameterPrefix}/agents/*`,
+        ],
+      })
+    );
+
     // Grant Agents Table read/write access to Backend API
     this.agentsTable.grantReadWrite(this.backendApi.lambdaFunction);
 
@@ -463,6 +481,21 @@ export class AgentCoreStack extends cdk.Stack {
     // Sessions Table access is now handled via user-scoped STS AssumeRole with Session Policy
     // (defined in AgentCoreRuntime construct) to ensure per-user data isolation.
     // Direct grantReadWrite is no longer used to prevent cross-user data access.
+
+    // Add SSM_PARAMETER_PREFIX environment variable to Trigger Lambda
+    triggerLambda.lambdaFunction.addEnvironment('SSM_PARAMETER_PREFIX', ssmParameterPrefix);
+
+    // Grant Trigger Lambda SSM read-only access for MCP env values
+    triggerLambda.lambdaFunction.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        sid: 'SsmMcpEnvRead',
+        effect: cdk.aws_iam.Effect.ALLOW,
+        actions: ['ssm:GetParameter'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${ssmParameterPrefix}/agents/*`,
+        ],
+      })
+    );
 
     // Update Trigger Lambda with Agent API URL (now available from Runtime)
     triggerLambda.lambdaFunction.addEnvironment(

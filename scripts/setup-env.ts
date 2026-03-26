@@ -27,6 +27,7 @@ interface StackOutputs {
   RuntimeInvocationEndpoint?: string;
   MemoryId?: string;
   GatewayMcpEndpoint?: string;
+  GatewayName?: string;
   UserStorageBucketName?: string;
   AgentsTableName?: string;
   SessionsTableName?: string;
@@ -157,6 +158,9 @@ AGENTS_TABLE_NAME=${outputs.AgentsTableName || ''}
 # Sessions Table
 SESSIONS_TABLE_NAME=${outputs.SessionsTableName || ''}
 
+# SSM Parameter Store prefix for MCP env values
+SSM_PARAMETER_PREFIX=/agentcore/${outputs.GatewayName || 'moca'}
+
 # AWS Region
 AWS_REGION=${outputs.Region || ''}
 
@@ -220,6 +224,10 @@ AGENT_API_URL=${outputs.RuntimeInvocationEndpoint || ''}
 
 # DynamoDB Configuration
 TRIGGERS_TABLE_NAME=${outputs.TriggersTableName || ''}
+AGENTS_TABLE_NAME=${outputs.AgentsTableName || ''}
+
+# SSM Parameter Store prefix for MCP env values
+SSM_PARAMETER_PREFIX=/agentcore/${outputs.GatewayName || 'moca'}
 `;
 }
 

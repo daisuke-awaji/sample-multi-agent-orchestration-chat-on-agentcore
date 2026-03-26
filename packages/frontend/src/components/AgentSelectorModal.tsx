@@ -11,6 +11,7 @@ import { useAgentStore } from '../stores/agentStore';
 import { useUIStore } from '../stores/uiStore';
 import type { Agent, CreateAgentInput } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
+import { getAgent as fetchAgentDetail } from '../api/agents';
 
 interface AgentSelectorModalProps {
   isOpen: boolean;
@@ -338,11 +339,22 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                         onMouseDown={(e) => {
                                           e.stopPropagation();
                                         }}
-                                        onClick={(e) => {
+                                        onClick={async (e) => {
                                           e.stopPropagation();
+                                          setOpenMenuId(null);
+                                          // Show form immediately with list data, then update with full detail
                                           setEditingAgent(agent);
                                           setMode('edit');
-                                          setOpenMenuId(null);
+                                          // Fetch full agent detail with SSM-resolved env values in background
+                                          try {
+                                            const fullAgent = await fetchAgentDetail(agent.agentId);
+                                            setEditingAgent(fullAgent);
+                                          } catch (err) {
+                                            console.warn(
+                                              'Failed to fetch agent detail, using list data:',
+                                              err
+                                            );
+                                          }
                                         }}
                                         className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
                                       >

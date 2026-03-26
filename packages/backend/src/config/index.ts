@@ -29,21 +29,36 @@ const envSchema = z.object({
   // CORS configuration
   CORS_ALLOWED_ORIGINS: z.string().default('*'),
 
-  // AgentCore Memory configuration
-  AGENTCORE_MEMORY_ID: z.string().optional(),
+  // AgentCore Memory configuration (required)
+  AGENTCORE_MEMORY_ID: z.string({
+    required_error: 'AGENTCORE_MEMORY_ID is required for memory features',
+  }),
   AWS_REGION: z.string().default('us-east-1'),
 
-  // AgentCore Gateway configuration
-  AGENTCORE_GATEWAY_ENDPOINT: z.string().url().optional(),
+  // AgentCore Gateway configuration (required)
+  AGENTCORE_GATEWAY_ENDPOINT: z.string({
+    required_error: 'AGENTCORE_GATEWAY_ENDPOINT is required for MCP tool integration',
+  }),
 
-  // User Storage configuration
-  USER_STORAGE_BUCKET_NAME: z.string().optional(),
+  // User Storage configuration (required)
+  USER_STORAGE_BUCKET_NAME: z.string({
+    required_error: 'USER_STORAGE_BUCKET_NAME is required for user file storage',
+  }),
 
-  // Agents Table configuration
-  AGENTS_TABLE_NAME: z.string().optional(),
+  // Agents Table configuration (required)
+  AGENTS_TABLE_NAME: z.string({
+    required_error: 'AGENTS_TABLE_NAME is required for agent management',
+  }),
 
-  // Sessions Table configuration
-  SESSIONS_TABLE_NAME: z.string().optional(),
+  // Sessions Table configuration (required)
+  SESSIONS_TABLE_NAME: z.string({
+    required_error: 'SESSIONS_TABLE_NAME is required for session management',
+  }),
+
+  // SSM Parameter Store prefix for MCP env values (required)
+  SSM_PARAMETER_PREFIX: z.string({
+    required_error: 'SSM_PARAMETER_PREFIX is required for secure MCP env storage',
+  }),
 });
 
 /**
@@ -101,6 +116,9 @@ export const config = {
 
   // Sessions Table configuration
   sessionsTableName: env.SESSIONS_TABLE_NAME,
+
+  // SSM Parameter Store prefix for MCP env values (e.g. "/agentcore/mocadev")
+  ssmParameterPrefix: env.SSM_PARAMETER_PREFIX,
 } as const;
 
 console.log('⚙️  Backend API configuration loaded:', {
