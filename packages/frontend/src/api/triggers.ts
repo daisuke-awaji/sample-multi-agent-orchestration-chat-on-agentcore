@@ -68,18 +68,18 @@ function parseTriggerDates(trigger: Trigger): Trigger {
  * Parse execution record dates (defensive: handles missing/invalid dates)
  */
 function parseExecutionDates(execution: ExecutionRecord): ExecutionRecord {
-  let executedAt: string;
-  try {
-    executedAt = execution.executedAt
-      ? new Date(execution.executedAt).toISOString()
-      : new Date().toISOString();
-  } catch {
-    executedAt = new Date().toISOString();
+  if (!execution.executedAt) {
+    return execution;
   }
-  return {
-    ...execution,
-    executedAt,
-  };
+  try {
+    const date = new Date(execution.executedAt);
+    if (isNaN(date.getTime())) {
+      return { ...execution, executedAt: '' };
+    }
+    return { ...execution, executedAt: date.toISOString() };
+  } catch {
+    return { ...execution, executedAt: '' };
+  }
 }
 
 /**

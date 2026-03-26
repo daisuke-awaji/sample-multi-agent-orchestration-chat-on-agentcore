@@ -4,7 +4,7 @@
  * Table list of execution records (simplified: no status tracking)
  */
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, ChevronDown, ChevronUp, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
 import { LoadingIndicator } from '../../ui/LoadingIndicator';
@@ -21,10 +21,13 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
   const { t, i18n } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Format date with i18n locale
+  // Format date with i18n locale (handles invalid/missing dates)
   const formatDate = (dateStr: string): string => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
     const locale = i18n.language === 'ja' ? 'ja-JP' : 'en-US';
-    return new Date(dateStr).toLocaleString(locale, {
+    return date.toLocaleString(locale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -80,9 +83,8 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
               const isExpanded = expandedId === execution.executionId;
 
               return (
-                <>
+                <React.Fragment key={execution.executionId}>
                   <tr
-                    key={execution.executionId}
                     className="hover:bg-surface-secondary transition-colors cursor-pointer"
                     onClick={() =>
                       (execution.eventPayload || execution.errorMessage) &&
@@ -140,7 +142,7 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
                     </td>
                   </tr>
                   {isExpanded && (
-                    <tr key={`${execution.executionId}-detail`}>
+                    <tr>
                       <td colSpan={4} className="px-6 py-4 bg-surface-secondary space-y-3">
                         {execution.errorMessage && (
                           <div>
@@ -165,7 +167,7 @@ export function ExecutionList({ executions, isLoading, hasMore, onLoadMore }: Ex
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>

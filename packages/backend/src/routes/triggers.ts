@@ -913,8 +913,8 @@ router.get(
           // Backward compatibility: old records have startedAt instead of executedAt
           executedAt:
             execution.executedAt ||
-            (execution as unknown as Record<string, unknown>).startedAt ||
-            new Date().toISOString(),
+            ((execution as unknown as Record<string, unknown>).startedAt as string) ||
+            '',
           sessionId: execution.sessionId,
           eventPayload: execution.eventPayload,
           errorMessage: execution.errorMessage,
