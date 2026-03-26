@@ -44,7 +44,7 @@ const DEFAULT_CONFIG = {
 };
 
 const VALID_PROVIDERS: readonly string[] = ['Anthropic', 'Amazon'];
-const INFERENCE_PROFILE_PREFIX = /^(global|us|eu|apac)\./;
+const INFERENCE_PROFILE_PREFIX = /^(global|us|eu|apac|jp)\./;
 
 /**
  * Validate bedrockModels configuration
@@ -60,7 +60,7 @@ function validateBedrockModels(models: BedrockModelConfig[], env: Environment): 
     }
     if (!INFERENCE_PROFILE_PREFIX.test(model.id)) {
       throw new Error(
-        `[${env}] bedrockModels: model id "${model.id}" must start with inference profile prefix (global., us., eu., apac.)`
+        `[${env}] bedrockModels: model id "${model.id}" must start with inference profile prefix (global., us., eu., apac., jp.)`
       );
     }
     if (!model.name || typeof model.name !== 'string') {
