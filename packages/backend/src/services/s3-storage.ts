@@ -21,7 +21,7 @@ const defaultS3Client = new S3Client({ region: process.env.AWS_REGION });
  * Get an S3 client scoped to the given user, or fall back to default when scoping is not configured.
  */
 async function getS3Client(userId: string): Promise<S3Client> {
-  if (process.env.USER_SCOPED_S3_ROLE_ARN) {
+  if (process.env.USER_SCOPED_ROLE_ARN) {
     return createUserScopedS3Client(userId);
   }
   return defaultS3Client;

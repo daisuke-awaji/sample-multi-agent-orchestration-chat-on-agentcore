@@ -52,10 +52,10 @@ function buildSessionPolicy(bucketName: string, userId: string): string {
 }
 
 async function assumeUserScopedS3Role(userId: string): Promise<Credentials> {
-  const roleArn = process.env.USER_SCOPED_S3_ROLE_ARN;
+  const roleArn = process.env.USER_SCOPED_ROLE_ARN;
   const bucketName = process.env.USER_STORAGE_BUCKET_NAME;
 
-  if (!roleArn) throw new Error('USER_SCOPED_S3_ROLE_ARN is not set');
+  if (!roleArn) throw new Error('USER_SCOPED_ROLE_ARN is not set');
   if (!bucketName) throw new Error('USER_STORAGE_BUCKET_NAME is not set');
 
   const cached = credentialCache.get(userId);
