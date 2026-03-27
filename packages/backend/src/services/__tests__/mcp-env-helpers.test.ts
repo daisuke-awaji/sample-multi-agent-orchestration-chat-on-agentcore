@@ -79,7 +79,7 @@ describe('extractEnvFromMcpConfig', () => {
       mcpServers: {
         withEnv: {
           command: 'node',
-          env: { API_KEY: 'secret' },
+          env: { API_KEY: 'test-dummy-value' },
         },
         withoutEnv: {
           url: 'http://localhost:3000',
@@ -91,7 +91,7 @@ describe('extractEnvFromMcpConfig', () => {
     const { cleanedConfig, envMap } = extractEnvFromMcpConfig(mcpConfig);
 
     expect(envMap).not.toBeNull();
-    expect(envMap!.withEnv).toEqual({ API_KEY: 'secret' });
+    expect(envMap!.withEnv).toEqual({ API_KEY: 'test-dummy-value' });
     expect(envMap!.withoutEnv).toBeUndefined();
 
     expect(cleanedConfig.mcpServers.withEnv.env).toBeUndefined();
