@@ -14,12 +14,12 @@ describe('extractEnvFromMcpConfig', () => {
         github: {
           command: 'npx',
           args: ['-y', '@modelcontextprotocol/server-github'],
-          env: { GITHUB_TOKEN: 'ghp_xxx' },
+          env: { GH_OWNER: 'test-org' },
         },
         slack: {
           command: 'npx',
           args: ['-y', '@modelcontextprotocol/server-slack'],
-          env: { SLACK_BOT_TOKEN: 'xoxb-xxx' },
+          env: { SLACK_CHANNEL: 'test-channel' },
         },
       },
     };
@@ -40,8 +40,8 @@ describe('extractEnvFromMcpConfig', () => {
 
     // envMap should contain extracted env values
     expect(envMap).not.toBeNull();
-    expect(envMap!.github).toEqual({ GITHUB_TOKEN: 'ghp_xxx' });
-    expect(envMap!.slack).toEqual({ SLACK_BOT_TOKEN: 'xoxb-xxx' });
+    expect(envMap!.github).toEqual({ GH_OWNER: 'test-org' });
+    expect(envMap!.slack).toEqual({ SLACK_CHANNEL: 'test-channel' });
   });
 
   it('returns null envMap when no servers have env values', () => {
@@ -79,7 +79,7 @@ describe('extractEnvFromMcpConfig', () => {
       mcpServers: {
         withEnv: {
           command: 'node',
-          env: { API_KEY: 'test-dummy-value' },
+          env: { SOME_VAR: 'test-value' },
         },
         withoutEnv: {
           url: 'http://localhost:3000',
@@ -91,7 +91,7 @@ describe('extractEnvFromMcpConfig', () => {
     const { cleanedConfig, envMap } = extractEnvFromMcpConfig(mcpConfig);
 
     expect(envMap).not.toBeNull();
-    expect(envMap!.withEnv).toEqual({ API_KEY: 'test-dummy-value' });
+    expect(envMap!.withEnv).toEqual({ SOME_VAR: 'test-value' });
     expect(envMap!.withoutEnv).toBeUndefined();
 
     expect(cleanedConfig.mcpServers.withEnv.env).toBeUndefined();
@@ -104,14 +104,14 @@ describe('extractEnvFromMcpConfig', () => {
       mcpServers: {
         github: {
           command: 'npx',
-          env: { TOKEN: 'value' },
+          env: { APP_MODE: 'testing' },
         },
       },
     };
 
     extractEnvFromMcpConfig(mcpConfig);
 
-    expect(mcpConfig.mcpServers.github.env).toEqual({ TOKEN: 'value' });
+    expect(mcpConfig.mcpServers.github.env).toEqual({ APP_MODE: 'testing' });
   });
 });
 
@@ -130,15 +130,15 @@ describe('restoreEnvToMcpConfig', () => {
     };
 
     const envMap = {
-      github: { GITHUB_TOKEN: 'ghp_xxx' },
-      slack: { SLACK_BOT_TOKEN: 'xoxb-xxx' },
+      github: { GH_OWNER: 'test-org' },
+      slack: { SLACK_CHANNEL: 'test-channel' },
     };
 
     const restored = restoreEnvToMcpConfig(mcpConfig, envMap);
 
-    expect(restored.mcpServers.github.env).toEqual({ GITHUB_TOKEN: 'ghp_xxx' });
+    expect(restored.mcpServers.github.env).toEqual({ GH_OWNER: 'test-org' });
     expect(restored.mcpServers.github.command).toBe('npx');
-    expect(restored.mcpServers.slack.env).toEqual({ SLACK_BOT_TOKEN: 'xoxb-xxx' });
+    expect(restored.mcpServers.slack.env).toEqual({ SLACK_CHANNEL: 'test-channel' });
   });
 
   it('leaves servers without envMap entries unchanged', () => {
@@ -150,12 +150,12 @@ describe('restoreEnvToMcpConfig', () => {
     };
 
     const envMap = {
-      github: { GITHUB_TOKEN: 'ghp_xxx' },
+      github: { GH_OWNER: 'test-org' },
     };
 
     const restored = restoreEnvToMcpConfig(mcpConfig, envMap);
 
-    expect(restored.mcpServers.github.env).toEqual({ GITHUB_TOKEN: 'ghp_xxx' });
+    expect(restored.mcpServers.github.env).toEqual({ GH_OWNER: 'test-org' });
     expect(restored.mcpServers.other.env).toBeUndefined();
     expect(restored.mcpServers.other.url).toBe('http://localhost:3000');
   });
@@ -167,7 +167,7 @@ describe('restoreEnvToMcpConfig', () => {
       },
     };
 
-    const envMap = { github: { TOKEN: 'value' } };
+    const envMap = { github: { APP_MODE: 'testing' } };
 
     restoreEnvToMcpConfig(mcpConfig, envMap);
 
@@ -195,7 +195,7 @@ describe('extractEnvFromMcpConfig + restoreEnvToMcpConfig round-trip', () => {
         github: {
           command: 'npx',
           args: ['-y', 'server-github'],
-          env: { GITHUB_TOKEN: 'ghp_xxx', GITHUB_ORG: 'myorg' },
+          env: { GH_OWNER: 'test-org', GITHUB_ORG: 'myorg' },
         },
         noenv: {
           url: 'http://localhost:8080',
@@ -212,7 +212,7 @@ describe('extractEnvFromMcpConfig + restoreEnvToMcpConfig round-trip', () => {
     expect(restored.mcpServers.github.command).toBe('npx');
     expect(restored.mcpServers.github.args).toEqual(['-y', 'server-github']);
     expect(restored.mcpServers.github.env).toEqual({
-      GITHUB_TOKEN: 'ghp_xxx',
+      GH_OWNER: 'test-org',
       GITHUB_ORG: 'myorg',
     });
     expect(restored.mcpServers.noenv.url).toBe('http://localhost:8080');
