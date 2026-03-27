@@ -261,6 +261,7 @@ export class Frontend extends Construct {
             'docker/**',
             'docs/**',
             'scripts/**',
+            '**/*.tsbuildinfo',
           ],
         },
       ],
