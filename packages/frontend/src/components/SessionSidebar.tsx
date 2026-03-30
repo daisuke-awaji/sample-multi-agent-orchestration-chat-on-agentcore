@@ -3,7 +3,7 @@
  * Display and manage session list
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -41,7 +41,7 @@ interface SessionItemProps {
   onDeleteRequest: (sessionId: string) => void;
 }
 
-function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: SessionItemProps) {
+const SessionItem = memo(function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: SessionItemProps) {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -142,7 +142,7 @@ function SessionItem({ session, isActive, isNew = false, onDeleteRequest }: Sess
       )}
     </div>
   );
-}
+});
 
 /**
  * Session Sidebar Component
@@ -205,6 +205,9 @@ export function SessionSidebar() {
       }
     });
 
+    // Always update ref so next render compares against latest IDs
+    prevSessionIdsRef.current = currentIds;
+
     if (newIds.size > 0) {
       // Execute setState asynchronously to avoid eslint error
       setTimeout(() => {
@@ -214,8 +217,6 @@ export function SessionSidebar() {
       const timer = setTimeout(() => setNewSessionIds(new Set()), 300);
       return () => clearTimeout(timer);
     }
-
-    prevSessionIdsRef.current = currentIds;
   }, [sessions]);
 
   // Infinite scroll: Intersection Observer for loading more sessions
