@@ -20,6 +20,23 @@ function getBackendApiUrl(): string {
 }
 
 /**
+ * Build request headers for backend API calls.
+ * Automatically includes X-Target-User-Id when running as a machine user
+ * (e.g., EventBridge Scheduler triggered execution).
+ */
+function buildRequestHeaders(authHeader: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    Authorization: authHeader,
+    'Content-Type': 'application/json',
+  };
+  const context = getCurrentContext();
+  if (context?.userId) {
+    headers['X-Target-User-Id'] = context.userId;
+  }
+  return headers;
+}
+
+/**
  * Backend API response type
  */
 interface AgentResponse {
@@ -87,10 +104,7 @@ async function handleCreate(
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'application/json',
-    },
+    headers: buildRequestHeaders(authHeader),
     body: JSON.stringify(requestBody),
   });
 
@@ -185,10 +199,7 @@ async function handleUpdate(
 
   const response = await fetch(url, {
     method: 'PUT',
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'application/json',
-    },
+    headers: buildRequestHeaders(authHeader),
     body: JSON.stringify(updatePayload),
   });
 
@@ -253,10 +264,7 @@ async function handleGet(input: { agentId?: string }, authHeader: string): Promi
 
   const response = await fetch(url, {
     method: 'GET',
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'application/json',
-    },
+    headers: buildRequestHeaders(authHeader),
   });
 
   if (!response.ok) {
