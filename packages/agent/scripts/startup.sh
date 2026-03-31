@@ -22,9 +22,10 @@ if [ -n "$GITHUB_TOKEN_SECRET_NAME" ]; then
   }
   
   if [ -n "$GITHUB_TOKEN" ] && [ "$GITHUB_TOKEN" != "null" ] && [[ "$GITHUB_TOKEN" != *"Error"* ]]; then
-    echo "$GITHUB_TOKEN" | gh auth login --with-token
-    echo "GitHub CLI authenticated successfully"
-    gh auth status
+    echo "$GITHUB_TOKEN" | gh auth login --with-token 2>&1 || {
+      echo "Warning: gh auth login failed, GitHub CLI tools will not be available"
+    }
+    gh auth status 2>&1 || true
   else
     echo "Warning: Could not retrieve GitHub token, skipping gh auth"
     echo "Token value (first 20 chars): ${GITHUB_TOKEN:0:20}"
@@ -57,9 +58,10 @@ if [ -n "$GITLAB_TOKEN_SECRET_NAME" ]; then
     
     # Authenticate glab CLI if available
     if command -v glab &> /dev/null; then
-      echo "$GITLAB_TOKEN" | glab auth login --hostname "$GITLAB_HOST" --stdin
-      echo "GitLab CLI (glab) authenticated successfully for $GITLAB_HOST"
-      glab auth status || true
+      echo "$GITLAB_TOKEN" | glab auth login --hostname "$GITLAB_HOST" --stdin 2>&1 || {
+        echo "Warning: glab auth login failed, GitLab CLI tools will not be available"
+      }
+      glab auth status 2>&1 || true
     else
       echo "glab CLI not found, using GITLAB_TOKEN environment variable only"
     fi
