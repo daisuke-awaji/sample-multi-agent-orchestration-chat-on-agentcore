@@ -181,16 +181,18 @@ router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
 router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const result = resolveUserId(auth, req);
     const input: CreateAgentInput = req.body;
 
-    if (!userId) {
+    if ('error' in result) {
       return res.status(400).json({
         error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
+        message: result.error,
         requestId: auth.requestId,
       });
     }
+
+    const { userId } = result;
 
     // Validation
     if (!input.name || !input.description || !input.systemPrompt || !input.enabledTools) {
@@ -240,17 +242,19 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
 router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const result = resolveUserId(auth, req);
     const { agentId } = req.params;
     const input: Partial<CreateAgentInput> = req.body;
 
-    if (!userId) {
+    if ('error' in result) {
       return res.status(400).json({
         error: 'Invalid authentication',
-        message: 'Failed to retrieve user ID',
+        message: result.error,
         requestId: auth.requestId,
       });
     }
+
+    const { userId } = result;
 
     if (!agentId) {
       return res.status(400).json({
