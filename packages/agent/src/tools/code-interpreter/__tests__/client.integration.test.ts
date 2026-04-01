@@ -412,7 +412,8 @@ describe('AgentCoreCodeInterpreterClient - File Operations', () => {
 
     // Verify all files were downloaded
     files.forEach((file) => {
-      const localPath = path.join(downloadDir, file);
+      // nosemgrep: path-join-resolve-traversal - test code with hardcoded values, path.basename strips traversal
+      const localPath = path.join(downloadDir, path.basename(file));
       expect(fs.existsSync(localPath)).toBe(true);
     });
   }, 90000);
