@@ -143,6 +143,35 @@ npm run deploy
 カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[デプロイオプション](docs/deployment-options-ja.md) を参照してください。
 
 
+## コスト
+
+以下の表は、本システムを **ap-northeast-1（東京）** リージョンにデプロイした場合の1ヶ月あたりのコスト内訳です。
+
+ここでは、デフォルトモデル（**Claude Sonnet 4.6**、1セッション約5ターン）で**月100チャットセッション**を想定しています。月額コストはセッション数に比例します（例：月50セッションの場合は、50/100 を掛けてください）。
+
+| AWS サービス | 内訳 | コスト [USD/月] |
+|-------------|------|----------------:|
+| Bedrock | 入力: Sonnet 4.6, 100K tokens/セッション | 30.00 |
+| Bedrock | 入力 (キャッシュ書込): Sonnet 4.6, 10K tokens/セッション | 3.75 |
+| Bedrock | 入力 (キャッシュ読取): Sonnet 4.6, 80K tokens/セッション | 2.40 |
+| Bedrock | 出力: Sonnet 4.6, 15K tokens/セッション | 22.50 |
+| AgentCore | Runtime Memory: 24 GB-Hours/セッション | 22.68 |
+| AgentCore | Runtime vCPU: 0.08 vCPU-Hours/セッション | 0.72 |
+| AgentCore | Short-Term Memory: 36 events/セッション | 0.90 |
+| AgentCore | Long-Term Memory Storage: 2 memories/セッション | 0.15 |
+| AgentCore | Long-Term Memory Retrieval: 1.3 queries/セッション | 0.07 |
+| AgentCore | Gateway: 2 invocations/セッション | 0.001 |
+| DynamoDB | Read: ~800 RRU/セッション, Write: ~200 WRU/セッション | 0.14 |
+| S3 | ストレージ: ~10 GB（ユーザーファイル） | 0.50 |
+| Cognito | 11 MAU（Essentials ティア） | 0.40 |
+| AppSync | ~20 operations/セッション | 0.12 |
+| API Gateway | ~10 requests/セッション | 0.02 |
+| Lambda | ~30 invocations/セッション, 128MB, 平均1秒 | < 0.01 |
+| CloudFront | ~300 requests/日 | < 0.01 |
+| **合計** | | **~84** |
+
+システム未使用時（チャットセッションがアクティブでない場合）の継続コストは最小限です（DynamoDB、S3、Cognito の基本料金のみで ~$1/月）。コンピュートに関する初期費用や固定費はありません。
+
 ## ドキュメント
 
 ### 技術ドキュメント
