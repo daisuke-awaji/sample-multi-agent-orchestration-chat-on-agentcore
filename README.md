@@ -153,6 +153,35 @@ After deployment, you can find the Frontend URL in the CloudFormation stack outp
 For advanced configuration options such as custom domains, environment-specific settings, and event rules, see the [Deployment Options](docs/deployment-options.md) documentation.
 
 
+## Cost
+
+The following table provides a cost breakdown for deploying this system in the **ap-northeast-1 (Tokyo)** region for one month.
+
+Here we assume **100 chat sessions per month** using the default model (**Claude Sonnet 4.6**, ~5 turns/session). The monthly cost is proportional to the number of sessions. (e.g. If you only run 50 sessions/month, multiply it with 50/100.)
+
+| AWS service | Dimensions | Cost [USD/month] |
+|-------------|------------|------------------:|
+| Bedrock | Input: Sonnet 4.6, 100K tokens/session | 30.00 |
+| Bedrock | Input (cache write): Sonnet 4.6, 10K tokens/session | 3.75 |
+| Bedrock | Input (cache read): Sonnet 4.6, 80K tokens/session | 2.40 |
+| Bedrock | Output: Sonnet 4.6, 15K tokens/session | 22.50 |
+| AgentCore | Runtime Memory: 24 GB-Hours/session | 22.68 |
+| AgentCore | Runtime vCPU: 0.08 vCPU-Hours/session | 0.72 |
+| AgentCore | Short-Term Memory: 36 events/session | 0.90 |
+| AgentCore | Long-Term Memory Storage: 2 memories/session | 0.15 |
+| AgentCore | Long-Term Memory Retrieval: 1.3 queries/session | 0.07 |
+| AgentCore | Gateway: 2 invocations/session | 0.001 |
+| DynamoDB | Read: ~800 RRU/session, Write: ~200 WRU/session | 0.14 |
+| S3 | Storage: ~10 GB (user files) | 0.50 |
+| Cognito | 11 MAU (Essentials tier) | 0.40 |
+| AppSync | ~20 operations/session | 0.12 |
+| API Gateway | ~10 requests/session | 0.02 |
+| Lambda | ~30 invocations/session, 128MB, 1s avg | < 0.01 |
+| CloudFront | ~300 requests/day | < 0.01 |
+| **TOTAL** | | **~84** |
+
+Additionally, when the system is not in use (i.e., no active chat sessions), the ongoing costs are minimal (~$1/month for DynamoDB, S3, and Cognito base charges only). There are no upfront or fixed costs for compute.
+
 ## Documentation
 
 ### Technical Documentation
