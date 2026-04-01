@@ -74,6 +74,12 @@ export interface FrontendProps {
    * Available Bedrock models for frontend model selector (optional)
    */
   bedrockModels?: BedrockModelConfig[];
+
+  /**
+   * S3 server access logs bucket (optional)
+   * When set, enables server access logging for S3 and CloudFront
+   */
+  serverAccessLogsBucket?: s3.IBucket;
 }
 
 export class Frontend extends Construct {
@@ -118,8 +124,12 @@ export class Frontend extends Construct {
       bucketName: `${resourcePrefix}-frontend-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}`,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true, // Enforce SSL/TLS connections (S10)
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For demo purposes
       autoDeleteObjects: true, // For demo purposes
+      // Server access logging (S1)
+      serverAccessLogsBucket: props.serverAccessLogsBucket,
+      serverAccessLogsPrefix: props.serverAccessLogsBucket ? 'frontend-s3/' : undefined,
     });
 
     // Response Headers Policy for optimized caching and security
@@ -184,6 +194,9 @@ export class Frontend extends Construct {
       this,
       'AgentCoreCloudFrontDistribution',
       {
+        // CloudFront access logging (CFR3)
+        logBucket: props.serverAccessLogsBucket,
+        logFilePrefix: props.serverAccessLogsBucket ? 'cloudfront/' : undefined,
         defaultBehavior: {
           origin: s3Origin,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,

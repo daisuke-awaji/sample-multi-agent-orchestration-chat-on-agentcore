@@ -3,6 +3,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
 import { Construct } from 'constructs';
+import { NagSuppressions } from 'cdk-nag';
 import { AgentCoreLambdaTarget } from './constructs/agentcore';
 import { EnvironmentConfig } from '../config';
 import * as path from 'path';
@@ -39,6 +40,12 @@ export interface AgentCoreGatewayTargetStackProps extends cdk.StackProps {
    * Used when gatewayArn is not directly specified.
    */
   readonly coreStackName?: string;
+
+  /**
+   * S3 server access logs bucket (optional)
+   * When set, enables server access logging for S3 buckets in this stack
+   */
+  readonly serverAccessLogsBucket?: s3.IBucket;
 }
 
 /**
@@ -122,6 +129,17 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
 
     // ── Athena Tools Target ──
 
+    // Resolve server access logs bucket (direct specification or cross-stack import)
+    let serverAccessLogsBucket: s3.IBucket | undefined = props.serverAccessLogsBucket;
+    if (!serverAccessLogsBucket && props.coreStackName) {
+      const logsBucketName = cdk.Fn.importValue(`${props.coreStackName}-AccessLogsBucketName`);
+      serverAccessLogsBucket = s3.Bucket.fromBucketName(
+        this,
+        'ImportedAccessLogsBucket',
+        logsBucketName
+      );
+    }
+
     // Create S3 bucket for Athena query results
     this.athenaOutputBucket = new s3.Bucket(this, 'AthenaOutputBucket', {
       bucketName: `${resourcePrefix}-athena-output-${this.account}-${this.region}`,
@@ -130,6 +148,10 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
       lifecycleRules: [{ expiration: cdk.Duration.days(7) }],
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true, // Enforce SSL/TLS connections (S10)
+      // Server access logging (S1)
+      serverAccessLogsBucket: serverAccessLogsBucket,
+      serverAccessLogsPrefix: serverAccessLogsBucket ? 'athena-output/' : undefined,
     });
 
     this.athenaToolsTarget = new AgentCoreLambdaTarget(this, 'AthenaToolsTarget', {
@@ -365,6 +387,50 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     // Tags
     cdk.Tags.of(this).add('Project', 'AgentCore');
     cdk.Tags.of(this).add('Component', 'GatewayTargets');
+
+    // ── cdk-nag Suppressions ──
+
+    // Stack-level suppressions
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole is the standard managed policy for Lambda functions to write CloudWatch Logs.',
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'NodejsFunction uses NODEJS_22_X which is the latest available runtime. cdk-nag may not recognize it as the latest.',
+      },
+    ]);
+
+    // Suppress IAM5 for all Lambda target roles (wildcard permissions required by service)
+    NagSuppressions.addStackSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'Wildcard permissions are required for: Gateway Role Lambda Arn:* (version/alias invocation), Athena workgroup/*, Glue database/*, table/*/*, S3 source data reading (Resource::*), Bedrock inference-profile/*, foundation-model/*, async-invoke/*, knowledge-base/*, and user storage bucket objects (/*). These are scoped to specific services and actions.',
+        },
+      ],
+      true
+    );
+
+    // Suppress S1 for AthenaOutputBucket when no log bucket is available
+    if (!serverAccessLogsBucket) {
+      NagSuppressions.addResourceSuppressionsByPath(
+        this,
+        [`/${id}/AthenaOutputBucket/Resource`],
+        [
+          {
+            id: 'AwsSolutions-S1',
+            reason:
+              'Server access logging is not configured when no log bucket is provided from the core stack.',
+          },
+        ]
+      );
+    }
   }
 
   /**

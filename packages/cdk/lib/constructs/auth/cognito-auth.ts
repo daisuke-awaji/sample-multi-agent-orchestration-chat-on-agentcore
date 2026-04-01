@@ -182,7 +182,7 @@ exports.handler = async (event) => {
         requireLowercase: true,
         requireUppercase: true,
         requireDigits: true,
-        requireSymbols: false,
+        requireSymbols: true,
       },
 
       // MFA settings

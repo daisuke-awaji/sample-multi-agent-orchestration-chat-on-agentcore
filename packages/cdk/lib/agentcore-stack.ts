@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+import { NagSuppressions } from 'cdk-nag';
 import { AgentCoreGateway, AgentCoreMemory, AgentCoreRuntime } from './constructs/agentcore';
 import { AgentsTable, SessionsTable, TriggersTable, UserStorage } from './constructs/storage';
 import { TriggerLambda, TriggerEventSources, SessionStreamHandler } from './constructs/triggers';
@@ -133,6 +135,11 @@ export class AgentCoreStack extends cdk.Stack {
   public readonly userStorage: UserStorage;
 
   /**
+   * S3 access logs bucket (shared across stacks)
+   */
+  public readonly accessLogsBucket: s3.Bucket;
+
+  /**
    * Created Agents Table
    */
   public readonly agentsTable: AgentsTable;
@@ -226,6 +233,37 @@ export class AgentCoreStack extends cdk.Stack {
       description: 'Cognito User Pool Client ID',
     });
 
+    // 2.5. Create S3 Access Logs Bucket (shared by all S3 buckets and CloudFront)
+    this.accessLogsBucket = new s3.Bucket(this, 'AccessLogsBucket', {
+      bucketName: `${resourcePrefix}-access-logs-${this.account}-${this.region}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      lifecycleRules: [
+        {
+          id: 'DeleteOldLogs',
+          expiration: cdk.Duration.days(90),
+        },
+      ],
+      // objectOwnership is required for CloudFront logging
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+    });
+
+    // Export log bucket ARN for cross-stack reference (Target stack)
+    new cdk.CfnOutput(this, 'AccessLogsBucketArn', {
+      value: this.accessLogsBucket.bucketArn,
+      description: 'S3 Access Logs Bucket ARN',
+      exportName: `${id}-AccessLogsBucketArn`,
+    });
+
+    new cdk.CfnOutput(this, 'AccessLogsBucketName', {
+      value: this.accessLogsBucket.bucketName,
+      description: 'S3 Access Logs Bucket Name',
+      exportName: `${id}-AccessLogsBucketName`,
+    });
+
     // 3. Create AgentCore Memory
     const memoryName = props?.memoryName || `${resourcePrefix.replace(/-/g, '_')}_memory`;
     const useBuiltInStrategies = props?.useBuiltInMemoryStrategies ?? true;
@@ -251,6 +289,7 @@ export class AgentCoreStack extends cdk.Stack {
       corsAllowedOrigins: envConfig.corsAllowedOrigins,
       removalPolicy: envConfig.s3RemovalPolicy,
       autoDeleteObjects: envConfig.s3AutoDeleteObjects,
+      serverAccessLogsBucket: this.accessLogsBucket,
     });
 
     // 5. Create Agents Table
@@ -514,6 +553,7 @@ export class AgentCoreStack extends cdk.Stack {
       customDomain: envConfig.customDomain,
       appsyncEventsEndpoint: appsyncEvents.realtimeEndpoint, // AppSync Events WebSocket endpoint for real-time updates
       bedrockModels: envConfig.bedrockModels,
+      serverAccessLogsBucket: this.accessLogsBucket,
     });
 
     // 10. Additional CloudFormation outputs (authentication related)
@@ -727,5 +767,86 @@ export class AgentCoreStack extends cdk.Stack {
     cdk.Tags.of(this).add('SessionsTable', 'Enabled');
     cdk.Tags.of(this).add('TriggersTable', 'Enabled');
     cdk.Tags.of(this).add('TriggerLambda', 'Enabled');
+
+    // ── cdk-nag Suppressions ──
+
+    // Stack-level suppressions (applies to all resources in this stack)
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole is the standard managed policy for Lambda functions to write CloudWatch Logs.',
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'Lambda runtime versions are managed by CDK internal Custom Resources and deploy-time-build constructs which are not directly controllable.',
+      },
+      {
+        id: 'AwsSolutions-CB4',
+        reason:
+          'CodeBuild projects created by deploy-time-build (@cdklabs/deploy-time-build) do not expose KMS encryption configuration.',
+      },
+      {
+        id: 'AwsSolutions-APIG4',
+        reason:
+          'HTTP API v2 does not use API Gateway authorizers. JWT authentication is implemented at the Express.js application layer.',
+      },
+      {
+        id: 'AwsSolutions-APIG1',
+        reason:
+          'Access logging is configured via CfnStage escape hatch (AccessLogSettings property override). cdk-nag may not detect escape hatch modifications.',
+      },
+      {
+        id: 'AwsSolutions-COG2',
+        reason:
+          'MFA is not required for this PoV/development stage. Will be enabled for production.',
+      },
+      {
+        id: 'AwsSolutions-COG3',
+        reason:
+          'Cognito Advanced Security (Threat Protection) requires PLUS pricing tier. Current User Pool uses ESSENTIALS tier for cost optimization in PoV/development.',
+      },
+      {
+        id: 'AwsSolutions-CFR1',
+        reason: 'CloudFront geo restriction is not required for this PoV/development stage.',
+      },
+      {
+        id: 'AwsSolutions-CFR2',
+        reason: 'CloudFront WAF integration is not required for this PoV/development stage.',
+      },
+      {
+        id: 'AwsSolutions-CFR4',
+        reason:
+          'CloudFront default certificate (*.cloudfront.net) does not support setting minimumProtocolVersion above TLSv1. Custom domain with TLSv1.2 certificate will be configured for production.',
+      },
+    ]);
+
+    // Suppress IAM5 for all wildcard permissions across the stack
+    // cdk-nag IAM5 is a granular rule - use addStackSuppressions with appliesTo patterns
+    NagSuppressions.addStackSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'Wildcard permissions are required for various resources: DynamoDB GSI index/*, EventBridge Scheduler, SSM parameters, Bedrock/AgentCore resources, S3 bucket objects, Secrets Manager (random suffix), AppSync channelNamespace, CodeBuild logs/reports, CDK internal Custom Resources, and deploy-time-build generated policies.',
+        },
+      ],
+      true
+    );
+
+    // Suppress S1 for access logs bucket itself (self-referencing loop prevention)
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      [`/${id}/AccessLogsBucket/Resource`],
+      [
+        {
+          id: 'AwsSolutions-S1',
+          reason:
+            'Access logs bucket cannot log to itself to avoid infinite loop. This is the centralized log destination.',
+        },
+      ]
+    );
   }
 }

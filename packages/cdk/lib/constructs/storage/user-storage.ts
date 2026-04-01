@@ -38,6 +38,12 @@ export interface UserStorageProps {
    * @default false
    */
   readonly autoDeleteObjects?: boolean;
+
+  /**
+   * S3 server access logs bucket (optional)
+   * When set, enables server access logging to this bucket
+   */
+  readonly serverAccessLogsBucket?: s3.IBucket;
 }
 
 /**
@@ -78,6 +84,10 @@ export class UserStorage extends Construct {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       versioned: true, // Enable versioning
       enforceSSL: true, // Enforce SSL/TLS connections
+
+      // Server access logging (S1)
+      serverAccessLogsBucket: props?.serverAccessLogsBucket,
+      serverAccessLogsPrefix: props?.serverAccessLogsBucket ? 'user-storage/' : undefined,
 
       // Lifecycle settings
       lifecycleRules: [
