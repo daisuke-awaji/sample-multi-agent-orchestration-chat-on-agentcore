@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+import { NagSuppressions } from 'cdk-nag';
 import { AgentCoreGateway, AgentCoreMemory, AgentCoreRuntime } from './constructs/agentcore';
 import { AgentsTable, SessionsTable, TriggersTable, UserStorage } from './constructs/storage';
 import { TriggerLambda, TriggerEventSources, SessionStreamHandler } from './constructs/triggers';
@@ -133,6 +135,11 @@ export class AgentCoreStack extends cdk.Stack {
   public readonly userStorage: UserStorage;
 
   /**
+   * S3 access log bucket (shared by all S3 buckets and CloudFront)
+   */
+  public readonly logBucket: s3.Bucket;
+
+  /**
    * Created Agents Table
    */
   public readonly agentsTable: AgentsTable;
@@ -153,6 +160,30 @@ export class AgentCoreStack extends cdk.Stack {
 
     // Configure resource prefix (from environment config, can be overridden by props.gatewayName)
     const resourcePrefix = props.gatewayName || envConfig.resourcePrefix;
+
+    // 0. Create S3 access log bucket (shared by all S3 buckets and CloudFront) (S1, S10, CFR3)
+    this.logBucket = new s3.Bucket(this, 'AccessLogsBucket', {
+      bucketName: `${resourcePrefix}-access-logs-${this.account}-${this.region}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      // Self-log: prefix only (avoid circular reference)
+      serverAccessLogsPrefix: 'self/',
+      lifecycleRules: [
+        {
+          id: 'ExpireAfter90Days',
+          expiration: cdk.Duration.days(90),
+        },
+      ],
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // Export log bucket name for cross-stack reference (AgentCoreGatewayTargetStack)
+    new cdk.CfnOutput(this, 'LogBucketName', {
+      value: this.logBucket.bucketName,
+      description: 'S3 access log bucket name',
+      exportName: `${id}-LogBucketName`,
+    });
 
     // 1. Create Cognito authentication system (shared by Gateway and Runtime)
     this.cognitoAuth = new CognitoAuth(this, 'CognitoAuth', {
@@ -251,6 +282,7 @@ export class AgentCoreStack extends cdk.Stack {
       corsAllowedOrigins: envConfig.corsAllowedOrigins,
       removalPolicy: envConfig.s3RemovalPolicy,
       autoDeleteObjects: envConfig.s3AutoDeleteObjects,
+      serverAccessLogsBucket: this.logBucket,
     });
 
     // 5. Create Agents Table
@@ -514,6 +546,8 @@ export class AgentCoreStack extends cdk.Stack {
       customDomain: envConfig.customDomain,
       appsyncEventsEndpoint: appsyncEvents.realtimeEndpoint, // AppSync Events WebSocket endpoint for real-time updates
       bedrockModels: envConfig.bedrockModels,
+      serverAccessLogsBucket: this.logBucket, // S1
+      logBucket: this.logBucket, // CFR3
     });
 
     // 10. Additional CloudFormation outputs (authentication related)
@@ -727,5 +761,86 @@ export class AgentCoreStack extends cdk.Stack {
     cdk.Tags.of(this).add('SessionsTable', 'Enabled');
     cdk.Tags.of(this).add('TriggersTable', 'Enabled');
     cdk.Tags.of(this).add('TriggerLambda', 'Enabled');
+
+    // ── cdk-nag NagSuppressions ──────────────────────────────────────────────
+
+    // Stack-level: CDK-internal / uncontrollable patterns
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole is the standard managed policy for Lambda execution roles and is acceptable here.',
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'CDK internal Custom Resource handlers and @cdklabs/deploy-time-build Lambdas are managed by CDK; their runtimes cannot be controlled by user code.',
+      },
+      {
+        id: 'AwsSolutions-CB4',
+        reason:
+          '@cdklabs/deploy-time-build CodeBuild project does not expose a KMS key configuration option.',
+      },
+    ]);
+
+    // Resource-level: wildcard IAM permissions with justified reasons
+    NagSuppressions.addResourceSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'Wildcard resources are required for: DynamoDB GSI index access (index/*), ' +
+            'EventBridge Scheduler dynamic schedule names (schedule/default/*), ' +
+            'SSM dynamic parameter paths (parameter/agentcore/*/agents/*), ' +
+            'Bedrock/AgentCore service requirements, ' +
+            'S3 user-file access (bucket/*), ' +
+            'Secrets Manager random-suffix secret names, ' +
+            'and CDK-internal LogRetention/Custom Resource roles (Resource::*).',
+        },
+      ],
+      true // apply to all child resources
+    );
+
+    // APIG1 already fixed (access logs added). APIG4: JWT auth handled by Express.js middleware.
+    NagSuppressions.addResourceSuppressions(
+      this.backendApi.httpApi,
+      [
+        {
+          id: 'AwsSolutions-APIG4',
+          reason:
+            'HTTP API v2 authorization is handled in the Express.js application layer via Cognito JWT middleware.',
+        },
+      ],
+      true
+    );
+
+    // COG2: MFA not required at PoV stage (Warning)
+    NagSuppressions.addResourceSuppressions(
+      this.cognitoAuth.userPool,
+      [
+        {
+          id: 'AwsSolutions-COG2',
+          reason: 'MFA is intentionally disabled at the PoV/development stage.',
+        },
+      ],
+      false
+    );
+
+    // CFR1, CFR2: Geo-restriction and WAF not required at PoV stage (Warning)
+    NagSuppressions.addResourceSuppressions(
+      this.frontend.cloudFrontDistribution,
+      [
+        {
+          id: 'AwsSolutions-CFR1',
+          reason: 'Geo-restriction is not required at the PoV/development stage.',
+        },
+        {
+          id: 'AwsSolutions-CFR2',
+          reason: 'WAF integration is not required at the PoV/development stage.',
+        },
+      ],
+      false
+    );
   }
 }

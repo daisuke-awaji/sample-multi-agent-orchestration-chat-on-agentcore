@@ -38,6 +38,12 @@ export interface UserStorageProps {
    * @default false
    */
   readonly autoDeleteObjects?: boolean;
+
+  /**
+   * S3 server access logs destination bucket (S1)
+   * When set, server access logs are delivered to this bucket
+   */
+  readonly serverAccessLogsBucket?: s3.IBucket;
 }
 
 /**
@@ -94,6 +100,12 @@ export class UserStorage extends Construct {
       // Removal policy settings
       removalPolicy: removalPolicy,
       autoDeleteObjects: autoDeleteObjects,
+
+      // Server access logs (S1)
+      ...(props?.serverAccessLogsBucket && {
+        serverAccessLogsBucket: props.serverAccessLogsBucket,
+        serverAccessLogsPrefix: 'user-storage/',
+      }),
 
       // CORS settings (for direct upload from frontend)
       cors: [

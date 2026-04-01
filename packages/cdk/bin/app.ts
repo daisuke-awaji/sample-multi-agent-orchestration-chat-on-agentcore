@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+import { AwsSolutionsChecks } from 'cdk-nag';
 import { AgentCoreStack } from '../lib/agentcore-stack';
 import { AgentCoreGatewayTargetStack } from '../lib/agentcore-gateway-target-stack';
 import { getEnvironmentConfig, Environment } from '../config';
@@ -58,6 +59,9 @@ const targetStack = new AgentCoreGatewayTargetStack(app, targetStackName, {
   terminationProtection: envConfig.deletionProtection,
 });
 targetStack.addDependency(coreStack);
+
+// Apply cdk-nag AwsSolutionsChecks to all stacks
+cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 
 // Output environment information
 console.log(`🚀 Deploying AgentCore Stack for environment: ${envName}`);

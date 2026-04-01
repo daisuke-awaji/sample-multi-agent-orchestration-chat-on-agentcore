@@ -74,6 +74,16 @@ export interface FrontendProps {
    * Available Bedrock models for frontend model selector (optional)
    */
   bedrockModels?: BedrockModelConfig[];
+
+  /**
+   * S3 server access logs destination bucket (S1)
+   */
+  readonly serverAccessLogsBucket?: s3.IBucket;
+
+  /**
+   * S3 bucket for CloudFront access logs (CFR3)
+   */
+  readonly logBucket?: s3.IBucket;
 }
 
 export class Frontend extends Construct {
@@ -120,6 +130,12 @@ export class Frontend extends Construct {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // For demo purposes
       autoDeleteObjects: true, // For demo purposes
+      enforceSSL: true, // S10
+      // Server access logs (S1)
+      ...(props.serverAccessLogsBucket && {
+        serverAccessLogsBucket: props.serverAccessLogsBucket,
+        serverAccessLogsPrefix: 'frontend/',
+      }),
     });
 
     // Response Headers Policy for optimized caching and security
@@ -220,6 +236,11 @@ export class Frontend extends Construct {
         // Custom domain settings
         domainNames: domainNames,
         certificate: certificate,
+        // CloudFront access logs (CFR3)
+        ...(props.logBucket && {
+          logBucket: props.logBucket,
+          logFilePrefix: 'cloudfront/',
+        }),
       }
     );
 

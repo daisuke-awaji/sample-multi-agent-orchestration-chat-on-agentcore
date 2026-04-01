@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as agentcore from '@aws-cdk/aws-bedrock-agentcore-alpha';
+import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { AgentCoreLambdaTarget } from './constructs/agentcore';
 import { EnvironmentConfig } from '../config';
@@ -93,6 +94,14 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     const gatewayRoleArn =
       props.gatewayRoleArn || this.importValue(props.coreStackName, 'GatewayRoleArn');
 
+    // Import S3 log bucket from core stack (cross-stack reference) (S1)
+    const logBucketName = props.coreStackName
+      ? cdk.Fn.importValue(`${props.coreStackName}-LogBucketName`)
+      : undefined;
+    const importedLogBucket = logBucketName
+      ? s3.Bucket.fromBucketName(this, 'ImportedLogBucket', logBucketName)
+      : undefined;
+
     // Import Gateway using L2 fromGatewayAttributes
     const importedGateway = agentcore.Gateway.fromGatewayAttributes(this, 'ImportedGateway', {
       gatewayArn,
@@ -130,6 +139,12 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
       lifecycleRules: [{ expiration: cdk.Duration.days(7) }],
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true, // S10
+      // Server access logs (S1)
+      ...(importedLogBucket && {
+        serverAccessLogsBucket: importedLogBucket,
+        serverAccessLogsPrefix: 'athena-output/',
+      }),
     });
 
     this.athenaToolsTarget = new AgentCoreLambdaTarget(this, 'AthenaToolsTarget', {
@@ -365,6 +380,39 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     // Tags
     cdk.Tags.of(this).add('Project', 'AgentCore');
     cdk.Tags.of(this).add('Component', 'GatewayTargets');
+
+    // ── cdk-nag NagSuppressions ──────────────────────────────────────────────
+
+    // Stack-level: CDK-internal / uncontrollable patterns
+    NagSuppressions.addStackSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason:
+          'AWSLambdaBasicExecutionRole is the standard managed policy for Lambda execution roles.',
+      },
+      {
+        id: 'AwsSolutions-L1',
+        reason:
+          'NodejsFunction Lambda runtimes (NODEJS_22_X) are current; cdk-nag may flag them if the rule predates this version.',
+      },
+    ]);
+
+    // Resource-level: wildcard IAM permissions with justified reasons
+    NagSuppressions.addResourceSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'Wildcard resources are required for: Gateway Role Lambda ARN versions/aliases (Arn:*), ' +
+            'Athena workgroup (workgroup/*), Glue database/table (database/*, table/*/*), ' +
+            'S3 source data read for Athena (Resource::*), ' +
+            'Bedrock model/inference-profile invocations, ' +
+            'S3 user-storage access (bucket/*).',
+        },
+      ],
+      true // apply to all child resources
+    );
   }
 
   /**

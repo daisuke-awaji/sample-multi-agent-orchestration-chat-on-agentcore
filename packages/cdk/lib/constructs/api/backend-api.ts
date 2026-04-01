@@ -329,6 +329,33 @@ export class BackendApi extends Construct {
     // Get API URL
     this.apiUrl = this.httpApi.url!;
 
+    // Enable API Gateway access logs (APIG1)
+    const accessLogGroup = new logs.LogGroup(this, 'ApiGwAccessLogs', {
+      logGroupName: `/aws/apigateway/${apiName}-access-logs`,
+      retention: props.logRetention || logs.RetentionDays.TWO_WEEKS,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+    // Use escape hatch to configure access logs on the default stage
+    // cdk-nag (APIG1) requires both destinationArn and format for CfnStage
+    const defaultStage = this.httpApi.defaultStage;
+    if (defaultStage) {
+      const cfnStage = defaultStage.node.defaultChild as apigatewayv2.CfnStage;
+      cfnStage.accessLogSettings = {
+        destinationArn: accessLogGroup.logGroupArn,
+        // Structured JSON log format for HTTP API v2 (required by cdk-nag APIG1)
+        format: JSON.stringify({
+          requestId: '$context.requestId',
+          ip: '$context.identity.sourceIp',
+          requestTime: '$context.requestTime',
+          httpMethod: '$context.httpMethod',
+          routeKey: '$context.routeKey',
+          status: '$context.status',
+          protocol: '$context.protocol',
+          responseLength: '$context.responseLength',
+        }),
+      };
+    }
+
     // Add permission for API Gateway to invoke Lambda function
     this.lambdaFunction.addPermission('ApiGatewayInvokePermission', {
       principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),

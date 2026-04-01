@@ -182,7 +182,7 @@ exports.handler = async (event) => {
         requireLowercase: true,
         requireUppercase: true,
         requireDigits: true,
-        requireSymbols: false,
+        requireSymbols: true,
       },
 
       // MFA settings
@@ -206,6 +206,9 @@ exports.handler = async (event) => {
 
       // Deletion protection
       deletionProtection: props.deletionProtection ?? false,
+
+      // Threat protection (COG3) - replaces deprecated advancedSecurityMode
+      standardThreatProtectionMode: cognito.StandardThreatProtectionMode.FULL_FUNCTION,
 
       // No custom attributes (simple configuration)
       customAttributes: {},
