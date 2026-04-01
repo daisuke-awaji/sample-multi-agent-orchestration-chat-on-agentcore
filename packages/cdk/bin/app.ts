@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
+import { AwsSolutionsChecks } from 'cdk-nag';
 import { AgentCoreStack } from '../lib/agentcore-stack';
 import { AgentCoreGatewayTargetStack } from '../lib/agentcore-gateway-target-stack';
 import { getEnvironmentConfig, Environment } from '../config';
 
 const app = new cdk.App();
+cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 
 // Get environment from Context (default: default)
 const envContext = app.node.tryGetContext('env') as Environment | undefined;

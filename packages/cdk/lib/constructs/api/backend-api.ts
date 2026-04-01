@@ -284,6 +284,13 @@ export class BackendApi extends Construct {
       }
     );
 
+    // Create CloudWatch Log Group for API Gateway access logs (APIG1)
+    const apiAccessLogGroup = new logs.LogGroup(this, 'ApiAccessLogGroup', {
+      logGroupName: `/aws/apigateway/${apiName}-access-logs`,
+      retention: props.logRetention || logs.RetentionDays.TWO_WEEKS,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Create HTTP API Gateway
     this.httpApi = new apigatewayv2.HttpApi(this, 'BackendHttpApi', {
       apiName: apiName,
@@ -302,6 +309,25 @@ export class BackendApi extends Construct {
       },
       // Removed defaultIntegration - prevents $default route from forwarding OPTIONS requests to Lambda
     });
+
+    // Enable access logging on the default stage via escape hatch (APIG1)
+    const defaultStage = this.httpApi.defaultStage?.node.defaultChild as cdk.CfnResource;
+    if (defaultStage) {
+      defaultStage.addPropertyOverride('AccessLogSettings', {
+        DestinationArn: apiAccessLogGroup.logGroupArn,
+        Format: JSON.stringify({
+          requestId: '$context.requestId',
+          ip: '$context.identity.sourceIp',
+          requestTime: '$context.requestTime',
+          httpMethod: '$context.httpMethod',
+          routeKey: '$context.routeKey',
+          status: '$context.status',
+          protocol: '$context.protocol',
+          responseLength: '$context.responseLength',
+          integrationError: '$context.integrationErrorMessage',
+        }),
+      });
+    }
 
     // Forward all routes to Lambda function
     // Lambda Web Adapter handles Express routing internally
