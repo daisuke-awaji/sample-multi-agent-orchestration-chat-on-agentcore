@@ -151,6 +151,7 @@ export class BackendApi extends Construct {
             'bedrock-agentcore:CreateSession',
             'bedrock-agentcore:UpdateSession',
             'bedrock-agentcore:DeleteSession',
+            'bedrock-agentcore:DeleteEvent',
             'bedrock-agentcore:ListMemoryRecords',
             'bedrock-agentcore:DeleteMemoryRecord',
             'bedrock-agentcore:RetrieveMemoryRecords',
