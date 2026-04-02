@@ -27,8 +27,9 @@ import { streamAgentResponse } from './stream-handler.js';
  * Sends an error response and returns null if validation fails.
  */
 function validateRequest(body: InvocationRequest, res: Response): string | null {
-  // Validate prompt
-  if (!body.prompt?.trim()) {
+  // Validate prompt (allow empty prompt if images are provided)
+  const hasImages = body.images && body.images.length > 0;
+  if (!body.prompt?.trim() && !hasImages) {
     res.status(400).json({ error: 'Empty prompt provided' });
     return null;
   }
