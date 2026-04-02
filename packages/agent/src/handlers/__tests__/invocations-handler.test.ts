@@ -162,6 +162,16 @@ describe('handleInvocation', () => {
       expect(mockCreateAgent).not.toHaveBeenCalled();
     });
 
+    it('should allow empty prompt when images are provided', async () => {
+      const images = [{ base64: 'abc123', mimeType: 'image/png' }];
+      req = createMockRequest({ prompt: '', images });
+
+      await handleInvocation(req, res);
+
+      expect(res.status).not.toHaveBeenCalledWith(400);
+      expect(mockCreateAgent).toHaveBeenCalled();
+    });
+
     it('should return 400 when image validation fails', async () => {
       mockValidateImageData.mockReturnValue({ valid: false, error: 'Invalid image format' });
       req = createMockRequest({
