@@ -15,9 +15,12 @@ interface AuthStore {
 let authStore: AuthStore | null = null;
 
 /**
- * Track whether a token refresh attempt is in progress to avoid concurrent refreshes
+ * Shared promise for concurrent token refresh requests.
+ * When multiple 401 responses arrive simultaneously, all callers
+ * wait on the same refresh promise instead of triggering separate
+ * refreshes (or worse, immediately returning false and forcing logout).
  */
-let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
  * Initialize error handler with auth store
@@ -28,31 +31,41 @@ export function initializeErrorHandler(store: AuthStore): void {
 }
 
 /**
- * Attempt to refresh the access token
+ * Attempt to refresh the access token.
+ * If a refresh is already in progress, returns the same promise so that
+ * concurrent callers share the result instead of racing each other.
+ *
  * @returns true if refresh succeeded, false otherwise
  */
 async function attemptTokenRefresh(): Promise<boolean> {
-  if (isRefreshing) {
-    return false;
+  // If a refresh is already in flight, piggy-back on it
+  if (refreshPromise) {
+    console.log('🔄 Token refresh already in progress, waiting...');
+    return refreshPromise;
   }
 
-  try {
-    isRefreshing = true;
-    console.log('🔄 Attempting token refresh...');
-    const newToken = await getValidAccessToken();
+  refreshPromise = (async () => {
+    try {
+      console.log('🔄 Attempting token refresh...');
+      const newToken = await getValidAccessToken();
 
-    if (newToken) {
-      console.log('✅ Token refresh succeeded');
-      return true;
+      if (newToken) {
+        console.log('✅ Token refresh succeeded');
+        return true;
+      }
+
+      console.warn('❌ Token refresh returned null');
+      return false;
+    } catch (error) {
+      console.warn('❌ Token refresh failed:', error);
+      return false;
     }
+  })();
 
-    console.warn('❌ Token refresh returned null');
-    return false;
-  } catch (error) {
-    console.warn('❌ Token refresh failed:', error);
-    return false;
+  try {
+    return await refreshPromise;
   } finally {
-    isRefreshing = false;
+    refreshPromise = null;
   }
 }
 
