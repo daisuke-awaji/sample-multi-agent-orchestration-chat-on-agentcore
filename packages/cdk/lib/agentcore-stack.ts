@@ -8,6 +8,7 @@ import { TriggerLambda, TriggerEventSources, SessionStreamHandler } from './cons
 import { BackendApi, AppSyncEvents } from './constructs/api';
 import { Frontend } from './constructs/frontend';
 import { CognitoAuth } from './constructs/auth';
+import { OperationsDashboard } from './constructs/monitoring';
 import { EnvironmentConfig } from '../config';
 
 export interface AgentCoreStackProps extends cdk.StackProps {
@@ -314,7 +315,7 @@ export class AgentCoreStack extends cdk.Stack {
     });
 
     // 5.7. Create Session Stream Handler Lambda (DynamoDB Streams -> AppSync Events)
-    new SessionStreamHandler(this, 'SessionStreamHandler', {
+    const sessionStreamHandler = new SessionStreamHandler(this, 'SessionStreamHandler', {
       sessionsTable: this.sessionsTable.table,
       appsyncEvents: appsyncEvents,
     });
@@ -767,6 +768,22 @@ export class AgentCoreStack extends cdk.Stack {
     cdk.Tags.of(this).add('SessionsTable', 'Enabled');
     cdk.Tags.of(this).add('TriggersTable', 'Enabled');
     cdk.Tags.of(this).add('TriggerLambda', 'Enabled');
+
+    // ── Operations Dashboard ──
+    new OperationsDashboard(this, 'OperationsDashboard', {
+      resourcePrefix,
+      stackName: id,
+      backendApiFunction: this.backendApi.lambdaFunction,
+      sessionStreamHandlerFunction: sessionStreamHandler.handler,
+      triggerExecutorFunction: triggerLambda.lambdaFunction,
+      gatewayInterceptorFunction: this.gateway.interceptorLambda,
+      httpApi: this.backendApi.httpApi,
+      agentsTable: this.agentsTable.table,
+      sessionsTable: this.sessionsTable.table,
+      triggersTable: triggersTable.table,
+      cloudFrontDistribution: this.frontend.cloudFrontDistribution,
+      userStorageBucket: this.userStorage.bucket,
+    });
 
     // ── cdk-nag Suppressions ──
 
