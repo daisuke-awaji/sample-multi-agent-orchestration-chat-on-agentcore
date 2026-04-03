@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { generateDownloadUrl } from '../api/storage';
-import { openUrlInNewTab, downloadWithAsyncUrl } from '../utils/download';
+import { downloadWithAsyncUrl } from '../utils/download';
 
 interface S3FileLinkProps {
   path: string;
@@ -42,28 +42,23 @@ export const S3FileLink: React.FC<S3FileLinkProps> = ({ path, children }) => {
   }, [fetchPresignedUrl]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-
-    if (!presignedUrl) {
-      // Fallback: if pre-fetch hasn't completed, use window.open before await
-      handleAsyncFallback();
+    if (presignedUrl) {
+      // Presigned URL is ready — let the browser handle the native <a> click.
+      // Do NOT call e.preventDefault(). The href and target are already set on
+      // the rendered <a> element, so the browser will navigate natively.
+      // This avoids transient activation issues on mobile Safari.
       return;
     }
 
-    // Synchronous navigation — no transient activation issue
-    openUrlInNewTab(presignedUrl);
-  };
-
-  // Fallback for when presigned URL is not yet available
-  const handleAsyncFallback = async () => {
+    // Presigned URL not yet available — prevent default and use async fallback
+    e.preventDefault();
     downloadWithAsyncUrl(
       () => generateDownloadUrl(path),
       (err) => {
         console.error('Failed to generate download URL:', err);
         setError(err.message);
       }
-    ).then((/* void */) => {
-      // Re-fetch to cache the URL for subsequent clicks
+    ).then(() => {
       fetchPresignedUrl();
     }).catch(() => {
       // Error already handled in onError callback
@@ -117,6 +112,8 @@ export const S3FileLink: React.FC<S3FileLinkProps> = ({ path, children }) => {
       <a
         href={presignedUrl || path}
         onClick={handleClick}
+        target="_blank"
+        rel="noopener noreferrer"
         className={`
           inline-flex items-center gap-1
           text-action-primary hover:text-action-primary
