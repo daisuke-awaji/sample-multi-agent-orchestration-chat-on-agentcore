@@ -29,7 +29,6 @@
     "@aws-sdk/client-dynamodb": "^3.654.0",
     "@aws-sdk/client-ssm": "^3.1017.0",
     "@aws-sdk/util-dynamodb": "^3.654.0",
-    "nanoid": "^5.1.5",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

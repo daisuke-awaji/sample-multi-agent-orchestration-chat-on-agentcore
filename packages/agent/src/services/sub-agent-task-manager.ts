@@ -11,7 +11,7 @@ import { WorkspaceSync } from './workspace-sync.js';
 import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
 import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
 import { SessionPersistenceHook } from '../session/session-persistence-hook.js';
-import { customAlphabet } from 'nanoid';
+import { randomBytes } from 'crypto';
 import type { HookProvider } from '@strands-agents/sdk';
 import type { CreateAgentOptions } from '../agent/types.js';
 
@@ -43,10 +43,22 @@ import type { CreateAgentOptions } from '../agent/types.js';
  * - Matches frontend session ID length for consistency
  * - Provides sufficient entropy for unique IDs (62^33 possibilities)
  */
-const generateSessionId = customAlphabet(
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-  33
-);
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const ID_LENGTH = 33;
+const MASK = 63; // 2^6 - 1, next power of 2 above alphabet size (62)
+
+function generateSessionId(): string {
+  const bytes = randomBytes(ID_LENGTH * 2);
+  let result = '';
+  let pos = 0;
+  while (result.length < ID_LENGTH) {
+    const idx = bytes[pos++] & MASK;
+    if (idx < ALPHABET.length) {
+      result += ALPHABET[idx];
+    }
+  }
+  return result;
+}
 
 /**
  * Task status

@@ -4,16 +4,28 @@
  */
 
 import fetch from 'node-fetch';
-import { customAlphabet } from 'nanoid';
+import { randomBytes } from 'crypto';
 import type { ClientConfig } from '../config/index.js';
 import { getCachedJwtToken } from '../auth/cognito.js';
 import { getCachedMachineUserToken } from '../auth/machine-user.js';
 
 // AgentCore sessionId constraint: [a-zA-Z0-9][a-zA-Z0-9-_]*
-const generateSessionId = customAlphabet(
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-  33
-);
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const ID_LENGTH = 33;
+const MASK = 63;
+
+function generateSessionId(): string {
+  const bytes = randomBytes(ID_LENGTH * 2);
+  let result = '';
+  let pos = 0;
+  while (result.length < ID_LENGTH) {
+    const idx = bytes[pos++] & MASK;
+    if (idx < ALPHABET.length) {
+      result += ALPHABET[idx];
+    }
+  }
+  return result;
+}
 
 // Strands Agents SDK streaming event type definitions
 export interface AgentStreamEvent {

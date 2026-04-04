@@ -2,16 +2,28 @@
  * Service for invoking Agent API
  */
 
-import { customAlphabet } from 'nanoid';
+import { randomBytes } from 'crypto';
 import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
 import { AgentsService, MCPConfig } from './agents-service.js';
 import { buildEventDrivenPrompt } from './prompt-builder.js';
 
 // AgentCore sessionId constraint: [a-zA-Z0-9][a-zA-Z0-9-_]*
-const generateSessionId = customAlphabet(
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-  33
-);
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const ID_LENGTH = 33;
+const MASK = 63;
+
+function generateSessionId(): string {
+  const bytes = randomBytes(ID_LENGTH * 2);
+  let result = '';
+  let pos = 0;
+  while (result.length < ID_LENGTH) {
+    const idx = bytes[pos++] & MASK;
+    if (idx < ALPHABET.length) {
+      result += ALPHABET[idx];
+    }
+  }
+  return result;
+}
 
 /**
  * Encode ARN in Agent URL for AgentCore Runtime
