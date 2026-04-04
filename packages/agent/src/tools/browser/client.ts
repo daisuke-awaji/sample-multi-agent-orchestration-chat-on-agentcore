@@ -67,7 +67,7 @@ export class AgentCoreBrowserClient {
     this.region = options.region || process.env.AWS_REGION || 'us-east-1';
     this.browserIdentifier = options.browserIdentifier || 'aws.browser.v1';
     this.storagePath = options.storagePath || '';
-    this.defaultSessionName = `browser-${uuidv7().slice(0, 12)}`;
+    this.defaultSessionName = `browser-${uuidv7().replace(/-/g, '').slice(0, 12)}`;
     this.client = new BedrockAgentCoreClient({ region: this.region });
     // S3 client will be lazily initialized with user-scoped credentials when needed
     this.s3Client = new S3Client({ region: this.region });

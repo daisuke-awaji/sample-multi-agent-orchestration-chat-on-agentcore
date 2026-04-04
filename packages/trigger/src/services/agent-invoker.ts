@@ -4,13 +4,14 @@
 
 import { customAlphabet } from 'nanoid';
 import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
+import { AgentsService, MCPConfig } from './agents-service.js';
+import { buildEventDrivenPrompt } from './prompt-builder.js';
 
+// AgentCore sessionId constraint: [a-zA-Z0-9][a-zA-Z0-9-_]*
 const generateSessionId = customAlphabet(
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
   33
 );
-import { AgentsService, MCPConfig } from './agents-service.js';
-import { buildEventDrivenPrompt } from './prompt-builder.js';
 
 /**
  * Encode ARN in Agent URL for AgentCore Runtime

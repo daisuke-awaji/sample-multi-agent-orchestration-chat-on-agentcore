@@ -6,13 +6,14 @@
 import fetch from 'node-fetch';
 import { customAlphabet } from 'nanoid';
 import type { ClientConfig } from '../config/index.js';
+import { getCachedJwtToken } from '../auth/cognito.js';
+import { getCachedMachineUserToken } from '../auth/machine-user.js';
 
+// AgentCore sessionId constraint: [a-zA-Z0-9][a-zA-Z0-9-_]*
 const generateSessionId = customAlphabet(
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
   33
 );
-import { getCachedJwtToken } from '../auth/cognito.js';
-import { getCachedMachineUserToken } from '../auth/machine-user.js';
 
 // Strands Agents SDK streaming event type definitions
 export interface AgentStreamEvent {

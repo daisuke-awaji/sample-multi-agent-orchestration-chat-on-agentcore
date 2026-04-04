@@ -55,7 +55,7 @@ export class AgentCoreCodeInterpreterClient {
     if (options.sessionName) {
       this.defaultSession = options.sessionName;
     } else {
-      this.defaultSession = `session-${uuidv7().slice(0, 12)}`;
+      this.defaultSession = `session-${uuidv7().replace(/-/g, '').slice(0, 12)}`;
     }
 
     this.sessions = new Map();
