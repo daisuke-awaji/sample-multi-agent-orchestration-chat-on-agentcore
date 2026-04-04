@@ -38,10 +38,11 @@ import {
   UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import { AgentsService } from '../agents-service.js';
+import type { UserId, AgentId } from '@moca/core';
 
 const TABLE_NAME = 'test-agents-table';
-const USER_ID = 'user-123';
-const AGENT_ID = 'agent-456';
+const USER_ID = 'user-123' as UserId;
+const AGENT_ID = 'agent-456' as AgentId;
 
 const baseDynamoAgent = {
   userId: USER_ID,
@@ -279,9 +280,9 @@ describe('AgentsService', () => {
       mockSend.mockResolvedValueOnce({});
 
       const cloned = await service.cloneAgent(
-        'target-user',
-        'source-user',
-        'source-agent',
+        'target-user' as UserId,
+        'source-user' as UserId,
+        'source-agent' as AgentId,
         'targetuser'
       );
 
@@ -297,7 +298,7 @@ describe('AgentsService', () => {
         Item: { ...baseDynamoAgent, isShared: 'false' },
       });
 
-      await expect(service.cloneAgent('target-user', USER_ID, AGENT_ID)).rejects.toThrow(
+      await expect(service.cloneAgent('target-user' as UserId, USER_ID, AGENT_ID)).rejects.toThrow(
         'Shared agent not found'
       );
     });
@@ -305,7 +306,7 @@ describe('AgentsService', () => {
     it('throws "Shared agent not found" when source agent does not exist', async () => {
       mockSend.mockResolvedValueOnce({ Item: undefined });
 
-      await expect(service.cloneAgent('target-user', USER_ID, AGENT_ID)).rejects.toThrow(
+      await expect(service.cloneAgent('target-user' as UserId, USER_ID, AGENT_ID)).rejects.toThrow(
         'Shared agent not found'
       );
     });

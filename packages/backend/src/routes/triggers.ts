@@ -5,8 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
-import { parseUserId, parseAgentId } from '@moca/core';
-import type { UserId } from '@moca/core';
+import { parseUserId } from '@moca/core';
 import { getTriggersDynamoDBService } from '../services/triggers-dynamodb.js';
 import { getSchedulerService } from '../services/scheduler-service.js';
 

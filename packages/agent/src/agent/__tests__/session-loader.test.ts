@@ -7,6 +7,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import type { SessionStorage, SessionConfig } from '../../session/types.js';
+import type { SessionId } from '@moca/core';
 
 // Mock logger to suppress output during tests
 jest.mock('../../config/index.js', () => ({
@@ -30,7 +31,7 @@ describe('loadSessionHistory', () => {
   const mockMessages = [createMockMessage('user', 'Hello'), createMockMessage('assistant', 'Hi!')];
 
   const mockSessionConfig: SessionConfig = {
-    sessionId: 'test-session-id',
+    sessionId: 'test-session-id' as SessionId,
     actorId: 'test-actor-id',
   };
 

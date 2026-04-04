@@ -24,6 +24,7 @@ import {
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 import { SchedulerService } from '../scheduler-service.js';
+import type { UserId, AgentId } from '@moca/core';
 
 const MockSchedulerClient = jest.mocked(SchedulerClient);
 const MockCreateScheduleCommand = jest.mocked(CreateScheduleCommand);
@@ -38,8 +39,8 @@ const BASE_CONFIG = {
   expression: '0 9 * * ? *',
   payload: {
     triggerId: 'trigger-123',
-    userId: 'user-456',
-    agentId: 'agent-789',
+    userId: 'user-456' as UserId,
+    agentId: 'agent-789' as AgentId,
     prompt: 'Run daily task',
   },
   targetArn: 'arn:aws:lambda:us-east-1:123456789:function:test',

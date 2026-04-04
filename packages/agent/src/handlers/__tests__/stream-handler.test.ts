@@ -41,6 +41,7 @@ jest.unstable_mockModule('../../context/request-context.js', () => ({
 
 const { streamAgentResponse } = await import('../stream-handler.js');
 import type { StreamOptions } from '../stream-handler.js';
+import type { SessionId } from '@moca/core';
 
 /** Create a mock Express Response */
 function createMockResponse() {
@@ -98,7 +99,7 @@ describe('streamAgentResponse', () => {
     mockGetCurrentContext.mockReturnValue({
       requestId: 'test-request-id',
       userId: 'test-user',
-      sessionId: 'test-session',
+      sessionId: 'test-session' as SessionId,
     });
     mockGetContextMetadata.mockReturnValue({
       requestId: 'test-request-id',
@@ -209,7 +210,7 @@ describe('streamAgentResponse', () => {
           appendMessage: mockAppendMessage,
         } as any,
         sessionConfig: {
-          sessionId: 'test-session',
+          sessionId: 'test-session' as SessionId,
           actorId: 'test-actor',
         },
       };
@@ -228,7 +229,7 @@ describe('streamAgentResponse', () => {
           appendMessage: jest.fn<any>().mockResolvedValue(undefined),
         } as any,
         sessionConfig: {
-          sessionId: 'test-session',
+          sessionId: 'test-session' as SessionId,
           actorId: 'test-actor',
         },
       };
@@ -255,7 +256,7 @@ describe('streamAgentResponse', () => {
           appendMessage: jest.fn<any>().mockRejectedValue(new Error('Save failed')),
         } as any,
         sessionConfig: {
-          sessionId: 'test-session',
+          sessionId: 'test-session' as SessionId,
           actorId: 'test-actor',
         },
       };
