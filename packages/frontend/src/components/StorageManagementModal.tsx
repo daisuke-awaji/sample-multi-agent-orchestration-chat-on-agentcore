@@ -573,9 +573,7 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
         (error) => {
           console.error('Download error:', error);
         }
-      ).catch(() => {
-        // Error already handled in onError callback
-      });
+      );
     }
   };
 
