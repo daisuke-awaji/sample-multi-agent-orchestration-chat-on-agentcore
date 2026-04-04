@@ -10,14 +10,15 @@ import {
   DeleteScheduleCommand,
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
+import type { UserId, AgentId } from '@moca/core';
 
 /**
  * Schedule payload for Lambda invocation
  */
 export interface SchedulePayload {
   triggerId: string;
-  userId: string;
-  agentId: string;
+  userId: UserId;
+  agentId: AgentId;
   prompt: string;
   sessionId?: string;
   modelId?: string;

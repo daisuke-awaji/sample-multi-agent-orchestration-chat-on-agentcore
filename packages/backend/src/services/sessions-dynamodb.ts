@@ -10,6 +10,7 @@ import {
   GetItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import type { UserId, AgentId } from '@moca/core';
 import { config } from '../config/index.js';
 
 /**
@@ -21,10 +22,10 @@ export type SessionType = 'user' | 'event' | 'subagent';
  * Session data stored in DynamoDB
  */
 export interface SessionData {
-  userId: string;
+  userId: UserId;
   sessionId: string;
   title: string;
-  agentId?: string;
+  agentId?: AgentId;
   storagePath?: string;
   sessionType?: SessionType;
   createdAt: string;
@@ -37,7 +38,7 @@ export interface SessionData {
 export interface SessionSummary {
   sessionId: string;
   title: string;
-  agentId?: string;
+  agentId?: AgentId;
   storagePath?: string;
   sessionType?: SessionType;
   createdAt: string;
@@ -76,7 +77,7 @@ export class SessionsDynamoDBService {
    * List sessions for a user (sorted by updatedAt descending)
    */
   async listSessions(
-    userId: string,
+    userId: UserId,
     maxResults: number = 50,
     nextToken?: string
   ): Promise<SessionListResult> {
@@ -136,7 +137,7 @@ export class SessionsDynamoDBService {
   /**
    * Get a single session
    */
-  async getSession(userId: string, sessionId: string): Promise<SessionData | null> {
+  async getSession(userId: UserId, sessionId: string): Promise<SessionData | null> {
     if (!this.isConfigured()) {
       return null;
     }
@@ -163,7 +164,7 @@ export class SessionsDynamoDBService {
   /**
    * Delete a session from DynamoDB
    */
-  async deleteSession(userId: string, sessionId: string): Promise<void> {
+  async deleteSession(userId: UserId, sessionId: string): Promise<void> {
     if (!this.isConfigured()) {
       console.warn('[SessionsDynamoDBService] SESSIONS_TABLE_NAME not configured, skipping delete');
       return;
