@@ -2,8 +2,13 @@
  * Service for invoking Agent API
  */
 
-import { v7 as uuidv7 } from 'uuid';
+import { customAlphabet } from 'nanoid';
 import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
+
+const generateSessionId = customAlphabet(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+  33
+);
 import { AgentsService, MCPConfig } from './agents-service.js';
 import { buildEventDrivenPrompt } from './prompt-builder.js';
 
@@ -103,7 +108,7 @@ export class AgentInvoker {
       finalLength: prompt.length,
     });
 
-    const sessionId = payload.sessionId || uuidv7();
+    const sessionId = payload.sessionId || generateSessionId();
 
     return {
       request: {
