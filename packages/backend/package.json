@@ -42,6 +42,7 @@
     "@aws-sdk/client-sts": "^3.1012.0",
     "@aws-sdk/s3-request-presigner": "^3.957.0",
     "@aws-sdk/util-dynamodb": "^3.958.0",
+    "@moca/core": "*",
     "@moca/tool-definitions": "*",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "@strands-agents/sdk": "^0.1.3",

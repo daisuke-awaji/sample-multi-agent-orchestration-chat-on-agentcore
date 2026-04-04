@@ -112,7 +112,7 @@ export default defineConfig({
           'vendor-auth': ['amazon-cognito-identity-js'],
 
           // State management and utilities
-          'vendor-utils': ['zustand', 'zod', 'uuid', 'nanoid'],
+          'vendor-utils': ['zustand', 'zod', 'uuid'],
         },
       },
     },

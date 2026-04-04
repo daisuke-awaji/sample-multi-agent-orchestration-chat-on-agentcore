@@ -1,107 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { generateSessionId } from '../sessionId';
+import { generateSessionId, isSessionId, parseSessionId, SESSION_ID_LENGTH } from '../sessionId';
+import type { SessionId } from '../sessionId';
 
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const AGENTCORE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
-
-describe('generateSessionId', () => {
-  it('returns a string', () => {
-    expect(typeof generateSessionId()).toBe('string');
+/**
+ * Re-export verification tests.
+ * The main test suite lives in packages/libs/core/src/__tests__/session-id.test.ts.
+ * This file only verifies that the re-export from the frontend module works correctly.
+ */
+describe('sessionId re-export from @moca/core', () => {
+  it('generateSessionId returns a valid SessionId', () => {
+    const id: SessionId = generateSessionId();
+    expect(typeof id).toBe('string');
+    expect(id).toHaveLength(SESSION_ID_LENGTH);
+    expect(isSessionId(id)).toBe(true);
   });
 
-  it('generates a 33-character string', () => {
-    const id = generateSessionId();
-    expect(id).toHaveLength(33);
+  it('isSessionId validates correctly', () => {
+    expect(isSessionId('a'.repeat(33))).toBe(true);
+    expect(isSessionId('short')).toBe(false);
   });
 
-  it('contains only alphanumeric characters (no hyphens, underscores, or special chars)', () => {
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).toMatch(/^[a-zA-Z0-9]+$/);
-    }
+  it('parseSessionId works for valid input', () => {
+    const valid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg';
+    expect(parseSessionId(valid)).toBe(valid);
   });
 
-  it('first character is always alphanumeric', () => {
-    for (let i = 0; i < 1000; i++) {
-      const id = generateSessionId();
-      expect(id[0]).toMatch(/[a-zA-Z0-9]/);
-    }
-  });
-
-  it('satisfies AgentCore sessionId constraint pattern', () => {
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).toMatch(AGENTCORE_PATTERN);
-    }
-  });
-
-  it('generates unique IDs across 1000 calls', () => {
-    const ids = new Set(Array.from({ length: 1000 }, () => generateSessionId()));
-    expect(ids.size).toBe(1000);
-  });
-
-  it('uses only characters from the defined alphabet', () => {
-    const alphabetSet = new Set(ALPHABET.split(''));
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      for (const char of id) {
-        expect(alphabetSet.has(char)).toBe(true);
-      }
-    }
-  });
-
-  it('does not contain hyphens', () => {
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).not.toContain('-');
-    }
-  });
-
-  it('does not contain underscores', () => {
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).not.toContain('_');
-    }
-  });
-
-  it('produces roughly uniform character distribution (chi-square sanity check)', () => {
-    const charCounts: Record<string, number> = {};
-    const sampleSize = 10000;
-    const totalChars = sampleSize * 33;
-
-    for (let i = 0; i < sampleSize; i++) {
-      const id = generateSessionId();
-      for (const char of id) {
-        charCounts[char] = (charCounts[char] || 0) + 1;
-      }
-    }
-
-    const uniqueChars = Object.keys(charCounts);
-    expect(uniqueChars.length).toBe(62);
-
-    const expected = totalChars / 62;
-    for (const char of uniqueChars) {
-      const ratio = charCounts[char] / expected;
-      // Each character should appear within ±30% of expected frequency
-      expect(ratio).toBeGreaterThan(0.7);
-      expect(ratio).toBeLessThan(1.3);
-    }
-  });
-
-  it('has no sequential pattern across consecutive calls', () => {
-    const id1 = generateSessionId();
-    const id2 = generateSessionId();
-    const id3 = generateSessionId();
-
-    // Should not share a common prefix (unlike UUID v7 which shares timestamp prefix)
-    const commonPrefix = (a: string, b: string) => {
-      let i = 0;
-      while (i < a.length && a[i] === b[i]) i++;
-      return i;
-    };
-
-    // Statistically, common prefix of two random 62-alphabet strings should be very short
-    expect(commonPrefix(id1, id2)).toBeLessThan(5);
-    expect(commonPrefix(id2, id3)).toBeLessThan(5);
+  it('parseSessionId throws for invalid input', () => {
+    expect(() => parseSessionId('bad')).toThrow('Invalid sessionId');
   });
 });

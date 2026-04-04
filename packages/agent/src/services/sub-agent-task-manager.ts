@@ -11,49 +11,10 @@ import { WorkspaceSync } from './workspace-sync.js';
 import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
 import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
 import { SessionPersistenceHook } from '../session/session-persistence-hook.js';
-import { randomBytes } from 'crypto';
+import { generateSessionId, parseSessionId } from '@moca/core';
+import type { SessionId } from '@moca/core';
 import type { HookProvider } from '@strands-agents/sdk';
 import type { CreateAgentOptions } from '../agent/types.js';
-
-/**
- * Session ID Generator for Sub-Agents
- *
- * AgentCore Runtime セッションID 命名規約:
- *
- * | コンポーネント              | 最小長 | 最大長 | パターン                        | ハイフン/アンダースコア |
- * |---------------------------|--------|--------|---------------------------------|----------------------|
- * | Runtime（リクエスト）        | 33     | 256    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
- * | Runtime（レスポンスヘッダー） | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
- * | Memory                     | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
- * | CodeInterpreter / Browser  | 1      | 40     | [0-9a-zA-Z]{1,40}             | ❌ 使用不可            |
- *
- * 同じセッションIDを Runtime・Memory・CodeInterpreter/Browser で共有するため、
- * 全制約の共通部分を満たすフォーマットを採用:
- * - 33文字（Runtime の最小長）
- * - [a-zA-Z0-9] のみ（CodeInterpreter/Browser がハイフン不可）
- * - 40文字以内（CodeInterpreter/Browser の最大長）
- *
- * Additional sub-agent context:
- * - sessionType: 'subagent' attribute distinguishes from regular sessions
- * - Enables filtering and special handling in UI via DynamoDB Sessions table
- * - Random first characters ensure even partition distribution in AgentCore Memory
- */
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const ID_LENGTH = 33;
-const MASK = 63; // 2^6 - 1, next power of 2 above alphabet size (62)
-
-function generateSessionId(): string {
-  const bytes = randomBytes(ID_LENGTH * 2);
-  let result = '';
-  let pos = 0;
-  while (result.length < ID_LENGTH) {
-    const idx = bytes[pos++] & MASK;
-    if (idx < ALPHABET.length) {
-      result += ALPHABET[idx];
-    }
-  }
-  return result;
-}
 
 /**
  * Task status
@@ -241,9 +202,12 @@ class SubAgentTaskManager {
           config.AGENTCORE_MEMORY_ID,
           config.BEDROCK_REGION
         );
+        // task.sessionId is either generated via generateSessionId() (already SessionId)
+        // or provided externally — validate with parseSessionId
+        const validSessionId: SessionId = parseSessionId(task.sessionId);
         sessionConfig = {
           actorId: userId,
-          sessionId: task.sessionId,
+          sessionId: validSessionId,
           sessionType: 'subagent' as const,
         };
 

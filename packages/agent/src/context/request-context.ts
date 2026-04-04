@@ -5,6 +5,7 @@
 
 import { AsyncLocalStorage } from 'async_hooks';
 import { v7 as uuidv7 } from 'uuid';
+import type { SessionId } from '@moca/core';
 import type { WorkspaceSync } from '../services/workspace-sync.js';
 import type { SessionType } from '../session/types.js';
 
@@ -30,8 +31,8 @@ export interface RequestContext {
   clientId?: string;
   /** OAuth scopes */
   scopes?: string[];
-  /** Session ID (from x-amzn-bedrock-agentcore-runtime-session-id header) */
-  sessionId?: string;
+  /** Session ID (from x-amzn-bedrock-agentcore-runtime-session-id header) — validated Branded type */
+  sessionId?: SessionId;
   /** Session type (from x-amzn-bedrock-agentcore-runtime-session-type header) */
   sessionType?: SessionType;
 }
