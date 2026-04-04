@@ -5,6 +5,8 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
+import { parseUserId, parseAgentId } from '@moca/core';
+import type { UserId } from '@moca/core';
 import { getTriggersDynamoDBService } from '../services/triggers-dynamodb.js';
 import { getSchedulerService } from '../services/scheduler-service.js';
 
@@ -17,7 +19,7 @@ const router = Router();
 router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -93,7 +95,7 @@ router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respon
 router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
     const triggerId = req.params.id as string;
 
     if (!userId) {
@@ -176,7 +178,7 @@ router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
 router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -344,7 +346,7 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
 router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
     const triggerId = req.params.id as string;
 
     if (!userId) {
@@ -554,7 +556,7 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
 router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
     const triggerId = req.params.id as string;
 
     if (!userId) {
@@ -638,7 +640,7 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
 router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
     const triggerId = req.params.id as string;
 
     if (!userId) {
@@ -738,7 +740,7 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
 router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
     const triggerId = req.params.id as string;
 
     if (!userId) {
@@ -841,7 +843,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const userId = auth.userId;
+      const userId = auth.userId ? parseUserId(auth.userId) : undefined;
       const triggerId = req.params.id as string;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const nextToken = req.query.nextToken as string | undefined;

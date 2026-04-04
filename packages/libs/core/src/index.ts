@@ -30,5 +30,13 @@ export {
   SESSION_ID_PATTERN,
 } from './session-id.js';
 
+// UserId
+export type { UserId } from './user-id.js';
+export { isUserId, parseUserId, USER_ID_PATTERN } from './user-id.js';
+
+// AgentId
+export type { AgentId } from './agent-id.js';
+export { isAgentId, parseAgentId, AGENT_ID_PATTERN } from './agent-id.js';
+
 // Crypto utilities
 export { getSecureRandomBytes } from './crypto.js';
