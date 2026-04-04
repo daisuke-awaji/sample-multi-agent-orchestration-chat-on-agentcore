@@ -10,7 +10,7 @@ import {
   GetCodeInterpreterSessionCommand,
 } from '@aws-sdk/client-bedrock-agentcore';
 import { logger, WORKSPACE_DIRECTORY } from '../../config/index.js';
-import * as crypto from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
 import type {
@@ -55,7 +55,7 @@ export class AgentCoreCodeInterpreterClient {
     if (options.sessionName) {
       this.defaultSession = options.sessionName;
     } else {
-      this.defaultSession = `session-${crypto.randomUUID().slice(0, 12)}`;
+      this.defaultSession = `session-${uuidv7().replace(/-/g, '').slice(0, 12)}`;
     }
 
     this.sessions = new Map();

@@ -11,42 +11,10 @@ import { WorkspaceSync } from './workspace-sync.js';
 import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
 import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
 import { SessionPersistenceHook } from '../session/session-persistence-hook.js';
-import { customAlphabet } from 'nanoid';
+import { generateSessionId, parseSessionId } from '@moca/core';
+import type { SessionId } from '@moca/core';
 import type { HookProvider } from '@strands-agents/sdk';
 import type { CreateAgentOptions } from '../agent/types.js';
-
-/**
- * Session ID Generator for Sub-Agents
- *
- * Background:
- * Sub-agent sessions need to be stored in AgentCore Memory and displayed in the UI
- * alongside regular user sessions. The session ID format must meet several requirements:
- *
- * 1. AWS AgentCore Memory Constraints:
- *    - Format: [a-zA-Z0-9][a-zA-Z0-9-_]*
- *    - First character must be alphanumeric (no hyphens/underscores)
- *
- * 2. Consistency with Frontend:
- *    - Regular user sessions use customAlphabet with 33-char alphanumeric IDs
- *    - Sub-agent sessions use the same format for consistency
- *    - Reference: packages/frontend/src/stores/sessionStore.ts
- *
- * 3. Partition Distribution (Critical for Performance):
- *    - AgentCore Memory partitions data by sessionId prefix
- *    - Random first characters ensure even distribution across partitions
- *
- * 4. Sub-agent Identification:
- *    - sessionType: 'subagent' attribute distinguishes from regular sessions
- *    - Enables filtering and special handling in UI via DynamoDB Sessions table
- *
- * Why 33 characters?
- * - Matches frontend session ID length for consistency
- * - Provides sufficient entropy for unique IDs (62^33 possibilities)
- */
-const generateSessionId = customAlphabet(
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-  33
-);
 
 /**
  * Task status
@@ -234,9 +202,12 @@ class SubAgentTaskManager {
           config.AGENTCORE_MEMORY_ID,
           config.BEDROCK_REGION
         );
+        // task.sessionId is either generated via generateSessionId() (already SessionId)
+        // or provided externally — validate with parseSessionId
+        const validSessionId: SessionId = parseSessionId(task.sessionId);
         sessionConfig = {
           actorId: userId,
-          sessionId: task.sessionId,
+          sessionId: validSessionId,
           sessionType: 'subagent' as const,
         };
 

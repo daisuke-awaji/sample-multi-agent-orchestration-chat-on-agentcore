@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { nanoid } from 'nanoid';
+import { randomId } from '../utils/randomId';
 import type {
   ChatState,
   SessionChatState,
@@ -174,7 +174,7 @@ export const useChatStore = create<ChatStore>()(
       addMessage: (sessionId: string, message: Omit<Message, 'id' | 'timestamp'>) => {
         const newMessage: Message = {
           ...message,
-          id: nanoid(),
+          id: randomId(),
           timestamp: new Date(),
         };
 
@@ -644,7 +644,7 @@ export const useChatStore = create<ChatStore>()(
               return {
                 type: 'image' as const,
                 image: {
-                  id: nanoid(),
+                  id: randomId(),
                   fileName: content.image.fileName || 'image',
                   mimeType: content.image.mimeType,
                   size: 0, // Size not available from API

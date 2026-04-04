@@ -4,8 +4,8 @@
  */
 
 import fetch from 'node-fetch';
-import { randomUUID } from 'crypto';
 import type { ClientConfig } from '../config/index.js';
+import { generateSessionId } from '@moca/core';
 import { getCachedJwtToken } from '../auth/cognito.js';
 import { getCachedMachineUserToken } from '../auth/machine-user.js';
 
@@ -178,7 +178,7 @@ export class AgentCoreClient {
       };
 
       // Always add session ID to headers
-      const actualSessionId = sessionId || `session-${randomUUID()}`;
+      const actualSessionId = sessionId || generateSessionId();
       headers['X-Amzn-Bedrock-AgentCore-Runtime-Session-Id'] = actualSessionId;
 
       // Additional trace ID header is also required for AgentCore Runtime

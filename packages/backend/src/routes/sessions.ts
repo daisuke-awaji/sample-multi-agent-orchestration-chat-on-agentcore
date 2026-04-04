@@ -5,6 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
+import { isSessionId } from '@moca/core';
 import { createAgentCoreMemoryService } from '../services/agentcore-memory.js';
 import { getSessionsDynamoDBService } from '../services/sessions-dynamodb.js';
 import { config } from '../config/index.js';
@@ -121,6 +122,14 @@ router.get(
         });
       }
 
+      if (!isSessionId(sessionId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Session ID format is invalid (must be 33 alphanumeric characters)',
+          requestId: auth.requestId,
+        });
+      }
+
       // Check if AgentCore Memory ID is configured
       if (!config.agentcore.memoryId) {
         return res.status(500).json({
@@ -210,6 +219,14 @@ router.delete(
         return res.status(400).json({
           error: 'Invalid request',
           message: 'Session ID is not specified',
+          requestId: auth.requestId,
+        });
+      }
+
+      if (!isSessionId(sessionId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Session ID format is invalid (must be 33 alphanumeric characters)',
           requestId: auth.requestId,
         });
       }

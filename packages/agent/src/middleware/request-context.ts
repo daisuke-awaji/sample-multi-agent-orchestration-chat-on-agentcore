@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createRequestContext, runWithContext } from '../context/request-context.js';
+import { isSessionId } from '@moca/core';
 import { logger } from '../config/index.js';
 import type { SessionType } from '../session/types.js';
 
@@ -106,14 +107,25 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
   requestContext.clientId = tokenInfo.clientId;
   requestContext.scopes = tokenInfo.scopes;
 
-  // Extract session headers
-  const sessionId = req.headers['x-amzn-bedrock-agentcore-runtime-session-id'] as
+  // Extract and validate session headers
+  const rawSessionId = req.headers['x-amzn-bedrock-agentcore-runtime-session-id'] as
     | string
     | undefined;
   const sessionType = req.headers['x-amzn-bedrock-agentcore-runtime-session-type'] as
     | SessionType
     | undefined;
-  requestContext.sessionId = sessionId;
+
+  if (rawSessionId) {
+    if (isSessionId(rawSessionId)) {
+      requestContext.sessionId = rawSessionId;
+    } else {
+      logger.warn('⚠️ Invalid sessionId in header, ignoring:', {
+        requestId: requestContext.requestId,
+        rawSessionId,
+      });
+      // sessionId remains undefined — sessionless mode
+    }
+  }
   requestContext.sessionType = sessionType;
 
   // Log request context
