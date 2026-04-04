@@ -18,30 +18,25 @@ import type { CreateAgentOptions } from '../agent/types.js';
 /**
  * Session ID Generator for Sub-Agents
  *
- * Background:
- * Sub-agent sessions need to be stored in AgentCore Memory and displayed in the UI
- * alongside regular user sessions. The session ID format must meet several requirements:
+ * AgentCore Runtime セッションID 命名規約:
  *
- * 1. AWS AgentCore Memory Constraints:
- *    - Format: [a-zA-Z0-9][a-zA-Z0-9-_]*
- *    - First character must be alphanumeric (no hyphens/underscores)
+ * | コンポーネント              | 最小長 | 最大長 | パターン                        | ハイフン/アンダースコア |
+ * |---------------------------|--------|--------|---------------------------------|----------------------|
+ * | Runtime（リクエスト）        | 33     | 256    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | Runtime（レスポンスヘッダー） | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | Memory                     | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | CodeInterpreter / Browser  | 1      | 40     | [0-9a-zA-Z]{1,40}             | ❌ 使用不可            |
  *
- * 2. Consistency with Frontend:
- *    - Regular user sessions use customAlphabet with 33-char alphanumeric IDs
- *    - Sub-agent sessions use the same format for consistency
- *    - Reference: packages/frontend/src/stores/sessionStore.ts
+ * 同じセッションIDを Runtime・Memory・CodeInterpreter/Browser で共有するため、
+ * 全制約の共通部分を満たすフォーマットを採用:
+ * - 33文字（Runtime の最小長）
+ * - [a-zA-Z0-9] のみ（CodeInterpreter/Browser がハイフン不可）
+ * - 40文字以内（CodeInterpreter/Browser の最大長）
  *
- * 3. Partition Distribution (Critical for Performance):
- *    - AgentCore Memory partitions data by sessionId prefix
- *    - Random first characters ensure even distribution across partitions
- *
- * 4. Sub-agent Identification:
- *    - sessionType: 'subagent' attribute distinguishes from regular sessions
- *    - Enables filtering and special handling in UI via DynamoDB Sessions table
- *
- * Why 33 characters?
- * - Matches frontend session ID length for consistency
- * - Provides sufficient entropy for unique IDs (62^33 possibilities)
+ * Additional sub-agent context:
+ * - sessionType: 'subagent' attribute distinguishes from regular sessions
+ * - Enables filtering and special handling in UI via DynamoDB Sessions table
+ * - Random first characters ensure even partition distribution in AgentCore Memory
  */
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const ID_LENGTH = 33;

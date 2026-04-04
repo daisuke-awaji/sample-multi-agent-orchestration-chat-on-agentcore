@@ -7,7 +7,18 @@ import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
 import { AgentsService, MCPConfig } from './agents-service.js';
 import { buildEventDrivenPrompt } from './prompt-builder.js';
 
-// AgentCore sessionId constraint: [a-zA-Z0-9][a-zA-Z0-9-_]*
+/**
+ * AgentCore Runtime セッションID 命名規約:
+ *
+ * | コンポーネント              | 最小長 | 最大長 | パターン                        | ハイフン/アンダースコア |
+ * |---------------------------|--------|--------|---------------------------------|----------------------|
+ * | Runtime（リクエスト）        | 33     | 256    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | Runtime（レスポンスヘッダー） | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | Memory                     | 1      | 100    | [a-zA-Z0-9][a-zA-Z0-9-_]*     | ✅ 使用可             |
+ * | CodeInterpreter / Browser  | 1      | 40     | [0-9a-zA-Z]{1,40}             | ❌ 使用不可            |
+ *
+ * 全制約の共通部分: 33文字、[a-zA-Z0-9] のみ、40文字以内
+ */
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const ID_LENGTH = 33;
 const MASK = 63;
