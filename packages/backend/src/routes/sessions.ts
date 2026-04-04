@@ -5,7 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
-import { isSessionId } from '@moca/core';
+import { isSessionId, parseUserId } from '@moca/core';
 import { createAgentCoreMemoryService } from '../services/agentcore-memory.js';
 import { getSessionsDynamoDBService } from '../services/sessions-dynamodb.js';
 import { config } from '../config/index.js';
@@ -21,7 +21,7 @@ const router = Router();
 router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const actorId = auth.userId;
+    const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     // Parse pagination query parameters
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
@@ -103,7 +103,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const actorId = auth.userId;
+      const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { sessionId } = req.params;
 
       if (!actorId) {
@@ -204,7 +204,7 @@ router.delete(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const actorId = auth.userId;
+      const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { sessionId } = req.params;
 
       if (!actorId) {

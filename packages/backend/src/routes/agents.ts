@@ -10,6 +10,8 @@ import {
   getCurrentAuth,
   AuthInfo,
 } from '../middleware/auth.js';
+import { parseUserId, parseAgentId, isAgentId } from '@moca/core';
+import type { UserId, AgentId } from '@moca/core';
 import {
   createAgentsService,
   CreateAgentInput,
@@ -36,7 +38,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 function resolveUserId(
   auth: AuthInfo,
   req: AuthenticatedRequest
-): { userId: string } | { error: string } {
+): { userId: UserId } | { error: string } {
   if (auth.isMachineUser) {
     const targetUserId = req.headers['x-target-user-id'] as string | undefined;
     if (!targetUserId) {
@@ -45,13 +47,13 @@ function resolveUserId(
     if (!UUID_REGEX.test(targetUserId)) {
       return { error: 'X-Target-User-Id must be a valid UUID format' };
     }
-    return { userId: targetUserId };
+    return { userId: parseUserId(targetUserId) };
   }
 
   if (!auth.userId) {
     return { error: 'Failed to retrieve user ID' };
   }
-  return { userId: auth.userId };
+  return { userId: parseUserId(auth.userId) };
 }
 
 /**
@@ -114,7 +116,7 @@ router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
   try {
     const auth = getCurrentAuth(req);
     const result = resolveUserId(auth, req);
-    const { agentId } = req.params;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
     if ('error' in result) {
       return res.status(400).json({
@@ -243,7 +245,7 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
   try {
     const auth = getCurrentAuth(req);
     const result = resolveUserId(auth, req);
-    const { agentId } = req.params;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
     const input: Partial<CreateAgentInput> = req.body;
 
     if ('error' in result) {
@@ -315,8 +317,8 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
 router.delete('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
-    const { agentId } = req.params;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -376,8 +378,8 @@ router.put(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const userId = auth.userId;
-      const { agentId } = req.params;
+      const userId = auth.userId ? parseUserId(auth.userId) : undefined;
+      const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
       if (!userId) {
         return res.status(400).json({
@@ -448,7 +450,7 @@ router.put(
 router.post('/initialize', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -544,9 +546,10 @@ router.get(
       });
 
       // Convert DEFAULT_AGENTS to Agent format (system user)
+      // System agents use synthetic IDs — not real UUIDs
       const defaultAgents: BackendAgent[] = DEFAULT_AGENTS.map((agent, index) => ({
-        userId: 'system',
-        agentId: `default-${index}`,
+        userId: 'system' as UserId,
+        agentId: `default-${index}` as AgentId,
         name: agent.name,
         description: agent.description,
         icon: agent.icon,
@@ -653,8 +656,8 @@ router.get(
 
         if (defaultAgent) {
           agent = {
-            userId: 'system',
-            agentId: `default-${index}`,
+            userId: 'system' as UserId,
+            agentId: `default-${index}` as AgentId,
             name: defaultAgent.name,
             description: defaultAgent.description,
             icon: defaultAgent.icon,
@@ -674,7 +677,10 @@ router.get(
       } else {
         // Handle user-shared agents
         const agentsService = createAgentsService();
-        agent = await agentsService.getSharedAgent(userId, agentId);
+        agent = await agentsService.getSharedAgent(
+          parseUserId(userId),
+          parseAgentId(agentId)
+        );
       }
 
       if (!agent) {
@@ -723,7 +729,7 @@ router.post(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const targetUserId = auth.userId;
+      const targetUserId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { userId: sourceUserId, agentId: sourceAgentId } = req.params;
 
       if (!targetUserId) {
@@ -762,7 +768,10 @@ router.post(
         }
       } else {
         // Handle user-shared agents
-        const sharedAgent = await agentsService.getSharedAgent(sourceUserId, sourceAgentId);
+        const sharedAgent = await agentsService.getSharedAgent(
+          parseUserId(sourceUserId),
+          parseAgentId(sourceAgentId)
+        );
         if (sharedAgent) {
           sourceAgent = {
             name: sharedAgent.name,
