@@ -35,6 +35,7 @@ import {
 import { Tooltip } from './ui/Tooltip/Tooltip';
 import { FolderTree } from './FolderTree';
 import { getFileIcon } from '../utils/fileIcons';
+import { downloadWithAsyncUrl } from '../utils/download';
 import { DownloadProgressModal } from './ui/DownloadProgressModal';
 
 interface StorageManagementModalProps {
@@ -565,19 +566,14 @@ export function StorageManagementModal({ isOpen, onClose }: StorageManagementMod
       // ZIP download for folders
       await handleFolderDownload(item.path, item.name);
     } else {
-      // Use <a> tag click pattern instead of window.open to avoid iOS Safari popup blockers
-      try {
-        const downloadUrl = await generateDownloadUrl(item.path);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => document.body.removeChild(link), 100);
-      } catch (error) {
-        console.error('Download error:', error);
-      }
+      // Open window synchronously within user gesture context (before await)
+      // This preserves transient activation on mobile browsers
+      await downloadWithAsyncUrl(
+        () => generateDownloadUrl(item.path),
+        (error) => {
+          console.error('Download error:', error);
+        }
+      );
     }
   };
 
