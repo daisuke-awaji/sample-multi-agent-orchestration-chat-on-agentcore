@@ -5,7 +5,7 @@
 
 import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 import { TriggerExecution } from '../types/index.js';
 
 /** Maximum size for eventPayload field (~10KB) */
@@ -56,7 +56,7 @@ export class ExecutionRecorder {
     event: unknown,
     errorMessage?: string
   ): Promise<string> {
-    const executionId = nanoid();
+    const executionId = uuidv7();
     const now = new Date().toISOString();
 
     // TTL: 30 days from now
