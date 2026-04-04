@@ -12,7 +12,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 
 /**
  * Trigger type definitions (matching trigger package)
@@ -131,7 +131,7 @@ export class TriggersDynamoDBService {
    * Create a new trigger
    */
   async createTrigger(input: CreateTriggerInput): Promise<Trigger> {
-    const triggerId = nanoid();
+    const triggerId = uuidv7();
     const now = new Date().toISOString();
 
     const trigger: Trigger = {

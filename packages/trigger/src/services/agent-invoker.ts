@@ -2,7 +2,7 @@
  * Service for invoking Agent API
  */
 
-import { randomUUID } from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import { SchedulerEventPayload, EventDrivenContext } from '../types/index.js';
 import { AgentsService, MCPConfig } from './agents-service.js';
 import { buildEventDrivenPrompt } from './prompt-builder.js';
@@ -103,7 +103,7 @@ export class AgentInvoker {
       finalLength: prompt.length,
     });
 
-    const sessionId = payload.sessionId || randomUUID();
+    const sessionId = payload.sessionId || uuidv7();
 
     return {
       request: {

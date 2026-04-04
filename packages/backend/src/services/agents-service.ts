@@ -13,7 +13,7 @@ import {
   AttributeValue,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall, NativeAttributeValue } from '@aws-sdk/util-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 import { config } from '../config/index.js';
 import { SsmEnvStore } from './ssm-env-store.js';
 import {
@@ -221,7 +221,7 @@ export class AgentsService {
   async createAgent(userId: string, input: CreateAgentInput, username?: string): Promise<Agent> {
     try {
       const now = new Date().toISOString();
-      const agentId = uuidv4();
+      const agentId = uuidv7();
 
       // Extract env values and store in SSM
       let mcpConfigForDb = input.mcpConfig;
@@ -246,7 +246,7 @@ export class AgentsService {
         enabledTools: input.enabledTools,
         scenarios: input.scenarios.map((scenario) => ({
           ...scenario,
-          id: uuidv4(),
+          id: uuidv7(),
         })),
         mcpConfig: mcpConfigForDb,
         createdAt: now,
@@ -325,7 +325,7 @@ export class AgentsService {
       if (input.scenarios !== undefined) {
         const scenariosWithIds = input.scenarios.map((scenario) => ({
           ...scenario,
-          id: uuidv4(),
+          id: uuidv7(),
         }));
         updateExpressions.push('#scenarios = :scenarios');
         expressionAttributeNames['#scenarios'] = 'scenarios';

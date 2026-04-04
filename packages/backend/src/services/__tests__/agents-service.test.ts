@@ -28,7 +28,7 @@ jest.mock('../../config/index', () => ({
 }));
 
 jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid-1234'),
+  v7: jest.fn(() => 'test-uuid-1234'),
 }));
 
 import {

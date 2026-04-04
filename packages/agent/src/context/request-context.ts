@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from 'async_hooks';
-import { randomUUID } from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import type { WorkspaceSync } from '../services/workspace-sync.js';
 import type { SessionType } from '../session/types.js';
 
@@ -85,7 +85,7 @@ export function getCurrentStoragePath(): string {
 export function createRequestContext(authorizationHeader?: string): RequestContext {
   return {
     authorizationHeader,
-    requestId: randomUUID(),
+    requestId: uuidv7(),
     startTime: new Date(),
     isMachineUser: false,
   };

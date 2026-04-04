@@ -27,7 +27,7 @@ import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chromium } from 'playwright-core';
 import { logger } from '../../config/index.js';
 import { getCurrentContext, getCurrentStoragePath } from '../../context/request-context.js';
-import * as crypto from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import type {
   ToolResult,
   SessionInfo,
@@ -67,7 +67,7 @@ export class AgentCoreBrowserClient {
     this.region = options.region || process.env.AWS_REGION || 'us-east-1';
     this.browserIdentifier = options.browserIdentifier || 'aws.browser.v1';
     this.storagePath = options.storagePath || '';
-    this.defaultSessionName = `browser-${crypto.randomUUID().slice(0, 12)}`;
+    this.defaultSessionName = `browser-${uuidv7().slice(0, 12)}`;
     this.client = new BedrockAgentCoreClient({ region: this.region });
     // S3 client will be lazily initialized with user-scoped credentials when needed
     this.s3Client = new S3Client({ region: this.region });
