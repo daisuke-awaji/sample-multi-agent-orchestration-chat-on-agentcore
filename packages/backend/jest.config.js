@@ -17,9 +17,6 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!@moca/core)',
-  ],
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testTimeout: 30000,
   collectCoverageFrom: [
