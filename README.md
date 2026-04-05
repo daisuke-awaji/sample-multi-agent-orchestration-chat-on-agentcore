@@ -148,6 +148,20 @@ Deploy the stack with the following commands.
 npm run deploy
 ```
 
+#### 5. Seed system agents
+
+After deployment, seed the default system agents into DynamoDB. This is a one-time operation that populates the shared agents directory with the built-in agents.
+
+```bash
+npx tsx scripts/seed-system-agents.ts --env dev
+```
+
+To update system agents after changing `DEFAULT_AGENTS` definitions, use `--force` to replace existing ones:
+
+```bash
+npx tsx scripts/seed-system-agents.ts --env dev --force
+```
+
 After deployment, you can find the Frontend URL in the CloudFormation stack outputs.
 
 For advanced configuration options such as custom domains, environment-specific settings, and event rules, see the [Deployment Options](docs/deployment-options.md) documentation.
