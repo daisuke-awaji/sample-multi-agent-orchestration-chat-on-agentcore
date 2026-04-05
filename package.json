@@ -28,6 +28,7 @@
     "destroy": "npm run destroy -w @moca/cdk",
     "build:lambda": "npm run build -w @moca/lambda-tools",
     "setup-env": "tsx scripts/setup-env.ts",
+    "seed-system-agents": "tsx scripts/seed-system-agents.ts",
     "cdk": "npm run cdk -w @moca/cdk",
     "synth": "npm run synth -w @moca/cdk"
   },
