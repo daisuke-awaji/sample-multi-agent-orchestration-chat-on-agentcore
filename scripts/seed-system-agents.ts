@@ -27,6 +27,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v7 as uuidv7 } from 'uuid';
+import { SYSTEM_USER_ID } from '../packages/libs/core/src/system-ids.js';
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing
@@ -82,13 +83,6 @@ Options:
     dryRun: !!opts.dryRun,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-// Canonical source: packages/libs/core/src/system-ids.ts
-const SYSTEM_USER_ID = '00000000-0000-7000-0000-000000000000';
 
 // ---------------------------------------------------------------------------
 // CloudFormation helpers
