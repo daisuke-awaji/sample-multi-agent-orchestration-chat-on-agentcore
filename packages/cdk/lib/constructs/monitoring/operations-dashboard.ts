@@ -205,6 +205,7 @@ export class OperationsDashboard extends Construct {
         sessionStreamHandlerFunction.metricDuration({ statistic: 'p50', period: cdk.Duration.hours(1), label: 'SessionStream p50' }),
         sessionStreamHandlerFunction.metricDuration({ statistic: 'p99', period: cdk.Duration.hours(1), label: 'SessionStream p99' }),
       ],
+      leftAnnotations: [{ label: 'Baseline avg ~699 ms', value: 699, color: '#1f77b4' }],
     });
 
     const wLambdaConcurrent = new cloudwatch.GraphWidget({
@@ -438,13 +439,13 @@ export class OperationsDashboard extends Construct {
         '',
         '| Metric | Baseline (mean) | Std Dev | Notes |',
         '|---|---|---|---|',
-        '| API Requests/day | ~388 | ±120 | Weekday peak; weekend ~40% lower |',
+        '| API Requests/day | ~431 avg / 1,824 peak | ±199 | Weekday peak; weekend ~40% lower. Peak record 4/3 |',
         '| API avg Latency | ~616 ms | ±180 ms | Lambda cold-starts excluded |',
         '| API p99 Latency | ~3,935 ms | — | Bedrock inference dominates tail |',
-        '| Lambda BackendAPI avg Duration | ~610 ms | — | Per invocation |',
+        '| Lambda BackendAPI avg Duration | ~699 ms | — | Per invocation |',
         '| Trigger Executor avg Duration | ~2,629 ms | ±400 ms | 2–3 executions/day |',
-        '| DDB agents RCU/day | ~2,570 | — | Primary read table |',
-        '| DDB sessions WCU/day | ~609 | — | Primary write table |',
+        '| DDB agents RCU/day | ~2,990 | ±1,491 | Primary read table |',
+        '| DDB sessions WCU/day | ~632 | ±279 | Primary write table; trending toward ~1,390 on peak days |',
         '| CF 5xx Error Rate | 0% | — | 25+ days continuous zero |',
         '| API 5xx Errors | 0 | — | 25+ days continuous zero |',
         '',
