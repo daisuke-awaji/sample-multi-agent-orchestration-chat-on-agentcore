@@ -18,7 +18,7 @@ import {
   isSystemUserId,
   isSystemAgentId,
 } from '@moca/core';
-import type { UserId, AgentId } from '@moca/core';
+import type { UserId } from '@moca/core';
 import {
   createAgentsService,
   CreateAgentInput,
