@@ -14,7 +14,6 @@ import { translateIfKey } from '../utils/agent-translation';
 import { useSharedAgentStore } from '../stores/sharedAgentStore';
 import { useAgentStore } from '../stores/agentStore';
 import { useAuthStore } from '../stores/authStore';
-import { createAgent } from '../api/agents';
 import { useUIStore } from '../stores/uiStore';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -47,28 +46,12 @@ export const SharedAgentDetailModal: React.FC<SharedAgentDetailModalProps> = ({
   const handleAddToMyAgents = async () => {
     setIsCloning(true);
     try {
-      // Create new if default agent (userId === "system")
-      if (agent.userId === 'system') {
-        await createAgent({
-          name: agent.name,
-          description: agent.description,
-          icon: agent.icon,
-          systemPrompt: agent.systemPrompt,
-          enabledTools: agent.enabledTools,
-          scenarios: agent.scenarios.map((s) => ({
-            title: s.title,
-            prompt: s.prompt,
-          })),
-          mcpConfig: agent.mcpConfig,
-        });
-      } else {
-        // Clone if shared agent
-        if (!agent.userId) {
-          toast.error(t('agentDirectory.userIdNotFound'));
-          return;
-        }
-        await cloneAgent(agent.userId, agent.agentId);
+      // All agents (including system defaults) use the same clone path
+      if (!agent.userId) {
+        toast.error(t('agentDirectory.userIdNotFound'));
+        return;
       }
+      await cloneAgent(agent.userId, agent.agentId);
 
       await refreshAgents();
       toast.success(t('agentDirectory.addSuccess'));

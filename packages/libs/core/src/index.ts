@@ -41,11 +41,8 @@ export { isAgentId, parseAgentId, AGENT_ID_PATTERN } from './agent-id.js';
 // Crypto utilities
 export { getSecureRandomBytes } from './crypto.js';
 
-// System IDs (synthetic identifiers for default/system agents)
+// System IDs (well-known identifiers for default/system agents)
 export {
   SYSTEM_USER_ID,
-  systemAgentId,
-  systemScenarioId,
-  isSystemUserId,
-  isSystemAgentId,
+  isSystemUser,
 } from './system-ids.js';

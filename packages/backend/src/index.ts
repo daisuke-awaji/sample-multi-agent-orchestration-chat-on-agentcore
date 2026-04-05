@@ -16,6 +16,8 @@ import storageRouter from './routes/storage.js';
 import triggersRouter from './routes/triggers.js';
 import eventsRouter from './routes/events.js';
 import webhooksRouter from './routes/webhooks.js';
+import { createAgentsService } from './services/agents-service.js';
+import { DEFAULT_AGENTS } from './data/default-agents.js';
 
 const app = express();
 
@@ -198,6 +200,12 @@ async function startServer(): Promise<void> {
   try {
     // Pre-load JWKS cache for faster first verification
     await hydrateJWKS();
+
+    // Seed system agents (idempotent — skips if already seeded)
+    const agentsService = createAgentsService();
+    agentsService.seedSystemAgents(DEFAULT_AGENTS).catch((err) => {
+      console.error('⚠️ System agent seed failed (non-fatal):', err);
+    });
 
     app.listen(config.port, () => {
       console.log(`🚀 AgentCore Backend API server listening on port ${config.port}`);

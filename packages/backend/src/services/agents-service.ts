@@ -15,6 +15,7 @@ import {
 import { marshall, unmarshall, NativeAttributeValue } from '@aws-sdk/util-dynamodb';
 import { v7 as uuidv7 } from 'uuid';
 import type { UserId, AgentId } from '@moca/core';
+import { SYSTEM_USER_ID } from '@moca/core';
 import { config } from '../config/index.js';
 import { SsmEnvStore } from './ssm-env-store.js';
 import {
@@ -616,6 +617,35 @@ export class AgentsService {
     } catch (error) {
       console.error('Error cloning agent:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Seed default agents for the system user.
+   *
+   * Idempotent: skips if the system user already owns any agents.
+   * Each created agent is immediately marked as shared so that it
+   * appears in the shared-agents GSI query alongside user-shared agents.
+   */
+  async seedSystemAgents(defaultAgents: CreateAgentInput[]): Promise<void> {
+    try {
+      const existing = await this.listAgents(SYSTEM_USER_ID);
+      if (existing.length > 0) {
+        console.log(
+          `ℹ️  System agents already seeded (${existing.length} items), skipping`
+        );
+        return;
+      }
+
+      console.log(`🌱 Seeding ${defaultAgents.length} system agents...`);
+      for (const input of defaultAgents) {
+        const agent = await this.createAgent(SYSTEM_USER_ID, input, 'System');
+        await this.toggleShare(SYSTEM_USER_ID, agent.agentId);
+      }
+      console.log(`✅ System agents seeded successfully (${defaultAgents.length} items)`);
+    } catch (error) {
+      console.error('Failed to seed system agents:', error);
+      throw new Error('Failed to seed system agents', { cause: error });
     }
   }
 }
