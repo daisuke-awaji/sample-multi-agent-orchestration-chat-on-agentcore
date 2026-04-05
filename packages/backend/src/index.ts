@@ -202,10 +202,12 @@ async function startServer(): Promise<void> {
     await hydrateJWKS();
 
     // Seed system agents (idempotent — skips if already seeded)
-    const agentsService = createAgentsService();
-    agentsService.seedSystemAgents(DEFAULT_AGENTS).catch((err) => {
+    try {
+      const agentsService = createAgentsService();
+      await agentsService.seedSystemAgents(DEFAULT_AGENTS);
+    } catch (err) {
       console.error('⚠️ System agent seed failed (non-fatal):', err);
-    });
+    }
 
     app.listen(config.port, () => {
       console.log(`🚀 AgentCore Backend API server listening on port ${config.port}`);
