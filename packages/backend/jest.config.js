@@ -16,6 +16,7 @@ export default {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@moca/core$': '<rootDir>/src/tests/mocks/moca-core.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testTimeout: 30000,

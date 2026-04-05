@@ -31,15 +31,6 @@ jest.mock('uuid', () => ({
   v7: jest.fn(() => 'test-uuid-1234'),
 }));
 
-jest.mock('@moca/core', () => ({
-  SYSTEM_USER_ID: '00000000-0000-7000-0000-000000000000',
-  parseUserId: (v: string) => v,
-  isUserId: (v: string) => /^[0-9a-f]{8}-/.test(v),
-  parseAgentId: (v: string) => v,
-  isAgentId: (v: string) => /^[0-9a-f]{8}-/.test(v),
-  isSystemUser: (id: string) => id === '00000000-0000-7000-0000-000000000000',
-}));
-
 import {
   DynamoDBClient,
   PutItemCommand,
