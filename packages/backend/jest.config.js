@@ -16,10 +16,12 @@ export default {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^@moca/core$': '<rootDir>/../../packages/libs/core/dist/index.js',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!@moca/core)',
+  ],
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
-  testTimeout: 30000, // AWS通信のため30秒に設定
+  testTimeout: 30000,
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.test.ts',
