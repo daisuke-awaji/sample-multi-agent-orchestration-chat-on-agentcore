@@ -148,7 +148,7 @@ Deploy the stack with the following commands.
 npm run deploy
 ```
 
-#### 5. Seed system agents
+#### 5. Seed system agents (Optional)
 
 After deployment, seed the default system agents into DynamoDB. This is a one-time operation that populates the shared agents directory with the built-in agents.
 
