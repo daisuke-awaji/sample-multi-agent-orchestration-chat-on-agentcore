@@ -30,6 +30,11 @@ function ToolItem({ tool }: ToolItemProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const hasLongDescription = tool.description ? tool.description.length > 200 : false;
+  const hasParameters =
+    tool.inputSchema.properties && Object.keys(tool.inputSchema.properties).length > 0;
+  const isExpandable = hasParameters || hasLongDescription;
+
   const renderParameters = () => {
     if (!tool.inputSchema.properties) return null;
 
@@ -65,7 +70,18 @@ function ToolItem({ tool }: ToolItemProps) {
 
   return (
     <Card variant="default" padding="md">
-      <div className="flex items-start gap-3">
+      <div
+        className={`flex items-start gap-3 ${isExpandable ? 'cursor-pointer' : ''}`}
+        role={isExpandable ? 'button' : undefined}
+        tabIndex={isExpandable ? 0 : undefined}
+        onClick={() => isExpandable && setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (isExpandable && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+      >
         <div className="flex-shrink-0 w-8 h-8 bg-surface-secondary rounded-btn flex items-center justify-center text-fg-secondary">
           {getToolIcon(tool.name)}
         </div>
@@ -74,12 +90,8 @@ function ToolItem({ tool }: ToolItemProps) {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-fg-default truncate">{tool.name}</h3>
 
-            {tool.inputSchema.properties && Object.keys(tool.inputSchema.properties).length > 0 && (
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex-shrink-0 p-1 text-fg-disabled hover:text-fg-secondary rounded"
-                aria-label={isExpanded ? t('tool.hideDetails') : t('tool.showDetails')}
-              >
+            {isExpandable && (
+              <span className="flex-shrink-0 p-1 text-fg-disabled">
                 <svg
                   className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                   fill="currentColor"
@@ -91,12 +103,16 @@ function ToolItem({ tool }: ToolItemProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-              </button>
+              </span>
             )}
           </div>
 
           {tool.description && (
-            <p className="text-fg-secondary text-sm mt-1 leading-relaxed">{tool.description}</p>
+            <p
+              className={`text-fg-secondary text-sm mt-1 leading-relaxed ${!isExpanded ? 'line-clamp-3' : ''}`}
+            >
+              {tool.description}
+            </p>
           )}
 
           {isExpanded && renderParameters()}
