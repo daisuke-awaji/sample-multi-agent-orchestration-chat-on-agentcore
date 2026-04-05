@@ -5,11 +5,12 @@
  * Usage:
  *   npx tsx scripts/seed-system-agents.ts --env dev
  *   npx tsx scripts/seed-system-agents.ts --env prd --force
- *   npx tsx scripts/seed-system-agents.ts --env dev --region ap-northeast-1
+ *   npx tsx scripts/seed-system-agents.ts --env dev --table mocadev-agents
  *
  * Options:
  *   --env      Environment name (dev|stg|prd)             [required]
  *   --region   AWS region (default: ap-northeast-1)
+ *   --table    DynamoDB table name (auto-detected from CloudFormation if omitted)
  *   --force    Delete existing system agents and re-seed
  *   --dry-run  Show what would be done without making changes
  */
@@ -20,6 +21,7 @@ import {
 } from '@aws-sdk/client-cloudformation';
 import {
   DynamoDBClient,
+  PutItemCommand,
   QueryCommand,
   DeleteItemCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -29,6 +31,8 @@ import { v7 as uuidv7 } from 'uuid';
 // ---------------------------------------------------------------------------
 // CLI argument parsing
 // ---------------------------------------------------------------------------
+
+const VALID_ENVS = ['dev', 'stg', 'prd'] as const;
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -65,6 +69,11 @@ Options:
     process.exit(1);
   }
 
+  if (!VALID_ENVS.includes(opts.env as typeof VALID_ENVS[number])) {
+    console.error(`❌ --env must be one of: ${VALID_ENVS.join(', ')}. Got: "${opts.env}"`);
+    process.exit(1);
+  }
+
   return {
     env: opts.env as string,
     region: (opts.region as string) || 'ap-northeast-1',
@@ -78,6 +87,7 @@ Options:
 // Constants
 // ---------------------------------------------------------------------------
 
+// Canonical source: packages/libs/core/src/system-ids.ts
 const SYSTEM_USER_ID = '00000000-0000-7000-0000-000000000000';
 
 // ---------------------------------------------------------------------------
@@ -177,11 +187,10 @@ async function createAgent(
     mcpConfig: input.mcpConfig,
     createdAt: now,
     updatedAt: now,
-    isShared: 'true',
+    isShared: 'true', // String — matches DynamoAgent GSI key format (agents-service.ts:toDynamoAgent)
     createdBy: 'System',
   };
 
-  const { PutItemCommand } = await import('@aws-sdk/client-dynamodb');
   await client.send(
     new PutItemCommand({
       TableName: tableName,
@@ -219,7 +228,7 @@ async function main() {
 
   // 2. Load DEFAULT_AGENTS from backend data
   const { DEFAULT_AGENTS } = await import(
-    '../packages/backend/src/data/default-agents.js'
+    '../packages/backend/src/data/default-agents.ts'
   );
   console.log(`📝 Default agents defined: ${DEFAULT_AGENTS.length}`);
 
@@ -250,26 +259,42 @@ async function main() {
     console.log('   Done.');
   }
 
-  // 5. Seed
+  // 5. Seed — track progress for partial failure reporting
   console.log(`\n🌱 Seeding ${DEFAULT_AGENTS.length} system agents...`);
   const created: Array<{ agentId: string; name: string }> = [];
+  const failed: Array<{ name: string; error: string }> = [];
 
   for (const input of DEFAULT_AGENTS) {
     if (opts.dryRun) {
       console.log(`   [dry-run] Would create: ${input.name}`);
-    } else {
+      continue;
+    }
+    try {
       const agent = await createAgent(dynamoClient, tableName, input);
       created.push(agent);
       console.log(`   ✅ ${agent.agentId}  ${agent.name}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      failed.push({ name: input.name, error: msg });
+      console.error(`   ❌ Failed: ${input.name} — ${msg}`);
     }
   }
 
-  console.log(
-    `\n✨ ${opts.dryRun ? 'Would seed' : 'Seeded'} ${DEFAULT_AGENTS.length} system agents (userId: ${SYSTEM_USER_ID})\n`
-  );
+  // 6. Summary
+  if (opts.dryRun) {
+    console.log(`\n📋 Would seed ${DEFAULT_AGENTS.length} system agents (userId: ${SYSTEM_USER_ID})\n`);
+  } else if (failed.length === 0) {
+    console.log(`\n✨ Seeded ${created.length} system agents (userId: ${SYSTEM_USER_ID})\n`);
+  } else {
+    console.error(`\n⚠️  Partial seed: ${created.length} succeeded, ${failed.length} failed`);
+    for (const f of failed) {
+      console.error(`   - ${f.name}: ${f.error}`);
+    }
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
-  console.error('\n❌ Seed failed:', err.message || err);
+  console.error('\n❌ Seed failed:', err);
   process.exit(1);
 });
