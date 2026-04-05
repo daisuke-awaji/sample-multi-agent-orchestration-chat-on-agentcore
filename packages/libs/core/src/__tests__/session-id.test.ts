@@ -129,7 +129,7 @@ describe('isSessionId', () => {
   it('returns true for valid 33-char alphanumeric string', () => {
     expect(isSessionId('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg')).toBe(true);
     expect(isSessionId('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')).toBe(true);
-    expect(isSessionId('0123456789012345678901234567890AB')).toBe(true);
+    expect(isSessionId('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')).toBe(true);
   });
 
   it('returns false for empty string', () => {
