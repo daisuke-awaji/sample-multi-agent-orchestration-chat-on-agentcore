@@ -10,7 +10,14 @@ import {
   getCurrentAuth,
   AuthInfo,
 } from '../middleware/auth.js';
-import { parseUserId, parseAgentId, isAgentId } from '@moca/core';
+import { parseUserId, parseAgentId, isAgentId, isUserId } from '@moca/core';
+import {
+  SYSTEM_USER_ID,
+  systemAgentId,
+  systemScenarioId,
+  isSystemUserId,
+  isSystemAgentId,
+} from '@moca/core';
 import type { UserId, AgentId } from '@moca/core';
 import {
   createAgentsService,
@@ -131,7 +138,7 @@ router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -261,7 +268,7 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -331,7 +338,7 @@ router.delete('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -392,7 +399,7 @@ router.put(
       if (!agentId) {
         return res.status(400).json({
           error: 'Invalid request',
-          message: 'Agent ID is not specified',
+          message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
           requestId: auth.requestId,
         });
       }
@@ -546,18 +553,18 @@ router.get(
       });
 
       // Convert DEFAULT_AGENTS to Agent format (system user)
-      // System agents use synthetic IDs — not real UUIDs
+      // System agents use synthetic IDs via @moca/core helpers — not real UUIDs
       const defaultAgents: BackendAgent[] = DEFAULT_AGENTS.map((agent, index) => ({
-        userId: 'system' as UserId,
-        agentId: `default-${index}` as AgentId,
+        userId: SYSTEM_USER_ID,
+        agentId: systemAgentId(index),
         name: agent.name,
         description: agent.description,
         icon: agent.icon,
         systemPrompt: agent.systemPrompt,
         enabledTools: agent.enabledTools,
-        scenarios: agent.scenarios.map((scenario) => ({
+        scenarios: agent.scenarios.map((scenario, sIdx) => ({
           ...scenario,
-          id: `default-${index}-scenario-${agent.scenarios.indexOf(scenario)}`,
+          id: systemScenarioId(index, sIdx),
         })),
         mcpConfig: agent.mcpConfig,
         createdAt: new Date('2025-01-01').toISOString(),
@@ -650,22 +657,22 @@ router.get(
       let agent: BackendAgent | null = null;
 
       // Handle system agents (default agents)
-      if (userId === 'system' && agentId.startsWith('default-')) {
+      if (isSystemUserId(userId) && isSystemAgentId(agentId)) {
         const index = parseInt(agentId.replace('default-', '').split('-')[0], 10);
         const defaultAgent = DEFAULT_AGENTS[index];
 
         if (defaultAgent) {
           agent = {
-            userId: 'system' as UserId,
-            agentId: `default-${index}` as AgentId,
+            userId: SYSTEM_USER_ID,
+            agentId: systemAgentId(index),
             name: defaultAgent.name,
             description: defaultAgent.description,
             icon: defaultAgent.icon,
             systemPrompt: defaultAgent.systemPrompt,
             enabledTools: defaultAgent.enabledTools,
-            scenarios: defaultAgent.scenarios.map((scenario) => ({
+            scenarios: defaultAgent.scenarios.map((scenario, sIdx) => ({
               ...scenario,
-              id: `default-${index}-scenario-${defaultAgent.scenarios.indexOf(scenario)}`,
+              id: systemScenarioId(index, sIdx),
             })),
             mcpConfig: defaultAgent.mcpConfig,
             createdAt: new Date('2025-01-01').toISOString(),
@@ -675,7 +682,14 @@ router.get(
           };
         }
       } else {
-        // Handle user-shared agents
+        // Handle user-shared agents — validate ID formats before passing to service
+        if (!isUserId(userId) || !isAgentId(agentId)) {
+          return res.status(400).json({
+            error: 'Invalid request',
+            message: 'User ID or Agent ID format is invalid (must be UUIDs)',
+            requestId: auth.requestId,
+          });
+        }
         const agentsService = createAgentsService();
         agent = await agentsService.getSharedAgent(
           parseUserId(userId),
@@ -759,7 +773,7 @@ router.post(
       let sourceAgent: CreateAgentInput | null = null;
 
       // Handle system agents (default agents)
-      if (sourceUserId === 'system' && sourceAgentId.startsWith('default-')) {
+      if (isSystemUserId(sourceUserId) && isSystemAgentId(sourceAgentId)) {
         const index = parseInt(sourceAgentId.replace('default-', '').split('-')[0], 10);
         const defaultAgent = DEFAULT_AGENTS[index];
 
@@ -767,7 +781,14 @@ router.post(
           sourceAgent = defaultAgent;
         }
       } else {
-        // Handle user-shared agents
+        // Handle user-shared agents — validate ID formats before passing to service
+        if (!isUserId(sourceUserId) || !isAgentId(sourceAgentId)) {
+          return res.status(400).json({
+            error: 'Invalid request',
+            message: 'Source User ID or Agent ID format is invalid (must be UUIDs)',
+            requestId: auth.requestId,
+          });
+        }
         const sharedAgent = await agentsService.getSharedAgent(
           parseUserId(sourceUserId),
           parseAgentId(sourceAgentId)

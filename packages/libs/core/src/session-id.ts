@@ -90,17 +90,28 @@ export function parseSessionId(value: string): SessionId {
  * Generate a new cryptographically secure SessionId.
  *
  * Algorithm:
- * 1. Allocate 2x the required random bytes (buffer for rejection sampling)
+ * 1. Allocate a batch of random bytes for rejection sampling
  * 2. Mask each byte with MASK; accept only values within ALPHABET range
- * 3. Repeat until 33 characters are collected
+ * 3. If the batch is exhausted before 33 characters are collected,
+ *    allocate a fresh batch and continue (prevents undefined-read bias)
+ *
+ * With MASK=63 and ALPHABET=62, the rejection rate is 2/64 ≈ 3.1%.
+ * A single batch of 66 bytes is expected to yield ~64 accepted characters,
+ * far more than the 33 required. The refill path exists only as a safety net.
  *
  * @returns A new SessionId (33 alphanumeric characters)
  */
 export function generateSessionId(): SessionId {
-  const bytes = getSecureRandomBytes(SESSION_ID_LENGTH * 2);
+  const BATCH_SIZE = SESSION_ID_LENGTH * 2; // 66 bytes per batch
+  let bytes = getSecureRandomBytes(BATCH_SIZE);
   let result = '';
   let pos = 0;
   while (result.length < SESSION_ID_LENGTH) {
+    // Safety: refill random bytes if current batch is exhausted
+    if (pos >= bytes.length) {
+      bytes = getSecureRandomBytes(BATCH_SIZE);
+      pos = 0;
+    }
     const idx = bytes[pos++] & MASK;
     if (idx < ALPHABET.length) {
       result += ALPHABET[idx];
