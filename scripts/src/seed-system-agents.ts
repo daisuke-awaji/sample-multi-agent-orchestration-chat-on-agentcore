@@ -3,12 +3,13 @@
  * Seed system default agents into DynamoDB.
  *
  * Usage:
- *   npx tsx scripts/seed-system-agents.ts --env dev
- *   npx tsx scripts/seed-system-agents.ts --env prd --force
- *   npx tsx scripts/seed-system-agents.ts --env dev --table mocadev-agents
+ *   npm run seed-system-agents -- --env default
+ *   npm run seed-system-agents -- --env dev
+ *   npm run seed-system-agents -- --env prd --force
+ *   npm run seed-system-agents -- --env dev --table mocadev-agents
  *
  * Options:
- *   --env      Environment name (dev|stg|prd)             [required]
+ *   --env      Environment name (default|dev|stg|prd)     [required]
  *   --region   AWS region (default: ap-northeast-1)
  *   --table    DynamoDB table name (auto-detected from CloudFormation if omitted)
  *   --force    Delete existing system agents and re-seed
@@ -27,13 +28,13 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v7 as uuidv7 } from 'uuid';
-import { SYSTEM_USER_ID } from '../packages/libs/core/src/system-ids.js';
+import { SYSTEM_USER_ID } from '../../packages/libs/core/src/system-ids.js';
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing
 // ---------------------------------------------------------------------------
 
-const VALID_ENVS = ['dev', 'stg', 'prd'] as const;
+const VALID_ENVS = ['default', 'dev', 'stg', 'prd'] as const;
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -52,10 +53,10 @@ function parseArgs() {
       opts.dryRun = true;
     } else if (args[i] === '--help' || args[i] === '-h') {
       console.log(`
-Usage: npx tsx scripts/seed-system-agents.ts --env <dev|stg|prd> [options]
+Usage: npm run seed-system-agents -- --env <default|dev|stg|prd> [options]
 
 Options:
-  --env      Environment name (dev|stg|prd)             [required]
+  --env      Environment name (default|dev|stg|prd)     [required]
   --region   AWS region (default: ap-northeast-1)
   --table    DynamoDB table name (auto-detected from CloudFormation if omitted)
   --force    Delete existing system agents and re-seed
@@ -70,7 +71,7 @@ Options:
     process.exit(1);
   }
 
-  if (!VALID_ENVS.includes(opts.env as typeof VALID_ENVS[number])) {
+  if (!VALID_ENVS.includes(opts.env as (typeof VALID_ENVS)[number])) {
     console.error(`❌ --env must be one of: ${VALID_ENVS.join(', ')}. Got: "${opts.env}"`);
     process.exit(1);
   }
@@ -201,8 +202,11 @@ async function createAgent(
 
 async function main() {
   const opts = parseArgs();
-  const envSuffix = opts.env.charAt(0).toUpperCase() + opts.env.slice(1);
-  const stackName = `MocaAgentCoreApp${envSuffix}`;
+  // default environment has no suffix (stack: MocaAgentCoreApp), others capitalize first letter
+  const stackName =
+    opts.env === 'default'
+      ? 'MocaAgentCoreApp'
+      : `MocaAgentCoreApp${opts.env.charAt(0).toUpperCase() + opts.env.slice(1)}`;
 
   console.log(`\n🔍 Environment: ${opts.env} (stack: ${stackName}, region: ${opts.region})`);
   if (opts.dryRun) console.log('📋 DRY RUN — no changes will be made\n');
@@ -222,7 +226,7 @@ async function main() {
 
   // 2. Load DEFAULT_AGENTS from backend data
   const { DEFAULT_AGENTS } = await import(
-    '../packages/backend/src/data/default-agents.ts'
+    '../../packages/backend/src/data/default-agents.ts'
   );
   console.log(`📝 Default agents defined: ${DEFAULT_AGENTS.length}`);
 
@@ -276,7 +280,9 @@ async function main() {
 
   // 6. Summary
   if (opts.dryRun) {
-    console.log(`\n📋 Would seed ${DEFAULT_AGENTS.length} system agents (userId: ${SYSTEM_USER_ID})\n`);
+    console.log(
+      `\n📋 Would seed ${DEFAULT_AGENTS.length} system agents (userId: ${SYSTEM_USER_ID})\n`
+    );
   } else if (failed.length === 0) {
     console.log(`\n✨ Seeded ${created.length} system agents (userId: ${SYSTEM_USER_ID})\n`);
   } else {

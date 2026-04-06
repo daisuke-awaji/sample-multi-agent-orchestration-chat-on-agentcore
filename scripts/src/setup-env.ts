@@ -40,7 +40,7 @@ interface StackOutputs {
 }
 
 const STACK_NAME = process.env.STACK_NAME || 'MocaAgentCoreApp';
-const PROJECT_ROOT = path.resolve(__dirname, '..');
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
 /**
  * Retrieve Client Secret from Cognito App Client
