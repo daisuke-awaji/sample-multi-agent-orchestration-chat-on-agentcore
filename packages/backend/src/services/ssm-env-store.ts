@@ -15,6 +15,7 @@ import {
   DeleteParameterCommand,
   ParameterNotFound,
 } from '@aws-sdk/client-ssm';
+import type { UserId, AgentId } from '@moca/core';
 
 /** Nested env map: serverName → { envKey: envValue } */
 export type McpEnvMap = Record<string, Record<string, string>>;
@@ -53,7 +54,7 @@ export class SsmEnvStore {
   /**
    * Save (create or overwrite) env values as a SecureString parameter.
    */
-  async save(userId: string, agentId: string, envMap: McpEnvMap): Promise<void> {
+  async save(userId: UserId, agentId: AgentId, envMap: McpEnvMap): Promise<void> {
     const name = this.getParameterName(userId, agentId);
 
     await this.client.send(
@@ -71,7 +72,7 @@ export class SsmEnvStore {
    * Retrieve and decrypt the env values.
    * Returns `null` when the parameter does not exist.
    */
-  async get(userId: string, agentId: string): Promise<McpEnvMap | null> {
+  async get(userId: UserId, agentId: AgentId): Promise<McpEnvMap | null> {
     const name = this.getParameterName(userId, agentId);
 
     try {
@@ -95,7 +96,7 @@ export class SsmEnvStore {
   /**
    * Delete the env parameter. Silently ignores ParameterNotFound.
    */
-  async delete(userId: string, agentId: string): Promise<void> {
+  async delete(userId: UserId, agentId: AgentId): Promise<void> {
     const name = this.getParameterName(userId, agentId);
 
     try {
@@ -111,7 +112,7 @@ export class SsmEnvStore {
   // Internal
   // ---------------------------------------------------------------------------
 
-  private getParameterName(userId: string, agentId: string): string {
+  private getParameterName(userId: UserId, agentId: AgentId): string {
     return `${this.parameterPrefix}/agents/${userId}/${agentId}/mcp-env`;
   }
 }

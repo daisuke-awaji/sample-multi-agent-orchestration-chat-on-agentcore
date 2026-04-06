@@ -12,7 +12,8 @@ import {
   QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
+import type { UserId, AgentId } from '@moca/core';
 
 /**
  * Trigger type definitions (matching trigger package)
@@ -37,12 +38,12 @@ export interface Trigger {
   PK: string;
   SK: string;
   id: string;
-  userId: string;
+  userId: UserId;
   name: string;
   description?: string;
   type: TriggerType;
   enabled: boolean;
-  agentId: string;
+  agentId: AgentId;
   prompt: string;
   sessionId?: string;
   modelId?: string;
@@ -77,11 +78,11 @@ export interface GetExecutionsResult {
 }
 
 export interface CreateTriggerInput {
-  userId: string;
+  userId: UserId;
   name: string;
   description?: string;
   type: TriggerType;
-  agentId: string;
+  agentId: AgentId;
   prompt: string;
   sessionId?: string;
   modelId?: string;
@@ -131,7 +132,7 @@ export class TriggersDynamoDBService {
    * Create a new trigger
    */
   async createTrigger(input: CreateTriggerInput): Promise<Trigger> {
-    const triggerId = nanoid();
+    const triggerId = uuidv7();
     const now = new Date().toISOString();
 
     const trigger: Trigger = {
@@ -177,7 +178,7 @@ export class TriggersDynamoDBService {
   /**
    * Get a trigger by ID
    */
-  async getTrigger(userId: string, triggerId: string): Promise<Trigger | null> {
+  async getTrigger(userId: UserId, triggerId: string): Promise<Trigger | null> {
     const result = await this.client.send(
       new GetItemCommand({
         TableName: this.tableName,
@@ -198,7 +199,7 @@ export class TriggersDynamoDBService {
   /**
    * List all triggers for a user
    */
-  async listTriggers(userId: string): Promise<Trigger[]> {
+  async listTriggers(userId: UserId): Promise<Trigger[]> {
     const result = await this.client.send(
       new QueryCommand({
         TableName: this.tableName,
@@ -221,7 +222,7 @@ export class TriggersDynamoDBService {
    * Update a trigger
    */
   async updateTrigger(
-    userId: string,
+    userId: UserId,
     triggerId: string,
     updates: UpdateTriggerInput
   ): Promise<Trigger> {
@@ -345,7 +346,7 @@ export class TriggersDynamoDBService {
   /**
    * Delete a trigger
    */
-  async deleteTrigger(userId: string, triggerId: string): Promise<void> {
+  async deleteTrigger(userId: UserId, triggerId: string): Promise<void> {
     await this.client.send(
       new DeleteItemCommand({
         TableName: this.tableName,

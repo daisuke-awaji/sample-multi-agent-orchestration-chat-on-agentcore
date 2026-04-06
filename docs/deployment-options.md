@@ -216,6 +216,40 @@ npm run deploy:stg
 npm run deploy:prd
 ```
 
+## System Agent Seeding
+
+After deploying a new environment, seed the default system agents into DynamoDB. These agents appear in the shared agents directory for all users.
+
+```bash
+# Seed system agents (auto-detects table name from CloudFormation)
+npx tsx scripts/seed-system-agents.ts --env dev
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--env <dev\|stg\|prd>` | Environment name (required) |
+| `--region <region>` | AWS region (default: `ap-northeast-1`) |
+| `--table <name>` | DynamoDB table name (auto-detected from CloudFormation if omitted) |
+| `--force` | Delete existing system agents and re-seed |
+| `--dry-run` | Preview changes without writing to DynamoDB |
+
+### Examples
+
+```bash
+# Preview what would be seeded
+npx tsx scripts/seed-system-agents.ts --env dev --dry-run
+
+# Re-seed after updating DEFAULT_AGENTS definitions
+npx tsx scripts/seed-system-agents.ts --env prd --force
+
+# Specify table name directly (when CloudFormation access is unavailable)
+npx tsx scripts/seed-system-agents.ts --env dev --table mocadev-agents
+```
+
+> **Note:** This is a one-time operation per environment. The script is idempotent — if system agents already exist, it skips unless `--force` is specified.
+
 
 ## Microsoft Graph (OneDrive) Integration
 

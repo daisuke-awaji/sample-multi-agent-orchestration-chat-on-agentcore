@@ -13,7 +13,8 @@ import {
   AttributeValue,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall, NativeAttributeValue } from '@aws-sdk/util-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
+import type { UserId, AgentId } from '@moca/core';
 import { config } from '../config/index.js';
 import { SsmEnvStore } from './ssm-env-store.js';
 import {
@@ -42,8 +43,8 @@ export interface Scenario {
 }
 
 export interface Agent {
-  userId: string;
-  agentId: string;
+  userId: UserId;
+  agentId: AgentId;
   name: string;
   description: string;
   icon?: string;
@@ -98,7 +99,7 @@ export interface CreateAgentInput {
 }
 
 export interface UpdateAgentInput extends Partial<CreateAgentInput> {
-  agentId: string;
+  agentId: AgentId;
 }
 
 /**
@@ -127,7 +128,7 @@ export class AgentsService {
   /**
    * Get list of Agents for a user
    */
-  async listAgents(userId: string): Promise<Agent[]> {
+  async listAgents(userId: UserId): Promise<Agent[]> {
     try {
       const command = new QueryCommand({
         TableName: this.tableName,
@@ -154,7 +155,7 @@ export class AgentsService {
   /**
    * Get a specific Agent (with env values resolved from SSM if available)
    */
-  async getAgent(userId: string, agentId: string): Promise<Agent | null> {
+  async getAgent(userId: UserId, agentId: AgentId): Promise<Agent | null> {
     try {
       const command = new GetItemCommand({
         TableName: this.tableName,
@@ -192,7 +193,7 @@ export class AgentsService {
    * Get a specific Agent without resolving SSM env values (raw DynamoDB data).
    * Used internally when env resolution is not needed (e.g. for shared agents, cloning).
    */
-  private async getAgentRaw(userId: string, agentId: string): Promise<Agent | null> {
+  private async getAgentRaw(userId: UserId, agentId: AgentId): Promise<Agent | null> {
     try {
       const command = new GetItemCommand({
         TableName: this.tableName,
@@ -218,10 +219,10 @@ export class AgentsService {
   /**
    * Create a new Agent
    */
-  async createAgent(userId: string, input: CreateAgentInput, username?: string): Promise<Agent> {
+  async createAgent(userId: UserId, input: CreateAgentInput, username?: string): Promise<Agent> {
     try {
       const now = new Date().toISOString();
-      const agentId = uuidv4();
+      const agentId = uuidv7() as AgentId;
 
       // Extract env values and store in SSM
       let mcpConfigForDb = input.mcpConfig;
@@ -246,7 +247,7 @@ export class AgentsService {
         enabledTools: input.enabledTools,
         scenarios: input.scenarios.map((scenario) => ({
           ...scenario,
-          id: uuidv4(),
+          id: uuidv7(),
         })),
         mcpConfig: mcpConfigForDb,
         createdAt: now,
@@ -276,7 +277,7 @@ export class AgentsService {
   /**
    * Update an Agent
    */
-  async updateAgent(userId: string, input: UpdateAgentInput): Promise<Agent> {
+  async updateAgent(userId: UserId, input: UpdateAgentInput): Promise<Agent> {
     try {
       // Retrieve existing Agent
       const existingAgent = await this.getAgent(userId, input.agentId);
@@ -325,7 +326,7 @@ export class AgentsService {
       if (input.scenarios !== undefined) {
         const scenariosWithIds = input.scenarios.map((scenario) => ({
           ...scenario,
-          id: uuidv4(),
+          id: uuidv7(),
         }));
         updateExpressions.push('#scenarios = :scenarios');
         expressionAttributeNames['#scenarios'] = 'scenarios';
@@ -388,7 +389,7 @@ export class AgentsService {
   /**
    * Delete an Agent
    */
-  async deleteAgent(userId: string, agentId: string): Promise<void> {
+  async deleteAgent(userId: UserId, agentId: AgentId): Promise<void> {
     try {
       // Delete SSM parameter (best-effort)
       await this.ssmEnvStore.delete(userId, agentId).catch((err) => {
@@ -415,7 +416,7 @@ export class AgentsService {
    * Called when a user logs in for the first time
    */
   async initializeDefaultAgents(
-    userId: string,
+    userId: UserId,
     defaultAgents: CreateAgentInput[],
     username?: string
   ): Promise<Agent[]> {
@@ -437,7 +438,7 @@ export class AgentsService {
   /**
    * Toggle the sharing state of an Agent
    */
-  async toggleShare(userId: string, agentId: string): Promise<Agent> {
+  async toggleShare(userId: UserId, agentId: AgentId): Promise<Agent> {
     try {
       const existingAgent = await this.getAgent(userId, agentId);
 
@@ -558,7 +559,7 @@ export class AgentsService {
    * Get a shared Agent (from any user).
    * Env values are stripped for security — non-owners must not see secrets.
    */
-  async getSharedAgent(userId: string, agentId: string): Promise<Agent | null> {
+  async getSharedAgent(userId: UserId, agentId: AgentId): Promise<Agent | null> {
     try {
       // Use raw read (no SSM resolution) since we strip env anyway
       const agent = await this.getAgentRaw(userId, agentId);
@@ -584,9 +585,9 @@ export class AgentsService {
    * Env values are NOT copied — the target user must provide their own credentials.
    */
   async cloneAgent(
-    targetUserId: string,
-    sourceUserId: string,
-    sourceAgentId: string,
+    targetUserId: UserId,
+    sourceUserId: UserId,
+    sourceAgentId: AgentId,
     targetUsername?: string
   ): Promise<Agent> {
     try {

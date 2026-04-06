@@ -1,3 +1,5 @@
+import type { SessionId } from '@moca/core';
+
 /**
  * Session type
  * - user: Normal conversation session by a user
@@ -13,8 +15,8 @@ export type SessionType = 'user' | 'event' | 'subagent';
 export interface SessionConfig {
   /** ID that uniquely identifies the user (e.g., "engineer_alice") */
   actorId: string;
-  /** ID that uniquely identifies the session (e.g., "python_study_20250817") */
-  sessionId: string;
+  /** ID that uniquely identifies the session — Branded type ensuring format validity */
+  sessionId: SessionId;
   /** Session type (default: 'user') */
   sessionType?: SessionType;
 }

@@ -5,6 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest } from '../middleware/auth.js';
+import { parseUserId } from '@moca/core';
 import * as storageService from '../services/s3-storage.js';
 
 const router = Router();
@@ -18,7 +19,7 @@ router.use(jwtAuthMiddleware);
  */
 router.get('/list', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -43,7 +44,7 @@ router.get('/list', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/size', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -68,7 +69,7 @@ router.get('/size', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.post('/upload', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -97,7 +98,7 @@ router.post('/upload', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.post('/directory', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -126,7 +127,7 @@ router.post('/directory', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.delete('/file', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -156,7 +157,7 @@ router.delete('/file', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.delete('/directory', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -194,7 +195,7 @@ router.delete('/directory', async (req: AuthenticatedRequest, res: Response) => 
  */
 router.get('/download', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -223,7 +224,7 @@ router.get('/download', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/tree', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }
@@ -246,7 +247,7 @@ router.get('/tree', async (req: AuthenticatedRequest, res: Response) => {
  */
 router.get('/download-folder', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.userId;
+    const userId = req.userId ? parseUserId(req.userId) : undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', message: 'User ID not found' });
     }

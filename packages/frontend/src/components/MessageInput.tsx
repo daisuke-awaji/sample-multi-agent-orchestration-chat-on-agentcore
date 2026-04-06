@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, Loader2, Paperclip } from 'lucide-react';
-import { nanoid } from 'nanoid';
+import { randomId } from '../utils/randomId';
 import { useChatStore } from '../stores/chatStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { StoragePathDisplay } from './StoragePathDisplay';
@@ -128,7 +128,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       for (const file of validFiles) {
         const previewUrl = URL.createObjectURL(file);
         newImages.push({
-          id: nanoid(),
+          id: randomId(),
           file,
           fileName: file.name,
           mimeType: file.type,

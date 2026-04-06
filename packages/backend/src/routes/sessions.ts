@@ -5,6 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
+import { isSessionId, parseUserId } from '@moca/core';
 import { createAgentCoreMemoryService } from '../services/agentcore-memory.js';
 import { getSessionsDynamoDBService } from '../services/sessions-dynamodb.js';
 import { config } from '../config/index.js';
@@ -20,7 +21,7 @@ const router = Router();
 router.get('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const actorId = auth.userId;
+    const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     // Parse pagination query parameters
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
@@ -102,7 +103,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const actorId = auth.userId;
+      const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { sessionId } = req.params;
 
       if (!actorId) {
@@ -117,6 +118,14 @@ router.get(
         return res.status(400).json({
           error: 'Invalid request',
           message: 'Session ID is not specified',
+          requestId: auth.requestId,
+        });
+      }
+
+      if (!isSessionId(sessionId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Session ID format is invalid (must be 33 alphanumeric characters)',
           requestId: auth.requestId,
         });
       }
@@ -195,7 +204,7 @@ router.delete(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const actorId = auth.userId;
+      const actorId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { sessionId } = req.params;
 
       if (!actorId) {
@@ -210,6 +219,14 @@ router.delete(
         return res.status(400).json({
           error: 'Invalid request',
           message: 'Session ID is not specified',
+          requestId: auth.requestId,
+        });
+      }
+
+      if (!isSessionId(sessionId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Session ID format is invalid (must be 33 alphanumeric characters)',
           requestId: auth.requestId,
         });
       }

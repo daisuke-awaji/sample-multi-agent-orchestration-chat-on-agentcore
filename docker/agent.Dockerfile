@@ -64,6 +64,7 @@ WORKDIR /app
 # Copy workspace root package files for npm workspace resolution
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node packages/agent/package.json ./packages/agent/
+COPY --chown=node:node packages/libs/core/package.json ./packages/libs/core/
 COPY --chown=node:node packages/libs/tool-definitions/package.json ./packages/libs/tool-definitions/
 COPY --chown=node:node packages/libs/s3-workspace-sync/package.json ./packages/libs/s3-workspace-sync/
 COPY --chown=node:node packages/libs/generative-ui-catalog/package.json ./packages/libs/generative-ui-catalog/
@@ -74,6 +75,7 @@ RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 # Copy built artifacts from builder stage
 COPY --chown=node:node --from=builder /build/packages/agent/dist ./packages/agent/dist
 COPY --chown=node:node --from=builder /build/packages/agent/scripts ./packages/agent/scripts
+COPY --chown=node:node --from=builder /build/packages/libs/core/dist ./packages/libs/core/dist
 COPY --chown=node:node --from=builder /build/packages/libs/tool-definitions/dist ./packages/libs/tool-definitions/dist
 COPY --chown=node:node --from=builder /build/packages/libs/s3-workspace-sync/dist ./packages/libs/s3-workspace-sync/dist
 COPY --chown=node:node --from=builder /build/packages/libs/generative-ui-catalog/dist ./packages/libs/generative-ui-catalog/dist

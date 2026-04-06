@@ -10,11 +10,12 @@ import {
   getCurrentAuth,
   AuthInfo,
 } from '../middleware/auth.js';
+import { parseUserId, parseAgentId, isAgentId, isUserId } from '@moca/core';
+import type { UserId } from '@moca/core';
 import {
   createAgentsService,
   CreateAgentInput,
   UpdateAgentInput,
-  Agent as BackendAgent,
 } from '../services/agents-service.js';
 import { DEFAULT_AGENTS } from '../data/default-agents.js';
 
@@ -36,7 +37,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 function resolveUserId(
   auth: AuthInfo,
   req: AuthenticatedRequest
-): { userId: string } | { error: string } {
+): { userId: UserId } | { error: string } {
   if (auth.isMachineUser) {
     const targetUserId = req.headers['x-target-user-id'] as string | undefined;
     if (!targetUserId) {
@@ -45,13 +46,13 @@ function resolveUserId(
     if (!UUID_REGEX.test(targetUserId)) {
       return { error: 'X-Target-User-Id must be a valid UUID format' };
     }
-    return { userId: targetUserId };
+    return { userId: parseUserId(targetUserId) };
   }
 
   if (!auth.userId) {
     return { error: 'Failed to retrieve user ID' };
   }
-  return { userId: auth.userId };
+  return { userId: parseUserId(auth.userId) };
 }
 
 /**
@@ -114,7 +115,7 @@ router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
   try {
     const auth = getCurrentAuth(req);
     const result = resolveUserId(auth, req);
-    const { agentId } = req.params;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
     if ('error' in result) {
       return res.status(400).json({
@@ -129,7 +130,7 @@ router.get('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -243,7 +244,7 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
   try {
     const auth = getCurrentAuth(req);
     const result = resolveUserId(auth, req);
-    const { agentId } = req.params;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
     const input: Partial<CreateAgentInput> = req.body;
 
     if ('error' in result) {
@@ -259,7 +260,7 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -315,8 +316,8 @@ router.put('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res
 router.delete('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
-    const { agentId } = req.params;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
+    const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -329,7 +330,7 @@ router.delete('/:agentId', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
     if (!agentId) {
       return res.status(400).json({
         error: 'Invalid request',
-        message: 'Agent ID is not specified',
+        message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
         requestId: auth.requestId,
       });
     }
@@ -376,8 +377,8 @@ router.put(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const userId = auth.userId;
-      const { agentId } = req.params;
+      const userId = auth.userId ? parseUserId(auth.userId) : undefined;
+      const agentId = isAgentId(req.params.agentId) ? parseAgentId(req.params.agentId) : undefined;
 
       if (!userId) {
         return res.status(400).json({
@@ -390,7 +391,7 @@ router.put(
       if (!agentId) {
         return res.status(400).json({
           error: 'Invalid request',
-          message: 'Agent ID is not specified',
+          message: `Agent ID format is invalid (must be a UUID): "${req.params.agentId}"`,
           requestId: auth.requestId,
         });
       }
@@ -448,7 +449,7 @@ router.put(
 router.post('/initialize', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const auth = getCurrentAuth(req);
-    const userId = auth.userId;
+    const userId = auth.userId ? parseUserId(auth.userId) : undefined;
 
     if (!userId) {
       return res.status(400).json({
@@ -527,7 +528,8 @@ router.post('/initialize', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
  *   - cursor: Pagination cursor (optional)
  * JWT authentication required
  *
- * Note: Default agents are included only on the first page (no cursor)
+ * System default agents are stored in DynamoDB with isShared='true'
+ * and are returned alongside user-shared agents from the GSI query.
  */
 router.get(
   '/shared-agents/list',
@@ -543,26 +545,6 @@ router.get(
         hasCursor: !!cursor,
       });
 
-      // Convert DEFAULT_AGENTS to Agent format (system user)
-      const defaultAgents: BackendAgent[] = DEFAULT_AGENTS.map((agent, index) => ({
-        userId: 'system',
-        agentId: `default-${index}`,
-        name: agent.name,
-        description: agent.description,
-        icon: agent.icon,
-        systemPrompt: agent.systemPrompt,
-        enabledTools: agent.enabledTools,
-        scenarios: agent.scenarios.map((scenario) => ({
-          ...scenario,
-          id: `default-${index}-scenario-${agent.scenarios.indexOf(scenario)}`,
-        })),
-        mcpConfig: agent.mcpConfig,
-        createdAt: new Date('2025-01-01').toISOString(),
-        updatedAt: new Date('2025-01-01').toISOString(),
-        isShared: true,
-        createdBy: 'System',
-      }));
-
       const agentsService = createAgentsService();
       const result = await agentsService.listSharedAgents(
         limit ? parseInt(limit as string, 10) : 20,
@@ -570,38 +552,20 @@ router.get(
         cursor as string | undefined
       );
 
-      // Filter and add default agents only on first page (no cursor)
-      let allAgents: BackendAgent[] = [];
-      if (!cursor) {
-        // Filter default agents by search query
-        let filteredDefaultAgents = defaultAgents;
-        if (searchQuery) {
-          const query = (searchQuery as string).toLowerCase();
-          filteredDefaultAgents = defaultAgents.filter(
-            (agent) =>
-              agent.name.toLowerCase().includes(query) ||
-              agent.description.toLowerCase().includes(query)
-          );
-        }
-        allAgents = [...filteredDefaultAgents, ...result.items];
-      } else {
-        allAgents = result.items;
-      }
-
       console.log(
         '✅ Shared Agent list retrieval completed (%s): %d items',
         auth.requestId,
-        allAgents.length
+        result.items.length
       );
 
       res.status(200).json({
-        agents: allAgents,
+        agents: result.items,
         nextCursor: result.nextCursor,
         hasMore: result.hasMore,
         metadata: {
           requestId: auth.requestId,
           timestamp: new Date().toISOString(),
-          count: allAgents.length,
+          count: result.items.length,
         },
       });
     } catch (error) {
@@ -621,7 +585,7 @@ router.get(
  * Shared Agent detail retrieval endpoint
  * GET /shared-agents/:userId/:agentId
  * JWT authentication required
- * Supports system agents (userId === 'system')
+ * All agents (including system defaults) are stored in DynamoDB.
  */
 router.get(
   '/shared-agents/:userId/:agentId',
@@ -639,43 +603,24 @@ router.get(
         });
       }
 
+      if (!isUserId(userId) || !isAgentId(agentId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'User ID or Agent ID format is invalid (must be UUIDs)',
+          requestId: auth.requestId,
+        });
+      }
+
       console.log('🔍 Shared Agent detail retrieval started (%s):', auth.requestId, {
         userId,
         agentId,
       });
 
-      let agent: BackendAgent | null = null;
-
-      // Handle system agents (default agents)
-      if (userId === 'system' && agentId.startsWith('default-')) {
-        const index = parseInt(agentId.replace('default-', '').split('-')[0], 10);
-        const defaultAgent = DEFAULT_AGENTS[index];
-
-        if (defaultAgent) {
-          agent = {
-            userId: 'system',
-            agentId: `default-${index}`,
-            name: defaultAgent.name,
-            description: defaultAgent.description,
-            icon: defaultAgent.icon,
-            systemPrompt: defaultAgent.systemPrompt,
-            enabledTools: defaultAgent.enabledTools,
-            scenarios: defaultAgent.scenarios.map((scenario) => ({
-              ...scenario,
-              id: `default-${index}-scenario-${defaultAgent.scenarios.indexOf(scenario)}`,
-            })),
-            mcpConfig: defaultAgent.mcpConfig,
-            createdAt: new Date('2025-01-01').toISOString(),
-            updatedAt: new Date('2025-01-01').toISOString(),
-            isShared: true,
-            createdBy: 'System',
-          };
-        }
-      } else {
-        // Handle user-shared agents
-        const agentsService = createAgentsService();
-        agent = await agentsService.getSharedAgent(userId, agentId);
-      }
+      const agentsService = createAgentsService();
+      const agent = await agentsService.getSharedAgent(
+        parseUserId(userId),
+        parseAgentId(agentId)
+      );
 
       if (!agent) {
         return res.status(404).json({
@@ -715,7 +660,7 @@ router.get(
  * Shared Agent clone endpoint
  * POST /shared-agents/:userId/:agentId/clone
  * JWT authentication required
- * Supports cloning both user-shared agents and system agents
+ * All agents (including system defaults) are cloned via the same path.
  */
 router.post(
   '/shared-agents/:userId/:agentId/clone',
@@ -723,7 +668,7 @@ router.post(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const auth = getCurrentAuth(req);
-      const targetUserId = auth.userId;
+      const targetUserId = auth.userId ? parseUserId(auth.userId) : undefined;
       const { userId: sourceUserId, agentId: sourceAgentId } = req.params;
 
       if (!targetUserId) {
@@ -742,6 +687,14 @@ router.post(
         });
       }
 
+      if (!isUserId(sourceUserId) || !isAgentId(sourceAgentId)) {
+        return res.status(400).json({
+          error: 'Invalid request',
+          message: 'Source User ID or Agent ID format is invalid (must be UUIDs)',
+          requestId: auth.requestId,
+        });
+      }
+
       console.log('📥 Shared Agent clone started (%s):', auth.requestId, {
         targetUserId,
         targetUsername: auth.username,
@@ -750,40 +703,12 @@ router.post(
       });
 
       const agentsService = createAgentsService();
-      let sourceAgent: CreateAgentInput | null = null;
-
-      // Handle system agents (default agents)
-      if (sourceUserId === 'system' && sourceAgentId.startsWith('default-')) {
-        const index = parseInt(sourceAgentId.replace('default-', '').split('-')[0], 10);
-        const defaultAgent = DEFAULT_AGENTS[index];
-
-        if (defaultAgent) {
-          sourceAgent = defaultAgent;
-        }
-      } else {
-        // Handle user-shared agents
-        const sharedAgent = await agentsService.getSharedAgent(sourceUserId, sourceAgentId);
-        if (sharedAgent) {
-          sourceAgent = {
-            name: sharedAgent.name,
-            description: sharedAgent.description,
-            icon: sharedAgent.icon,
-            systemPrompt: sharedAgent.systemPrompt,
-            enabledTools: sharedAgent.enabledTools,
-            scenarios: sharedAgent.scenarios,
-            mcpConfig: sharedAgent.mcpConfig,
-          };
-        }
-      }
-
-      if (!sourceAgent) {
-        return res.status(404).json({
-          error: 'Not Found',
-          message: 'Shared Agent not found',
-          requestId: auth.requestId,
-        });
-      }
-      const clonedAgent = await agentsService.createAgent(targetUserId, sourceAgent, auth.username);
+      const clonedAgent = await agentsService.cloneAgent(
+        targetUserId,
+        parseUserId(sourceUserId),
+        parseAgentId(sourceAgentId),
+        auth.username
+      );
 
       console.log('✅ Shared Agent clone completed (%s): %s', auth.requestId, clonedAgent.agentId);
 
@@ -798,6 +723,14 @@ router.post(
     } catch (error) {
       const auth = getCurrentAuth(req);
       console.error('💥 Shared Agent clone error (%s):', auth.requestId, error);
+
+      if (error instanceof Error && error.message === 'Shared agent not found') {
+        return res.status(404).json({
+          error: 'Not Found',
+          message: 'Shared Agent not found',
+          requestId: auth.requestId,
+        });
+      }
 
       res.status(500).json({
         error: 'Internal Server Error',

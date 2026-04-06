@@ -1,36 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { generateSessionId } from '../sessionId';
+import { generateSessionId, isSessionId, parseSessionId, SESSION_ID_LENGTH } from '../sessionId';
+import type { SessionId } from '../sessionId';
 
-describe('generateSessionId', () => {
-  it('generates a 33-character string', () => {
-    const id = generateSessionId();
-    expect(id).toHaveLength(33);
+/**
+ * Re-export verification tests.
+ * The main test suite lives in packages/libs/core/src/__tests__/session-id.test.ts.
+ * This file only verifies that the re-export from the frontend module works correctly.
+ */
+describe('sessionId re-export from @moca/core', () => {
+  it('generateSessionId returns a valid SessionId', () => {
+    const id: SessionId = generateSessionId();
+    expect(typeof id).toBe('string');
+    expect(id).toHaveLength(SESSION_ID_LENGTH);
+    expect(isSessionId(id)).toBe(true);
   });
 
-  it('contains only alphanumeric characters', () => {
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).toMatch(/^[a-zA-Z0-9]+$/);
-    }
+  it('isSessionId validates correctly', () => {
+    expect(isSessionId('a'.repeat(33))).toBe(true);
+    expect(isSessionId('short')).toBe(false);
   });
 
-  it('first character is always alphanumeric (never - or _)', () => {
-    for (let i = 0; i < 1000; i++) {
-      const id = generateSessionId();
-      expect(id[0]).toMatch(/[a-zA-Z0-9]/);
-    }
+  it('parseSessionId works for valid input', () => {
+    const valid = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg';
+    expect(parseSessionId(valid)).toBe(valid);
   });
 
-  it('satisfies AgentCore sessionId constraint pattern', () => {
-    const pattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
-    for (let i = 0; i < 100; i++) {
-      const id = generateSessionId();
-      expect(id).toMatch(pattern);
-    }
-  });
-
-  it('generates unique IDs', () => {
-    const ids = new Set(Array.from({ length: 100 }, () => generateSessionId()));
-    expect(ids.size).toBe(100);
+  it('parseSessionId throws for invalid input', () => {
+    expect(() => parseSessionId('bad')).toThrow('Invalid sessionId');
   });
 });

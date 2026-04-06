@@ -12,6 +12,7 @@ import {
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { UserId } from '@moca/core';
 import { config } from '../config/index.js';
 import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
 
@@ -20,7 +21,7 @@ const defaultS3Client = new S3Client({ region: process.env.AWS_REGION });
 /**
  * Get an S3 client scoped to the given user, or fall back to default when scoping is not configured.
  */
-async function getS3Client(userId: string): Promise<S3Client> {
+async function getS3Client(userId: UserId): Promise<S3Client> {
   if (process.env.USER_SCOPED_ROLE_ARN) {
     return createUserScopedS3Client(userId);
   }
@@ -52,7 +53,7 @@ export interface UploadUrlResponse {
 /**
  * Generate storage path prefix for a user
  */
-function getUserStoragePrefix(userId: string): string {
+function getUserStoragePrefix(userId: UserId): string {
   return `users/${userId}`;
 }
 
@@ -92,7 +93,7 @@ function normalizePath(path: string): string {
  * List directory contents
  */
 export async function listStorageItems(
-  userId: string,
+  userId: UserId,
   path: string = '/'
 ): Promise<ListStorageResponse> {
   const bucketName = config.userStorageBucketName;
@@ -159,7 +160,7 @@ export async function listStorageItems(
  * Recursively calculate the total size of all files in a directory
  */
 export async function getDirectorySize(
-  userId: string,
+  userId: UserId,
   path: string = '/'
 ): Promise<{ totalSize: number; fileCount: number }> {
   const bucketName = config.userStorageBucketName;
@@ -209,7 +210,7 @@ export async function getDirectorySize(
  * Generate a pre-signed URL for file upload
  */
 export async function generateUploadUrl(
-  userId: string,
+  userId: UserId,
   fileName: string,
   path: string = '/',
   contentType?: string
@@ -253,7 +254,7 @@ export async function generateUploadUrl(
  * Create a directory
  * Since S3 has no concept of directories, create an empty placeholder object
  */
-export async function createDirectory(userId: string, directoryName: string, path: string = '/') {
+export async function createDirectory(userId: UserId, directoryName: string, path: string = '/') {
   const bucketName = config.userStorageBucketName;
   if (!bucketName) {
     throw new Error('USER_STORAGE_BUCKET_NAME is not configured');
@@ -286,7 +287,7 @@ export async function createDirectory(userId: string, directoryName: string, pat
 /**
  * Delete a file
  */
-export async function deleteFile(userId: string, filePath: string) {
+export async function deleteFile(userId: UserId, filePath: string) {
   const bucketName = config.userStorageBucketName;
   if (!bucketName) {
     throw new Error('USER_STORAGE_BUCKET_NAME is not configured');
@@ -315,7 +316,7 @@ export async function deleteFile(userId: string, filePath: string) {
  * @param force If true, recursively delete all objects within the directory
  */
 export async function deleteDirectory(
-  userId: string,
+  userId: UserId,
   directoryPath: string,
   force: boolean = false
 ) {
@@ -408,7 +409,7 @@ export async function deleteDirectory(
 /**
  * Generate a pre-signed URL for file download
  */
-export async function generateDownloadUrl(userId: string, filePath: string): Promise<string> {
+export async function generateDownloadUrl(userId: UserId, filePath: string): Promise<string> {
   const bucketName = config.userStorageBucketName;
   if (!bucketName) {
     throw new Error('USER_STORAGE_BUCKET_NAME is not configured');
@@ -436,7 +437,7 @@ export async function generateDownloadUrl(userId: string, filePath: string): Pro
 /**
  * Check if a file exists
  */
-export async function checkFileExists(userId: string, filePath: string): Promise<boolean> {
+export async function checkFileExists(userId: UserId, filePath: string): Promise<boolean> {
   const bucketName = config.userStorageBucketName;
   if (!bucketName) {
     throw new Error('USER_STORAGE_BUCKET_NAME is not configured');
@@ -487,7 +488,7 @@ export interface FolderNode {
  * Get folder tree
  * Returns all folders from root in hierarchical structure
  */
-export async function getFolderTree(userId: string): Promise<FolderNode[]> {
+export async function getFolderTree(userId: UserId): Promise<FolderNode[]> {
   const bucketName = config.userStorageBucketName;
   if (!bucketName) {
     throw new Error('USER_STORAGE_BUCKET_NAME is not configured');
@@ -578,7 +579,7 @@ export async function getFolderTree(userId: string): Promise<FolderNode[]> {
  * Get pre-signed URLs for all files in a folder (recursively)
  */
 export async function getRecursiveDownloadUrls(
-  userId: string,
+  userId: UserId,
   folderPath: string
 ): Promise<FolderDownloadInfo> {
   const bucketName = config.userStorageBucketName;

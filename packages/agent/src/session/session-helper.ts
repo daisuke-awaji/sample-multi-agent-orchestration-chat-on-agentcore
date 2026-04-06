@@ -4,6 +4,7 @@
 
 import { SessionPersistenceHook } from './session-persistence-hook.js';
 import { createSessionStorage } from './index.js';
+import type { SessionId } from '@moca/core';
 import type { SessionConfig, SessionType } from './types.js';
 
 /**
@@ -19,7 +20,7 @@ export interface SessionSetupResult {
  */
 export interface SessionSetupOptions {
   actorId: string;
-  sessionId: string | undefined;
+  sessionId: SessionId | undefined;
   sessionType?: SessionType;
   agentId?: string;
   storagePath?: string;

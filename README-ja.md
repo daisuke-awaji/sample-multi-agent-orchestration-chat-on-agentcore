@@ -138,6 +138,20 @@ npx -w packages/cdk cdk bootstrap
 npm run deploy
 ```
 
+#### 5. システムエージェントの初期登録（任意）
+
+デプロイ後、デフォルトのシステムエージェントを DynamoDB に登録します。この操作は環境ごとに初回のみ必要です。
+
+```bash
+npx tsx scripts/seed-system-agents.ts --env dev
+```
+
+`DEFAULT_AGENTS` の定義を変更した場合は、`--force` で既存データを置き換えます。
+
+```bash
+npx tsx scripts/seed-system-agents.ts --env dev --force
+```
+
 デプロイが完了すると、CloudFormationスタックの出力からフロントエンドURLを確認できます。
 
 カスタムドメイン、環境別設定、イベントルールなどの詳細な設定オプションについては、[デプロイオプション](docs/deployment-options-ja.md) を参照してください。
