@@ -26,7 +26,7 @@
     "deploy:stg": "npm run deploy:stg -w @moca/cdk",
     "deploy:prd": "npm run deploy:prd -w @moca/cdk",
     "destroy": "npm run destroy -w @moca/cdk",
-    "build:lambda": "npm run build -w @moca/lambda-tools",
+    "build:lambda": "tsc --build tsconfig.build.json && npm run build -w @moca/lambda-tools",
     "setup-env": "tsx scripts/setup-env.ts",
     "seed-system-agents": "tsx scripts/seed-system-agents.ts",
     "cdk": "npm run cdk -w @moca/cdk",
