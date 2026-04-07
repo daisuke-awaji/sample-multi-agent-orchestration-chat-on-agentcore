@@ -23,13 +23,13 @@ export function OAuthCallbackPage() {
   useEffect(() => {
     const sessionUri = searchParams.get('session_id');
 
-    if (!sessionUri) {
-      setStatus('error');
-      setErrorMessage(t('oauth.missingSessionId'));
-      return;
-    }
-
     const completeAuth = async () => {
+      if (!sessionUri) {
+        setStatus('error');
+        setErrorMessage(t('oauth.missingSessionId'));
+        return;
+      }
+
       try {
         await backendClient.post('/oauth/complete', { sessionUri });
         setStatus('success');
