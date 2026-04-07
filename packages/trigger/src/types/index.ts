@@ -3,6 +3,8 @@
  * These types define the data models for event-driven agent invocations
  */
 
+import type { TriggerId } from '@moca/core';
+
 /**
  * Trigger type - supports extensibility for future trigger sources
  */
@@ -68,7 +70,7 @@ export interface Trigger {
   SK: string; // TRIGGER#{triggerId}
 
   // Basic information
-  id: string;
+  id: TriggerId;
   userId: string;
   name: string;
   description?: string;
@@ -106,7 +108,7 @@ export interface TriggerExecution {
   PK: string; // TRIGGER#{triggerId}
   SK: string; // EXECUTION#{executionId}
 
-  triggerId: string;
+  triggerId: TriggerId;
   executionId: string;
 
   /** Execution timestamp (ISO 8601) */
@@ -153,7 +155,7 @@ export interface UpdateTriggerRequest extends Partial<CreateTriggerRequest> {
  * Response for trigger API
  */
 export interface TriggerResponse {
-  id: string;
+  id: TriggerId;
   userId: string;
   name: string;
   description?: string;
@@ -176,7 +178,7 @@ export interface TriggerResponse {
  * Response for trigger execution history
  */
 export interface TriggerExecutionResponse {
-  triggerId: string;
+  triggerId: TriggerId;
   executionId: string;
   executedAt: string;
   sessionId?: string;
@@ -188,7 +190,7 @@ export interface TriggerExecutionResponse {
  * EventBridge Scheduler event payload
  */
 export interface SchedulerEventPayload {
-  triggerId: string;
+  triggerId: TriggerId;
   userId: string;
   agentId: string;
   prompt: string;
@@ -237,7 +239,7 @@ export interface CustomEventBridgeEvent {
 export interface EventDrivenContext {
   // Execution Metadata
   /** Trigger ID from the application */
-  triggerId: string;
+  triggerId: TriggerId;
 
   /** Human-readable trigger name */
   triggerName?: string;

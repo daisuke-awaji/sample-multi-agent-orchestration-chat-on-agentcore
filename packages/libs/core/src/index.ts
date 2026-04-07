@@ -38,6 +38,10 @@ export { isUserId, parseUserId, USER_ID_PATTERN } from './user-id.js';
 export type { AgentId } from './agent-id.js';
 export { isAgentId, parseAgentId, AGENT_ID_PATTERN } from './agent-id.js';
 
+// TriggerId
+export type { TriggerId } from './trigger-id.js';
+export { isTriggerId, parseTriggerId, TRIGGER_ID_PATTERN } from './trigger-id.js';
+
 // Crypto utilities
 export { getSecureRandomBytes } from './crypto.js';
 

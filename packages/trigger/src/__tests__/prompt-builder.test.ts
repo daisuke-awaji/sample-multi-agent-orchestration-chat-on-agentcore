@@ -5,10 +5,11 @@
 import { describe, test, expect } from '@jest/globals';
 import { buildEventDrivenPrompt } from '../services/prompt-builder.js';
 import { EventDrivenContext } from '../types/index.js';
+import type { TriggerId } from '@moca/core';
 
 describe('buildEventDrivenPrompt', () => {
   const mockContext: EventDrivenContext = {
-    triggerId: 'test-trigger-123',
+    triggerId: '550e8400-e29b-41d4-a716-446655440000' as TriggerId,
     triggerName: 'Daily Report Generator',
     executionTime: '2026-01-17T00:00:00Z',
     eventBridge: {
@@ -83,7 +84,7 @@ describe('buildEventDrivenPrompt', () => {
 
     const result = buildEventDrivenPrompt(userPrompt, contextWithoutName);
 
-    expect(result).toContain('test-trigger-123');
+    expect(result).toContain('550e8400-e29b-41d4-a716-446655440000');
   });
 
   test('should handle complex event detail structures', () => {

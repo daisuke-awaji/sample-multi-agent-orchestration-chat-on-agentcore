@@ -5,7 +5,7 @@
 
 import { Router, Response } from 'express';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from '../middleware/auth.js';
-import { parseUserId } from '@moca/core';
+import { parseUserId, isTriggerId } from '@moca/core';
 import { getTriggersDynamoDBService } from '../services/triggers-dynamodb.js';
 import { getSchedulerService } from '../services/scheduler-service.js';
 
@@ -95,7 +95,15 @@ router.get('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-    const triggerId = req.params.id as string;
+
+    if (!isTriggerId(req.params.id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Invalid triggerId format: "${req.params.id}"`,
+        requestId: auth.requestId,
+      });
+    }
+    const triggerId = req.params.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -347,7 +355,15 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-    const triggerId = req.params.id as string;
+
+    if (!isTriggerId(req.params.id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Invalid triggerId format: "${req.params.id}"`,
+        requestId: auth.requestId,
+      });
+    }
+    const triggerId = req.params.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -558,7 +574,15 @@ router.delete('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: 
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-    const triggerId = req.params.id as string;
+
+    if (!isTriggerId(req.params.id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Invalid triggerId format: "${req.params.id}"`,
+        requestId: auth.requestId,
+      });
+    }
+    const triggerId = req.params.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -642,7 +666,15 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-    const triggerId = req.params.id as string;
+
+    if (!isTriggerId(req.params.id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Invalid triggerId format: "${req.params.id}"`,
+        requestId: auth.requestId,
+      });
+    }
+    const triggerId = req.params.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -743,7 +775,15 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
   try {
     const auth = getCurrentAuth(req);
     const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-    const triggerId = req.params.id as string;
+
+    if (!isTriggerId(req.params.id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Invalid triggerId format: "${req.params.id}"`,
+        requestId: auth.requestId,
+      });
+    }
+    const triggerId = req.params.id;
 
     if (!userId) {
       return res.status(400).json({
@@ -847,7 +887,15 @@ router.get(
     try {
       const auth = getCurrentAuth(req);
       const userId = auth.userId ? parseUserId(auth.userId) : undefined;
-      const triggerId = req.params.id as string;
+
+      if (!isTriggerId(req.params.id)) {
+        return res.status(400).json({
+          error: 'Validation Error',
+          message: `Invalid triggerId format: "${req.params.id}"`,
+          requestId: auth.requestId,
+        });
+      }
+      const triggerId = req.params.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const nextToken = req.query.nextToken as string | undefined;
 
