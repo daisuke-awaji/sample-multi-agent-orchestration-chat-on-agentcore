@@ -204,7 +204,7 @@ describe('handleInvocation', () => {
     it('should create agent with correct options', async () => {
       req = createMockRequest({
         prompt: 'Hello',
-        modelId: 'custom-model',
+        modelId: 'test.custom-model',
         enabledTools: ['tool1', 'tool2'],
         systemPrompt: 'Be helpful',
       });
@@ -213,7 +213,7 @@ describe('handleInvocation', () => {
 
       expect(mockCreateAgent).toHaveBeenCalledWith(
         expect.objectContaining({
-          modelId: 'custom-model',
+          modelId: 'test.custom-model',
           enabledTools: ['tool1', 'tool2'],
           systemPrompt: 'Be helpful',
         })

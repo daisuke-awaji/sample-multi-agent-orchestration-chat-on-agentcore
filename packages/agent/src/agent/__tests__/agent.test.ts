@@ -158,10 +158,10 @@ describe('createAgent', () => {
   });
 
   it('should use custom modelId when provided', async () => {
-    await createAgent({ modelId: 'custom-model-id' });
+    await createAgent({ modelId: 'test.custom-model' as any });
 
-    expect(mockCreateBedrockModel).toHaveBeenCalledWith({ modelId: 'custom-model-id' });
-    expect(mockGetPromptCachingSupport).toHaveBeenCalledWith('custom-model-id');
+    expect(mockCreateBedrockModel).toHaveBeenCalledWith({ modelId: 'test.custom-model' });
+    expect(mockGetPromptCachingSupport).toHaveBeenCalledWith('test.custom-model');
   });
 
   it('should use default model ID from config when not provided', async () => {
