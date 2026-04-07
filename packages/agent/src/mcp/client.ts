@@ -6,6 +6,11 @@ import { getCurrentAuthHeader, getCurrentStoragePath } from '../context/request-
 import { MCPToolDefinition } from '../schemas/types.js';
 
 /**
+ * MCP Protocol Version for Gateway requests
+ */
+const MCP_PROTOCOL_VERSION = '2025-06-18';
+
+/**
  * Basic JSONRPC response type
  */
 interface JSONRPCResponse<T = unknown> {
@@ -263,6 +268,7 @@ export class AgentCoreMCPClient {
       const authHeader = this.getAuthorizationHeader(false);
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Mcp-Protocol-Version': MCP_PROTOCOL_VERSION,
       };
 
       if (authHeader) {
@@ -342,6 +348,7 @@ export class AgentCoreMCPClient {
       const storagePath = getCurrentStoragePath();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Mcp-Protocol-Version': MCP_PROTOCOL_VERSION,
         'x-storage-path': storagePath,
       };
 

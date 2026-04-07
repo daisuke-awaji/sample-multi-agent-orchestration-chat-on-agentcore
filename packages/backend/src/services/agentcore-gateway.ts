@@ -53,6 +53,11 @@ interface ToolsCallResult {
 }
 
 /**
+ * MCP Protocol Version for Gateway requests
+ */
+const MCP_PROTOCOL_VERSION = '2025-06-18';
+
+/**
  * AgentCore Gateway MCP client
  */
 export class AgentCoreGatewayService {
@@ -102,6 +107,7 @@ export class AgentCoreGatewayService {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Mcp-Protocol-Version': MCP_PROTOCOL_VERSION,
       };
 
       if (authToken) {
