@@ -336,7 +336,9 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
     });
 
     // ── GitHub MCP Server Target (3LO Authorization Code Flow) ──
-    // Conditionally created only when GitHub OAuth provider ARN and secret ARN are configured
+    // Conditionally created only when GitHub OAuth provider ARN and secret ARN are configured.
+    // Create the OAuth Credential Provider via AgentCore Identity console first,
+    // then set githubOAuthProviderArn and githubOAuthSecretArn in environment config.
     if (envConfig.githubOAuthProviderArn && envConfig.githubOAuthSecretArn) {
       const githubMcpTarget = agentcore.GatewayTarget.forMcpServer(
         this,
