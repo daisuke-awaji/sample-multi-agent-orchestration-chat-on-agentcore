@@ -492,6 +492,16 @@ settings:
   sendOnEnter: Send message
   newlineOnEnter: New line
   sendSuffix: ' to send'
+  serviceTier: Service Tier
+  serviceTierAuto: Auto (follow server config)
+  serviceTierAutoDescription: Flex for event-driven/sub-agents, Standard for user chats
+  serviceTierStandard: Standard (default)
+  serviceTierStandardDescription: Normal response speed at standard pricing
+  serviceTierFlex: Flex (50% cost reduction)
+  serviceTierFlexDescription: May increase latency, 50% discount
+  serviceTierPriority: Priority (low latency)
+  serviceTierPriorityDescription: Fastest response speed at premium pricing
+  serviceTierHint: Applies to user chat sessions only. Does not affect event-driven sessions.
 
 # Error
 error:

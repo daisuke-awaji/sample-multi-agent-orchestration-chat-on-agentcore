@@ -9,9 +9,11 @@ import {
   Check,
   Palette,
   User,
+  Zap,
 } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import type { ServiceTierSetting } from '../stores/settingsStore';
 import { useThemeStore } from '../stores/themeStore';
 import type { Theme } from '../stores/themeStore';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -27,11 +29,12 @@ import { getMe, type MeResponse } from '../api/auth';
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { isMemoryEnabled, setMemoryEnabled } = useMemoryStore();
-  const { sendBehavior, setSendBehavior } = useSettingsStore();
+  const { sendBehavior, setSendBehavior, serviceTier, setServiceTier } = useSettingsStore();
   const { theme, setTheme } = useThemeStore();
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [isServiceTierDropdownOpen, setIsServiceTierDropdownOpen] = useState(false);
 
   // Account info from /me endpoint
   const [accountInfo, setAccountInfo] = useState<MeResponse | null>(null);
@@ -39,6 +42,7 @@ export function SettingsPage() {
   const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const serviceTierDropdownRef = useRef<HTMLDivElement>(null);
 
   // Language selection options
   const languageOptions = [
@@ -51,6 +55,30 @@ export function SettingsPage() {
     { value: 'light', label: t('settings.themeLight') },
     { value: 'dark', label: t('settings.themeDark') },
     { value: 'system', label: t('settings.themeAuto') },
+  ];
+
+  // Service tier selection options
+  const serviceTierOptions: { value: ServiceTierSetting; label: string; description: string }[] = [
+    {
+      value: undefined,
+      label: t('settings.serviceTierAuto'),
+      description: t('settings.serviceTierAutoDescription'),
+    },
+    {
+      value: 'default',
+      label: t('settings.serviceTierStandard'),
+      description: t('settings.serviceTierStandardDescription'),
+    },
+    {
+      value: 'flex',
+      label: t('settings.serviceTierFlex'),
+      description: t('settings.serviceTierFlexDescription'),
+    },
+    {
+      value: 'priority',
+      label: t('settings.serviceTierPriority'),
+      description: t('settings.serviceTierPriorityDescription'),
+    },
   ];
 
   // Fetch account info on mount
@@ -92,16 +120,22 @@ export function SettingsPage() {
       if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
         setIsThemeDropdownOpen(false);
       }
+      if (
+        serviceTierDropdownRef.current &&
+        !serviceTierDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsServiceTierDropdownOpen(false);
+      }
     };
 
-    if (isLanguageDropdownOpen || isThemeDropdownOpen) {
+    if (isLanguageDropdownOpen || isThemeDropdownOpen || isServiceTierDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isLanguageDropdownOpen, isThemeDropdownOpen]);
+  }, [isLanguageDropdownOpen, isThemeDropdownOpen, isServiceTierDropdownOpen]);
 
   return (
     <div className="min-h-screen bg-surface-primary">
@@ -226,6 +260,66 @@ export function SettingsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Service Tier section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="w-5 h-5 text-fg-secondary" />
+            <h2 className="text-lg font-semibold text-fg-default">
+              {t('settings.serviceTier')}
+            </h2>
+          </div>
+
+          <div ref={serviceTierDropdownRef} className="relative w-full">
+            <button
+              onClick={() => setIsServiceTierDropdownOpen(!isServiceTierDropdownOpen)}
+              className="w-full px-4 py-3 bg-surface-primary border border-border-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-transparent text-fg-default font-medium cursor-pointer hover:border-border-strong transition-colors flex items-center justify-between"
+            >
+              <span>
+                {serviceTierOptions.find((opt) => opt.value === serviceTier)?.label}
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 text-fg-muted transition-transform duration-200 ${
+                  isServiceTierDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {isServiceTierDropdownOpen && (
+              <div className="absolute z-10 w-full mt-2 bg-surface-elevated border border-border rounded-lg shadow-elevation-3 overflow-hidden animate-subtle-fade-in">
+                {serviceTierOptions.map((option) => (
+                  <button
+                    key={option.value ?? 'auto'}
+                    onClick={() => {
+                      setServiceTier(option.value);
+                      setIsServiceTierDropdownOpen(false);
+                    }}
+                    className={`
+                      w-full px-4 py-3 text-left flex items-center justify-between
+                      transition-colors duration-150
+                      ${
+                        serviceTier === option.value
+                          ? 'bg-feedback-info-bg text-action-primary font-medium'
+                          : 'text-fg-default hover:bg-surface-secondary'
+                      }
+                    `}
+                  >
+                    <div>
+                      <span className="block">{option.label}</span>
+                      <span className="block text-xs text-fg-muted mt-0.5">
+                        {option.description}
+                      </span>
+                    </div>
+                    {serviceTier === option.value && (
+                      <Check className="w-5 h-5 text-action-primary flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-fg-muted mt-2">{t('settings.serviceTierHint')}</p>
         </div>
 
         {/* Memory management section */}

@@ -38,6 +38,7 @@ interface AgentConfig {
   memoryTopK?: number;
   mcpConfig?: Record<string, unknown>;
   images?: Array<{ base64: string; mimeType: string }>;
+  serviceTier?: 'default' | 'flex' | 'priority';
 }
 
 /**

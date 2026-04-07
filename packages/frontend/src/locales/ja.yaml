@@ -491,6 +491,16 @@ settings:
   sendOnEnter: メッセージを送信
   newlineOnEnter: 改行
   sendSuffix: で送信
+  serviceTier: サービスティア
+  serviceTierAuto: 自動 (サーバー設定に従う)
+  serviceTierAutoDescription: イベント駆動・サブエージェントはFlex、ユーザーチャットはStandard
+  serviceTierStandard: Standard (デフォルト)
+  serviceTierStandardDescription: 通常の応答速度・通常価格
+  serviceTierFlex: Flex (50%コスト削減)
+  serviceTierFlexDescription: 応答が遅くなる可能性あり・50%割引
+  serviceTierPriority: Priority (低レイテンシー)
+  serviceTierPriorityDescription: 最速の応答速度・割増価格
+  serviceTierHint: ユーザーチャットに適用されます。イベント駆動セッションには影響しません。
 
 # エラー
 error:

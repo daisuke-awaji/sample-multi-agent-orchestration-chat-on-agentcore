@@ -16,6 +16,15 @@ import { logger } from '../utils/logger';
 export type SendBehavior = 'enter' | 'cmdEnter';
 
 /**
+ * Bedrock service tier setting
+ * - undefined: Use server-side auto-detection (default)
+ * - 'default': Standard tier
+ * - 'flex': Flex tier (50% cost reduction, may increase latency)
+ * - 'priority': Priority tier (lowest latency, premium pricing)
+ */
+export type ServiceTierSetting = 'default' | 'flex' | 'priority' | undefined;
+
+/**
  * Settings Store state
  */
 interface SettingsState {
@@ -25,9 +34,13 @@ interface SettingsState {
   // Selected model ID
   selectedModelId: string;
 
+  // Bedrock service tier
+  serviceTier: ServiceTierSetting;
+
   // Actions
   setSendBehavior: (behavior: SendBehavior) => void;
   setSelectedModelId: (modelId: string) => void;
+  setServiceTier: (tier: ServiceTierSetting) => void;
 }
 
 /**
@@ -43,6 +56,9 @@ export const useSettingsStore = create<SettingsState>()(
         // Initial state: default model
         selectedModelId: DEFAULT_MODEL_ID,
 
+        // Initial state: use server-side auto-detection
+        serviceTier: undefined,
+
         /**
          * Change Enter key behavior setting
          */
@@ -57,6 +73,14 @@ export const useSettingsStore = create<SettingsState>()(
         setSelectedModelId: (modelId: string) => {
           set({ selectedModelId: modelId });
           logger.log(`[SettingsStore] Model changed to: ${modelId}`);
+        },
+
+        /**
+         * Change Bedrock service tier
+         */
+        setServiceTier: (tier: ServiceTierSetting) => {
+          set({ serviceTier: tier });
+          logger.log(`[SettingsStore] Service tier changed to: ${tier ?? 'auto'}`);
         },
       }),
       {

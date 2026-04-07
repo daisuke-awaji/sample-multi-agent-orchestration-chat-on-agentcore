@@ -294,8 +294,8 @@ export const useChatStore = create<ChatStore>()(
           // Get long-term memory settings
           const { isMemoryEnabled } = useMemoryStore.getState();
 
-          // Get selected model ID
-          const { selectedModelId } = useSettingsStore.getState();
+          // Get selected model ID and service tier
+          const { selectedModelId, serviceTier } = useSettingsStore.getState();
 
           // Convert images to Base64
           let imageData: Array<{ base64: string; mimeType: string }> | undefined;
@@ -320,12 +320,14 @@ export const useChatStore = create<ChatStore>()(
                 memoryEnabled: isMemoryEnabled,
                 mcpConfig: selectedAgent.mcpConfig as Record<string, unknown> | undefined,
                 images: imageData,
+                serviceTier,
               }
             : {
                 modelId: selectedModelId,
                 storagePath: agentWorkingDirectory,
                 memoryEnabled: isMemoryEnabled,
                 images: imageData,
+                serviceTier,
               };
 
           // Debug log
