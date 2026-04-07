@@ -178,6 +178,32 @@ export interface EnvironmentConfig {
   microsoftGraphOAuthSecretArn?: string;
 
   /**
+   * GitHub OAuth2 Credential Provider ARN (optional)
+   * Created via AgentCore Identity management console.
+   * When set together with githubOAuthSecretArn, enables GitHub MCP server target with 3LO.
+   * Format: arn:aws:bedrock-agentcore:{region}:{account}:token-vault/{id}/oauth2credentialprovider/{name}
+   */
+  githubOAuthProviderArn?: string;
+
+  /**
+   * GitHub OAuth2 Secret ARN (optional)
+   * The Secrets Manager secret ARN auto-generated when creating the OAuth2 credential provider.
+   * Required together with githubOAuthProviderArn to enable GitHub MCP server target.
+   * Format: arn:aws:secretsmanager:{region}:{account}:secret:{name}
+   * NOTE: This is a secret ARN reference, not the actual secret value
+   * pragma: allowlist secret
+   */
+  githubOAuthSecretArn?: string;
+
+  /**
+   * Default return URL for 3LO OAuth callback (optional)
+   * The URL users are redirected to after completing OAuth consent.
+   * Typically set to the Moca frontend callback page.
+   * Example: 'https://your-moca-domain.com/oauth/callback'
+   */
+  oauthReturnUrl?: string;
+
+  /**
    * Enable AWS ReadOnly + CloudFormation deploy permissions for runtime (optional)
    * When true, attaches ReadOnlyAccess managed policy and CloudFormation deployment permissions.
    * Useful for development environments where the agent needs to inspect and deploy AWS resources.

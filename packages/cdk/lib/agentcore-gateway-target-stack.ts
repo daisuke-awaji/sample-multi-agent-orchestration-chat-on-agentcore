@@ -335,6 +335,39 @@ export class AgentCoreGatewayTargetStack extends cdk.Stack {
       description: 'Nova Reel Tools Lambda Function Name',
     });
 
+    // ── GitHub MCP Server Target (3LO Authorization Code Flow) ──
+    // Conditionally created only when GitHub OAuth provider ARN and secret ARN are configured
+    if (envConfig.githubOAuthProviderArn && envConfig.githubOAuthSecretArn) {
+      const githubMcpTarget = agentcore.GatewayTarget.forMcpServer(
+        this,
+        'GitHubMcpTarget',
+        {
+          gateway: importedGateway,
+          gatewayTargetName: 'github-mcp',
+          description:
+            'GitHub MCP Server with Authorization Code Flow (3LO) for repository search, issue management, and PR operations',
+          endpoint: 'https://api.githubcopilot.com/mcp/',
+          credentialProviderConfigurations: [
+            agentcore.GatewayCredentialProvider.fromOauthIdentityArn({
+              providerArn: envConfig.githubOAuthProviderArn,
+              secretArn: envConfig.githubOAuthSecretArn,
+              scopes: ['repo', 'read:user'],
+            }),
+          ],
+        }
+      );
+
+      new cdk.CfnOutput(this, 'GitHubMcpTargetId', {
+        value: githubMcpTarget.targetId,
+        description: 'GitHub MCP Server Gateway Target ID',
+      });
+
+      new cdk.CfnOutput(this, 'GitHubMcpTargetArn', {
+        value: githubMcpTarget.targetArn,
+        description: 'GitHub MCP Server Gateway Target ARN',
+      });
+    }
+
     // ── OneDrive (Microsoft Graph) OpenAPI Target ──
     // Conditionally created only when OAuth provider ARN and secret ARN are configured
     if (envConfig.microsoftGraphOAuthProviderArn && envConfig.microsoftGraphOAuthSecretArn) {

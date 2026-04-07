@@ -12,6 +12,7 @@ import { AgentDirectoryPage } from './pages/AgentDirectoryPage';
 import { SearchChatPage } from './pages/SearchChatPage';
 import { EventsPage } from './pages/EventsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { getCurrentUserSession } from './lib/cognito';
 import { useAgentStore } from './stores/agentStore';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -101,6 +102,7 @@ function App() {
         {isAuthenticated ? (
           <div className="h-screen flex">
             <Routes>
+              <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
               <Route element={<MainLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/chat" element={<ChatPage />} />
