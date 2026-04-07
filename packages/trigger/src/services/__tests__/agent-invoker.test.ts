@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals
 import { AgentInvoker } from '../agent-invoker.js';
 import type { AgentsService } from '../agents-service.js';
 import type { SchedulerEventPayload } from '../../types/index.js';
+import type { TriggerId } from '@moca/core';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ function buildAgent(overrides: Record<string, unknown> = {}) {
 
 function makePayload(overrides: Partial<SchedulerEventPayload> = {}): SchedulerEventPayload {
   return {
-    triggerId: 'trigger-001',
+    triggerId: '550e8400-e29b-41d4-a716-446655440000' as TriggerId,
     userId: 'user-123',
     agentId: 'agent-456',
     prompt: 'Hello, agent!',

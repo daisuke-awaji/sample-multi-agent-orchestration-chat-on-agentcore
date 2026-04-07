@@ -4,6 +4,7 @@
  */
 
 import { SchedulerEvent, EventDrivenContext } from '../types/index.js';
+import { parseTriggerId } from '@moca/core';
 import { AuthService } from '../services/auth-service.js';
 import { AgentInvoker } from '../services/agent-invoker.js';
 import { ExecutionRecorder } from '../services/execution-recorder.js';
@@ -24,13 +25,25 @@ export async function handleSchedulerEvent(event: SchedulerEvent): Promise<Handl
   console.log('Received Scheduler event:', JSON.stringify(event, null, 2));
 
   const payload = event.detail;
-  const { triggerId, userId, agentId, prompt } = payload;
+  const { triggerId: rawTriggerId, userId, agentId, prompt } = payload;
 
-  if (!triggerId || !userId || !agentId || !prompt) {
+  if (!rawTriggerId || !userId || !agentId || !prompt) {
     console.error('Invalid event payload:', payload);
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'Missing required fields in event payload' }),
+    };
+  }
+
+  // Validate triggerId format (runtime check — EventBridge payload is untyped JSON)
+  let triggerId;
+  try {
+    triggerId = parseTriggerId(rawTriggerId);
+  } catch {
+    console.error('Invalid triggerId in event payload, discarding:', { rawTriggerId });
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid triggerId format in event payload' }),
     };
   }
 

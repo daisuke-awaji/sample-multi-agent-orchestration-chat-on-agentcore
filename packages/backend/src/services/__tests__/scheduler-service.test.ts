@@ -24,7 +24,7 @@ import {
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
 import { SchedulerService } from '../scheduler-service.js';
-import type { UserId, AgentId } from '@moca/core';
+import type { UserId, AgentId, TriggerId } from '@moca/core';
 
 const MockSchedulerClient = jest.mocked(SchedulerClient);
 const MockCreateScheduleCommand = jest.mocked(CreateScheduleCommand);
@@ -38,7 +38,7 @@ const BASE_CONFIG = {
   name: 'test-schedule',
   expression: '0 9 * * ? *',
   payload: {
-    triggerId: 'trigger-123',
+    triggerId: '550e8400-e29b-41d4-a716-446655440000' as TriggerId,
     userId: 'user-456' as UserId,
     agentId: 'agent-789' as AgentId,
     prompt: 'Run daily task',
@@ -132,7 +132,7 @@ describe('SchedulerService - createSchedule', () => {
     await service.createSchedule(BASE_CONFIG);
 
     const call = MockCreateScheduleCommand.mock.calls[0][0] as { Name: string };
-    expect(call.Name).toBe('trigger-trigger-123');
+    expect(call.Name).toBe('trigger-550e8400-e29b-41d4-a716-446655440000');
   });
 
   it('sets GroupName from constructor parameter', async () => {
@@ -187,7 +187,7 @@ describe('SchedulerService - createSchedule', () => {
 
     const arn = await service.createSchedule(BASE_CONFIG);
 
-    expect(arn).toContain('trigger-trigger-123');
+    expect(arn).toContain('trigger-550e8400-e29b-41d4-a716-446655440000');
     expect(arn).toContain('test-group');
   });
 
@@ -216,19 +216,19 @@ describe('SchedulerService - deleteSchedule', () => {
   });
 
   it('calls DeleteScheduleCommand with correct schedule name', async () => {
-    await service.deleteSchedule('trigger-abc');
+    await service.deleteSchedule('a1b2c3d4-e5f6-7890-abcd-ef1234567890' as TriggerId);
 
     const call = MockDeleteScheduleCommand.mock.calls[0][0] as { Name: string; GroupName: string };
-    expect(call.Name).toBe('trigger-trigger-abc');
+    expect(call.Name).toBe('trigger-a1b2c3d4-e5f6-7890-abcd-ef1234567890');
     expect(call.GroupName).toBe('test-group');
   });
 
   it('throws error when delete fails', async () => {
     mockSend.mockImplementation(() => Promise.reject(new Error('Not found')));
 
-    await expect(service.deleteSchedule('trigger-abc')).rejects.toThrow(
-      'Failed to delete EventBridge schedule: Not found'
-    );
+    await expect(
+      service.deleteSchedule('a1b2c3d4-e5f6-7890-abcd-ef1234567890' as TriggerId)
+    ).rejects.toThrow('Failed to delete EventBridge schedule: Not found');
   });
 });
 
@@ -248,7 +248,7 @@ describe('SchedulerService - scheduleExists', () => {
   it('returns true when schedule exists', async () => {
     mockSend.mockImplementation(() => Promise.resolve({ Name: 'trigger-123' }));
 
-    const exists = await service.scheduleExists('123');
+    const exists = await service.scheduleExists('019573e4-5a1b-7c2d-8e3f-4a5b6c7d8e9f' as TriggerId);
     expect(exists).toBe(true);
   });
 
@@ -258,13 +258,15 @@ describe('SchedulerService - scheduleExists', () => {
     });
     mockSend.mockImplementation(() => Promise.reject(error));
 
-    const exists = await service.scheduleExists('nonexistent');
+    const exists = await service.scheduleExists('019573e4-5a1b-7c2d-8e3f-4a5b6c7d8e9f' as TriggerId);
     expect(exists).toBe(false);
   });
 
   it('rethrows non-ResourceNotFoundException errors', async () => {
     mockSend.mockImplementation(() => Promise.reject(new Error('Internal server error')));
 
-    await expect(service.scheduleExists('123')).rejects.toThrow('Internal server error');
+    await expect(
+      service.scheduleExists('019573e4-5a1b-7c2d-8e3f-4a5b6c7d8e9f' as TriggerId)
+    ).rejects.toThrow('Internal server error');
   });
 });

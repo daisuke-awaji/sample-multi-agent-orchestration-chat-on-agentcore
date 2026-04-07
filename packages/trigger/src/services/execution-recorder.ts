@@ -6,6 +6,7 @@
 import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { v7 as uuidv7 } from 'uuid';
+import type { TriggerId } from '@moca/core';
 import { TriggerExecution } from '../types/index.js';
 
 /** Maximum size for eventPayload field (~10KB) */
@@ -51,7 +52,7 @@ export class ExecutionRecorder {
    * @param errorMessage - If provided, indicates the execution failed
    */
   async recordExecution(
-    triggerId: string,
+    triggerId: TriggerId,
     sessionId: string | undefined,
     event: unknown,
     errorMessage?: string
@@ -97,7 +98,7 @@ export class ExecutionRecorder {
   /**
    * Update trigger's last execution timestamp
    */
-  async updateTriggerLastExecution(userId: string, triggerId: string): Promise<void> {
+  async updateTriggerLastExecution(userId: string, triggerId: TriggerId): Promise<void> {
     const now = new Date().toISOString();
 
     try {

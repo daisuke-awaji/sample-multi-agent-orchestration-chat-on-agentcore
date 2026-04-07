@@ -13,7 +13,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v7 as uuidv7 } from 'uuid';
-import type { UserId, AgentId } from '@moca/core';
+import type { UserId, AgentId, TriggerId } from '@moca/core';
 
 /**
  * Trigger type definitions (matching trigger package)
@@ -37,7 +37,7 @@ export interface EventTriggerConfig {
 export interface Trigger {
   PK: string;
   SK: string;
-  id: string;
+  id: TriggerId;
   userId: UserId;
   name: string;
   description?: string;
@@ -63,7 +63,7 @@ export interface Trigger {
 export interface TriggerExecution {
   PK: string;
   SK: string;
-  triggerId: string;
+  triggerId: TriggerId;
   executionId: string;
   executedAt: string;
   sessionId?: string;
@@ -132,7 +132,7 @@ export class TriggersDynamoDBService {
    * Create a new trigger
    */
   async createTrigger(input: CreateTriggerInput): Promise<Trigger> {
-    const triggerId = uuidv7();
+    const triggerId = uuidv7() as TriggerId;
     const now = new Date().toISOString();
 
     const trigger: Trigger = {
@@ -178,7 +178,7 @@ export class TriggersDynamoDBService {
   /**
    * Get a trigger by ID
    */
-  async getTrigger(userId: UserId, triggerId: string): Promise<Trigger | null> {
+  async getTrigger(userId: UserId, triggerId: TriggerId): Promise<Trigger | null> {
     const result = await this.client.send(
       new GetItemCommand({
         TableName: this.tableName,
@@ -223,7 +223,7 @@ export class TriggersDynamoDBService {
    */
   async updateTrigger(
     userId: UserId,
-    triggerId: string,
+    triggerId: TriggerId,
     updates: UpdateTriggerInput
   ): Promise<Trigger> {
     const now = new Date().toISOString();
@@ -346,7 +346,7 @@ export class TriggersDynamoDBService {
   /**
    * Delete a trigger
    */
-  async deleteTrigger(userId: UserId, triggerId: string): Promise<void> {
+  async deleteTrigger(userId: UserId, triggerId: TriggerId): Promise<void> {
     await this.client.send(
       new DeleteItemCommand({
         TableName: this.tableName,
@@ -386,7 +386,7 @@ export class TriggersDynamoDBService {
    * Get execution history for a trigger with pagination support
    */
   async getExecutions(
-    triggerId: string,
+    triggerId: TriggerId,
     limit: number = 20,
     exclusiveStartKey?: Record<string, unknown>
   ): Promise<GetExecutionsResult> {

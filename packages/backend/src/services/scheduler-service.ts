@@ -10,13 +10,13 @@ import {
   DeleteScheduleCommand,
   GetScheduleCommand,
 } from '@aws-sdk/client-scheduler';
-import type { UserId, AgentId } from '@moca/core';
+import type { UserId, AgentId, TriggerId } from '@moca/core';
 
 /**
  * Schedule payload for Lambda invocation
  */
 export interface SchedulePayload {
-  triggerId: string;
+  triggerId: TriggerId;
   userId: UserId;
   agentId: AgentId;
   prompt: string;
@@ -138,7 +138,7 @@ export class SchedulerService {
   /**
    * Update an existing schedule
    */
-  async updateSchedule(triggerId: string, config: Partial<ScheduleConfig>): Promise<void> {
+  async updateSchedule(triggerId: TriggerId, config: Partial<ScheduleConfig>): Promise<void> {
     const scheduleName = `trigger-${triggerId}`;
 
     console.log('Updating EventBridge Schedule:', {
@@ -215,7 +215,7 @@ export class SchedulerService {
   /**
    * Delete a schedule
    */
-  async deleteSchedule(triggerId: string): Promise<void> {
+  async deleteSchedule(triggerId: TriggerId): Promise<void> {
     const scheduleName = `trigger-${triggerId}`;
 
     console.log('Deleting EventBridge Schedule:', { name: scheduleName });
@@ -241,7 +241,7 @@ export class SchedulerService {
   /**
    * Enable a schedule
    */
-  async enableSchedule(triggerId: string): Promise<void> {
+  async enableSchedule(triggerId: TriggerId): Promise<void> {
     await this.updateSchedule(triggerId, { enabled: true });
     console.log('Schedule enabled:', { triggerId });
   }
@@ -249,7 +249,7 @@ export class SchedulerService {
   /**
    * Disable a schedule
    */
-  async disableSchedule(triggerId: string): Promise<void> {
+  async disableSchedule(triggerId: TriggerId): Promise<void> {
     await this.updateSchedule(triggerId, { enabled: false });
     console.log('Schedule disabled:', { triggerId });
   }
@@ -257,7 +257,7 @@ export class SchedulerService {
   /**
    * Check if a schedule exists
    */
-  async scheduleExists(triggerId: string): Promise<boolean> {
+  async scheduleExists(triggerId: TriggerId): Promise<boolean> {
     const scheduleName = `trigger-${triggerId}`;
 
     try {
