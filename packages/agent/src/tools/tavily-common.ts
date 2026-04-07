@@ -56,7 +56,7 @@ export async function getTavilyApiKey(): Promise<string> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to retrieve Tavily API Key from Secrets Manager: ${errorMessage}`);
-      throw new Error(`Failed to retrieve API key from Secrets Manager: ${errorMessage}`);
+      throw new Error(`Failed to retrieve API key from Secrets Manager: ${errorMessage}`, { cause: error });
     }
   }
 

@@ -252,18 +252,17 @@ describe('agentCorePayloadToMessage', () => {
     });
 
     it('restores non-ASCII content from Buffer blob (utf8 verification)', () => {
+      const nonAsciiText = 'H\u00e9llo W\u00f6rld \ud83d\ude80\ud83c\udf0d';
       const blobData = {
         messageType: 'content',
         role: 'user',
-        content: [{ type: 'textBlock', text: '\u65e5\u672c\u8a9e\u30c6\u30b9\u30c8\ud83d\ude80' }],
+        content: [{ type: 'textBlock', text: nonAsciiText }],
       };
       const payload = {
         blob: Buffer.from(JSON.stringify(blobData), 'utf8') as unknown as Uint8Array,
       };
       const msg = agentCorePayloadToMessage(payload);
-      expect((msg.content[0] as TextBlock).text).toBe(
-        '\u65e5\u672c\u8a9e\u30c6\u30b9\u30c8\ud83d\ude80'
-      );
+      expect((msg.content[0] as TextBlock).text).toBe(nonAsciiText);
     });
   });
 

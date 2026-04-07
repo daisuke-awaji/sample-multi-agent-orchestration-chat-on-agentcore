@@ -295,7 +295,8 @@ router.post('/', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Respo
         // Rollback: delete the trigger
         await triggersService.deleteTrigger(userId, trigger.id);
         throw new Error(
-          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`,
+          { cause: scheduleError }
         );
       }
     }
@@ -456,7 +457,8 @@ router.put('/:id', jwtAuthMiddleware, async (req: AuthenticatedRequest, res: Res
       } catch (scheduleError) {
         console.error('Failed to create EventBridge Schedule during type change:', scheduleError);
         throw new Error(
-          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+          `Failed to create schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`,
+          { cause: scheduleError }
         );
       }
     }
@@ -688,7 +690,8 @@ router.post('/:id/enable', jwtAuthMiddleware, async (req: AuthenticatedRequest, 
       } catch (scheduleError) {
         console.error('Failed to enable EventBridge Schedule:', scheduleError);
         throw new Error(
-          `Failed to enable schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+          `Failed to enable schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`,
+          { cause: scheduleError }
         );
       }
     }
@@ -788,7 +791,8 @@ router.post('/:id/disable', jwtAuthMiddleware, async (req: AuthenticatedRequest,
       } catch (scheduleError) {
         console.error('Failed to disable EventBridge Schedule:', scheduleError);
         throw new Error(
-          `Failed to disable schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`
+          `Failed to disable schedule: ${scheduleError instanceof Error ? scheduleError.message : String(scheduleError)}`,
+          { cause: scheduleError }
         );
       }
     }

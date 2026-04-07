@@ -56,9 +56,9 @@ export async function getMachineUserToken(config: MachineUserConfig): Promise<Ma
     };
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Machine user authentication error: ${error.message}`);
+      throw new Error(`Machine user authentication error: ${error.message}`, { cause: error });
     }
-    throw new Error('Unknown authentication error occurred');
+    throw new Error('Unknown authentication error occurred', { cause: error });
   }
 }
 

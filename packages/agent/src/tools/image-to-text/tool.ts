@@ -109,7 +109,7 @@ async function fetchImageFromS3(s3Uri: string, userId: string): Promise<ImageSou
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`[IMAGE_TO_TEXT] Failed to fetch image from S3: ${errorMessage}`);
-    throw new Error(`S3 fetch failed: ${errorMessage}`);
+    throw new Error(`S3 fetch failed: ${errorMessage}`, { cause: error });
   }
 }
 
@@ -141,7 +141,7 @@ async function processLocalFile(filePath: string): Promise<ImageSource> {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`[IMAGE_TO_TEXT] Failed to process local file: ${errorMessage}`);
-    throw new Error(`Local file processing failed: ${errorMessage}`);
+    throw new Error(`Local file processing failed: ${errorMessage}`, { cause: error });
   }
 }
 
@@ -218,7 +218,7 @@ async function analyzeImage(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`[IMAGE_TO_TEXT] Image analysis failed: ${errorMessage}`);
-    throw new Error(`Image analysis failed: ${errorMessage}`);
+    throw new Error(`Image analysis failed: ${errorMessage}`, { cause: error });
   }
 }
 

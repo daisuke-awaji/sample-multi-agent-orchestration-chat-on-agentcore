@@ -111,7 +111,6 @@ export class S3WorkspaceSync extends EventEmitter {
   async pull(): Promise<SyncResult> {
     const startTime = Date.now();
     let downloadedFiles = 0;
-    let deletedFiles = 0;
     const errors: string[] = [];
     const s3FilePaths = new Set<string>();
 
@@ -217,7 +216,7 @@ export class S3WorkspaceSync extends EventEmitter {
       await Promise.all(downloadPromises);
 
       // Phase 3: Delete local-only files
-      deletedFiles = this.cleanupLocalOnlyFiles(s3FilePaths);
+      const deletedFiles = this.cleanupLocalOnlyFiles(s3FilePaths);
 
       // Phase 4: Load custom .syncignore from workspace (if present)
       this.ignoreFilter.loadFromWorkspace(this.workspaceDir);

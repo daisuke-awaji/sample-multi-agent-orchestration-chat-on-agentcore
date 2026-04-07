@@ -179,7 +179,8 @@ export class AgentCoreGatewayService {
     } catch (error) {
       console.error('💥 Tool list retrieval error:', error);
       throw new Error(
-        `Failed to retrieve tool list: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to retrieve tool list: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -247,7 +248,8 @@ export class AgentCoreGatewayService {
     } catch (error) {
       console.error('💥 Tool search error (query: "%s"):', query, error);
       throw new Error(
-        `Tool search failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Tool search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
