@@ -112,6 +112,13 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
 
   const effectiveServiceTier = body.serviceTier ?? resolveServiceTier(sessionType);
 
+  logger.info('Service tier resolved:', {
+    requestId,
+    sessionType: sessionType || 'undefined',
+    requestedTier: body.serviceTier || 'none',
+    effectiveTier: effectiveServiceTier,
+  });
+
   const agentOptions: CreateAgentOptions = {
     hooks,
     modelId: body.modelId,
