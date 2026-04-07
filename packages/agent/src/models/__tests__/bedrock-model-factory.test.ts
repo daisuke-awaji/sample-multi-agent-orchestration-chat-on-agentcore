@@ -35,32 +35,32 @@ describe('createBedrockModel — serviceTier', () => {
     jest.clearAllMocks();
   });
 
-  it('does not include additionalRequestFields when serviceTier is undefined', () => {
+  it('does not include additionalArgs when serviceTier is undefined', () => {
     createBedrockModel();
 
     const opts = mockBedrockModelConstructor.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.additionalRequestFields).toBeUndefined();
+    expect(opts.additionalArgs).toBeUndefined();
   });
 
-  it('does not include additionalRequestFields when serviceTier is "default"', () => {
+  it('does not include additionalArgs when serviceTier is "default"', () => {
     createBedrockModel({ serviceTier: 'default' });
 
     const opts = mockBedrockModelConstructor.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.additionalRequestFields).toBeUndefined();
+    expect(opts.additionalArgs).toBeUndefined();
   });
 
-  it('passes service_tier "flex" via additionalRequestFields', () => {
+  it('passes serviceTier "flex" via additionalArgs', () => {
     createBedrockModel({ serviceTier: 'flex' });
 
     const opts = mockBedrockModelConstructor.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.additionalRequestFields).toEqual({ service_tier: 'flex' });
+    expect(opts.additionalArgs).toEqual({ serviceTier: { type: 'flex' } });
   });
 
-  it('passes service_tier "priority" via additionalRequestFields', () => {
+  it('passes serviceTier "priority" via additionalArgs', () => {
     createBedrockModel({ serviceTier: 'priority' });
 
     const opts = mockBedrockModelConstructor.mock.calls[0][0] as Record<string, unknown>;
-    expect(opts.additionalRequestFields).toEqual({ service_tier: 'priority' });
+    expect(opts.additionalArgs).toEqual({ serviceTier: { type: 'priority' } });
   });
 
   it('preserves other model options alongside serviceTier', () => {
@@ -73,6 +73,6 @@ describe('createBedrockModel — serviceTier', () => {
     const opts = mockBedrockModelConstructor.mock.calls[0][0] as Record<string, unknown>;
     expect(opts.modelId).toBe('amazon.nova-pro-v1:0');
     expect(opts.region).toBe('eu-west-1');
-    expect(opts.additionalRequestFields).toEqual({ service_tier: 'flex' });
+    expect(opts.additionalArgs).toEqual({ serviceTier: { type: 'flex' } });
   });
 });

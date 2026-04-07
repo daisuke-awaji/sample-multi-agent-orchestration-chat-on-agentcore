@@ -121,7 +121,7 @@ export function createBedrockModel(options?: BedrockModelOptions): BedrockModel 
       maxAttempts: 5,
     },
     ...(serviceTier && serviceTier !== 'default'
-      ? { additionalRequestFields: { service_tier: serviceTier } }
+      ? { additionalArgs: { serviceTier: { type: serviceTier } } }
       : {}),
   });
 }
