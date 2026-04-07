@@ -5,11 +5,15 @@ import { config, logger } from '../config/index.js';
 // Types
 // ---------------------------------------------------------------------------
 
+export type ServiceTier = 'default' | 'flex' | 'priority';
+export type ServiceTierConfig = ServiceTier | 'auto';
+
 export interface BedrockModelOptions {
   modelId?: string;
   region?: string;
   cachePrompt?: 'default' | 'ephemeral';
   cacheTools?: 'default' | 'ephemeral';
+  serviceTier?: ServiceTier;
 }
 
 /**
@@ -84,6 +88,7 @@ export function supportsToolCaching(modelId: string): boolean {
 export function createBedrockModel(options?: BedrockModelOptions): BedrockModel {
   const modelId = options?.modelId || config.BEDROCK_MODEL_ID;
   const region = options?.region || config.BEDROCK_REGION;
+  const serviceTier = options?.serviceTier;
 
   const cachingSupport = getPromptCachingSupport(modelId);
 
@@ -103,6 +108,7 @@ export function createBedrockModel(options?: BedrockModelOptions): BedrockModel 
     cachePrompt,
     cacheTools,
     cachingSupport,
+    serviceTier: serviceTier || 'default',
   });
 
   return new BedrockModel({
@@ -114,5 +120,8 @@ export function createBedrockModel(options?: BedrockModelOptions): BedrockModel 
       retryMode: 'adaptive',
       maxAttempts: 5,
     },
+    ...(serviceTier && serviceTier !== 'default'
+      ? { additionalRequestFields: { service_tier: serviceTier } }
+      : {}),
   });
 }

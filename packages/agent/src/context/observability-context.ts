@@ -6,6 +6,7 @@ import { trace, context as otelContext, propagation, SpanStatusCode } from '@ope
 import type { Span } from '@opentelemetry/api';
 import { logger } from '../config/index.js';
 import type { SessionType } from '../session/types.js';
+import type { ServiceTier } from '../models/bedrock.js';
 
 /** Tracer instance for creating custom spans */
 const tracer = trace.getTracer('moca-agent');
@@ -19,6 +20,7 @@ export interface ObservabilityParams {
   modelId?: string;
   isMachineUser?: boolean;
   memoryEnabled?: boolean;
+  serviceTier?: ServiceTier;
 }
 
 /**
@@ -69,6 +71,9 @@ export class ObservabilityContext {
     }
     if (this.params.memoryEnabled) {
       entries['gen_ai.memory.enabled'] = { value: 'true' };
+    }
+    if (this.params.serviceTier) {
+      entries['gen_ai.request.service_tier'] = { value: this.params.serviceTier };
     }
 
     return entries;

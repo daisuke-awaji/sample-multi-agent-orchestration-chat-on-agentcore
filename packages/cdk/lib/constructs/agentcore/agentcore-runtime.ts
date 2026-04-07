@@ -220,6 +220,7 @@ export class AgentCoreRuntime extends Construct {
       AWS_REGION: props.region || 'us-east-1',
       BEDROCK_MODEL_ID: 'global.anthropic.claude-sonnet-4-6',
       BEDROCK_REGION: props.region || 'us-east-1',
+      BEDROCK_SERVICE_TIER: 'auto',
       LOG_LEVEL: 'info',
     };
 

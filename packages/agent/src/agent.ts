@@ -52,7 +52,7 @@ export async function createAgent(options?: CreateAgentOptions): Promise<CreateA
 
   // 3. Create Bedrock model and apply cache points to history
   const modelId = options?.modelId || config.BEDROCK_MODEL_ID;
-  const model = createBedrockModel({ modelId: options?.modelId });
+  const model = createBedrockModel({ modelId: options?.modelId, serviceTier: options?.serviceTier });
   const cachingSupport = getPromptCachingSupport(modelId);
   const messagesWithCache = new CachePointAppender(cachingSupport).apply(savedMessages);
 

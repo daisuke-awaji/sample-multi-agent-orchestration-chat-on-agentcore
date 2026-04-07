@@ -3,6 +3,7 @@
  */
 
 import type { ImageData } from '../validation/index.js';
+import type { ServiceTier } from '../models/bedrock.js';
 
 /**
  * Agent invocation request type definition
@@ -19,4 +20,5 @@ export interface InvocationRequest {
   mcpConfig?: Record<string, unknown>; // Optional: User-defined MCP server configuration
   images?: ImageData[]; // Optional: Array of images for multimodal input
   targetUserId?: string; // Optional: Target user ID for batch processing (machine user only)
+  serviceTier?: ServiceTier; // Optional: Bedrock service tier override (default/flex/priority)
 }

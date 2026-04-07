@@ -28,6 +28,9 @@ const envSchema = z.object({
   GITLAB_TOKEN_SECRET_NAME: z.string().optional(),
   GITLAB_HOST: z.string().default('gitlab.com'),
 
+  // Bedrock Service Tier Configuration
+  BEDROCK_SERVICE_TIER: z.enum(['default', 'flex', 'priority', 'auto']).default('auto'),
+
   // Debug Configuration
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   DEBUG_MCP: z

@@ -4,6 +4,7 @@
 
 import type { Agent, HookProvider } from '@strands-agents/sdk';
 import type { SessionStorage, SessionConfig } from '../session/types.js';
+import type { ServiceTier } from '../models/bedrock.js';
 
 /**
  * Strands Agent creation options for AgentCore Runtime
@@ -23,6 +24,7 @@ export interface CreateAgentOptions {
   memoryTopK?: number; // Number of long-term memories to retrieve (default: 10)
   // User-defined MCP server configuration
   mcpConfig?: Record<string, unknown>; // Configuration in mcp.json format
+  serviceTier?: ServiceTier; // Bedrock service tier override (default/flex/priority)
 }
 
 /**

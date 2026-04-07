@@ -160,7 +160,10 @@ describe('createAgent', () => {
   it('should use custom modelId when provided', async () => {
     await createAgent({ modelId: 'custom-model-id' });
 
-    expect(mockCreateBedrockModel).toHaveBeenCalledWith({ modelId: 'custom-model-id' });
+    expect(mockCreateBedrockModel).toHaveBeenCalledWith({
+      modelId: 'custom-model-id',
+      serviceTier: undefined,
+    });
     expect(mockGetPromptCachingSupport).toHaveBeenCalledWith('custom-model-id');
   });
 
@@ -333,5 +336,31 @@ describe('createAgent', () => {
     const maxStart = Math.max(...startIndices);
     const minEnd = Math.min(...endIndices);
     expect(maxStart).toBeLessThan(minEnd);
+  });
+
+  // ── Service Tier Tests ─────────────────────────────────────────────
+
+  it('should pass serviceTier to createBedrockModel when provided', async () => {
+    await createAgent({ serviceTier: 'flex' });
+
+    expect(mockCreateBedrockModel).toHaveBeenCalledWith(
+      expect.objectContaining({ serviceTier: 'flex' })
+    );
+  });
+
+  it('should pass serviceTier override to createBedrockModel', async () => {
+    await createAgent({ serviceTier: 'priority' });
+
+    expect(mockCreateBedrockModel).toHaveBeenCalledWith(
+      expect.objectContaining({ serviceTier: 'priority' })
+    );
+  });
+
+  it('should pass undefined serviceTier when not provided', async () => {
+    await createAgent();
+
+    expect(mockCreateBedrockModel).toHaveBeenCalledWith(
+      expect.objectContaining({ serviceTier: undefined })
+    );
   });
 });

@@ -20,6 +20,7 @@ import { initializeWorkspaceSync } from '../services/workspace-sync-helper.js';
 import { logger } from '../config/index.js';
 import { validateImageData } from '../validation/index.js';
 import { resolveEffectiveUserId } from './auth-resolver.js';
+import { resolveServiceTier, type ServiceTier } from '../models/index.js';
 import { streamAgentResponse } from './stream-handler.js';
 
 /**
@@ -42,6 +43,13 @@ function validateRequest(body: InvocationRequest, res: Response): string | null 
       res.status(400).json({ error: validation.error });
       return null;
     }
+  }
+
+  // Validate serviceTier
+  const VALID_SERVICE_TIERS: ServiceTier[] = ['default', 'flex', 'priority'];
+  if (body.serviceTier && !VALID_SERVICE_TIERS.includes(body.serviceTier)) {
+    res.status(400).json({ error: `Invalid serviceTier: ${body.serviceTier}. Must be one of: ${VALID_SERVICE_TIERS.join(', ')}` });
+    return null;
   }
 
   // Resolve effective user ID
@@ -102,6 +110,8 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
     (hook) => hook != null
   ) as HookProvider[];
 
+  const effectiveServiceTier = body.serviceTier ?? resolveServiceTier(sessionType);
+
   const agentOptions: CreateAgentOptions = {
     hooks,
     modelId: body.modelId,
@@ -112,6 +122,7 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
     actorId: body.memoryEnabled ? actorId : undefined,
     memoryTopK: body.memoryTopK,
     mcpConfig: body.mcpConfig,
+    serviceTier: effectiveServiceTier,
   };
 
   if (sessionResult) {
@@ -128,6 +139,7 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
     modelId: body.modelId,
     isMachineUser: context.isMachineUser,
     memoryEnabled: body.memoryEnabled,
+    serviceTier: effectiveServiceTier,
   });
 
   await otelCtx.traceAsync('agent.invocation', async () => {
