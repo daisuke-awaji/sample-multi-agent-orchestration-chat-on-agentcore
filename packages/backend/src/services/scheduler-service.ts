@@ -129,7 +129,8 @@ export class SchedulerService {
     } catch (error) {
       console.error('Failed to create schedule:', error);
       throw new Error(
-        `Failed to create EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to create EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       );
     }
   }
@@ -205,7 +206,8 @@ export class SchedulerService {
     } catch (error) {
       console.error('Failed to update schedule:', error);
       throw new Error(
-        `Failed to update EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to update EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       );
     }
   }
@@ -230,7 +232,8 @@ export class SchedulerService {
     } catch (error) {
       console.error('Failed to delete schedule:', error);
       throw new Error(
-        `Failed to delete EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to delete EventBridge schedule: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       );
     }
   }

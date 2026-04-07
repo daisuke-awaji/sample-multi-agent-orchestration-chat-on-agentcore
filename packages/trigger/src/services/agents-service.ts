@@ -164,7 +164,7 @@ export class AgentsService {
       return agent;
     } catch (error) {
       console.error('Error getting agent:', error);
-      throw new Error('Failed to get agent');
+      throw new Error('Failed to get agent', { cause: error });
     }
   }
 }

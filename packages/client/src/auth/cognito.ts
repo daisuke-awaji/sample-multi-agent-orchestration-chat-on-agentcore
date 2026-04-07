@@ -62,9 +62,9 @@ export async function getJwtToken(config: CognitoConfig): Promise<AuthResult> {
     };
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Cognito 認証エラー: ${error.message}`);
+      throw new Error(`Cognito 認証エラー: ${error.message}`, { cause: error });
     }
-    throw new Error('不明な認証エラーが発生しました');
+    throw new Error('不明な認証エラーが発生しました', { cause: error });
   }
 }
 

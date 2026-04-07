@@ -70,7 +70,7 @@ function parseEnv(): Config {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues.map((issue) => issue.path.join('.')).join(', ');
-      throw new Error(`Required environment variables are not set: ${missingVars}`);
+      throw new Error(`Required environment variables are not set: ${missingVars}`, { cause: error });
     }
     throw error;
   }

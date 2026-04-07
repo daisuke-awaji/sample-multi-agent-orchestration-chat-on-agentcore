@@ -129,9 +129,9 @@ export class AgentCoreClient {
       return (await response.json()) as PingResponse;
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Ping エラー: ${error.message}`);
+        throw new Error(`Ping エラー: ${error.message}`, { cause: error });
       }
-      throw new Error('不明なエラーが発生しました');
+      throw new Error('不明なエラーが発生しました', { cause: error });
     }
   }
 
@@ -156,9 +156,9 @@ export class AgentCoreClient {
       return (await response.json()) as ServiceInfoResponse;
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`サービス情報取得エラー: ${error.message}`);
+        throw new Error(`サービス情報取得エラー: ${error.message}`, { cause: error });
       }
-      throw new Error('不明なエラーが発生しました');
+      throw new Error('不明なエラーが発生しました', { cause: error });
     }
   }
 
@@ -301,9 +301,9 @@ export class AgentCoreClient {
       }
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Agent ストリーミング呼び出しエラー: ${error.message}`);
+        throw new Error(`Agent ストリーミング呼び出しエラー: ${error.message}`, { cause: error });
       }
-      throw new Error('不明なエラーが発生しました');
+      throw new Error('不明なエラーが発生しました', { cause: error });
     }
   }
 
@@ -361,9 +361,9 @@ export class AgentCoreClient {
       };
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Agent 呼び出しエラー: ${error.message}`);
+        throw new Error(`Agent 呼び出しエラー: ${error.message}`, { cause: error });
       }
-      throw new Error('不明なエラーが発生しました');
+      throw new Error('不明なエラーが発生しました', { cause: error });
     }
   }
 
@@ -392,7 +392,8 @@ export class AgentCoreClient {
       throw new Error(
         `接続テストに失敗しました (${connectionTime}ms): ${
           error instanceof Error ? error.message : '不明なエラー'
-        }`
+        }`,
+        { cause: error }
       );
     }
   }

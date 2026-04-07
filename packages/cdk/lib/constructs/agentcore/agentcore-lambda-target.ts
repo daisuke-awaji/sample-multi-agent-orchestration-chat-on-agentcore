@@ -152,7 +152,7 @@ export class AgentCoreLambdaTarget extends Construct {
 
       return schema;
     } catch (error) {
-      throw new Error(`Failed to load tool schema from ${schemaPath}: ${error}`);
+      throw new Error(`Failed to load tool schema from ${schemaPath}: ${error}`, { cause: error });
     }
   }
 

@@ -263,7 +263,7 @@ export async function downloadFolder(
       downloadedCount++;
     } catch (error) {
       if (signal?.aborted) {
-        throw new Error('Download cancelled');
+        throw new Error('Download cancelled', { cause: error });
       }
       console.error('Error downloading file %s:', file.relativePath, error);
       // Skip and continue on error

@@ -78,7 +78,8 @@ export class AuthService {
     } catch (error) {
       console.error('Failed to obtain Machine User token:', error);
       throw new Error(
-        'Authentication failed: ' + (error instanceof Error ? error.message : String(error))
+        'Authentication failed: ' + (error instanceof Error ? error.message : String(error)),
+        { cause: error }
       );
     }
   }
