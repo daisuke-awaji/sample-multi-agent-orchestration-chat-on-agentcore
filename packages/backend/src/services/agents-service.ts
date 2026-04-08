@@ -356,10 +356,18 @@ export class AgentsService {
         expressionAttributeValues[':mcpConfig'] = mcpConfigForDb;
       }
 
+      // Handle defaultStoragePath: empty string means remove, other values update
+      const removeExpressions: string[] = [];
       if (input.defaultStoragePath !== undefined) {
-        updateExpressions.push('#defaultStoragePath = :defaultStoragePath');
-        expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
-        expressionAttributeValues[':defaultStoragePath'] = input.defaultStoragePath;
+        if (input.defaultStoragePath === '') {
+          // Empty string means clear the attribute
+          removeExpressions.push('#defaultStoragePath');
+          expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
+        } else {
+          updateExpressions.push('#defaultStoragePath = :defaultStoragePath');
+          expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
+          expressionAttributeValues[':defaultStoragePath'] = input.defaultStoragePath;
+        }
       }
 
       // updatedAt is always updated
@@ -367,13 +375,19 @@ export class AgentsService {
       expressionAttributeNames['#updatedAt'] = 'updatedAt';
       expressionAttributeValues[':updatedAt'] = now;
 
+      // Build UpdateExpression with SET and optional REMOVE
+      let updateExpression = `SET ${updateExpressions.join(', ')}`;
+      if (removeExpressions.length > 0) {
+        updateExpression += ` REMOVE ${removeExpressions.join(', ')}`;
+      }
+
       const command = new UpdateItemCommand({
         TableName: this.tableName,
         Key: marshall({
           userId,
           agentId: input.agentId,
         }),
-        UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+        UpdateExpression: updateExpression,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: marshall(expressionAttributeValues, {
           removeUndefinedValues: true,

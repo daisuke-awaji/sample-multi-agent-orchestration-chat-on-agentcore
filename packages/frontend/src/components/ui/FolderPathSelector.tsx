@@ -74,7 +74,7 @@ export const FolderPathSelector: React.FC<FolderPathSelectorProps> = ({
 
   const handleClear = useCallback(() => {
     if (!disabled) {
-      onChange(undefined);
+      onChange('');
     }
   }, [disabled, onChange]);
 

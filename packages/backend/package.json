@@ -12,7 +12,7 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "jest --passWithNoTests",
-    "test:integration": "jest --testMatch='**/*.integration.test.ts' --testPathIgnorePatterns='/node_modules/'",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest --config jest.integration.config.js",
     "docker:build": "docker build -t agentcore-backend .",
     "docker:run": "docker run -p 3000:3000 agentcore-backend",
     "docker:dev": "docker-compose up --build",
