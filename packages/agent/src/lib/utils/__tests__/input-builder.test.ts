@@ -4,7 +4,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { buildInputContent } from '../input-builder.js';
-import type { ImageData } from '../../validation/index.js';
+import type { ImageData } from '../../../types/validation.js';
 
 // Mock logger to prevent console output during tests
 jest.mock('../../../config/index.js', () => ({
