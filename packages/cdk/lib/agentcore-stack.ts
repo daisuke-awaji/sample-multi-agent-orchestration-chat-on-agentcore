@@ -795,7 +795,6 @@ export class AgentCoreStack extends cdk.Stack {
         sessionStreamHandlerFunction: sessionStreamHandler.handler,
         agentRuntimeLogGroupName: `/aws/bedrock-agentcore/runtimes/${this.agentRuntime.runtimeId}-DEFAULT`,
         httpApi: this.backendApi.httpApi,
-        cloudFrontDistribution: this.frontend.cloudFrontDistribution,
       });
     }
 

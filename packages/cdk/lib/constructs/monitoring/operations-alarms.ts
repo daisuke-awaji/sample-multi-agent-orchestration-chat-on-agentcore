@@ -16,7 +16,6 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sns_subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import { Construct } from 'constructs';
 
 export interface OperationsAlarmsProps {
@@ -27,7 +26,6 @@ export interface OperationsAlarmsProps {
   readonly sessionStreamHandlerFunction: lambda.IFunction;
   readonly agentRuntimeLogGroupName: string;
   readonly httpApi: apigatewayv2.IHttpApi;
-  readonly cloudFrontDistribution: cloudfront.IDistribution;
 }
 
 export class OperationsAlarms extends Construct {
@@ -42,13 +40,13 @@ export class OperationsAlarms extends Construct {
       sessionStreamHandlerFunction,
       agentRuntimeLogGroupName,
       httpApi,
-      cloudFrontDistribution,
     } = props;
 
     // ── SNS Topic ──
     const alertTopic = new sns.Topic(this, 'AlertTopic', {
       topicName: `${resourcePrefix}-ops-alerts`,
       displayName: `${resourcePrefix} Operations Alerts`,
+      enforceSSL: true,
     });
     alertTopic.addSubscription(new sns_subscriptions.EmailSubscription(alertEmail));
 
@@ -249,25 +247,9 @@ export class OperationsAlarms extends Construct {
       1,
     );
 
-    // ── Layer 3: CloudFront 5xx Error Rate Alarm ──
-    // CloudFront metrics are only available in us-east-1
-    createAlarm(
-      'CloudFront5xxRateAlarm',
-      `${resourcePrefix}-cloudfront-5xx-rate`,
-      new cloudwatch.Metric({
-        namespace: 'AWS/CloudFront',
-        metricName: '5xxErrorRate',
-        dimensionsMap: {
-          DistributionId: cloudFrontDistribution.distributionId,
-          Region: 'Global',
-        },
-        statistic: 'Average',
-        period: cdk.Duration.minutes(15),
-        region: 'us-east-1',
-      }),
-      1,
-      cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
-      1,
-    );
+    // NOTE: CloudFront 5xxErrorRate alarm is not included because CloudFront
+    // metrics are only available in us-east-1, and CDK cannot create cross-region
+    // alarms from this stack (ap-northeast-1). A separate us-east-1 stack or
+    // manual alarm would be needed for CloudFront monitoring.
   }
 }
