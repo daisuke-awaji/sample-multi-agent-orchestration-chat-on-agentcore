@@ -20,13 +20,13 @@ import {
   GetBrowserSessionCommand,
 } from '@aws-sdk/client-bedrock-agentcore';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { createUserScopedS3Client } from '../../utils/scoped-credentials.js';
+import { createUserScopedS3Client } from '../../lib/utils/scoped-credentials.js';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { Sha256 } from '@aws-crypto/sha256-js';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import { chromium } from 'playwright-core';
 import { logger } from '../../config/index.js';
-import { getCurrentContext, getCurrentStoragePath } from '../../context/request-context.js';
+import { getCurrentContext, getCurrentStoragePath } from '../../lib/context/request-context.js';
 import { v7 as uuidv7 } from 'uuid';
 import type {
   ToolResult,

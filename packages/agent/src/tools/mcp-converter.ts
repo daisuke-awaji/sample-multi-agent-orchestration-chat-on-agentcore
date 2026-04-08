@@ -1,7 +1,7 @@
 import { tool } from '@strands-agents/sdk';
-import { MCPToolDefinition, ToolInput } from '../schemas/types.js';
-import { convertToZodSchema } from '../schemas/zod-converter.js';
-import { mcpClient, MCPToolResult } from '../mcp/client.js';
+import { MCPToolDefinition, ToolInput } from '../types/schemas.js';
+import { convertToZodSchema } from '../types/zod-converter.js';
+import { mcpClient, MCPToolResult } from '../lib/mcp/client.js';
 import { logger } from '../config/index.js';
 
 /**

@@ -4,11 +4,11 @@
 
 import express, { Request, Response, NextFunction, Express } from 'express';
 import cors from 'cors';
-import { corsOptions } from './middleware/cors.js';
-import { requestContextMiddleware } from './middleware/request-context.js';
-import { handleInvocation, handlePing, handleRoot, handleNotFound } from './handlers/index.js';
-import { asyncHandler } from './middleware/async-handler.js';
-import { getContextMetadata } from './context/request-context.js';
+import { corsOptions } from './runtime/middleware/cors.js';
+import { requestContextMiddleware } from './runtime/middleware/request-context.js';
+import { handleInvocation, handlePing, handleRoot, handleNotFound } from './runtime/handlers/index.js';
+import { asyncHandler } from './runtime/middleware/async-handler.js';
+import { getContextMetadata } from './lib/context/request-context.js';
 import { logger } from './config/index.js';
 
 /**

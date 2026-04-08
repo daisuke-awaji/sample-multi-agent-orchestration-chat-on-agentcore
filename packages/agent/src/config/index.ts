@@ -123,3 +123,6 @@ export const logger = {
     console.error('[ERROR]', new Date().toISOString(), ...formattedArgs);
   },
 };
+
+export * from './system-prompt.js';
+export * from './default-context.js';

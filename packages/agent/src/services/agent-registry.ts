@@ -4,7 +4,7 @@
  */
 
 import { logger } from '../config/index.js';
-import { getCurrentAuthHeader } from '../context/request-context.js';
+import { getCurrentAuthHeader } from '../lib/context/request-context.js';
 
 /**
  * Agent definition structure

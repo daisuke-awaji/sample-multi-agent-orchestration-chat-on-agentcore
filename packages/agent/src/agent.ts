@@ -13,18 +13,19 @@
 
 import { Agent, SlidingWindowConversationManager } from '@strands-agents/sdk';
 import { config } from './config/index.js';
-import { buildSystemPrompt } from './prompts/index.js';
-import { createBedrockModel, getPromptCachingSupport } from './models/index.js';
-import { CachePointAppender } from './session/cache-point-appender.js';
-import { getCurrentStoragePath } from './context/request-context.js';
+import { buildSystemPrompt } from './config/index.js';
+import { getPromptCachingSupport } from './types/index.js';
+import { createBedrockModel } from './config/bedrock-model.js';
+import { CachePointAppender } from './services/session/cache-point-appender.js';
+import { getCurrentStoragePath } from './lib/context/request-context.js';
 
 // Agent building blocks
-import { buildUserMCPClients } from './agent/mcp-clients-builder.js';
-import { buildToolSet } from './agent/tools-builder.js';
-import { extractMemoryParams, fetchLongTermMemories } from './agent/memory-fetcher.js';
-import { loadSessionHistory } from './agent/session-loader.js';
+import { buildUserMCPClients } from './runtime/agent/mcp-clients-builder.js';
+import { buildToolSet } from './runtime/agent/tools-builder.js';
+import { extractMemoryParams, fetchLongTermMemories } from './runtime/agent/memory-fetcher.js';
+import { loadSessionHistory } from './runtime/agent/session-loader.js';
 
-import type { CreateAgentOptions, CreateAgentResult } from './agent/types.js';
+import type { CreateAgentOptions, CreateAgentResult } from './runtime/agent/types.js';
 
 /**
  * Create Strands Agent for AgentCore Runtime.

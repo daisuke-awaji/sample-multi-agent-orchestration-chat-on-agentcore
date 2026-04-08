@@ -4,8 +4,8 @@
 
 import { WorkspaceSync } from './workspace-sync.js';
 import { validateStoragePath } from '@moca/s3-workspace-sync';
-import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
-import type { RequestContext } from '../context/request-context.js';
+import { WorkspaceSyncHook } from './session/workspace-sync-hook.js';
+import type { RequestContext } from '../lib/context/request-context.js';
 import { logger } from '../config/index.js';
 
 /**

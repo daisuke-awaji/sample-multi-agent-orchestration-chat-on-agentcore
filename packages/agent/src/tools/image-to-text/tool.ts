@@ -12,8 +12,8 @@ import {
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { readFile } from 'fs/promises';
 import { config, logger } from '../../config/index.js';
-import { getCurrentContext } from '../../context/request-context.js';
-import { createUserScopedS3Client } from '../../utils/scoped-credentials.js';
+import { getCurrentContext } from '../../lib/context/request-context.js';
+import { createUserScopedS3Client } from '../../lib/utils/scoped-credentials.js';
 import type { ImageToTextResult, ImageFormat, ImageSource } from './types.js';
 import { imageToTextDefinition } from '@moca/tool-definitions';
 

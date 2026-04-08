@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { browserDefinition } from '@moca/tool-definitions';
 import { logger } from '../../config/index.js';
 import { AgentCoreBrowserClient } from './client.js';
-import { getCurrentStoragePath } from '../../context/request-context.js';
+import { getCurrentStoragePath } from '../../lib/context/request-context.js';
 import type {
   StartSessionAction,
   NavigateAction,

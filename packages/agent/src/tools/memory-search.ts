@@ -8,8 +8,8 @@
 
 import { tool } from '@strands-agents/sdk';
 import { memorySearchDefinition } from '@moca/tool-definitions';
-import { retrieveLongTermMemory } from '../session/memory-retriever.js';
-import { getCurrentContext } from '../context/request-context.js';
+import { retrieveLongTermMemory } from '../services/session/memory-retriever.js';
+import { getCurrentContext } from '../lib/context/request-context.js';
 import { config, logger } from '../config/index.js';
 
 /**

@@ -6,7 +6,7 @@ import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
 import { logger } from '../../config/index.js';
 import { AgentCoreCodeInterpreterClient } from './client.js';
-import { getCurrentStoragePath } from '../../context/request-context.js';
+import { getCurrentStoragePath } from '../../lib/context/request-context.js';
 import type {
   InitSessionAction,
   ExecuteCodeAction,

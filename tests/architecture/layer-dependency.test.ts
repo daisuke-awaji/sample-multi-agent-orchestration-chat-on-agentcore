@@ -62,13 +62,12 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 const AGENT_LAYER_RULE: LayerRule = {
   name: 'packages/agent',
   layers: {
-    config: 0, schemas: 0, validation: 0, prompts: 0,
-    models: 1, utils: 1,
-    context: 2, mcp: 2, middleware: 2,
-    services: 3, session: 3,
+    types: 0,
+    config: 1,
+    lib: 2,
+    services: 3,
     tools: 4,
-    agent: 5,
-    handlers: 6,
+    runtime: 5,
   },
   srcRoot: 'packages/agent/src',
   layerExtractor: (fp) => fp.match(/packages\/agent\/src\/([^/]+)/)?.[1] ?? null,

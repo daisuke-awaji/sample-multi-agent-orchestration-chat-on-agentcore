@@ -7,8 +7,8 @@ import { fileEditorDefinition } from '@moca/tool-definitions';
 import { access, mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname } from 'path';
 import { logger } from '../config/index.js';
-import { getCurrentContext } from '../context/request-context.js';
-import { toDisplayPath } from '../utils/display-path.js';
+import { getCurrentContext } from '../lib/context/request-context.js';
+import { toDisplayPath } from '../lib/utils/display-path.js';
 
 /**
  * Check if oldString appears exactly once in the file content

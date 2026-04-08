@@ -7,8 +7,8 @@ import { executeCommandDefinition } from '@moca/tool-definitions';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
-import { getCurrentContext } from '../context/request-context.js';
-import { getUserScopedEnvVars } from '../utils/scoped-credentials.js';
+import { getCurrentContext } from '../lib/context/request-context.js';
+import { getUserScopedEnvVars } from '../lib/utils/scoped-credentials.js';
 
 const execAsync = promisify(exec);
 

@@ -10,7 +10,7 @@ import { tool } from '@strands-agents/sdk';
 import { z } from 'zod';
 import { logger } from '../../config/index.js';
 import { AgentCoreCodeInterpreterClient } from '../code-interpreter/client.js';
-import { getCurrentStoragePath } from '../../context/request-context.js';
+import { getCurrentStoragePath } from '../../lib/context/request-context.js';
 import { generateUiDefinition } from '@moca/tool-definitions';
 import { validateUISpec } from './catalog.js';
 import { extractJsonFromOutput } from './extract-json.js';
