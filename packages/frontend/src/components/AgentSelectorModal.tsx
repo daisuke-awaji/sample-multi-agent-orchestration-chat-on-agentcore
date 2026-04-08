@@ -1,17 +1,158 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Bot, MoreHorizontal, Edit2, Trash2, Share2, Search, X } from 'lucide-react';
+import {
+  Plus,
+  Bot,
+  MoreHorizontal,
+  Edit2,
+  Trash2,
+  Share2,
+  Search,
+  X,
+  Pin,
+  PinOff,
+  ArrowUpDown,
+} from 'lucide-react';
 import * as icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { AgentForm } from './AgentForm';
 import { Modal, ConfirmModal } from './ui/Modal';
 import { LoadingIndicator } from './ui/LoadingIndicator/LoadingIndicator';
 import { useAgentStore } from '../stores/agentStore';
 import { useUIStore } from '../stores/uiStore';
-import type { Agent, CreateAgentInput } from '../types/agent';
+import type { Agent, CreateAgentInput, AgentSortField, SortOrder } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
 import { getAgent as fetchAgentDetail } from '../api/agents';
+
+/**
+ * AgentCard component for rendering individual agent cards
+ */
+interface AgentCardProps {
+  agent: Agent;
+  isSelected: boolean;
+  isPinned: boolean;
+  onSelect: (agent: Agent) => void;
+  onToggleMenu: (agentId: string, event: React.MouseEvent) => void;
+  openMenuId: string | null;
+  onEdit: (agent: Agent) => void;
+  onToggleShare: (agent: Agent) => void;
+  onTogglePin: (agent: Agent) => void;
+  onDelete: (agent: Agent) => void;
+  t: TFunction;
+}
+
+const AgentCard: React.FC<AgentCardProps> = ({
+  agent,
+  isSelected,
+  isPinned,
+  onSelect,
+  onToggleMenu,
+  openMenuId,
+  onEdit,
+  onToggleShare,
+  onTogglePin,
+  onDelete,
+  t,
+}) => {
+  const AgentIcon = (icons[agent.icon as keyof typeof icons] as LucideIcon) || Bot;
+
+  return (
+    <div
+      className={`relative bg-surface-primary rounded-2xl transition-all cursor-pointer border ${
+        isSelected
+          ? 'border-blue-500 ring-2 ring-blue-100'
+          : 'border-border hover:border-border-strong'
+      }`}
+      onClick={() => onSelect(agent)}
+    >
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3 flex-1">
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                isSelected ? 'bg-blue-100' : 'bg-surface-secondary'
+              }`}
+            >
+              <AgentIcon
+                className={`w-5 h-5 ${isSelected ? 'text-action-primary' : 'text-fg-secondary'}`}
+              />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-medium text-fg-default">{translateIfKey(agent.name, t)}</h3>
+                {isPinned && <Pin className="w-3 h-3 text-fg-muted" />}
+              </div>
+              <p className="text-sm text-fg-muted mt-1 line-clamp-2">
+                {translateIfKey(agent.description, t)}
+              </p>
+            </div>
+          </div>
+
+          <div className="relative ml-2">
+            <button
+              onClick={(e) => onToggleMenu(agent.agentId, e)}
+              className="p-1.5 text-fg-disabled hover:text-fg-secondary hover:bg-surface-secondary rounded transition-colors"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown menu */}
+            {openMenuId === agent.agentId && (
+              <div className="absolute right-0 top-full mt-1 w-40 bg-surface-primary rounded-lg shadow-lg border border-border py-1 z-10">
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(agent);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  <span>{t('common.edit')}</span>
+                </button>
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleShare(agent);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
+                >
+                  <Share2 className="w-3 h-3" />
+                  <span>{agent.isShared ? t('agent.unshare') : t('agent.share')}</span>
+                </button>
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePin(agent);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
+                >
+                  {isPinned ? <PinOff className="w-3 h-3" /> : <Pin className="w-3 h-3" />}
+                  <span>{isPinned ? t('agent.unpin') : t('agent.pin')}</span>
+                </button>
+                <button
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(agent);
+                  }}
+                  className="w-full px-3 py-1.5 text-left text-sm text-feedback-error hover:bg-feedback-error-bg flex items-center space-x-2"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>{t('common.delete')}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface AgentSelectorModalProps {
   isOpen: boolean;
@@ -36,6 +177,11 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     refreshAgents,
     isLoading,
     error,
+    pinnedAgentIds,
+    pinAgent,
+    unpinAgent,
+    sortConfig,
+    setSortConfig,
   } = useAgentStore();
   const { isMobileView } = useUIStore();
 
@@ -45,18 +191,72 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter agents by search query
+  // Sort agents helper function
+  const sortAgents = useCallback(
+    (agentList: Agent[]) => {
+      return [...agentList].sort((a, b) => {
+        let aValue: string | Date;
+        let bValue: string | Date;
+
+        switch (sortConfig.field) {
+          case 'name':
+            aValue = translateIfKey(a.name, t).toLowerCase();
+            bValue = translateIfKey(b.name, t).toLowerCase();
+            break;
+          case 'createdAt':
+            aValue = new Date(a.createdAt);
+            bValue = new Date(b.createdAt);
+            break;
+          case 'updatedAt':
+            aValue = new Date(a.updatedAt);
+            bValue = new Date(b.updatedAt);
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortConfig.order === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.order === 'asc' ? 1 : -1;
+        return 0;
+      });
+    },
+    [sortConfig, t]
+  );
+
+  // Filter and sort agents
   const filteredAgents = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return agents;
+    let result = agents;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((agent) => {
+        const name = translateIfKey(agent.name, t).toLowerCase();
+        const description = translateIfKey(agent.description, t).toLowerCase();
+        return name.includes(query) || description.includes(query);
+      });
     }
-    const query = searchQuery.toLowerCase();
-    return agents.filter((agent) => {
-      const name = translateIfKey(agent.name, t).toLowerCase();
-      const description = translateIfKey(agent.description, t).toLowerCase();
-      return name.includes(query) || description.includes(query);
-    });
+
+    return result;
   }, [agents, searchQuery, t]);
+
+  // Get pinned agents (only those that exist in filtered list)
+  const pinnedAgents = useMemo(() => {
+    const pinned = filteredAgents.filter((agent) => pinnedAgentIds.includes(agent.agentId));
+    return sortAgents(pinned);
+  }, [filteredAgents, pinnedAgentIds, sortAgents]);
+
+  // Get unpinned agents (sorted)
+  const unpinnedAgents = useMemo(() => {
+    const unpinned = filteredAgents.filter((agent) => !pinnedAgentIds.includes(agent.agentId));
+    return sortAgents(unpinned);
+  }, [filteredAgents, pinnedAgentIds, sortAgents]);
+
+  // Handle sort change
+  const handleSortChange = (value: string) => {
+    const [field, order] = value.split('-') as [AgentSortField, SortOrder];
+    setSortConfig({ field, order });
+  };
 
   // Initialize when modal opens
   useEffect(() => {
@@ -280,141 +480,142 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                   </div>
                 ) : (
                   !isLoading && (
-                    <div
-                      className={`grid gap-6 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}
-                    >
-                      {filteredAgents.map((agent) => {
-                        const isSelected = selectedAgent?.agentId === agent.agentId;
-                        const AgentIcon =
-                          (icons[agent.icon as keyof typeof icons] as LucideIcon) || Bot;
-
-                        return (
-                          <div
-                            key={agent.agentId}
-                            className={`relative bg-surface-primary rounded-2xl transition-all cursor-pointer border ${
-                              isSelected
-                                ? 'border-blue-500 ring-2 ring-blue-100'
-                                : 'border-border hover:border-border-strong'
-                            }`}
-                            onClick={() => handleAgentSelect(agent)}
-                          >
-                            <div className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center space-x-3 flex-1">
-                                  <div
-                                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                      isSelected ? 'bg-blue-100' : 'bg-surface-secondary'
-                                    }`}
-                                  >
-                                    <AgentIcon
-                                      className={`w-5 h-5 ${
-                                        isSelected ? 'text-action-primary' : 'text-fg-secondary'
-                                      }`}
-                                    />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-2">
-                                      <h3 className="font-medium text-fg-default">
-                                        {translateIfKey(agent.name, t)}
-                                      </h3>
-                                    </div>
-                                    <p className="text-sm text-fg-muted mt-1 line-clamp-2">
-                                      {translateIfKey(agent.description, t)}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="relative ml-2">
-                                  <button
-                                    onClick={(e) => toggleMenu(agent.agentId, e)}
-                                    className="p-1.5 text-fg-disabled hover:text-fg-secondary hover:bg-surface-secondary rounded transition-colors"
-                                  >
-                                    <MoreHorizontal className="w-5 h-5" />
-                                  </button>
-
-                                  {/* Dropdown menu */}
-                                  {openMenuId === agent.agentId && (
-                                    <div className="absolute right-0 top-full mt-1 w-40 bg-surface-primary rounded-lg shadow-lg border border-border py-1 z-10">
-                                      <button
-                                        onMouseDown={(e) => {
-                                          e.stopPropagation();
-                                        }}
-                                        onClick={async (e) => {
-                                          e.stopPropagation();
-                                          setOpenMenuId(null);
-                                          // Show form immediately with list data, then update with full detail
-                                          setEditingAgent(agent);
-                                          setMode('edit');
-                                          // Fetch full agent detail with SSM-resolved env values in background
-                                          try {
-                                            const fullAgent = await fetchAgentDetail(agent.agentId);
-                                            setEditingAgent(fullAgent);
-                                          } catch (err) {
-                                            console.warn(
-                                              'Failed to fetch agent detail, using list data:',
-                                              err
-                                            );
-                                          }
-                                        }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
-                                      >
-                                        <Edit2 className="w-3 h-3" />
-                                        <span>{t('common.edit')}</span>
-                                      </button>
-                                      <button
-                                        onMouseDown={(e) => {
-                                          e.stopPropagation();
-                                        }}
-                                        onClick={async (e) => {
-                                          e.stopPropagation();
-                                          const wasShared = agent.isShared;
-                                          try {
-                                            await toggleShare(agent.agentId);
-                                            // Show toast on success
-                                            toast.success(
-                                              wasShared
-                                                ? t('agent.unshareSuccess')
-                                                : t('agent.shareSuccess'),
-                                              {
-                                                icon: '✅',
-                                              }
-                                            );
-                                          } catch (error) {
-                                            console.error('共有状態の変更に失敗:', error);
-                                            toast.error(t('agent.shareError'));
-                                          }
-                                          setOpenMenuId(null);
-                                        }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-fg-secondary hover:bg-surface-secondary flex items-center space-x-2"
-                                      >
-                                        <Share2 className="w-3 h-3" />
-                                        <span>
-                                          {agent.isShared ? t('agent.unshare') : t('agent.share')}
-                                        </span>
-                                      </button>
-                                      <button
-                                        onMouseDown={(e) => {
-                                          e.stopPropagation();
-                                        }}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setDeleteConfirmAgent(agent);
-                                          setOpenMenuId(null);
-                                        }}
-                                        className="w-full px-3 py-1.5 text-left text-sm text-feedback-error hover:bg-feedback-error-bg flex items-center space-x-2"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                        <span>{t('common.delete')}</span>
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                    <>
+                      {/* Pinned agents section */}
+                      {pinnedAgents.length > 0 && (
+                        <div className="mb-6">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Pin className="w-4 h-4 text-fg-muted" />
+                            <h4 className="text-sm font-medium text-fg-muted">
+                              {t('agent.pinnedAgents')}
+                            </h4>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div
+                            className={`grid gap-4 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}
+                          >
+                            {pinnedAgents.map((agent) => (
+                              <AgentCard
+                                key={agent.agentId}
+                                agent={agent}
+                                isSelected={selectedAgent?.agentId === agent.agentId}
+                                isPinned={true}
+                                onSelect={handleAgentSelect}
+                                onToggleMenu={toggleMenu}
+                                openMenuId={openMenuId}
+                                onEdit={async (agent) => {
+                                  setOpenMenuId(null);
+                                  setEditingAgent(agent);
+                                  setMode('edit');
+                                  try {
+                                    const fullAgent = await fetchAgentDetail(agent.agentId);
+                                    setEditingAgent(fullAgent);
+                                  } catch (err) {
+                                    console.warn('Failed to fetch agent detail:', err);
+                                  }
+                                }}
+                                onToggleShare={async (agent) => {
+                                  const wasShared = agent.isShared;
+                                  try {
+                                    await toggleShare(agent.agentId);
+                                    toast.success(
+                                      wasShared
+                                        ? t('agent.unshareSuccess')
+                                        : t('agent.shareSuccess'),
+                                      { icon: '✅' }
+                                    );
+                                  } catch {
+                                    toast.error(t('agent.shareError'));
+                                  }
+                                  setOpenMenuId(null);
+                                }}
+                                onTogglePin={(agent) => {
+                                  unpinAgent(agent.agentId);
+                                  setOpenMenuId(null);
+                                }}
+                                onDelete={(agent) => {
+                                  setDeleteConfirmAgent(agent);
+                                  setOpenMenuId(null);
+                                }}
+                                t={t}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* All agents section with sort */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-fg-muted">
+                            {t('agent.allAgents')}
+                          </h4>
+                          <div className="flex items-center space-x-2">
+                            <ArrowUpDown className="w-4 h-4 text-fg-muted" />
+                            <select
+                              value={`${sortConfig.field}-${sortConfig.order}`}
+                              onChange={(e) => handleSortChange(e.target.value)}
+                              className="text-sm border border-border-strong rounded-lg bg-surface-primary text-fg-default px-2 py-1 focus:outline-none focus:ring-2 focus:ring-border-focus"
+                            >
+                              <option value="createdAt-desc">{t('agent.sortNewest')}</option>
+                              <option value="createdAt-asc">{t('agent.sortOldest')}</option>
+                              <option value="name-asc">{t('agent.sortNameAZ')}</option>
+                              <option value="name-desc">{t('agent.sortNameZA')}</option>
+                              <option value="updatedAt-desc">
+                                {t('agent.sortRecentlyUpdated')}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                        <div
+                          className={`grid gap-4 ${isMobileView ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}
+                        >
+                          {unpinnedAgents.map((agent) => (
+                            <AgentCard
+                              key={agent.agentId}
+                              agent={agent}
+                              isSelected={selectedAgent?.agentId === agent.agentId}
+                              isPinned={false}
+                              onSelect={handleAgentSelect}
+                              onToggleMenu={toggleMenu}
+                              openMenuId={openMenuId}
+                              onEdit={async (agent) => {
+                                setOpenMenuId(null);
+                                setEditingAgent(agent);
+                                setMode('edit');
+                                try {
+                                  const fullAgent = await fetchAgentDetail(agent.agentId);
+                                  setEditingAgent(fullAgent);
+                                } catch (err) {
+                                  console.warn('Failed to fetch agent detail:', err);
+                                }
+                              }}
+                              onToggleShare={async (agent) => {
+                                const wasShared = agent.isShared;
+                                try {
+                                  await toggleShare(agent.agentId);
+                                  toast.success(
+                                    wasShared ? t('agent.unshareSuccess') : t('agent.shareSuccess'),
+                                    { icon: '✅' }
+                                  );
+                                } catch {
+                                  toast.error(t('agent.shareError'));
+                                }
+                                setOpenMenuId(null);
+                              }}
+                              onTogglePin={(agent) => {
+                                pinAgent(agent.agentId);
+                                setOpenMenuId(null);
+                              }}
+                              onDelete={(agent) => {
+                                setDeleteConfirmAgent(agent);
+                                setOpenMenuId(null);
+                              }}
+                              t={t}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   )
                 )}
               </div>

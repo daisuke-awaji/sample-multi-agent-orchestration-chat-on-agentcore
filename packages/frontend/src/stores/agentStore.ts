@@ -4,7 +4,13 @@
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Agent, CreateAgentInput, UpdateAgentInput, AgentStore } from '../types/agent';
+import type {
+  Agent,
+  CreateAgentInput,
+  UpdateAgentInput,
+  AgentStore,
+  AgentSortConfig,
+} from '../types/agent';
 import * as agentsApi from '../api/agents';
 import { logger } from '../utils/logger';
 import { extractErrorMessage } from '../utils/store-helpers';
@@ -13,9 +19,24 @@ import { useChatStore } from './chatStore';
 import { useSessionStore } from './sessionStore';
 
 /**
+ * Extended AgentStore with pinned agents and sort functionality
+ */
+interface ExtendedAgentStore extends AgentStore {
+  // Pinned agents
+  pinnedAgentIds: string[];
+  pinAgent: (agentId: string) => void;
+  unpinAgent: (agentId: string) => void;
+  isPinned: (agentId: string) => boolean;
+
+  // Sort configuration
+  sortConfig: AgentSortConfig;
+  setSortConfig: (config: AgentSortConfig) => void;
+}
+
+/**
  * AgentStore implementation
  */
-export const useAgentStore = create<AgentStore>()(
+export const useAgentStore = create<ExtendedAgentStore>()(
   devtools(
     persist(
       (set, get) => ({
@@ -24,6 +45,12 @@ export const useAgentStore = create<AgentStore>()(
         selectedAgent: null,
         isLoading: false,
         error: null,
+
+        // Pinned agents state
+        pinnedAgentIds: [],
+
+        // Sort configuration state (default: newest first)
+        sortConfig: { field: 'createdAt', order: 'desc' },
 
         // Agent CRUD operations
         createAgent: async (input: CreateAgentInput) => {
@@ -91,9 +118,13 @@ export const useAgentStore = create<AgentStore>()(
               const updatedSelectedAgent =
                 state.selectedAgent?.agentId === agentId ? null : state.selectedAgent;
 
+              // Remove from pinned agents if it was pinned
+              const updatedPinnedAgentIds = state.pinnedAgentIds.filter((id) => id !== agentId);
+
               return {
                 agents: updatedAgents,
                 selectedAgent: updatedSelectedAgent,
+                pinnedAgentIds: updatedPinnedAgentIds,
                 isLoading: false,
                 error: null,
               };
@@ -251,11 +282,40 @@ export const useAgentStore = create<AgentStore>()(
             error: null,
           });
         },
+
+        // Pin agent functionality
+        pinAgent: (agentId: string) => {
+          set((state) => {
+            if (state.pinnedAgentIds.includes(agentId)) {
+              return state;
+            }
+            return {
+              pinnedAgentIds: [...state.pinnedAgentIds, agentId],
+            };
+          });
+        },
+
+        unpinAgent: (agentId: string) => {
+          set((state) => ({
+            pinnedAgentIds: state.pinnedAgentIds.filter((id) => id !== agentId),
+          }));
+        },
+
+        isPinned: (agentId: string) => {
+          return get().pinnedAgentIds.includes(agentId);
+        },
+
+        // Sort configuration
+        setSortConfig: (config: AgentSortConfig) => {
+          set({ sortConfig: config });
+        },
       }),
       {
-        name: 'agentcore-selected-agent',
+        name: 'agentcore-agent-preferences',
         partialize: (state) => ({
           selectedAgent: state.selectedAgent,
+          pinnedAgentIds: state.pinnedAgentIds,
+          sortConfig: state.sortConfig,
         }),
       }
     ),
