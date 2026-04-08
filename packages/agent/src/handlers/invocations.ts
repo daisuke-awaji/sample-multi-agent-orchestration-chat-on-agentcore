@@ -17,6 +17,7 @@ import { getCurrentContext } from '../context/request-context.js';
 import { ObservabilityContext } from '../context/observability-context.js';
 import { setupSession, getSessionStorage } from '../session/session-helper.js';
 import { initializeWorkspaceSync } from '../services/workspace-sync-helper.js';
+import { createSessionPersistenceDeps } from '../services/session-persistence-deps-factory.js';
 import { logger } from '../config/index.js';
 import { validateImageData } from '../validation/index.js';
 import { resolveEffectiveUserId } from './auth-resolver.js';
@@ -94,6 +95,7 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
     sessionType,
     agentId: body.agentId,
     storagePath: body.storagePath,
+    deps: createSessionPersistenceDeps(),
   });
   const sessionStorage = getSessionStorage();
 

@@ -4,14 +4,14 @@
  */
 
 import { HookProvider, HookRegistry, AfterToolsEvent } from '@strands-agents/sdk';
-import { WorkspaceSync } from '../services/workspace-sync.js';
+import type { IWorkspaceSync } from '../models/workspace-sync-types.js';
 import { logger } from '../config/index.js';
 
 /**
  * Hook that synchronizes the workspace with S3 after tool execution
  */
 export class WorkspaceSyncHook implements HookProvider {
-  constructor(private readonly workspaceSync: WorkspaceSync) {}
+  constructor(private readonly workspaceSync: IWorkspaceSync) {}
 
   /**
    * Register hook callbacks in the registry

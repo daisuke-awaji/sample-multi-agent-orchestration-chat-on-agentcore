@@ -6,6 +6,7 @@ import { SessionPersistenceHook } from './session-persistence-hook.js';
 import { createSessionStorage } from './index.js';
 import type { SessionId } from '@moca/core';
 import type { SessionConfig, SessionType } from './types.js';
+import type { SessionPersistenceDeps } from '../models/session-persistence-deps.js';
 
 /**
  * Result of session setup
@@ -24,6 +25,7 @@ export interface SessionSetupOptions {
   sessionType?: SessionType;
   agentId?: string;
   storagePath?: string;
+  deps: SessionPersistenceDeps;
 }
 
 // Initialize session storage once (shared across all sessions)
@@ -47,6 +49,7 @@ export function setupSession(options: SessionSetupOptions): SessionSetupResult |
   const hook = new SessionPersistenceHook(
     sessionStorage,
     config,
+    options.deps,
     options.agentId,
     options.storagePath
   );

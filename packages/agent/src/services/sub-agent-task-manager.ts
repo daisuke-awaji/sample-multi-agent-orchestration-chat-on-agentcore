@@ -11,6 +11,7 @@ import { WorkspaceSync } from './workspace-sync.js';
 import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
 import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
 import { SessionPersistenceHook } from '../session/session-persistence-hook.js';
+import { createSessionPersistenceDeps } from './session-persistence-deps-factory.js';
 import { generateSessionId, parseSessionId } from '@moca/core';
 import type { SessionId } from '@moca/core';
 import type { HookProvider } from '@strands-agents/sdk';
@@ -215,6 +216,7 @@ class SubAgentTaskManager {
         const sessionPersistenceHook = new SessionPersistenceHook(
           sessionStorage,
           sessionConfig,
+          createSessionPersistenceDeps(),
           task.agentId,
           task.storagePath
         );

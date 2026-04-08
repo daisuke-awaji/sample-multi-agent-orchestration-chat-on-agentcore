@@ -12,9 +12,7 @@ import {
   Message,
 } from '@strands-agents/sdk';
 import { SessionConfig, SessionStorage } from './types.js';
-import { getSessionsService } from '../services/sessions-service.js';
-import { getTitleGenerator } from '../services/title-generator.js';
-import { publishMessageEvent } from '../services/appsync-events-publisher.js';
+import type { SessionPersistenceDeps } from '../models/session-persistence-deps.js';
 import { logger } from '../config/index.js';
 
 /**
@@ -75,6 +73,7 @@ export class SessionPersistenceHook implements HookProvider {
   constructor(
     private readonly storage: SessionStorage,
     private readonly sessionConfig: SessionConfig,
+    private readonly deps: SessionPersistenceDeps,
     agentId?: string,
     storagePath?: string
   ) {
@@ -127,7 +126,7 @@ export class SessionPersistenceHook implements HookProvider {
     // This must run BEFORE AppSync publish so that when the frontend receives
     // the notification, the session record (agentId, storagePath, title) already
     // exists in DynamoDB and can be loaded by the UI.
-    const sessionsService = getSessionsService();
+    const sessionsService = this.deps.getSessionsService();
     if (!sessionsService.isConfigured()) {
       logger.debug(
         '[SessionPersistenceHook] SessionsService not configured, skipping DynamoDB operation'
@@ -225,12 +224,12 @@ export class SessionPersistenceHook implements HookProvider {
    * ensuring real-time UI updates regardless of execution mode.
    */
   private publishMessage(actorId: string, sessionId: string, message: Message): void {
-    publishMessageEvent(actorId, sessionId, {
+    this.deps.publishMessageEvent(actorId, sessionId, {
       type: 'MESSAGE_ADDED',
       sessionId,
       message: {
         role: message.role as 'user' | 'assistant',
-        content: message.content,
+        content: message.content as unknown[],
         timestamp: new Date().toISOString(),
       },
     }).catch((err) => {
@@ -256,10 +255,10 @@ export class SessionPersistenceHook implements HookProvider {
         assistantMessageLength: assistantMessage.length,
       });
 
-      const titleGenerator = getTitleGenerator();
+      const titleGenerator = this.deps.getTitleGenerator();
       const title = await titleGenerator.generateTitle(userMessage, assistantMessage);
 
-      const sessionsService = getSessionsService();
+      const sessionsService = this.deps.getSessionsService();
       await sessionsService.updateSessionTitle(userId, sessionId, title);
 
       logger.info('[SessionPersistenceHook] Title generated and saved:', {
