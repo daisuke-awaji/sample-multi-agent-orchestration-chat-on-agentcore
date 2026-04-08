@@ -8,7 +8,7 @@ import { TriggerLambda, TriggerEventSources, SessionStreamHandler } from './cons
 import { BackendApi, AppSyncEvents } from './constructs/api';
 import { Frontend } from './constructs/frontend';
 import { CognitoAuth } from './constructs/auth';
-import { OperationsDashboard } from './constructs/monitoring';
+import { OperationsDashboard, OperationsAlarms } from './constructs/monitoring';
 import { EnvironmentConfig } from '../config';
 
 export interface AgentCoreStackProps extends cdk.StackProps {
@@ -784,6 +784,20 @@ export class AgentCoreStack extends cdk.Stack {
       cloudFrontDistribution: this.frontend.cloudFrontDistribution,
       userStorageBucket: this.userStorage.bucket,
     });
+
+    // ── Operations Alarms (conditional on alertEmail) ──
+    if (envConfig.alertEmail) {
+      new OperationsAlarms(this, 'OperationsAlarms', {
+        resourcePrefix,
+        alertEmail: envConfig.alertEmail,
+        backendApiFunction: this.backendApi.lambdaFunction,
+        triggerExecutorFunction: triggerLambda.lambdaFunction,
+        sessionStreamHandlerFunction: sessionStreamHandler.handler,
+        agentRuntimeLogGroupName: `/aws/bedrock-agentcore/runtimes/${this.agentRuntime.runtimeId}-DEFAULT`,
+        httpApi: this.backendApi.httpApi,
+        cloudFrontDistribution: this.frontend.cloudFrontDistribution,
+      });
+    }
 
     // ── cdk-nag Suppressions ──
 
