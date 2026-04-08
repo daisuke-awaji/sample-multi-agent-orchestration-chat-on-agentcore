@@ -5,7 +5,7 @@
 import { trace, context as otelContext, propagation, SpanStatusCode } from '@opentelemetry/api';
 import type { Span } from '@opentelemetry/api';
 import { logger } from '../config/index.js';
-import type { SessionType } from '../session/types.js';
+import type { SessionType } from '../models/session-types.js';
 
 /** Tracer instance for creating custom spans */
 const tracer = trace.getTracer('moca-agent');

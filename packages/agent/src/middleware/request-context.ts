@@ -7,7 +7,7 @@ import { Request, Response, NextFunction } from 'express';
 import { createRequestContext, runWithContext } from '../context/request-context.js';
 import { isSessionId } from '@moca/core';
 import { logger } from '../config/index.js';
-import type { SessionType } from '../session/types.js';
+import type { SessionType } from '../models/session-types.js';
 
 /**
  * Token information extracted from JWT

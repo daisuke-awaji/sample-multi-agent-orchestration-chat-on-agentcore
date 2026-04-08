@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { v7 as uuidv7 } from 'uuid';
 import type { SessionId } from '@moca/core';
 import type { WorkspaceSync } from '../services/workspace-sync.js';
-import type { SessionType } from '../session/types.js';
+import type { SessionType } from '../models/session-types.js';
 
 /**
  * Type definition for request context
