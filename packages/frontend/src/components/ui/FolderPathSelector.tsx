@@ -1,14 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertCircle } from 'lucide-react';
 import { FolderTree } from '../FolderTree';
-import { fetchFolderTree, type FolderNode } from '../../api/storage';
+import { useStorageStore } from '../../stores/storageStore';
 
 interface FolderPathSelectorProps {
   value?: string;
   onChange: (path: string | undefined) => void;
   disabled?: boolean;
   id?: string;
+}
+
+/**
+ * Calculate parent paths from a given path
+ */
+function getParentPaths(path: string | undefined): string[] {
+  if (!path) return ['/'];
+  const parts = path.split('/').filter(Boolean);
+  const paths: string[] = ['/'];
+  let currentPath = '';
+  for (const part of parts) {
+    currentPath = currentPath ? `${currentPath}/${part}` : `/${part}`;
+    paths.push(currentPath);
+  }
+  return paths;
 }
 
 export const FolderPathSelector: React.FC<FolderPathSelectorProps> = ({
@@ -18,44 +33,32 @@ export const FolderPathSelector: React.FC<FolderPathSelectorProps> = ({
   id = 'folderPathSelector',
 }) => {
   const { t } = useTranslation();
-  const [folderTree, setFolderTree] = useState<FolderNode[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedPaths, setExpandedPaths] = useState<string[]>([]);
 
-  useEffect(() => {
-    const loadFolders = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetchFolderTree();
-        setFolderTree(response.tree);
-      } catch (err) {
-        console.error('Failed to load folder tree:', err);
-        setError(t('storage.loadError'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadFolders();
-  }, [t]);
+  // Use storageStore for folder tree (Stale-While-Revalidate pattern)
+  const folderTree = useStorageStore((state) => state.folderTree);
+  const isTreeLoading = useStorageStore((state) => state.isTreeLoading);
+  const loadFolderTree = useStorageStore((state) => state.loadFolderTree);
+  const error = useStorageStore((state) => state.error);
 
-  // Auto-expand parent paths when value is set
+  // Calculate paths that should be expanded based on value
+  const valueExpandedPaths = useMemo(() => getParentPaths(value), [value]);
+
+  // Local state for manually toggled paths (component-specific)
+  const [manuallyExpandedPaths, setManuallyExpandedPaths] = useState<string[]>(['/']);
+
+  // Combine value-derived paths with manually expanded paths
+  const expandedPaths = useMemo(
+    () => [...new Set([...valueExpandedPaths, ...manuallyExpandedPaths])],
+    [valueExpandedPaths, manuallyExpandedPaths]
+  );
+
+  // Load folder tree on mount (uses Stale-While-Revalidate in store)
   useEffect(() => {
-    if (value) {
-      const parts = value.split('/').filter(Boolean);
-      const paths: string[] = [];
-      let currentPath = '';
-      for (const part of parts) {
-        currentPath = currentPath ? `${currentPath}/${part}` : `/${part}`;
-        paths.push(currentPath);
-      }
-      setExpandedPaths((prev) => [...new Set([...prev, ...paths])]);
-    }
-  }, [value]);
+    loadFolderTree();
+  }, [loadFolderTree]);
 
   const handleToggleExpand = useCallback((path: string) => {
-    setExpandedPaths((prev) =>
+    setManuallyExpandedPaths((prev) =>
       prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
     );
   }, []);
@@ -104,7 +107,7 @@ export const FolderPathSelector: React.FC<FolderPathSelectorProps> = ({
           expandedPaths={expandedPaths}
           onSelect={handleSelect}
           onToggleExpand={handleToggleExpand}
-          isLoading={isLoading}
+          isLoading={isTreeLoading}
         />
       </div>
 
@@ -112,12 +115,12 @@ export const FolderPathSelector: React.FC<FolderPathSelectorProps> = ({
       {error && (
         <div className="flex items-center gap-1 text-feedback-error">
           <AlertCircle className="size-4" />
-          <p className="text-xs">{error}</p>
+          <p className="text-xs">{t('storage.loadError')}</p>
         </div>
       )}
 
       {/* No selection hint */}
-      {!value && !isLoading && !error && folderTree.length > 0 && (
+      {!value && !isTreeLoading && !error && folderTree.length > 0 && (
         <p className="text-xs text-fg-muted">{t('agent.noDefaultStoragePath')}</p>
       )}
     </div>
