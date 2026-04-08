@@ -106,7 +106,7 @@ export class AgentCoreGateway extends Construct {
       instructions: props.mcpConfig?.instructions || 'Use this Gateway to connect to MCP tools',
       searchType: props.mcpConfig?.searchType || agentcore.McpGatewaySearchType.SEMANTIC,
       supportedVersions: props.mcpConfig?.supportedVersions || [
-        agentcore.MCPProtocolVersion.MCP_2025_03_26,
+        agentcore.MCPProtocolVersion.MCP_2025_06_18,
       ],
     });
 
@@ -175,6 +175,7 @@ export class AgentCoreGateway extends Construct {
         actions: [
           'bedrock-agentcore:GetWorkloadAccessToken',
           'bedrock-agentcore:GetWorkloadAccessTokenForJWT',
+          'bedrock-agentcore:GetWorkloadAccessTokenForUserId',
         ],
         resources: [
           `arn:aws:bedrock-agentcore:${Aws.REGION}:${Aws.ACCOUNT_ID}:workload-identity-directory/*`,
@@ -191,6 +192,18 @@ export class AgentCoreGateway extends Construct {
         resources: [
           `arn:aws:bedrock-agentcore:${Aws.REGION}:${Aws.ACCOUNT_ID}:token-vault/*`,
           `arn:aws:bedrock-agentcore:${Aws.REGION}:${Aws.ACCOUNT_ID}:workload-identity-directory/*`,
+        ],
+      })
+    );
+
+    // CompleteResourceTokenAuth permission (3LO Authorization Code Flow)
+    gatewayRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'CompleteResourceTokenAuth',
+        effect: iam.Effect.ALLOW,
+        actions: ['bedrock-agentcore:CompleteResourceTokenAuth'],
+        resources: [
+          `arn:aws:bedrock-agentcore:${Aws.REGION}:${Aws.ACCOUNT_ID}:token-vault/*`,
         ],
       })
     );

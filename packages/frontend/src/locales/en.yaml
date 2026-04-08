@@ -1606,3 +1606,15 @@ defaultAgents:
       monitoring:
         title: Page Status Check
         prompt: "Please visit the following URL and check the current page status with screenshots. Verify whether the page displays correctly and check for any errors.\n\nURL: https://example.com"
+
+# OAuth 3LO
+oauth:
+  authenticating: Authenticating...
+  pleaseWait: Please wait a moment.
+  authCompleted: Authentication completed
+  authCompletedDescription: Authentication is complete. Returning to chat.
+  authFailed: Authentication failed
+  authFailedDescription: Authentication failed. Please try again.
+  redirecting: Redirecting to chat...
+  backToChat: Back to chat
+  missingSessionId: Session information not found. Please try authenticating again.

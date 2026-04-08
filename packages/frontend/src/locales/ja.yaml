@@ -1191,3 +1191,15 @@ defaultAgents:
       monitoring:
         title: ページ状態の確認
         prompt: "以下のURLにアクセスし、現在のページ状態をスクリーンショットで確認してください。ページが正常に表示されているか、エラーがないかをチェックしてください。\n\nURL: https://example.com"
+
+# OAuth 3LO
+oauth:
+  authenticating: 認証処理中...
+  pleaseWait: しばらくお待ちください。
+  authCompleted: 認証が完了しました
+  authCompletedDescription: 認証が完了しました。チャットに戻ります。
+  authFailed: 認証に失敗しました
+  authFailedDescription: 認証に失敗しました。もう一度お試しください。
+  redirecting: チャットに戻ります...
+  backToChat: チャットに戻る
+  missingSessionId: セッション情報が見つかりません。もう一度認証をお試しください。

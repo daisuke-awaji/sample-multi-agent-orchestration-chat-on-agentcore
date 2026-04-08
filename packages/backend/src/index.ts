@@ -16,6 +16,7 @@ import storageRouter from './routes/storage.js';
 import triggersRouter from './routes/triggers.js';
 import eventsRouter from './routes/events.js';
 import webhooksRouter from './routes/webhooks.js';
+import oauthCallbackRouter from './routes/oauth-callback.js';
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/storage', storageRouter);
 app.use('/triggers', triggersRouter);
 app.use('/events', eventsRouter);
 app.use('/webhooks', webhooksRouter);
+app.use('/oauth', oauthCallbackRouter);
 
 /**
  * Health check endpoint (no authentication required)

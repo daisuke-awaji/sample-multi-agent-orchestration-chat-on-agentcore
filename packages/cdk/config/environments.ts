@@ -36,6 +36,10 @@ export const environments: Record<Environment, EnvironmentConfigInput> = {
 
   /**
    * Development environment
+   *
+   * GitHub MCP Server target (3LO) is created manually via AWS Console
+   * because CloudFormation validates OAuth using Client Credentials Grant,
+   * which GitHub does not support (GitHub only supports Authorization Code Grant).
    */
   dev: {},
 
