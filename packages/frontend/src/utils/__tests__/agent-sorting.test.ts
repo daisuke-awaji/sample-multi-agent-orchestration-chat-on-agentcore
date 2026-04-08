@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { sortAgents, parseSortValue, filterAgentsByQuery } from '../agent-sorting';
 import type { Agent } from '../../types/agent';
 import type { TFunction } from 'i18next';
