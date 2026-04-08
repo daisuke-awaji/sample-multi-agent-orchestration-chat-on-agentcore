@@ -6,7 +6,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { v7 as uuidv7 } from 'uuid';
 import type { SessionId } from '@moca/core';
-import type { WorkspaceSync } from '../services/workspace-sync.js';
+import type { IWorkspaceSync } from '../models/workspace-sync-types.js';
 import type { SessionType } from '../models/session-types.js';
 
 /**
@@ -20,7 +20,7 @@ export interface RequestContext {
   /** S3 directory path selected by the user */
   storagePath?: string;
   /** Workspace sync service */
-  workspaceSync?: WorkspaceSync;
+  workspaceSync?: IWorkspaceSync;
   /** Request-specific ID (for log tracing) */
   requestId: string;
   /** Request start time */
