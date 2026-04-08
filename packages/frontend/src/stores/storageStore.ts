@@ -311,9 +311,14 @@ export const useStorageStore = create<StorageState>()(
             set({ error: null });
           },
 
-          // Load folder tree
+          // Load folder tree (Stale-While-Revalidate pattern)
           loadFolderTree: async () => {
-            set({ isTreeLoading: true });
+            const hasCachedData = get().folderTree.length > 0;
+
+            // Only show loading spinner if no cached data
+            if (!hasCachedData) {
+              set({ isTreeLoading: true });
+            }
 
             try {
               const response = await storageApi.fetchFolderTree();
@@ -323,10 +328,16 @@ export const useStorageStore = create<StorageState>()(
               });
             } catch (error) {
               logger.error('Failed to load folder tree:', error);
-              set({
-                error: extractErrorMessage(error, 'Failed to load folder tree'),
-                isTreeLoading: false,
-              });
+              // Only show error if no cached data to display
+              if (!hasCachedData) {
+                set({
+                  error: extractErrorMessage(error, 'Failed to load folder tree'),
+                  isTreeLoading: false,
+                });
+              } else {
+                // Silently fail if we have cached data
+                set({ isTreeLoading: false });
+              }
             }
           },
 

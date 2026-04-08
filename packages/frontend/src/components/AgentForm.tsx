@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, X, AlertCircle, Sparkles, Settings, Wrench, Server } from 'lucide-react';
 import { ToolSelector } from './ToolSelector';
@@ -7,6 +7,7 @@ import { IconPicker } from './ui/IconPicker';
 import { SidebarTabsLayout, type TabItem } from './ui/SidebarTabs';
 import { FormField } from './ui/FormField';
 import { Button } from './ui/Button';
+import { FolderPathSelector } from './ui/FolderPathSelector';
 import type { CreateAgentInput, Agent, Scenario } from '../types/agent';
 import { streamAgentResponse, createAgentConfigGenerationPrompt } from '../api/agent';
 import { useToolStore } from '../stores/toolStore';
@@ -37,6 +38,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
           prompt: translateIfKey(s.prompt, t),
         })),
         mcpConfig: agent.mcpConfig,
+        defaultStoragePath: agent.defaultStoragePath,
       };
     }
     return {
@@ -47,6 +49,7 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
       enabledTools: [],
       scenarios: [],
       mcpConfig: undefined,
+      defaultStoragePath: undefined,
     };
   });
 
@@ -451,6 +454,22 @@ export const AgentForm: React.FC<AgentFormProps> = ({ agent, onSubmit, isLoading
                   </div>
                 )}
               </div>
+
+              {/* Default Storage Path */}
+              <FormField
+                label={t('agent.defaultStoragePath')}
+                htmlFor="defaultStoragePath"
+                description={t('agent.defaultStoragePathDescription')}
+              >
+                <FolderPathSelector
+                  value={formData.defaultStoragePath}
+                  onChange={(path) =>
+                    setFormData((prev) => ({ ...prev, defaultStoragePath: path }))
+                  }
+                  disabled={isLoading || isGenerating}
+                  id="defaultStoragePath"
+                />
+              </FormField>
             </div>
           )}
 

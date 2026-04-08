@@ -52,6 +52,7 @@ export interface Agent {
   enabledTools: string[];
   scenarios: Scenario[];
   mcpConfig?: MCPConfig;
+  defaultStoragePath?: string; // Default working directory for this agent
   createdAt: string;
   updatedAt: string;
 
@@ -96,6 +97,7 @@ export interface CreateAgentInput {
   enabledTools: string[];
   scenarios: Omit<Scenario, 'id'>[];
   mcpConfig?: MCPConfig;
+  defaultStoragePath?: string;
 }
 
 export interface UpdateAgentInput extends Partial<CreateAgentInput> {
@@ -250,6 +252,7 @@ export class AgentsService {
           id: uuidv7(),
         })),
         mcpConfig: mcpConfigForDb,
+        defaultStoragePath: input.defaultStoragePath,
         createdAt: now,
         updatedAt: now,
         isShared: false, // Default to private
@@ -353,10 +356,30 @@ export class AgentsService {
         expressionAttributeValues[':mcpConfig'] = mcpConfigForDb;
       }
 
+      // Handle defaultStoragePath: empty string means remove, other values update
+      const removeExpressions: string[] = [];
+      if (input.defaultStoragePath !== undefined) {
+        if (input.defaultStoragePath === '') {
+          // Empty string means clear the attribute
+          removeExpressions.push('#defaultStoragePath');
+          expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
+        } else {
+          updateExpressions.push('#defaultStoragePath = :defaultStoragePath');
+          expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
+          expressionAttributeValues[':defaultStoragePath'] = input.defaultStoragePath;
+        }
+      }
+
       // updatedAt is always updated
       updateExpressions.push('#updatedAt = :updatedAt');
       expressionAttributeNames['#updatedAt'] = 'updatedAt';
       expressionAttributeValues[':updatedAt'] = now;
+
+      // Build UpdateExpression with SET and optional REMOVE
+      let updateExpression = `SET ${updateExpressions.join(', ')}`;
+      if (removeExpressions.length > 0) {
+        updateExpression += ` REMOVE ${removeExpressions.join(', ')}`;
+      }
 
       const command = new UpdateItemCommand({
         TableName: this.tableName,
@@ -364,7 +387,7 @@ export class AgentsService {
           userId,
           agentId: input.agentId,
         }),
-        UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+        UpdateExpression: updateExpression,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: marshall(expressionAttributeValues, {
           removeUndefinedValues: true,
@@ -610,6 +633,7 @@ export class AgentsService {
           prompt: s.prompt,
         })),
         mcpConfig: sourceAgent.mcpConfig,
+        defaultStoragePath: sourceAgent.defaultStoragePath,
       };
 
       return await this.createAgent(targetUserId, input, targetUsername);

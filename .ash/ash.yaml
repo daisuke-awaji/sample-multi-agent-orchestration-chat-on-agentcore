@@ -39,3 +39,5 @@ global_settings:
       reason: 'AgentCore Gateway OpenAPI target - security/securitySchemes are intentionally omitted because CDK L2 Construct explicitly prohibits them in OpenAPI schemas. Authentication is managed via Gateway outbound authorization configuration (credentialProviderConfigurations in CDK).'
     - path: 'packages/libs/core/src/__tests__/*'
       reason: 'Test files with deterministic UUID/ID test fixtures - not actual secrets'
+    - path: 'packages/backend/src/services/__tests__/*'
+      reason: 'Integration test files with fake test credentials (API_KEY, SECRET_TOKEN, SECRET_KEY) - not actual secrets'

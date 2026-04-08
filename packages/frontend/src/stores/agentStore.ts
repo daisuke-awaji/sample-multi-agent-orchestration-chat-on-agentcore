@@ -8,6 +8,9 @@ import type { Agent, CreateAgentInput, UpdateAgentInput, AgentStore } from '../t
 import * as agentsApi from '../api/agents';
 import { logger } from '../utils/logger';
 import { extractErrorMessage } from '../utils/store-helpers';
+import { useStorageStore } from './storageStore';
+import { useChatStore } from './chatStore';
+import { useSessionStore } from './sessionStore';
 
 /**
  * AgentStore implementation
@@ -144,6 +147,18 @@ export const useAgentStore = create<AgentStore>()(
         // Select agent
         selectAgent: (agent: Agent | null) => {
           set({ selectedAgent: agent });
+          // Apply default storage path if agent has one, but only if no messages exist in current session
+          if (agent?.defaultStoragePath) {
+            const activeSessionId = useSessionStore.getState().activeSessionId;
+            const sessions = useChatStore.getState().sessions;
+            const currentSession = activeSessionId ? sessions[activeSessionId] : null;
+            const hasMessages = currentSession?.messages && currentSession.messages.length > 0;
+
+            // Don't change working directory if session already has messages
+            if (!hasMessages) {
+              useStorageStore.getState().setAgentWorkingDirectory(agent.defaultStoragePath);
+            }
+          }
         },
 
         // Utilities
