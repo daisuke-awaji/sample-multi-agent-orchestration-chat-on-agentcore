@@ -12,7 +12,7 @@ import path from 'path';
 import { S3WorkspaceSync } from '@moca/s3-workspace-sync';
 import type { SyncResult } from '@moca/s3-workspace-sync';
 import { logger, WORKSPACE_DIRECTORY } from '../config/index.js';
-import { createUserScopedS3Client } from '../utils/scoped-credentials.js';
+import { createUserScopedS3Client } from '../libs/utils/scoped-credentials.js';
 
 export type { SyncResult };
 

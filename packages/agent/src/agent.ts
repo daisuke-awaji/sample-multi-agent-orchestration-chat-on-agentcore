@@ -1,30 +1,40 @@
 /**
  * Strands AI Agent Factory for AgentCore Runtime
  *
- * Thin orchestrator that delegates each concern to dedicated builder modules
- * under `./agent/`. See each module for implementation details:
+ * NOTE: This file intentionally lives at `src/agent.ts` as a **public facade**.
+ * While it orchestrates Layer 3 (runtime) modules, keeping it at the root
+ * provides a clean, discoverable entry point for agent creation:
  *
- * - `agent/types.ts`               — Type definitions
- * - `agent/mcp-clients-builder.ts`  — User-defined MCP client construction
- * - `agent/tools-builder.ts`        — Tool integration and filtering
- * - `agent/memory-fetcher.ts`       — Long-term memory retrieval
- * - `agent/session-loader.ts`       — Session history loading
+ *   import { createAgent } from './agent.js';
+ *
+ * Alternative considered: Moving to `runtime/agent/index.ts` would be
+ * more architecturally pure but would require changing all consumers
+ * and reduce discoverability. The facade pattern is preferred here.
+ *
+ * This thin orchestrator delegates each concern to dedicated builder modules
+ * under `./runtime/agent/`. See each module for implementation details:
+ *
+ * - `runtime/agent/types.ts`            — Type definitions
+ * - `runtime/agent/mcp-clients-builder.ts` — User-defined MCP client construction
+ * - `runtime/agent/tools-builder.ts`       — Tool integration and filtering
+ * - `runtime/agent/memory-fetcher.ts`      — Long-term memory retrieval
+ * - `runtime/agent/session-loader.ts`      — Session history loading
  */
 
 import { Agent, SlidingWindowConversationManager } from '@strands-agents/sdk';
 import { config } from './config/index.js';
-import { buildSystemPrompt } from './prompts/index.js';
-import { createBedrockModel, getPromptCachingSupport } from './models/index.js';
-import { CachePointAppender } from './session/cache-point-appender.js';
-import { getCurrentStoragePath } from './context/request-context.js';
+import { buildSystemPrompt } from './config/prompts/index.js';
+import { createBedrockModel, getPromptCachingSupport } from './config/index.js';
+import { CachePointAppender } from './services/session/cache-point-appender.js';
+import { getCurrentStoragePath } from './libs/context/request-context.js';
 
 // Agent building blocks
-import { buildUserMCPClients } from './agent/mcp-clients-builder.js';
-import { buildToolSet } from './agent/tools-builder.js';
-import { extractMemoryParams, fetchLongTermMemories } from './agent/memory-fetcher.js';
-import { loadSessionHistory } from './agent/session-loader.js';
+import { buildUserMCPClients } from './runtime/agent/mcp-clients-builder.js';
+import { buildToolSet } from './runtime/agent/tools-builder.js';
+import { extractMemoryParams, fetchLongTermMemories } from './runtime/agent/memory-fetcher.js';
+import { loadSessionHistory } from './runtime/agent/session-loader.js';
 
-import type { CreateAgentOptions, CreateAgentResult } from './agent/types.js';
+import type { CreateAgentOptions, CreateAgentResult } from './runtime/agent/types.js';
 
 /**
  * Create Strands Agent for AgentCore Runtime.

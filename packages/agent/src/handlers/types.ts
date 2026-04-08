@@ -2,7 +2,7 @@
  * Type definitions for invocation handlers
  */
 
-import type { ImageData } from '../validation/index.js';
+import type { ImageData } from '../types/validation/index.js';
 
 /**
  * Agent invocation request type definition

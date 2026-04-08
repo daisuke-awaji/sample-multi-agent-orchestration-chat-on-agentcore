@@ -6,16 +6,16 @@
 import { logger, config } from '../config/index.js';
 import { createAgent } from '../agent.js';
 import { getAgentDefinition } from './agent-registry.js';
-import { getCurrentContext, getCurrentAuthHeader } from '../context/request-context.js';
+import { getCurrentContext, getCurrentAuthHeader } from '../libs/context/request-context.js';
 import { WorkspaceSync } from './workspace-sync.js';
-import { WorkspaceSyncHook } from '../session/workspace-sync-hook.js';
-import { AgentCoreMemoryStorage } from '../session/agentcore-memory-storage.js';
-import { SessionPersistenceHook } from '../session/session-persistence-hook.js';
+import { WorkspaceSyncHook } from './session/workspace-sync-hook.js';
+import { AgentCoreMemoryStorage } from './session/agentcore-memory-storage.js';
+import { SessionPersistenceHook } from './session/session-persistence-hook.js';
 import { createSessionPersistenceDeps } from './session-persistence-deps-factory.js';
 import { generateSessionId, parseSessionId } from '@moca/core';
 import type { SessionId } from '@moca/core';
 import type { HookProvider } from '@strands-agents/sdk';
-import type { CreateAgentOptions } from '../models/agent-types.js';
+import type { CreateAgentOptions } from '../types/agent-types.js';
 
 /**
  * Task status

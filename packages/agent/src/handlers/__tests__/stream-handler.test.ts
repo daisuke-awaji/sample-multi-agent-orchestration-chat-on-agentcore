@@ -13,7 +13,9 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 const mockGetCurrentContext = jest.fn<any>();
 const mockGetContextMetadata = jest.fn<any>();
-const mockCreateErrorMessage = jest.fn<any>().mockReturnValue({ role: 'assistant', content: 'error' });
+const mockCreateErrorMessage = jest
+  .fn<any>()
+  .mockReturnValue({ role: 'assistant', content: 'error' });
 const mockSanitizeErrorMessage = jest.fn<any>().mockReturnValue('Sanitized error');
 const mockSerializeStreamEvent = jest.fn<any>().mockImplementation((event: any) => event);
 const mockBuildInputContent = jest.fn<any>().mockImplementation((prompt: string) => prompt);
@@ -25,14 +27,14 @@ jest.unstable_mockModule('../../config/index.js', () => ({
   config: {},
 }));
 
-jest.unstable_mockModule('../../utils/index.js', () => ({
+jest.unstable_mockModule('../../libs/utils/index.js', () => ({
   createErrorMessage: mockCreateErrorMessage,
   sanitizeErrorMessage: mockSanitizeErrorMessage,
   serializeStreamEvent: mockSerializeStreamEvent,
   buildInputContent: mockBuildInputContent,
 }));
 
-jest.unstable_mockModule('../../context/request-context.js', () => ({
+jest.unstable_mockModule('../../libs/context/request-context.js', () => ({
   getCurrentContext: mockGetCurrentContext,
   getContextMetadata: mockGetContextMetadata,
 }));
