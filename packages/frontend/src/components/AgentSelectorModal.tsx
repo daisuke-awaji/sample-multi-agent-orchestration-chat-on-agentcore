@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {
   Plus,
@@ -22,8 +22,10 @@ import { Modal, ConfirmModal } from './ui/Modal';
 import { LoadingIndicator } from './ui/LoadingIndicator/LoadingIndicator';
 import { useAgentStore } from '../stores/agentStore';
 import { useUIStore } from '../stores/uiStore';
-import type { Agent, CreateAgentInput, AgentSortField, SortOrder } from '../types/agent';
+import type { Agent, CreateAgentInput } from '../types/agent';
 import { translateIfKey } from '../utils/agent-translation';
+import { parseSortValue } from '../utils/agent-sorting';
+import { useAgentFiltering } from '../hooks/useAgentFiltering';
 import { getAgent as fetchAgentDetail } from '../api/agents';
 
 /**
@@ -191,71 +193,18 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sort agents helper function
-  const sortAgents = useCallback(
-    (agentList: Agent[]) => {
-      return [...agentList].sort((a, b) => {
-        let aValue: string | Date;
-        let bValue: string | Date;
-
-        switch (sortConfig.field) {
-          case 'name':
-            aValue = translateIfKey(a.name, t).toLowerCase();
-            bValue = translateIfKey(b.name, t).toLowerCase();
-            break;
-          case 'createdAt':
-            aValue = new Date(a.createdAt);
-            bValue = new Date(b.createdAt);
-            break;
-          case 'updatedAt':
-            aValue = new Date(a.updatedAt);
-            bValue = new Date(b.updatedAt);
-            break;
-          default:
-            return 0;
-        }
-
-        if (aValue < bValue) return sortConfig.order === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.order === 'asc' ? 1 : -1;
-        return 0;
-      });
-    },
-    [sortConfig, t]
+  // Filtering, sorting, and pin grouping via custom hook
+  const { filteredAgents, pinnedAgents, unpinnedAgents } = useAgentFiltering(
+    agents,
+    pinnedAgentIds,
+    searchQuery,
+    sortConfig,
+    t
   );
-
-  // Filter and sort agents
-  const filteredAgents = useMemo(() => {
-    let result = agents;
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((agent) => {
-        const name = translateIfKey(agent.name, t).toLowerCase();
-        const description = translateIfKey(agent.description, t).toLowerCase();
-        return name.includes(query) || description.includes(query);
-      });
-    }
-
-    return result;
-  }, [agents, searchQuery, t]);
-
-  // Get pinned agents (only those that exist in filtered list)
-  const pinnedAgents = useMemo(() => {
-    const pinned = filteredAgents.filter((agent) => pinnedAgentIds.includes(agent.agentId));
-    return sortAgents(pinned);
-  }, [filteredAgents, pinnedAgentIds, sortAgents]);
-
-  // Get unpinned agents (sorted)
-  const unpinnedAgents = useMemo(() => {
-    const unpinned = filteredAgents.filter((agent) => !pinnedAgentIds.includes(agent.agentId));
-    return sortAgents(unpinned);
-  }, [filteredAgents, pinnedAgentIds, sortAgents]);
 
   // Handle sort change
   const handleSortChange = (value: string) => {
-    const [field, order] = value.split('-') as [AgentSortField, SortOrder];
-    setSortConfig({ field, order });
+    setSortConfig(parseSortValue(value));
   };
 
   // Shared callbacks for AgentCard (used by both pinned and unpinned sections)
