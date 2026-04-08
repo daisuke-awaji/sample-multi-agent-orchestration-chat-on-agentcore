@@ -102,6 +102,8 @@ function resolveConfig(env: Environment, input: EnvironmentConfigInput): Environ
     // Adding a new optional property to EnvironmentConfig no longer requires
     // updating this function — only properties with defaults need explicit entries below.
     ...input,
+    // alertEmail: prefer config, fallback to ALERT_EMAIL env var, undefined = no alarms
+    alertEmail: input.alertEmail ?? process.env.ALERT_EMAIL ?? undefined,
     // Required properties (derived or with defaults)
     env,
     resourcePrefix: input.resourcePrefix ?? getDefaultResourcePrefix(env),
