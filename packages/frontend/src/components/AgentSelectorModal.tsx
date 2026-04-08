@@ -258,6 +258,48 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
     setSortConfig({ field, order });
   };
 
+  // Shared callbacks for AgentCard (used by both pinned and unpinned sections)
+  const handleEditAgent = useCallback(
+    async (agent: Agent) => {
+      setOpenMenuId(null);
+      setEditingAgent(agent);
+      setMode('edit');
+      try {
+        const fullAgent = await fetchAgentDetail(agent.agentId);
+        setEditingAgent(fullAgent);
+      } catch (err) {
+        console.warn('Failed to fetch agent detail:', err);
+      }
+    },
+    [setOpenMenuId, setEditingAgent, setMode]
+  );
+
+  const handleToggleShareAgent = useCallback(
+    async (agent: Agent) => {
+      const wasShared = agent.isShared;
+      try {
+        await toggleShare(agent.agentId);
+        toast.success(
+          wasShared ? t('agent.unshareSuccess') : t('agent.shareSuccess'),
+          { icon: '✅' }
+        );
+      } catch (error) {
+        console.error('Failed to toggle share status:', error);
+        toast.error(t('agent.shareError'));
+      }
+      setOpenMenuId(null);
+    },
+    [toggleShare, t, setOpenMenuId]
+  );
+
+  const handleDeleteConfirm = useCallback(
+    (agent: Agent) => {
+      setDeleteConfirmAgent(agent);
+      setOpenMenuId(null);
+    },
+    [setDeleteConfirmAgent, setOpenMenuId]
+  );
+
   // Initialize when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -502,40 +544,13 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                                 onSelect={handleAgentSelect}
                                 onToggleMenu={toggleMenu}
                                 openMenuId={openMenuId}
-                                onEdit={async (agent) => {
-                                  setOpenMenuId(null);
-                                  setEditingAgent(agent);
-                                  setMode('edit');
-                                  try {
-                                    const fullAgent = await fetchAgentDetail(agent.agentId);
-                                    setEditingAgent(fullAgent);
-                                  } catch (err) {
-                                    console.warn('Failed to fetch agent detail:', err);
-                                  }
-                                }}
-                                onToggleShare={async (agent) => {
-                                  const wasShared = agent.isShared;
-                                  try {
-                                    await toggleShare(agent.agentId);
-                                    toast.success(
-                                      wasShared
-                                        ? t('agent.unshareSuccess')
-                                        : t('agent.shareSuccess'),
-                                      { icon: '✅' }
-                                    );
-                                  } catch {
-                                    toast.error(t('agent.shareError'));
-                                  }
-                                  setOpenMenuId(null);
-                                }}
+                                onEdit={handleEditAgent}
+                                onToggleShare={handleToggleShareAgent}
                                 onTogglePin={(agent) => {
                                   unpinAgent(agent.agentId);
                                   setOpenMenuId(null);
                                 }}
-                                onDelete={(agent) => {
-                                  setDeleteConfirmAgent(agent);
-                                  setOpenMenuId(null);
-                                }}
+                                onDelete={handleDeleteConfirm}
                                 t={t}
                               />
                             ))}
@@ -578,38 +593,13 @@ export const AgentSelectorModal: React.FC<AgentSelectorModalProps> = ({
                               onSelect={handleAgentSelect}
                               onToggleMenu={toggleMenu}
                               openMenuId={openMenuId}
-                              onEdit={async (agent) => {
-                                setOpenMenuId(null);
-                                setEditingAgent(agent);
-                                setMode('edit');
-                                try {
-                                  const fullAgent = await fetchAgentDetail(agent.agentId);
-                                  setEditingAgent(fullAgent);
-                                } catch (err) {
-                                  console.warn('Failed to fetch agent detail:', err);
-                                }
-                              }}
-                              onToggleShare={async (agent) => {
-                                const wasShared = agent.isShared;
-                                try {
-                                  await toggleShare(agent.agentId);
-                                  toast.success(
-                                    wasShared ? t('agent.unshareSuccess') : t('agent.shareSuccess'),
-                                    { icon: '✅' }
-                                  );
-                                } catch {
-                                  toast.error(t('agent.shareError'));
-                                }
-                                setOpenMenuId(null);
-                              }}
+                              onEdit={handleEditAgent}
+                              onToggleShare={handleToggleShareAgent}
                               onTogglePin={(agent) => {
                                 pinAgent(agent.agentId);
                                 setOpenMenuId(null);
                               }}
-                              onDelete={(agent) => {
-                                setDeleteConfirmAgent(agent);
-                                setOpenMenuId(null);
-                              }}
+                              onDelete={handleDeleteConfirm}
                               t={t}
                             />
                           ))}
