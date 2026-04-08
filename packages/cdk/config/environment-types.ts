@@ -202,6 +202,13 @@ export interface EnvironmentConfig {
   bedrockModels?: BedrockModelConfig[];
 
   /**
+   * Alert notification email address (optional)
+   * When set, CloudWatch Alarms + SNS Topic are created for error notifications.
+   * When NOT set, no alarms are created (zero cost).
+   */
+  alertEmail?: string;
+
+  /**
    * Event rules configuration (optional)
    * Predefined EventBridge rules that users can subscribe to for triggers
    */

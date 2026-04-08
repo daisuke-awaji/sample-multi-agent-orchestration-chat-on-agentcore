@@ -4,3 +4,4 @@
  */
 
 export { OperationsDashboard, OperationsDashboardProps } from './operations-dashboard';
+export { OperationsAlarms, OperationsAlarmsProps } from './operations-alarms';
