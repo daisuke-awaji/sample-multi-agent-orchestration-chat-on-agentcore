@@ -3,7 +3,7 @@
  * Displays shared agents list and provides search functionality
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Bot, Users } from 'lucide-react';

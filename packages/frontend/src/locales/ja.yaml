@@ -277,6 +277,9 @@ agent:
   shareSuccess: エージェントを共有しました
   unshareSuccess: エージェントの共有を解除しました
   shareError: 共有状態の変更に失敗しました
+  defaultStoragePath: デフォルト作業ディレクトリ
+  defaultStoragePathDescription: デフォルトの作業ディレクトリを選択してください。このエージェントが選択されると、自動的にディレクトリが適用されます。
+  noDefaultStoragePath: デフォルトなし
 
 # Agent Directory
 agentDirectory:
@@ -376,6 +379,7 @@ tool:
 
 # ストレージ
 storage:
+  loadError: フォルダの読み込みに失敗しました
   title: ストレージ管理
   fileStorage: ファイルストレージ
   loadingImage: 画像を読み込み中...

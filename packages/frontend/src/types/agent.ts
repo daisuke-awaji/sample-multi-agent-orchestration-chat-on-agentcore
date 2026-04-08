@@ -35,6 +35,7 @@ export interface Agent {
   enabledTools: string[]; // Array of enabled tool names
   scenarios: Scenario[]; // Frequently used prompts
   mcpConfig?: MCPConfig; // MCP server configuration
+  defaultStoragePath?: string; // Default working directory for this agent
   createdAt: Date;
   updatedAt: Date;
 
@@ -55,6 +56,7 @@ export interface CreateAgentInput {
   enabledTools: string[];
   scenarios: Omit<Scenario, 'id'>[];
   mcpConfig?: MCPConfig;
+  defaultStoragePath?: string;
 }
 
 /**

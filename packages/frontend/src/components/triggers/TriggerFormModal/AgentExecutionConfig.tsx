@@ -5,9 +5,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Sparkles, FolderCog } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { AVAILABLE_MODELS, getModelById } from '../../../config/models';
-import { useStorageStore } from '../../../stores/storageStore';
+import { FolderPathSelector } from '../../ui/FolderPathSelector';
 
 export interface AgentExecutionConfigProps {
   modelId?: string;
@@ -26,40 +26,26 @@ export function AgentExecutionConfig({
 }: AgentExecutionConfigProps) {
   const { t } = useTranslation();
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  const [isDirectorySelectorOpen, setIsDirectorySelectorOpen] = useState(false);
   const modelDropdownRef = useRef<HTMLDivElement>(null);
-  const directoryDropdownRef = useRef<HTMLDivElement>(null);
-  const { folderTree, loadFolderTree } = useStorageStore();
 
   const selectedModel = modelId ? getModelById(modelId) : null;
 
-  // Load folder tree on mount
-  useEffect(() => {
-    loadFolderTree();
-  }, [loadFolderTree]);
-
-  // Close dropdowns when clicking outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) {
         setIsModelSelectorOpen(false);
       }
-      if (
-        directoryDropdownRef.current &&
-        !directoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDirectorySelectorOpen(false);
-      }
     };
 
-    if (isModelSelectorOpen || isDirectorySelectorOpen) {
+    if (isModelSelectorOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isModelSelectorOpen, isDirectorySelectorOpen]);
+  }, [isModelSelectorOpen]);
 
   const handleModelSelect = (selectedModelId: string) => {
     onModelIdChange(selectedModelId);
@@ -70,33 +56,6 @@ export function AgentExecutionConfig({
     onModelIdChange(undefined);
     setIsModelSelectorOpen(false);
   };
-
-  const handleDirectorySelect = (path: string) => {
-    onWorkingDirectoryChange(path);
-    setIsDirectorySelectorOpen(false);
-  };
-
-  const handleClearDirectory = () => {
-    onWorkingDirectoryChange(undefined);
-    setIsDirectorySelectorOpen(false);
-  };
-
-  // Flatten folder tree for dropdown
-  const flattenFolderTree = (
-    nodes: typeof folderTree,
-    depth = 0
-  ): Array<{ path: string; name: string; depth: number }> => {
-    const result: Array<{ path: string; name: string; depth: number }> = [];
-    for (const node of nodes) {
-      result.push({ path: node.path, name: node.name, depth });
-      if (node.children) {
-        result.push(...flattenFolderTree(node.children, depth + 1));
-      }
-    }
-    return result;
-  };
-
-  const folders = flattenFolderTree(folderTree);
 
   return (
     <div className="space-y-4">
@@ -177,63 +136,11 @@ export function AgentExecutionConfig({
           {t('triggers.form.workingDirectory')}
           <span className="text-fg-disabled ml-1 text-xs">({t('triggers.form.optional')})</span>
         </label>
-
-        <div ref={directoryDropdownRef} className="relative">
-          <button
-            type="button"
-            onClick={() => !disabled && setIsDirectorySelectorOpen(!isDirectorySelectorOpen)}
-            disabled={disabled}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-fg-default bg-surface-primary border border-border-strong rounded-lg hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <FolderCog className="w-4 h-4 text-fg-disabled flex-shrink-0" />
-              {workingDirectory ? (
-                <span className="font-mono text-xs truncate">{workingDirectory}</span>
-              ) : (
-                <span className="text-fg-disabled">{t('triggers.form.selectDirectory')}</span>
-              )}
-            </div>
-            <ChevronDown
-              className={`w-4 h-4 text-fg-disabled transition-transform flex-shrink-0 ${
-                isDirectorySelectorOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-
-          {isDirectorySelectorOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-surface-primary rounded-lg shadow-lg border border-border py-1 z-50 max-h-64 overflow-y-auto">
-              <button
-                type="button"
-                onClick={handleClearDirectory}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-surface-secondary transition-colors text-fg-muted"
-              >
-                {t('triggers.form.useDefault')}
-              </button>
-              <div className="border-t border-border my-1" />
-              {folders.map((folder) => (
-                <button
-                  key={folder.path}
-                  type="button"
-                  onClick={() => handleDirectorySelect(folder.path)}
-                  className={`w-full px-3 py-2 text-left hover:bg-surface-secondary transition-colors ${
-                    folder.path === workingDirectory ? 'bg-feedback-info-bg' : ''
-                  }`}
-                  style={{ paddingLeft: `${12 + folder.depth * 16}px` }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-fg-default truncate">
-                      {folder.path}
-                    </span>
-                    {folder.path === workingDirectory && (
-                      <div className="w-2 h-2 rounded-full bg-action-primary ml-2 flex-shrink-0" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
+        <FolderPathSelector
+          value={workingDirectory}
+          onChange={onWorkingDirectoryChange}
+          disabled={disabled}
+        />
         <p className="text-xs text-fg-muted mt-1">{t('triggers.form.workingDirectoryHint')}</p>
       </div>
     </div>

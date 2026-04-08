@@ -278,6 +278,9 @@ agent:
   shareSuccess: Agent shared successfully
   unshareSuccess: Agent unshared successfully
   shareError: Failed to change sharing status
+  defaultStoragePath: Default Working Directory
+  defaultStoragePathDescription: Select a default working directory. When this agent is selected, the directory will be automatically applied.
+  noDefaultStoragePath: No default directory
 
 # Agent Directory
 agentDirectory:
@@ -377,6 +380,7 @@ tool:
 
 # Storage
 storage:
+  loadError: Failed to load folders
   title: Storage Management
   fileStorage: File Storage
   loadingImage: Loading image...

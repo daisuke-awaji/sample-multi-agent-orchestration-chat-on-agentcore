@@ -52,6 +52,7 @@ export interface Agent {
   enabledTools: string[];
   scenarios: Scenario[];
   mcpConfig?: MCPConfig;
+  defaultStoragePath?: string; // Default working directory for this agent
   createdAt: string;
   updatedAt: string;
 
@@ -96,6 +97,7 @@ export interface CreateAgentInput {
   enabledTools: string[];
   scenarios: Omit<Scenario, 'id'>[];
   mcpConfig?: MCPConfig;
+  defaultStoragePath?: string;
 }
 
 export interface UpdateAgentInput extends Partial<CreateAgentInput> {
@@ -250,6 +252,7 @@ export class AgentsService {
           id: uuidv7(),
         })),
         mcpConfig: mcpConfigForDb,
+        defaultStoragePath: input.defaultStoragePath,
         createdAt: now,
         updatedAt: now,
         isShared: false, // Default to private
@@ -351,6 +354,12 @@ export class AgentsService {
         updateExpressions.push('#mcpConfig = :mcpConfig');
         expressionAttributeNames['#mcpConfig'] = 'mcpConfig';
         expressionAttributeValues[':mcpConfig'] = mcpConfigForDb;
+      }
+
+      if (input.defaultStoragePath !== undefined) {
+        updateExpressions.push('#defaultStoragePath = :defaultStoragePath');
+        expressionAttributeNames['#defaultStoragePath'] = 'defaultStoragePath';
+        expressionAttributeValues[':defaultStoragePath'] = input.defaultStoragePath;
       }
 
       // updatedAt is always updated
@@ -610,6 +619,7 @@ export class AgentsService {
           prompt: s.prompt,
         })),
         mcpConfig: sourceAgent.mcpConfig,
+        defaultStoragePath: sourceAgent.defaultStoragePath,
       };
 
       return await this.createAgent(targetUserId, input, targetUsername);
