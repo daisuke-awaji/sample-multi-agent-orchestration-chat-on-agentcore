@@ -100,6 +100,24 @@ export interface AgentActions {
 }
 
 /**
+ * Sort field options for agent list
+ */
+export type AgentSortField = 'name' | 'createdAt' | 'updatedAt';
+
+/**
+ * Sort order options
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
+ * Sort configuration for agent list
+ */
+export interface AgentSortConfig {
+  field: AgentSortField;
+  order: SortOrder;
+}
+
+/**
  * Complete type for AgentStore
  */
 export type AgentStore = AgentState & AgentActions;

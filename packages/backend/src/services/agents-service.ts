@@ -129,25 +129,36 @@ export class AgentsService {
 
   /**
    * Get list of Agents for a user
+   * Uses internal pagination to ensure all agents are retrieved
+   * (DynamoDB Query has a 1MB limit per request)
    */
   async listAgents(userId: UserId): Promise<Agent[]> {
     try {
-      const command = new QueryCommand({
-        TableName: this.tableName,
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: marshall({
-          ':userId': userId,
-        }),
-      });
+      const allItems: Agent[] = [];
+      let exclusiveStartKey: Record<string, AttributeValue> | undefined;
 
-      const response = await this.dynamoClient.send(command);
+      do {
+        const command = new QueryCommand({
+          TableName: this.tableName,
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: marshall({
+            ':userId': userId,
+          }),
+          ExclusiveStartKey: exclusiveStartKey,
+        });
 
-      if (!response.Items || response.Items.length === 0) {
-        return [];
-      }
+        const response = await this.dynamoClient.send(command);
 
-      // Convert data retrieved from DynamoDB to Agent type
-      return response.Items.map((item) => fromDynamoAgent(unmarshall(item) as DynamoAgent));
+        if (response.Items && response.Items.length > 0) {
+          allItems.push(
+            ...response.Items.map((item) => fromDynamoAgent(unmarshall(item) as DynamoAgent))
+          );
+        }
+
+        exclusiveStartKey = response.LastEvaluatedKey;
+      } while (exclusiveStartKey);
+
+      return allItems;
     } catch (error) {
       console.error('Error listing agents:', error);
       throw new Error('Failed to list agents', { cause: error });

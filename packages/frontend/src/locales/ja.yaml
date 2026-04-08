@@ -280,6 +280,15 @@ agent:
   defaultStoragePath: デフォルト作業ディレクトリ
   defaultStoragePathDescription: デフォルトの作業ディレクトリを選択してください。このエージェントが選択されると、自動的にディレクトリが適用されます。
   noDefaultStoragePath: デフォルトなし
+  pinnedAgents: ピン留めしたエージェント
+  allAgents: すべてのエージェント
+  pin: ピン留め
+  unpin: ピン留め解除
+  sortNewest: 新しい順
+  sortOldest: 古い順
+  sortNameAZ: 名前（A-Z）
+  sortNameZA: 名前（Z-A）
+  sortRecentlyUpdated: 最近更新された順
 
 # Agent Directory
 agentDirectory:

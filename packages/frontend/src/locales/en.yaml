@@ -281,6 +281,15 @@ agent:
   defaultStoragePath: Default Working Directory
   defaultStoragePathDescription: Select a default working directory. When this agent is selected, the directory will be automatically applied.
   noDefaultStoragePath: No default directory
+  pinnedAgents: Pinned Agents
+  allAgents: All Agents
+  pin: Pin
+  unpin: Unpin
+  sortNewest: Newest first
+  sortOldest: Oldest first
+  sortNameAZ: Name (A-Z)
+  sortNameZA: Name (Z-A)
+  sortRecentlyUpdated: Recently updated
 
 # Agent Directory
 agentDirectory:
