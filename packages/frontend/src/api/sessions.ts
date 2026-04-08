@@ -4,6 +4,7 @@
  */
 
 import { backendClient } from './client/backend-client';
+import type { ToolUse, ToolResult } from '../types/index';
 
 /**
  * Session type
@@ -24,29 +25,13 @@ export interface SessionSummary {
 }
 
 /**
- * ToolUse type definition (shared with Backend)
+ * API-layer MessageContent type definition
+ *
+ * This differs from the frontend MessageContent (types/index.ts) in that
+ * the image variant carries raw base64/mimeType from the API rather than
+ * the full ImageAttachment used in the UI.
  */
-export interface ToolUse {
-  id: string;
-  name: string;
-  input: Record<string, unknown>;
-  status?: 'pending' | 'running' | 'completed' | 'error';
-  originalToolUseId?: string;
-}
-
-/**
- * ToolResult type definition (shared with Backend)
- */
-export interface ToolResult {
-  toolUseId: string;
-  content: string;
-  isError: boolean;
-}
-
-/**
- * MessageContent type definition (Union type)
- */
-export type MessageContent =
+export type ApiMessageContent =
   | { type: 'text'; text: string }
   | { type: 'toolUse'; toolUse: ToolUse }
   | { type: 'toolResult'; toolResult: ToolResult }
@@ -58,7 +43,7 @@ export type MessageContent =
 export interface ConversationMessage {
   id: string;
   type: 'user' | 'assistant';
-  contents: MessageContent[];
+  contents: ApiMessageContent[];
   timestamp: string;
 }
 

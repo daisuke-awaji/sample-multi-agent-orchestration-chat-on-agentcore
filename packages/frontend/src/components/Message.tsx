@@ -245,18 +245,17 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                           rehypePlugins={[rehypeKatex]}
                           components={markdownComponents}
                         >
-                          {content.text || ''}
+                          {content.text}
                         </ReactMarkdown>
                       </div>
                     );
 
                   case 'toolUse':
-                    return content.toolUse ? (
+                    return (
                       <ToolUseBlock key={`tool-use-${index}`} toolUse={content.toolUse} />
-                    ) : null;
+                    );
 
                   case 'toolResult': {
-                    if (!content.toolResult) return null;
                     if (extractUISpec(content.toolResult.content) !== null) {
                       return (
                         <JsonRenderBlock
@@ -274,7 +273,6 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                   }
 
                   case 'image': {
-                    if (!content.image) return null;
                     // Use previewUrl if available (newly attached), otherwise construct from base64 (from session history)
                     const imageSrc =
                       content.image.previewUrl ||
@@ -293,11 +291,7 @@ export const Message: React.FC<MessageProps> = ({ message }) => {
                   }
 
                   default:
-                    return (
-                      <div key={`unknown-${index}`} className="text-fg-muted text-sm">
-                        {t('common.unsupportedContentType', { type: content.type })}
-                      </div>
-                    );
+                    return null;
                 }
               })}
 

@@ -83,7 +83,7 @@ interface MessageEvent {
  * - toolUse: { type: 'toolUse', toolUse: ToolUse }
  * - toolResult: { type: 'toolResult', toolResult: ToolResult }
  */
-function convertContent(apiContent: unknown): MessageContent {
+function convertContent(apiContent: unknown): MessageContent | null {
   const content = apiContent as Record<string, unknown>;
 
   // textBlock → text (Agent SDK format)
@@ -124,8 +124,8 @@ function convertContent(apiContent: unknown): MessageContent {
     };
   }
 
-  // Pass through for already-converted or unknown types
-  return content as unknown as MessageContent;
+  // Unknown type — skip
+  return null;
 }
 
 // ============================================================
@@ -239,7 +239,9 @@ export function useMessageEventsSubscription(sessionId: string | null) {
           }
 
           // Convert content
-          const contents: MessageContent[] = event.message.content.map(convertContent);
+          const contents: MessageContent[] = event.message.content
+            .map(convertContent)
+            .filter((c): c is MessageContent => c !== null);
 
           // Add message to store
           const newMessage: Message = {

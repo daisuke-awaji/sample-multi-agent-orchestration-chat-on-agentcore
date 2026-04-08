@@ -9,8 +9,8 @@ import * as agentsApi from '../api/agents';
 import { logger } from '../utils/logger';
 import { extractErrorMessage } from '../utils/store-helpers';
 import { useStorageStore } from './storageStore';
-import { useChatStore } from './chatStore';
 import { useSessionStore } from './sessionStore';
+import { useChatStore } from './chatStore';
 
 /**
  * AgentStore implementation

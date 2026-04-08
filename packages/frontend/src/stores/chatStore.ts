@@ -11,13 +11,14 @@ import type {
   ImageAttachment,
 } from '../types/index';
 import { streamAgentResponse } from '../api/agent';
-import type { ConversationMessage } from '../api/sessions';
+import type { ConversationMessage, ApiMessageContent } from '../api/sessions';
 import { useAgentStore } from './agentStore';
 import { useStorageStore } from './storageStore';
 import { useSessionStore } from './sessionStore';
 import { useMemoryStore } from './memoryStore';
 import { useSettingsStore } from './settingsStore';
 import { logger } from '../utils/logger';
+import { extractErrorMessage } from '../utils/store-helpers';
 
 // Helper function: Convert image to Base64
 const convertImageToBase64 = (file: File): Promise<string> => {
@@ -68,11 +69,11 @@ const updateToolUseStatus = (
   status: ToolUse['status']
 ): MessageContent[] => {
   return contents.map((content) => {
-    if (content.type === 'toolUse' && content.toolUse) {
+    if (content.type === 'toolUse') {
       // Match by actual toolUseId or local ID
       if (content.toolUse.id === toolUseId || content.toolUse.originalToolUseId === toolUseId) {
         return {
-          ...content,
+          type: 'toolUse' as const,
           toolUse: {
             ...content.toolUse,
             status,
@@ -103,6 +104,14 @@ const getOrCreateSessionState = (
   return sessions[sessionId];
 };
 
+/**
+ * Get the active session ID from the single source of truth (sessionStore).
+ * This replaces the previously duplicated activeSessionId in chatStore.
+ */
+const getActiveSessionId = (): string | null => {
+  return useSessionStore.getState().activeSessionId;
+};
+
 interface ChatActions {
   getSessionState: (sessionId: string) => SessionChatState;
   getActiveSessionState: () => SessionChatState | null;
@@ -124,7 +133,6 @@ export const useChatStore = create<ChatStore>()(
     (set, get) => ({
       // State
       sessions: {},
-      activeSessionId: null,
       /**
        * WHY: lastStreamCompletedAt tracks per-session streaming completion time (epoch ms)
        *
@@ -150,14 +158,13 @@ export const useChatStore = create<ChatStore>()(
       },
 
       getActiveSessionState: () => {
-        const { sessions, activeSessionId } = get();
+        const { sessions } = get();
+        const activeSessionId = getActiveSessionId();
         if (!activeSessionId) return null;
         return getOrCreateSessionState(sessions, activeSessionId);
       },
 
       switchSession: (sessionId: string) => {
-        set({ activeSessionId: sessionId });
-
         // Initialize session state if it doesn't exist
         const { sessions } = get();
         if (!sessions[sessionId]) {
@@ -215,9 +222,6 @@ export const useChatStore = create<ChatStore>()(
 
       sendPrompt: async (prompt: string, sessionId: string, images?: ImageAttachment[]) => {
         const { addMessage, updateMessage, sessions } = get();
-
-        // Set activeSessionId (for streaming callbacks to work correctly)
-        set({ activeSessionId: sessionId });
 
         // Get/create session state
         const sessionState = getOrCreateSessionState(sessions, sessionId);
@@ -330,12 +334,12 @@ export const useChatStore = create<ChatStore>()(
 
           // Debug log
           if (selectedAgent) {
-            console.log(`🤖 Selected agent: ${selectedAgent.name}`);
-            console.log(`🔧 Enabled tools: ${selectedAgent.enabledTools.join(', ') || 'none'}`);
+            logger.log(`🤖 Selected agent: ${selectedAgent.name}`);
+            logger.log(`🔧 Enabled tools: ${selectedAgent.enabledTools.join(', ') || 'none'}`);
           } else {
-            console.log(`🤖 Using default agent`);
+            logger.log(`🤖 Using default agent`);
           }
-          console.log(`📁 Agent working directory: ${agentWorkingDirectory}`);
+          logger.log(`📁 Agent working directory: ${agentWorkingDirectory}`);
 
           // Process streaming response
           await streamAgentResponse(
@@ -343,12 +347,10 @@ export const useChatStore = create<ChatStore>()(
             sessionId,
             {
               onTextDelta: (text: string) => {
-                // Scope by session ID
-                const { activeSessionId } = get();
-
-                // Skip update if active session has switched
+                // Check if active session has switched (single source: sessionStore)
+                const activeSessionId = getActiveSessionId();
                 if (activeSessionId !== sessionId) {
-                  console.log(
+                  logger.log(
                     `⚠️ Session switch detected (${sessionId} → ${activeSessionId}), skipping update`
                   );
                   return;
@@ -383,10 +385,10 @@ export const useChatStore = create<ChatStore>()(
                 }
               },
               onToolUse: (toolUse: ToolUse) => {
-                const { activeSessionId, sessions } = get();
-                if (activeSessionId !== sessionId) return;
+                if (getActiveSessionId() !== sessionId) return;
 
                 // Add tool use
+                const { sessions } = get();
                 const sessionState = sessions[sessionId];
                 if (!sessionState) return;
 
@@ -404,10 +406,10 @@ export const useChatStore = create<ChatStore>()(
                 }
               },
               onToolInputUpdate: (toolUseId: string, input: Record<string, unknown>) => {
-                const { activeSessionId, sessions } = get();
-                if (activeSessionId !== sessionId) return;
+                if (getActiveSessionId() !== sessionId) return;
 
                 // Update tool input parameters
+                const { sessions } = get();
                 const sessionState = sessions[sessionId];
                 if (!sessionState) return;
 
@@ -416,14 +418,14 @@ export const useChatStore = create<ChatStore>()(
                 );
                 if (currentMessage) {
                   const updatedContents = currentMessage.contents.map((content) => {
-                    if (content.type === 'toolUse' && content.toolUse) {
+                    if (content.type === 'toolUse') {
                       // Match by originalToolUseId or local ID
                       if (
                         content.toolUse.originalToolUseId === toolUseId ||
                         content.toolUse.id === toolUseId
                       ) {
                         return {
-                          ...content,
+                          type: 'toolUse' as const,
                           toolUse: {
                             ...content.toolUse,
                             input,
@@ -440,10 +442,10 @@ export const useChatStore = create<ChatStore>()(
                 }
               },
               onToolResult: (toolResult: ToolResult) => {
-                const { activeSessionId, sessions } = get();
-                if (activeSessionId !== sessionId) return;
+                if (getActiveSessionId() !== sessionId) return;
 
                 // Add tool result
+                const { sessions } = get();
                 const sessionState = sessions[sessionId];
                 if (!sessionState) return;
 
@@ -517,8 +519,8 @@ export const useChatStore = create<ChatStore>()(
 
                 // Preserve existing contents and add error message
                 const existingContents = currentMessage?.contents || [];
-                const errorContent = {
-                  type: 'text' as const,
+                const errorContent: MessageContent = {
+                  type: 'text',
                   text: `An error occurred: ${error.message}`,
                 };
 
@@ -545,7 +547,7 @@ export const useChatStore = create<ChatStore>()(
             agentConfig
           );
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+          const errorMsg = extractErrorMessage(error, 'Failed to send message');
 
           const { sessions } = get();
           const currentState = sessions[sessionId] || createDefaultSessionState();
@@ -556,7 +558,7 @@ export const useChatStore = create<ChatStore>()(
               [sessionId]: {
                 ...currentState,
                 isLoading: false,
-                error: errorMessage,
+                error: errorMsg,
               },
             },
           });
@@ -627,7 +629,6 @@ export const useChatStore = create<ChatStore>()(
           return contents.some(
             (content) =>
               content.type === 'text' &&
-              content.text &&
               (content.text.includes('[SYSTEM_ERROR]') ||
                 content.text.startsWith('An error occurred:') ||
                 content.text.startsWith('エラーが発生しました:'))
@@ -635,25 +636,27 @@ export const useChatStore = create<ChatStore>()(
         };
 
         // Helper function to convert API MessageContent to local MessageContent type
-        const convertContents = (
-          apiContents: ConversationMessage['contents']
-        ): MessageContent[] => {
-          return apiContents.map((content) => {
-            if (content.type === 'image' && content.image) {
-              // Convert API image format to ImageAttachment format
-              return {
-                type: 'image' as const,
-                image: {
-                  id: randomId(),
-                  fileName: content.image.fileName || 'image',
-                  mimeType: content.image.mimeType,
-                  size: 0, // Size not available from API
-                  base64: content.image.base64,
-                } as ImageAttachment,
-              };
+        const convertContents = (apiContents: ApiMessageContent[]): MessageContent[] => {
+          return apiContents.map((content): MessageContent => {
+            switch (content.type) {
+              case 'image':
+                return {
+                  type: 'image',
+                  image: {
+                    id: randomId(),
+                    fileName: content.image.fileName || 'image',
+                    mimeType: content.image.mimeType,
+                    size: 0, // Size not available from API
+                    base64: content.image.base64,
+                  },
+                };
+              case 'text':
+                return { type: 'text', text: content.text };
+              case 'toolUse':
+                return { type: 'toolUse', toolUse: content.toolUse };
+              case 'toolResult':
+                return { type: 'toolResult', toolResult: content.toolResult };
             }
-            // Other types are compatible
-            return content as MessageContent;
           });
         };
 

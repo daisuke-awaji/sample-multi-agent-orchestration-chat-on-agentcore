@@ -45,32 +45,21 @@ export const IMAGE_ATTACHMENT_CONFIG = {
 
 export type AcceptedImageType = (typeof IMAGE_ATTACHMENT_CONFIG.ACCEPTED_TYPES)[number];
 
-// Message Content types
-export interface MessageContent {
-  type: 'text' | 'toolUse' | 'toolResult' | 'image';
-  text?: string;
-  toolUse?: ToolUse;
-  toolResult?: ToolResult;
-  image?: ImageAttachment;
-}
+// Message Content types (discriminated union for type safety)
+export type MessageContent =
+  | { type: 'text'; text: string }
+  | { type: 'toolUse'; toolUse: ToolUse }
+  | { type: 'toolResult'; toolResult: ToolResult }
+  | { type: 'image'; image: ImageAttachment };
 
 // Message types
 export interface Message {
   id: string;
   type: 'user' | 'assistant';
-  contents: MessageContent[]; // Changed from single content string to multiple content blocks
+  contents: MessageContent[];
   timestamp: Date;
   isStreaming?: boolean;
   isError?: boolean; // Flag to indicate this message contains an error
-}
-
-// Legacy support for single content string (backward compatibility)
-export interface LegacyMessage {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  isStreaming?: boolean;
 }
 
 // Session-specific chat state
@@ -84,7 +73,6 @@ export interface SessionChatState {
 // Chat types
 export interface ChatState {
   sessions: Record<string, SessionChatState>;
-  activeSessionId: string | null;
   /**
    * WHY: Tracks when HTTP streaming completed per session (epoch ms).
    *
