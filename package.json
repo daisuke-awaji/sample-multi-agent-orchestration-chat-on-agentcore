@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json && npm run build --workspaces --if-present",
-    "test": "tsc --build tsconfig.build.json && npm run test --workspaces --if-present",
+    "test": "tsc --build tsconfig.build.json && npm run test --workspaces --if-present && jest --config jest.config.cjs",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "format:check": "npm run format:check --workspaces --if-present",
