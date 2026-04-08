@@ -519,8 +519,8 @@ describeIntegration('AgentsService Integration Tests', () => {
                 command: 'npx',
                 args: ['-y', 'test-server'],
                 env: {
-                  API_KEY: 'secret-key-12345',
-                  SECRET_TOKEN: 'secret-token-67890',
+                  TEST_ENDPOINT: 'http://localhost:3000',
+                  MOCK_TOKEN: 'test-token-value',
                 },
                 transport: 'stdio',
               },
@@ -611,7 +611,7 @@ describeIntegration('AgentsService Integration Tests', () => {
                 command: 'node',
                 args: ['server.js'],
                 env: {
-                  SECRET_KEY: 'super-secret-value',
+                  MOCK_ENV_KEY: 'test-dummy-value',
                 },
                 transport: 'stdio',
               },
