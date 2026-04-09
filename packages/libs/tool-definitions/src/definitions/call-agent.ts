@@ -22,10 +22,10 @@ export const callAgentSchema = z.object({
     .optional()
     .describe(
       'Model ID to use (optional, defaults to agent config). ' +
-        'Must be a valid Bedrock model ID. Examples: ' +
-        '"global.anthropic.claude-sonnet-4-6", ' +
-        '"global.anthropic.claude-opus-4-6-v1", ' +
-        '"global.amazon.nova-2-lite-v1:0"'
+        'Available models: ' +
+        '"global.anthropic.claude-opus-4-6-v1" (Claude Opus 4.6), ' +
+        '"global.anthropic.claude-sonnet-4-6" (Claude Sonnet 4.6), ' +
+        '"global.amazon.nova-2-lite-v1:0" (Nova Lite 2)'
     ),
   storagePath: z
     .string()
@@ -76,7 +76,12 @@ Then use those agentIds with action='start_task' to invoke them.
 - Sub-agents run independently with no shared history
 - Tasks can run for minutes or hours
 - Use polling (waitForCompletion=true) for shorter tasks
-- Use immediate checks (waitForCompletion=false) for long-running tasks`,
+- Use immediate checks (waitForCompletion=false) for long-running tasks
+
+**Available Models (for modelId parameter):**
+- "global.anthropic.claude-opus-4-6-v1" — Claude Opus 4.6 (most capable)
+- "global.anthropic.claude-sonnet-4-6" — Claude Sonnet 4.6 (balanced)
+- "global.amazon.nova-2-lite-v1:0" — Nova Lite 2 (fast and cost-efficient)`,
   zodSchema: callAgentSchema,
   jsonSchema: zodToJsonSchema(callAgentSchema),
 };
