@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "document": "packages/frontend/README.md",
+      "reason": "Boilerplate Vite README — not maintained as project-specific documentation",
+      "addedDate": "2026-04-09"
+    },
+    {
+      "document": "packages/cdk/README.md",
+      "reason": "Minimal stub README (22 lines) — CDK config is documented in docs/deployment-options.md instead",
+      "addedDate": "2026-04-09"
+    }
+  ]
+}
