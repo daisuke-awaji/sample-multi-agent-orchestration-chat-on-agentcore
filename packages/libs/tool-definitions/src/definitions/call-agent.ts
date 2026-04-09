@@ -13,7 +13,20 @@ export const callAgentSchema = z.object({
     .optional()
     .describe('Agent ID (required for start_task, e.g., "web-researcher")'),
   query: z.string().optional().describe('Query to send to the agent (required for start_task)'),
-  modelId: z.string().optional().describe('Model ID to use (optional, defaults to agent config)'),
+  modelId: z
+    .string()
+    .regex(
+      /^(global\.|us\.|eu\.|apac\.)?(anthropic\.|amazon\.|meta\.|mistral\.|cohere\.)[a-zA-Z0-9._:/-]+$/,
+      'modelId must be a valid Bedrock model ID (e.g., "global.anthropic.claude-sonnet-4-6", "global.amazon.nova-2-lite-v1:0")'
+    )
+    .optional()
+    .describe(
+      'Model ID to use (optional, defaults to agent config). ' +
+        'Must be a valid Bedrock model ID. Examples: ' +
+        '"global.anthropic.claude-sonnet-4-6", ' +
+        '"global.anthropic.claude-opus-4-6-v1", ' +
+        '"global.amazon.nova-2-lite-v1:0"'
+    ),
   storagePath: z
     .string()
     .optional()
