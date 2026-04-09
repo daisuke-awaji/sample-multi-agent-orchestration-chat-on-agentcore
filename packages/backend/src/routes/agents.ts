@@ -17,7 +17,7 @@ import {
   CreateAgentInput,
   UpdateAgentInput,
 } from '../services/agents-service.js';
-import { DEFAULT_AGENTS } from '../data/default-agents.js';
+import { DEFAULT_AGENTS } from '../config/data/default-agents.js';
 
 const router = Router();
 
@@ -617,10 +617,7 @@ router.get(
       });
 
       const agentsService = createAgentsService();
-      const agent = await agentsService.getSharedAgent(
-        parseUserId(userId),
-        parseAgentId(agentId)
-      );
+      const agent = await agentsService.getSharedAgent(parseUserId(userId), parseAgentId(agentId));
 
       if (!agent) {
         return res.status(404).json({

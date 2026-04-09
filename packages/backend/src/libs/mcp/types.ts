@@ -59,7 +59,7 @@ export type MCPServerConfig = StdioMCPServer | HttpMCPServer | SseMCPServer;
 /**
  * Top-level configuration for mcp.json
  */
-export interface MCPConfig {
+export interface MCPConfigFile {
   /** MCP server definitions (key: server name) */
   mcpServers: Record<string, MCPServerConfig>;
 }
@@ -75,4 +75,51 @@ export class MCPConfigError extends Error {
     super(message);
     this.name = 'MCPConfigError';
   }
+}
+
+/**
+ * Logger function type definition
+ */
+export interface Logger {
+  info: (message: string, ...args: unknown[]) => void;
+  warn: (message: string, ...args: unknown[]) => void;
+  error: (message: string, ...args: unknown[]) => void;
+  debug?: (message: string, ...args: unknown[]) => void;
+}
+
+/**
+ * Default logger (using console)
+ */
+export const defaultLogger: Logger = {
+  info: console.log,
+  warn: console.warn,
+  error: console.error,
+  debug: console.debug,
+};
+
+/**
+ * MCP tool information type definition
+ */
+export interface MCPToolInfo {
+  name: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
+  serverName: string; // For identifying which server the tool belongs to
+}
+
+/**
+ * MCP server connection error information
+ */
+export interface MCPServerError {
+  serverName: string;
+  message: string;
+  details?: string; // Additional error details (e.g., stack trace, stderr output)
+}
+
+/**
+ * Result of fetching tools from MCP configuration
+ */
+export interface MCPToolsFetchResult {
+  tools: MCPToolInfo[];
+  errors: MCPServerError[];
 }

@@ -7,55 +7,8 @@
  */
 
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
-import { config } from '../config/index.js';
-
-/**
- * JWT payload type definition for Cognito tokens
- */
-export interface CognitoJWTPayload {
-  /** Subject */
-  sub?: string;
-  /** Issuer */
-  iss?: string;
-  /** Audience */
-  aud?: string | string[];
-  /** Expiration Time */
-  exp?: number;
-  /** Issued At */
-  iat?: number;
-  /** JWT ID */
-  jti?: string;
-  /** Cognito Username */
-  'cognito:username'?: string;
-  /** Username (Access Token) */
-  username?: string;
-  /** Email */
-  email?: string;
-  /** Token Use (access or id) */
-  token_use?: 'access' | 'id';
-  /** Client ID */
-  client_id?: string;
-  /** OAuth Scopes (space-separated, for machine users) */
-  scope?: string;
-  /** Cognito Groups */
-  'cognito:groups'?: string[];
-  /** Auth Time */
-  auth_time?: number;
-}
-
-/**
- * JWT verification result type definition
- */
-export interface JWTVerificationResult {
-  /** Verification success flag */
-  valid: boolean;
-  /** Decoded payload */
-  payload?: CognitoJWTPayload;
-  /** Error message */
-  error?: string;
-  /** Error details */
-  details?: unknown;
-}
+import type { CognitoJWTPayload, JWTVerificationResult } from '../../types/index.js';
+import { config } from '../../config/index.js';
 
 /**
  * Cached CognitoJwtVerifier instance

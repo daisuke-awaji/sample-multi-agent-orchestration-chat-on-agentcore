@@ -12,7 +12,12 @@
 
 import * as path from 'path';
 import type { LayerRule, PackageRule } from '../utils/types';
-import { checkLayerViolations, detectCircularDependencies } from '../utils/violation-checker';
+import type { FileEntry } from '../utils/violation-checker';
+import {
+  buildImportGraph,
+  checkLayerViolationsFromGraph,
+  detectCircularDependenciesFromGraph,
+} from '../utils/violation-checker';
 import { checkPackageDependencies } from '../utils/package-checker';
 import { formatViolations, formatCycles, formatPackageViolations } from '../utils/formatters';
 
@@ -69,16 +74,44 @@ const AGENT_LAYER_RULE: LayerRule = {
   layerExtractor: (fp) => fp.match(/packages\/agent\/src\/([^/]+)/)?.[1] ?? null,
 };
 
+/**
+ * Backend Layer Rule
+ *
+ * Layer Structure (aligned with packages/agent):
+ *   routes (4)     ── HTTP Entry Point
+ *       ↓
+ *   services (3)   ── Business Logic & Data Access
+ *       ↓
+ *   middleware (2) ── HTTP Middleware
+ *       ↓
+ *   config (1)     ── Configuration & Static Data
+ *       ↓
+ *   types (0)      ── Type Definitions, Schemas
+ *
+ *   [libs (-1) - Provider Layer: Cross-cutting concerns, accessible from all layers]
+ */
 const BACKEND_LAYER_RULE: LayerRule = {
   name: 'packages/backend',
   layers: {
-    config: 0,
-    mcp: 0,
-    utils: 1,
+    // ─── Core Layers (strict forward-only dependencies) ───
+    // Layer 0: Type Definitions
+    types: 0,
+
+    // Layer 1: Configuration & Static Data
+    config: 1,
+
+    // Layer 2: Middleware (HTTP Middleware)
     middleware: 2,
+
+    // Layer 3: Services (Business Logic & Data Access)
     services: 3,
-    data: 3,
+
+    // Layer 4: Routes (HTTP Entry Point)
     routes: 4,
+
+    // ─── Provider Layer (cross-cutting concerns) ───
+    // Accessible from all core layers
+    libs: -1,
   },
   srcRoot: 'packages/backend/src',
   layerExtractor: (fp) => fp.match(/packages\/backend\/src\/([^/]+)/)?.[1] ?? null,
@@ -133,6 +166,16 @@ const PACKAGE_RULES: PackageRule[] = [
   { name: '@moca/session-stream-handler', allowedDeps: [] },
 ];
 
+// ─── Import Graph Cache (built once per package, shared across test suites) ──
+
+const importGraphs = new Map<string, FileEntry[]>();
+
+beforeAll(() => {
+  for (const rule of ALL_LAYER_RULES) {
+    importGraphs.set(rule.name, buildImportGraph(rule, REPO_ROOT));
+  }
+});
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('Architecture Structural Tests', () => {
@@ -151,7 +194,8 @@ describe('Architecture Structural Tests', () => {
     it.each(ALL_LAYER_RULES.map((r) => [r.name, r] as const))(
       '%s has no circular dependencies between layers',
       (_name, rule) => {
-        const cycles = detectCircularDependencies(rule, REPO_ROOT);
+        const graph = importGraphs.get(rule.name)!;
+        const cycles = detectCircularDependenciesFromGraph(rule, REPO_ROOT, graph);
         if (cycles.length > 0) {
           throw new Error(
             `${cycles.length} circular dependency cycle(s) found:\n${formatCycles(cycles)}`
@@ -165,7 +209,8 @@ describe('Architecture Structural Tests', () => {
     it.each(ALL_LAYER_RULES.map((r) => [r.name, r] as const))(
       '%s has no upward layer imports',
       (_name, rule) => {
-        const violations = checkLayerViolations(rule, REPO_ROOT);
+        const graph = importGraphs.get(rule.name)!;
+        const violations = checkLayerViolationsFromGraph(rule, REPO_ROOT, graph);
         if (violations.length > 0) {
           throw new Error(
             `${violations.length} layer violation(s) found:\n${formatViolations(violations)}`

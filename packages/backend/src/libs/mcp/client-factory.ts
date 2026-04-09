@@ -8,28 +8,14 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { MCPServerConfig, StdioMCPServer, HttpMCPServer, SseMCPServer } from './types.js';
-import { MCPConfigError } from './types.js';
-
-/**
- * Logger function type definition
- */
-interface Logger {
-  info: (message: string, ...args: unknown[]) => void;
-  warn: (message: string, ...args: unknown[]) => void;
-  error: (message: string, ...args: unknown[]) => void;
-  debug?: (message: string, ...args: unknown[]) => void;
-}
-
-/**
- * Default logger (using console)
- */
-const defaultLogger: Logger = {
-  info: console.log,
-  warn: console.warn,
-  error: console.error,
-  debug: console.debug,
-};
+import type {
+  MCPServerConfig,
+  StdioMCPServer,
+  HttpMCPServer,
+  SseMCPServer,
+  Logger,
+} from './types.js';
+import { MCPConfigError, defaultLogger } from './types.js';
 
 /**
  * Create client for stdio transport

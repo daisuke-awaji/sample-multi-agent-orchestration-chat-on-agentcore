@@ -2,7 +2,7 @@
  * Load and validate mcp.json configuration file
  */
 
-import type { MCPConfig, MCPServerConfig } from './types.js';
+import type { MCPConfigFile, MCPServerConfig } from './types.js';
 
 /**
  * Auto-infer and add transport field to MCP server configuration
@@ -35,7 +35,7 @@ function inferTransport(serverConfig: Record<string, unknown>): Record<string, u
  * Extract only enabled MCP server configurations
  * Apply auto-inference if transport is not specified
  */
-export function getEnabledMCPServers(config: MCPConfig): Array<{
+export function getEnabledMCPServers(config: MCPConfigFile): Array<{
   name: string;
   config: MCPServerConfig;
 }> {

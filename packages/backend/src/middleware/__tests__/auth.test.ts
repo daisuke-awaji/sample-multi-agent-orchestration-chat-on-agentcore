@@ -29,9 +29,9 @@ jest.mock('aws-jwt-verify', () => ({
   },
 }));
 
-import { extractJWTFromHeader } from '../../utils/jwks.js';
+import { extractJWTFromHeader } from '../../libs/auth/index.js';
 import { getCurrentAuth, AuthenticatedRequest } from '../auth.js';
-import type { CognitoJWTPayload } from '../../utils/jwks.js';
+import type { CognitoJWTPayload } from '../../types/index.js';
 
 // Helper to create a mock AuthenticatedRequest
 function mockRequest(

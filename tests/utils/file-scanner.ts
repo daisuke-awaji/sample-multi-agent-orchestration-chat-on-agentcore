@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const EXCLUDED_DIRS = ['node_modules', 'dist', 'tests'];
+const EXCLUDED_DIRS = ['node_modules', 'dist', 'tests', 'cdk.out'];
 const TS_FILE_PATTERN = /\.tsx?$/;
 const TEST_FILE_PATTERN = /\.(test|spec)\.ts$/;
 

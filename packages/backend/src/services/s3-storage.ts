@@ -14,7 +14,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { UserId } from '@moca/core';
 import { config } from '../config/index.js';
-import { createUserScopedS3Client } from '../utils/scoped-s3-credentials.js';
+import { createUserScopedS3Client } from '../libs/utils/scoped-s3-credentials.js';
 
 const defaultS3Client = new S3Client({ region: process.env.AWS_REGION });
 
