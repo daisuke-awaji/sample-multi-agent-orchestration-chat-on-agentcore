@@ -34,23 +34,6 @@ Monorepo using npm workspaces. 9 packages.
 | libs/generative-ui-catalog | Generative UI component catalog. Referenced by both agent and frontend |
 | libs/s3-workspace-sync | S3 workspace synchronization. Referenced by agent |
 
-### Package Dependency Graph
-
-```
-frontend → (via API) → backend
-                          ↓
-agent ← invoked via AgentCore Gateway
-  ↓
-libs/tool-definitions  ← also referenced by backend
-libs/generative-ui-catalog ← also referenced by frontend
-libs/s3-workspace-sync
-
-cdk → docker/backend.Dockerfile, docker/agent.Dockerfile
-session-stream-handler (standalone Lambda)
-trigger (standalone Lambda)
-lambda-tools (standalone Lambda functions)
-```
-
 ## Conventions
 
 - Node.js 22, TypeScript ~5.2
