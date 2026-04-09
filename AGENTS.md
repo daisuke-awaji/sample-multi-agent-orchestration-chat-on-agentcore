@@ -33,6 +33,7 @@ Monorepo using npm workspaces. 9 packages.
 | libs/tool-definitions | Tool definition types (Zod + JSON Schema). The **interface layer** referenced by both agent and backend |
 | libs/generative-ui-catalog | Generative UI component catalog. Referenced by both agent and frontend |
 | libs/s3-workspace-sync | S3 workspace synchronization. Referenced by agent |
+| libs/core | Core branded types and shared utilities (SessionId, UserId, AgentId, TriggerId, SYSTEM_USER_ID). Referenced by agent, backend, frontend, client, and trigger |
 
 ## Conventions
 
@@ -44,13 +45,13 @@ Monorepo using npm workspaces. 9 packages.
 
 ## Deployment
 
-- `npm run deploy` → builds lambda-tools → CDK deploy
+- `npm run deploy` → `tsc --build` + CDK deploy (does NOT build lambda-tools; use `npm run build:lambda` separately)
 - Environments: default / dev / stg / prd (defined in `packages/cdk/config/environments.ts`)
 - backend and agent are Docker images (multi-stage build). Dockerfiles live in `docker/`
 
 ## Important Rules
 
-- **Changes to libs/ have wide impact**: Changing tool-definitions affects both agent and backend. Changing generative-ui-catalog affects both agent and frontend. Run tests for all dependent packages before merging.
+- **Changes to libs/ have wide impact**: Changing tool-definitions affects both agent and backend. Changing generative-ui-catalog affects agent, frontend, and backend (via tool-definitions dependency chain). Run tests for all dependent packages before merging.
 - **Do NOT write Lambda-specific code in backend**: Lambda Web Adapter handles HTTP translation. Implement as a standard Express server with `app.listen(8080)`.
 - **agent runs on AgentCore Runtime, NOT Lambda**: It is a Docker container, not a Lambda function. However, it is implemented as an Express server and runs locally with `npm run dev` as-is.
 - **Environment config changes**: Edit `packages/cdk/config/environments.ts`. Types are in `environment-types.ts`, utilities in `environment-utils.ts`.

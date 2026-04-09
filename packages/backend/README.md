@@ -40,9 +40,9 @@ GET /ping
   "service": "agentcore-backend",
   "version": "0.1.0",
   "environment": "development",
-  "jwks": {
+  "cognito": {
     "configured": true,
-    "uri": "[CONFIGURED]"
+    "userPoolId": "[CONFIGURED]"
   }
 }
 ```
@@ -89,6 +89,23 @@ GET /
 ```
 
 Returns API specifications and documentation information.
+
+### Additional API Endpoints (Authentication Required)
+
+The backend provides extensive API endpoints beyond the above. Key route groups:
+
+| Route Group | Base Path | Description |
+|-------------|-----------|-------------|
+| Agents | `/agents` | CRUD for agent configurations, sharing, cloning |
+| Sessions | `/sessions` | Session listing, event retrieval, deletion |
+| Tools | `/tools` | Tool listing, search, health checks |
+| Memory | `/memory` | Memory record listing, search, deletion |
+| Storage | `/storage` | S3 file operations (upload, download, list, delete, tree) |
+| Triggers | `/triggers` | CRUD for scheduled/event-driven triggers |
+| Events | `/events` | Event source configuration |
+| Webhooks | `/webhooks` | GitHub webhook integration |
+
+See `packages/backend/src/routes/*.ts` for complete endpoint details.
 
 ## 🛠 Setup
 
@@ -149,8 +166,8 @@ npm run clean        # Delete build artifacts
 ### Build Docker Image
 
 ```bash
-# Build standalone
-docker build -t agentcore-backend .
+# Build standalone (run from monorepo root)
+docker build -t agentcore-backend -f docker/backend.Dockerfile .
 
 # Build & start with Docker Compose
 docker-compose up --build
@@ -195,11 +212,12 @@ npm run docker:test        # Health check
 | `COGNITO_REGION` | ⚠️ | - | AWS Region |
 | `COGNITO_CLIENT_ID` | ❌ | - | Cognito Client ID |
 | `AWS_REGION` | ❌ | `us-east-1` | AWS region |
-| `AGENTCORE_MEMORY_ID` | ❌ | - | AgentCore Memory ID |
-| `AGENTCORE_GATEWAY_ENDPOINT` | ❌ | - | AgentCore Gateway endpoint |
-| `USER_STORAGE_BUCKET_NAME` | ❌ | - | S3 bucket for user storage |
-| `AGENTS_TABLE_NAME` | ❌ | - | DynamoDB agents table name |
-| `SESSIONS_TABLE_NAME` | ❌ | - | DynamoDB sessions table name |
+| `AGENTCORE_MEMORY_ID` | ⚠️ | - | AgentCore Memory ID |
+| `AGENTCORE_GATEWAY_ENDPOINT` | ⚠️ | - | AgentCore Gateway endpoint |
+| `USER_STORAGE_BUCKET_NAME` | ⚠️ | - | S3 bucket for user storage |
+| `AGENTS_TABLE_NAME` | ⚠️ | - | DynamoDB agents table name |
+| `SESSIONS_TABLE_NAME` | ⚠️ | - | DynamoDB sessions table name |
+| `SSM_PARAMETER_PREFIX` | ⚠️ | - | SSM Parameter Store prefix for secure MCP env storage |
 
 ⚠️ = Required in production environment
 
