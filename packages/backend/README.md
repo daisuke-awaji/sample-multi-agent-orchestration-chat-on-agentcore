@@ -21,7 +21,7 @@ Express API server with JWT authentication support. Supports Amazon Cognito User
 - **TypeScript**: Type-safe implementation
 - **Docker Support**: Containerized execution environment
 - **Health Check**: API Gateway / Lambda compatible
-- **Development Mode**: JWKS verification skip feature
+- **JWT Authentication**: Always enforced — COGNITO_USER_POOL_ID is required in all environments
 
 ## 🔌 API Endpoints
 
@@ -205,13 +205,14 @@ npm run docker:test        # Health check
 
 ### Environment Configuration Patterns
 
-#### Pattern 1: Development Environment (No JWT Verification)
+#### Pattern 1: Minimal Environment (JWT Verification Always Required)
 
 ```env
 PORT=3000
 NODE_ENV=development
 CORS_ALLOWED_ORIGINS=*
-# JWT settings not configured → Decode only
+COGNITO_USER_POOL_ID=ap-northeast-1_xxxxxxxxx
+COGNITO_REGION=ap-northeast-1
 ```
 
 #### Pattern 2: Production Equivalent (With JWT Verification)
@@ -252,9 +253,11 @@ sequenceDiagram
 
 ### Development Environment Behavior
 
-- **With JWKS Configuration**: Executes full JWT verification
-- **Without JWKS Configuration**: Decode only (skip verification)
-- **Production Environment**: Always execute JWKS verification
+> **Note:** `COGNITO_USER_POOL_ID` is required in all environments. The server will not start without it.
+> JWT verification is always enforced — there is no "decode-only" bypass mode.
+
+- **JWT Verification**: Always executed using Cognito JWKS (`verifier.verify()`)
+- **Production Environment**: Same JWT verification applies
 
 ### JWT Payload Example
 

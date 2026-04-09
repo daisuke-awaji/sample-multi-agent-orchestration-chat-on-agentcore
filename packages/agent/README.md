@@ -414,7 +414,7 @@ EOF
 | `AWS_REGION` | us-east-1 | AWS region |
 | `NODE_ENV` | development | Node.js environment |
 | `LOG_LEVEL` | info | Log level |
-| `AGENTCORE_GATEWAY_ENDPOINT` | - | AgentCore Gateway MCP endpoint (required) |
+| `AGENTCORE_GATEWAY_ENDPOINT` | ⚠️ Required | AgentCore Gateway MCP endpoint (server will not start without this value) |
 | `AGENTCORE_MEMORY_ID` | - | AgentCore Memory ID |
 | `BEDROCK_MODEL_ID` | global.anthropic.claude-sonnet-4-6 | Bedrock model ID |
 | `BEDROCK_REGION` | us-east-1 | Bedrock API region |
