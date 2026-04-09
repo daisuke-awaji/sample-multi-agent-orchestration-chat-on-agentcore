@@ -69,37 +69,43 @@ curl http://localhost:8080/ping
 ### Agent Invocation
 
 ```bash
-echo -n "Tell me the weather in Tokyo" | curl -X POST http://localhost:8080/invocations \
-  -H "Content-Type: application/octet-stream" \
-  --data-binary @-
+curl -X POST http://localhost:8080/invocations \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Tell me the weather in Tokyo"}'
 ```
 
-**Response Example:**
+**Response Format:** NDJSON (newline-delimited JSON) stream with `Content-Type: text/plain; charset=utf-8`.
 
-```json
-{
-  "response": {
-    "type": "agentResult",
-    "stopReason": "endTurn",
-    "lastMessage": {
-      "type": "message",
-      "role": "assistant",
-      "content": [
-        {
-          "type": "textBlock",
-          "text": "Tokyo Weather Information:\nTemperature: 22°C\nConditions: Sunny\nHumidity: 65%\nWind Speed: 5 km/h"
-        }
-      ]
-    }
-  }
-}
+Each line is a separate JSON event:
+```jsonl
+{"type":"textBlock","text":"Tokyo Weather..."}
+{"type":"toolUse","name":"tavily_search","input":{...}}
+{"type":"serverCompletionEvent","metadata":{...}}
 ```
 
 ## Available Tools
 
 ### Local Tools
 
-Tools under `./src/tools` are available.
+Built-in tools are located at `./src/runtime/tools/`. The following 15 tools are available:
+
+| Tool | Description |
+|------|-------------|
+| `execute_command` | Run shell commands |
+| `file_editor` | Create and edit files |
+| `tavily_search` | Web search |
+| `tavily_extract` | Extract content from URLs |
+| `tavily_crawl` | Crawl websites |
+| `s3_list_files` | List S3 files |
+| `code_interpreter` | Execute Python code |
+| `image_to_text` | Analyze images |
+| `call_agent` | Invoke other agents |
+| `manage_agent` | Manage agent configurations |
+| `memory_search` | Search long-term memory |
+| `browser` | Browser automation |
+| `todo` | Task management |
+| `think` | Internal reasoning |
+| `generate_ui` | Generate UI components |
 
 ### MCP Server Integration
 
@@ -196,13 +202,24 @@ Each server can be controlled with the `enabled` field (default: `true`):
 }
 ```
 
-#### Specifying Config File Path
+#### MCP Configuration via API
 
-By default, `./mcp.json` is loaded, but can be changed with an environment variable:
+MCP server configuration is passed via the `mcpConfig` field in the POST /invocations request body, not loaded from a local file:
 
-```bash
-export MCP_CONFIG_PATH=/path/to/custom-mcp.json
-npm run dev
+```json
+{
+  "prompt": "Search for AWS docs",
+  "mcpConfig": {
+    "mcpServers": {
+      "aws-docs": {
+        "transport": "stdio",
+        "command": "uvx",
+        "args": ["awslabs.aws-documentation-mcp-server@latest"],
+        "enabled": true
+      }
+    }
+  }
+}
 ```
 
 #### Popular MCP Servers
@@ -412,7 +429,6 @@ EOF
 |----------|---------|-------------|
 | `PORT` | 8080 | HTTP server port |
 | `AWS_REGION` | us-east-1 | AWS region |
-| `NODE_ENV` | development | Node.js environment |
 | `LOG_LEVEL` | info | Log level |
 | `AGENTCORE_GATEWAY_ENDPOINT` | - | AgentCore Gateway MCP endpoint (required) |
 | `AGENTCORE_MEMORY_ID` | - | AgentCore Memory ID |
@@ -485,19 +501,29 @@ npm run docker:dev
 ```
 packages/agent/
 ├── src/
-│   ├── index.ts          # HTTP server
-│   ├── agent.ts          # Strands Agent definition
-│   └── tools/
-│       └── weather.ts    # Weather tool
-├── Dockerfile            # Docker image configuration
+│   ├── index.ts          # HTTP server entry point
+│   ├── app.ts            # Express app factory
+│   ├── agent.ts          # Strands Agent facade
+│   ├── config/           # Zod-validated environment config
+│   ├── handlers/         # Request handlers (ping, invocations)
+│   ├── libs/             # MCP client, middleware, utilities
+│   ├── runtime/
+│   │   ├── agent/        # Agent runtime (tools-builder, mcp-clients-builder)
+│   │   └── tools/        # 15 built-in tools (execute-command, file-editor, etc.)
+│   ├── services/         # Workspace sync, session persistence, AppSync publisher
+│   ├── tests/            # Test files
+│   └── types/            # TypeScript type definitions
 ├── docker-compose.yml    # Development environment setup
 └── package.json          # npm scripts
 ```
 
+> Note: The Dockerfile lives at `docker/agent.Dockerfile` (monorepo root), not in this package directory.
+
 ### Adding Custom Tools
 
-1. Create tool file in `src/tools/`
-2. Add tool in `src/agent.ts`
+1. Create tool file in `src/runtime/tools/`
+2. Add the tool to the `localTools` array in `src/runtime/tools/index.ts`
+3. Add tool definition to `packages/libs/tool-definitions/src/definitions/` if shared schema is needed
 3. Build with `npm run build`
 4. Test with `npm run docker:dev`
 

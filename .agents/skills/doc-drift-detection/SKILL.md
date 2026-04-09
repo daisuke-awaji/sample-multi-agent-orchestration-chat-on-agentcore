@@ -34,6 +34,8 @@ Detect **semantic** drift between documentation and code — the kind that `grep
 
 ### Skip List
 
+Documents excluded from analysis. Add entries here when a PR is closed without merging (i.e., the finding was a false positive or intentional).
+
 - `packages/frontend/README.md` — Vite boilerplate, not project documentation
 - `packages/cdk/README.md` — Minimal stub; deployment docs live in `docs/deployment-options.md`
 
@@ -53,7 +55,6 @@ Return findings as JSON:
 {
   "group": "B",
   "document": "packages/backend/README.md",
-  "commit": "abc1234",
   "findings": [
     {
       "section": "API Endpoints",
@@ -67,3 +68,11 @@ Return findings as JSON:
   ]
 }
 ```
+
+## State Management
+
+This skill does **not** maintain JSON state files. All state is derived from:
+
+- **Run history**: `changelog.md` in this directory (max 30 entries)
+- **PR status**: `gh pr list --label doc-drift --state all` (GitHub is source of truth)
+- **Skip list**: The Skip List section above in this file
