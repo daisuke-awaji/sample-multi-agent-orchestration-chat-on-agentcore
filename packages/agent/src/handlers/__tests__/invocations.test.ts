@@ -12,7 +12,7 @@ import {
   verifyMachineUserClaim,
   REQUIRED_MACHINE_USER_SCOPE,
 } from '../auth-resolver.js';
-import type { RequestContext } from '../../context/request-context.js';
+import type { RequestContext } from '../../libs/context/request-context.js';
 
 /**
  * Helper to create a mock JWT token

@@ -10,15 +10,16 @@
 
 import type { Request, Response } from 'express';
 import type { HookProvider } from '@strands-agents/sdk';
-import type { CreateAgentOptions } from '../agent/types.js';
+import type { CreateAgentOptions } from '../runtime/agent/types.js';
 import type { InvocationRequest } from './types.js';
 import { createAgent } from '../agent.js';
-import { getCurrentContext } from '../context/request-context.js';
-import { ObservabilityContext } from '../context/observability-context.js';
-import { setupSession, getSessionStorage } from '../session/session-helper.js';
+import { getCurrentContext } from '../libs/context/request-context.js';
+import { ObservabilityContext } from '../libs/context/observability-context.js';
+import { setupSession, getSessionStorage } from '../services/session/session-helper.js';
 import { initializeWorkspaceSync } from '../services/workspace-sync-helper.js';
+import { createSessionPersistenceDeps } from '../services/session-persistence-deps-factory.js';
 import { logger } from '../config/index.js';
-import { validateImageData } from '../validation/index.js';
+import { validateImageData } from '../types/validation/index.js';
 import { resolveEffectiveUserId } from './auth-resolver.js';
 import { streamAgentResponse } from './stream-handler.js';
 
@@ -94,6 +95,7 @@ export async function handleInvocation(req: Request, res: Response): Promise<voi
     sessionType,
     agentId: body.agentId,
     storagePath: body.storagePath,
+    deps: createSessionPersistenceDeps(),
   });
   const sessionStorage = getSessionStorage();
 

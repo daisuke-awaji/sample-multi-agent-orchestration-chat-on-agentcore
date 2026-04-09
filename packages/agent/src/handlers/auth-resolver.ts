@@ -4,7 +4,7 @@
  */
 
 import { logger } from '../config/index.js';
-import { getCurrentContext } from '../context/request-context.js';
+import { getCurrentContext } from '../libs/context/request-context.js';
 
 /**
  * Required OAuth scope for machine user invocation

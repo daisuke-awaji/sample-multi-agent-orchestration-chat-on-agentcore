@@ -7,7 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { config } from './config/index.js';
 import { jwtAuthMiddleware, AuthenticatedRequest, getCurrentAuth } from './middleware/auth.js';
-import { hydrateJWKS } from './utils/jwks.js';
+import { hydrateJWKS } from './libs/auth/index.js';
 import agentsRouter from './routes/agents.js';
 import sessionsRouter from './routes/sessions.js';
 import toolsRouter from './routes/tools.js';

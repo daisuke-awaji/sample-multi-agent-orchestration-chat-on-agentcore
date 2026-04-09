@@ -36,7 +36,7 @@ jest.unstable_mockModule('../../config/index.js', () => ({
   config: {},
 }));
 
-jest.unstable_mockModule('../../validation/index.js', () => ({
+jest.unstable_mockModule('../../types/validation/index.js', () => ({
   validateImageData: mockValidateImageData,
 }));
 
@@ -44,7 +44,7 @@ jest.unstable_mockModule('../auth-resolver.js', () => ({
   resolveEffectiveUserId: mockResolveEffectiveUserId,
 }));
 
-jest.unstable_mockModule('../../context/request-context.js', () => ({
+jest.unstable_mockModule('../../libs/context/request-context.js', () => ({
   getCurrentContext: mockGetCurrentContext,
 }));
 
@@ -52,12 +52,12 @@ jest.unstable_mockModule('../../services/workspace-sync-helper.js', () => ({
   initializeWorkspaceSync: mockInitializeWorkspaceSync,
 }));
 
-jest.unstable_mockModule('../../session/session-helper.js', () => ({
+jest.unstable_mockModule('../../services/session/session-helper.js', () => ({
   setupSession: mockSetupSession,
   getSessionStorage: mockGetSessionStorage,
 }));
 
-jest.unstable_mockModule('../../context/observability-context.js', () => ({
+jest.unstable_mockModule('../../libs/context/observability-context.js', () => ({
   ObservabilityContext: jest.fn().mockImplementation(() => ({
     traceAsync: jest.fn(async (_name: string, fn: () => Promise<void>) => fn()),
   })),

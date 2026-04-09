@@ -9,7 +9,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { logger } from '../config/index.js';
-import { createUserScopedDynamoDBClient } from '../utils/scoped-credentials.js';
+import { createUserScopedDynamoDBClient } from '../libs/utils/scoped-credentials.js';
 
 /**
  * Session type

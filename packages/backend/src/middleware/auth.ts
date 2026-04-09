@@ -3,32 +3,17 @@
  * Express middleware that executes JWT authentication
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { verifyJWT, extractJWTFromHeader, CognitoJWTPayload } from '../utils/jwks.js';
+import { Response, NextFunction } from 'express';
+import { verifyJWT, extractJWTFromHeader } from '../libs/auth/index.js';
+import type {
+  CognitoJWTPayload,
+  AuthenticatedRequest,
+  AuthInfo,
+  AuthErrorResponse,
+} from '../types/index.js';
 
-/**
- * Authenticated request type definition
- * Add JWT information to Express Request object
- */
-export interface AuthenticatedRequest extends Request {
-  /** JWT payload */
-  jwt?: CognitoJWTPayload;
-  /** User ID */
-  userId?: string;
-  /** Request ID (for log tracking) */
-  requestId?: string;
-}
-
-/**
- * Authentication error response type definition
- */
-interface AuthErrorResponse {
-  error: string;
-  message: string;
-  code: string;
-  timestamp: string;
-  requestId?: string;
-}
+// Re-export types for backward compatibility
+export type { AuthenticatedRequest, AuthInfo } from '../types/index.js';
 
 /**
  * Generate request ID
@@ -168,25 +153,6 @@ function isMachineUserToken(payload?: CognitoJWTPayload): boolean {
 
   // Machine user: no user identifiers and token_use is 'access'
   return payload.token_use === 'access';
-}
-
-/**
- * Authentication information type definition
- */
-export interface AuthInfo {
-  authenticated: boolean;
-  userId?: string;
-  username?: string;
-  email?: string;
-  groups: string[];
-  tokenUse?: 'access' | 'id';
-  requestId?: string;
-  /** Whether the token is from a machine user (Client Credentials Flow) */
-  isMachineUser: boolean;
-  /** Client ID (for machine users) */
-  clientId?: string;
-  /** OAuth scopes (for machine users) */
-  scopes?: string[];
 }
 
 /**

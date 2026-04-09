@@ -13,11 +13,11 @@ import {
   sanitizeErrorMessage,
   serializeStreamEvent,
   buildInputContent,
-} from '../utils/index.js';
-import { getCurrentContext, getContextMetadata } from '../context/request-context.js';
-import type { SessionStorage, SessionConfig } from '../session/types.js';
-import type { AgentMetadata } from '../agent/types.js';
-import type { ImageData } from '../validation/index.js';
+} from '../libs/utils/index.js';
+import { getCurrentContext, getContextMetadata } from '../libs/context/request-context.js';
+import type { SessionStorage, SessionConfig } from '../services/session/types.js';
+import type { AgentMetadata } from '../runtime/agent/types.js';
+import type { ImageData } from '../types/validation/index.js';
 
 /**
  * Streaming-specific options (not duplicating what's in RequestContext)

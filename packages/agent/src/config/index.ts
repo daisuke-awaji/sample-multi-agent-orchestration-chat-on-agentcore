@@ -70,7 +70,9 @@ function parseEnv(): Config {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues.map((issue) => issue.path.join('.')).join(', ');
-      throw new Error(`Required environment variables are not set: ${missingVars}`, { cause: error });
+      throw new Error(`Required environment variables are not set: ${missingVars}`, {
+        cause: error,
+      });
     }
     throw error;
   }
@@ -123,3 +125,13 @@ export const logger = {
     console.error('[ERROR]', new Date().toISOString(), ...formattedArgs);
   },
 };
+
+// Re-export Bedrock model utilities
+export {
+  createBedrockModel,
+  getPromptCachingSupport,
+  supportsPromptCaching,
+  supportsToolCaching,
+  type BedrockModelOptions,
+  type PromptCachingSupport,
+} from './bedrock.js';
