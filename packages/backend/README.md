@@ -208,28 +208,33 @@ npm run docker:test        # Health check
 | `PORT` | ❌ | `3000` | Server port |
 | `NODE_ENV` | ❌ | `development` | Execution environment |
 | `CORS_ALLOWED_ORIGINS` | ❌ | `*` | CORS allowed origins |
-| `COGNITO_USER_POOL_ID` | ⚠️ | - | Cognito User Pool ID |
-| `COGNITO_REGION` | ⚠️ | - | AWS Region |
+| `COGNITO_USER_POOL_ID` | ✅ | - | Cognito User Pool ID |
+| `COGNITO_REGION` | ✅ | - | AWS Region |
 | `COGNITO_CLIENT_ID` | ❌ | - | Cognito Client ID |
 | `AWS_REGION` | ❌ | `us-east-1` | AWS region |
-| `AGENTCORE_MEMORY_ID` | ⚠️ | - | AgentCore Memory ID |
-| `AGENTCORE_GATEWAY_ENDPOINT` | ⚠️ | - | AgentCore Gateway endpoint |
-| `USER_STORAGE_BUCKET_NAME` | ⚠️ | - | S3 bucket for user storage |
-| `AGENTS_TABLE_NAME` | ⚠️ | - | DynamoDB agents table name |
-| `SESSIONS_TABLE_NAME` | ⚠️ | - | DynamoDB sessions table name |
-| `SSM_PARAMETER_PREFIX` | ⚠️ | - | SSM Parameter Store prefix for secure MCP env storage |
-
-⚠️ = Required in production environment
+| `AGENTCORE_MEMORY_ID` | ✅ | - | AgentCore Memory ID |
+| `AGENTCORE_GATEWAY_ENDPOINT` | ✅ | - | AgentCore Gateway endpoint |
+| `USER_STORAGE_BUCKET_NAME` | ✅ | - | S3 bucket for user storage |
+| `AGENTS_TABLE_NAME` | ✅ | - | DynamoDB agents table name |
+| `SESSIONS_TABLE_NAME` | ✅ | - | DynamoDB sessions table name |
+| `SSM_PARAMETER_PREFIX` | ✅ | - | SSM Parameter Store prefix for secure MCP env storage |
 
 ### Environment Configuration Patterns
 
-#### Pattern 1: Development Environment (No JWT Verification)
+#### Pattern 1: Development Environment
 
 ```env
 PORT=3000
 NODE_ENV=development
 CORS_ALLOWED_ORIGINS=*
-# JWT settings not configured → Decode only
+COGNITO_USER_POOL_ID=ap-northeast-1_xxxxxxxxx
+COGNITO_REGION=ap-northeast-1
+AGENTCORE_MEMORY_ID=your-memory-id
+AGENTCORE_GATEWAY_ENDPOINT=https://your-gateway-endpoint
+USER_STORAGE_BUCKET_NAME=your-bucket
+AGENTS_TABLE_NAME=your-agents-table
+SESSIONS_TABLE_NAME=your-sessions-table
+SSM_PARAMETER_PREFIX=/your/prefix
 ```
 
 #### Pattern 2: Production Equivalent (With JWT Verification)
@@ -268,11 +273,9 @@ sequenceDiagram
     A-->>C: Return authenticated response
 ```
 
-### Development Environment Behavior
+### Verification Behavior
 
-- **With JWKS Configuration**: Executes full JWT verification
-- **Without JWKS Configuration**: Decode only (skip verification)
-- **Production Environment**: Always execute JWKS verification
+JWT verification via `aws-jwt-verify` (CognitoJwtVerifier) is **always enforced** in all environments. There is no decode-only fallback mode. `COGNITO_USER_POOL_ID` and `COGNITO_REGION` must be set in all environments.
 
 ### JWT Payload Example
 

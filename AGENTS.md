@@ -20,7 +20,7 @@ Monorepo using npm workspaces. 9 packages.
 | packages/agent | AgentCore Runtime agent. Built with Strands Agents SDK (TypeScript). Runs as a Docker container on AgentCore Runtime | Express (8080) | src/index.ts |
 | packages/backend | REST API. Agent management, session persistence, file operations | Express + Lambda Web Adapter (8080) | src/index.ts |
 | packages/frontend | React SPA | Vite + Tailwind | index.html |
-| packages/cdk | CDK infrastructure. Manages all AWS resources. Environment config in `config/environments.ts` | CDK | lib/agentcore-stack.ts |
+| packages/cdk | CDK infrastructure. Manages all AWS resources. Environment config in `config/environments.ts` | CDK | bin/app.ts |
 | packages/client | API client SDK | — | src/ |
 | packages/session-stream-handler | DynamoDB Streams → AppSync Events relay | Lambda | src/ |
 | packages/trigger | EventBridge → automatic agent execution | Lambda | src/ |
