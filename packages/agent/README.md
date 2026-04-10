@@ -79,8 +79,8 @@ curl -X POST http://localhost:8080/invocations \
 Each line is a separate JSON event:
 ```jsonl
 {"type":"textBlock","text":"Tokyo Weather..."}
-{"type":"toolUse","name":"tavily_search","input":{...}}
-{"type":"serverCompletionEvent","metadata":{...}}
+{"type":"beforeToolsEvent","message":{"role":"assistant","content":[{"toolUse":{"toolUseId":"...","name":"tavily_search","input":{...}}}]}}
+{"type":"afterModelCallEvent","stopReason":"tool_use","stopData":{...}}
 ```
 
 ## Available Tools
@@ -115,17 +115,9 @@ This agent supports **Model Context Protocol (MCP)** and can be extended with to
 2. **Local stdio MCP Servers** - Command-line tools
 3. **Remote HTTP/SSE MCP Servers** - Web APIs
 
-#### mcp.json Configuration File
+#### MCP Server Configuration
 
-To use local MCP servers, create an `mcp.json` file in the project root:
-
-```bash
-# Copy sample file
-cp mcp.json.example mcp.json
-
-# Edit as needed
-vi mcp.json
-```
+MCP server configuration is passed via the `mcpConfig` field in the POST `/invocations` request body. There is no file-based configuration — `mcp.json.example` does not exist in the repository.
 
 #### Configuration Examples
 
