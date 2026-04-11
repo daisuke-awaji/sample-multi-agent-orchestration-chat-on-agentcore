@@ -21,7 +21,7 @@ Express API server with JWT authentication support. Supports Amazon Cognito User
 - **TypeScript**: Type-safe implementation
 - **Docker Support**: Containerized execution environment
 - **Health Check**: API Gateway / Lambda compatible
-- **Development Mode**: JWKS verification skip feature
+- **JWT Authentication**: Cognito JWT verification (always enforced)
 
 ## 🔌 API Endpoints
 
