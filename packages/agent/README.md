@@ -260,25 +260,17 @@ npm run docker:dev:aws
 
 ### Method 2: Local Script (for isengardcli)
 
-Convenience script for Amazon internal users with isengardcli:
+> ⚠️ The script `scripts/get-aws-credentials.local.sh` is not included in the repository. The npm script `docker:dev:aws` references `./scripts/get-aws-credentials.sh` which also does not exist. If you need isengardcli-based credential retrieval, create the script manually following this pattern:
 
 ```bash
-# Copy template
-cp scripts/get-aws-credentials.local.sh.example scripts/get-aws-credentials.local.sh
+# Create scripts/get-aws-credentials.sh that:
+# 1. Calls isengardcli to obtain temporary AWS credentials
+# 2. Writes them to .env.local
+# 3. Runs docker-compose up --build
 
-# Edit email and role as needed
-vi scripts/get-aws-credentials.local.sh
-
-# Start Docker
+# Then run:
 npm run docker:dev:aws
 ```
-
-**Features:**
-
-- Automatically retrieves credentials from isengardcli
-- Saves to `.env.local` file
-- Displays expiration time
-- Includes error handling
 
 ### Method 3: Direct Environment Variable Setup
 

@@ -4,6 +4,19 @@ Run history for the doc-drift detection skill. Max 30 entries (oldest trimmed).
 
 <!-- entries will be prepended below -->
 
+## Run #4 — 2026-04-11
+
+- **Commit**: 8a25051bbe8e8763c7096fd346fb78b00de4c460
+- **Findings**: 25 total (10 HIGH, 10 MEDIUM, 5 LOW) — 13 NEW, 12 CONTINUING, 0 RESOLVED
+- **PR Created**: docs-fix-drift-2026-04-11 — fixes 2 NEW HIGH findings (B4-12, C4-5)
+- **Previous PRs**: #349 MERGED, #351 CLOSED, #354 OPEN (covers 6 CONTINUING HIGH findings)
+- **Key observations**:
+  - No new code commits since Run #3 — all CONTINUING findings persist
+  - B4-12 (Features section "JWKS skip") was missed by PR #354 — second location for the JWT decode-only false claim
+  - C4-5 (phantom get-aws-credentials.local.sh.example) is a newly discovered phantom file reference
+  - 13 new MEDIUM/LOW findings discovered: undocumented env vars (7 backend, 10 agent), undocumented API operations, incomplete streaming event docs
+  - Total drift trending up: 21 → 25. Increase due to deeper analysis, not new code changes
+
 ## Run #1 fix — 2026-04-09
 
 - **Change**: Removed `inventory.json` and `false-positives.json`
